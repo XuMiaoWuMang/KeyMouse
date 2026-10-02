@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script",
+  "updated_at": "2026-10-02T17:35:40.372Z",
+  "mode": "groups",
+  "max_columns": 4,
+  "reading": {
+    "zh": "一次 run 的四段：入口与选项（读什么、怎么跑）→ 静态分析（分词、循环结构、变量作用域、目标继承）→ 执行（逐条派发、输出捕获、重试）→ 产物（JSON 报告）。静态分析组里任何错误都会在任何命令执行之前带行号报出。",
+    "en": "The four stages of one run: entry and options, static analysis (tokenising, loop structure, variable scopes, target inheritance), execution (dispatch, capture, retry), and the artefacts. Anything wrong in the analysis stage fails with a line number before a single command runs."
+  },
+  "order": [
+    "keymouse.script.run",
+    "keymouse.script.options",
+    "keymouse.script.model",
+    "keymouse.script.read",
+    "keymouse.script.parse",
+    "keymouse.script.loop",
+    "keymouse.script.vars",
+    "keymouse.script.target",
+    "keymouse.script.pseudo",
+    "keymouse.script.execution-mode",
+    "keymouse.script.capture",
+    "keymouse.script.retry",
+    "keymouse.script.wait",
+    "keymouse.script.report",
+    "keymouse.script.display"
+  ],
+  "groups": [
+    {
+      "id": "entry",
+      "title": {
+        "zh": "入口与选项",
+        "en": "Entry & options"
+      },
+      "children": [
+        "keymouse.script.run",
+        "keymouse.script.options",
+        "keymouse.script.model",
+        "keymouse.script.read"
+      ]
+    },
+    {
+      "id": "static",
+      "title": {
+        "zh": "静态分析（动手之前）",
+        "en": "Static analysis (before anything runs)"
+      },
+      "children": [
+        "keymouse.script.parse",
+        "keymouse.script.loop",
+        "keymouse.script.vars",
+        "keymouse.script.target",
+        "keymouse.script.pseudo"
+      ]
+    },
+    {
+      "id": "execute",
+      "title": {
+        "zh": "执行",
+        "en": "Execution"
+      },
+      "children": [
+        "keymouse.script.execution-mode",
+        "keymouse.script.capture",
+        "keymouse.script.retry",
+        "keymouse.script.wait"
+      ]
+    },
+    {
+      "id": "artefacts",
+      "title": {
+        "zh": "输出与产物",
+        "en": "Output & artefacts"
+      },
+      "children": [
+        "keymouse.script.report",
+        "keymouse.script.display"
+      ]
+    }
+  ]
+}

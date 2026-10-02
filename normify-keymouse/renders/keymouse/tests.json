@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.tests",
+  "updated_at": "2026-10-02T17:35:58.807Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "分两层：上面是不需要桌面的（单元测试、基准、文档链接——CI 能跑），下面是需要真实桌面的（冒烟与其靶子窗口，只能人工跑）。",
+    "en": "Two tiers: the desktop-free checks CI can run (unit suite, benchmark, docs links), and the desktop-only pair - the smoke suite and the target window it drives."
+  },
+  "order": [
+    "keymouse.tests.unit",
+    "keymouse.tests.bench",
+    "keymouse.tests.docs-link",
+    "keymouse.tests.smoke",
+    "keymouse.tests.smoke-target"
+  ],
+  "groups": [
+    {
+      "id": "free",
+      "title": {
+        "zh": "不需要桌面（CI 会跑）",
+        "en": "Desktop-free (CI runs these)"
+      },
+      "children": [
+        "keymouse.tests.unit",
+        "keymouse.tests.bench",
+        "keymouse.tests.docs-link"
+      ]
+    },
+    {
+      "id": "desktop",
+      "title": {
+        "zh": "需要真实桌面（人工）",
+        "en": "Needs a real desktop (human)"
+      },
+      "children": [
+        "keymouse.tests.smoke",
+        "keymouse.tests.smoke-target"
+      ]
+    }
+  ]
+}

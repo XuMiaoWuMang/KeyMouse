@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.cli.mouse",
+  "updated_at": "2026-10-02T17:35:17.541Z",
+  "mode": "grid",
+  "max_columns": 4,
+  "reading": {
+    "zh": "由只读到动手：先查坐标，再移动，然后按键与滚轮，最后是拖拽；右下角的坐标换算供全组共用（客户区坐标必须先换成屏幕坐标）。",
+    "en": "From read-only to acting: query, move, click and scroll, then drag. The geometry unit is shared by the whole group, since client coordinates must be mapped before anything can be clicked."
+  },
+  "order": [
+    "keymouse.cli.mouse.pos",
+    "keymouse.cli.mouse.move",
+    "keymouse.cli.mouse.moveby",
+    "keymouse.cli.mouse.button",
+    "keymouse.cli.mouse.wheel",
+    "keymouse.cli.mouse.drag",
+    "keymouse.cli.mouse.geometry"
+  ]
+}

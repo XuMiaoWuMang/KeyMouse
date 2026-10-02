@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.run",
+  "updated_at": "2026-10-02T17:38:47.162Z",
+  "mode": "layers",
+  "max_columns": 4,
+  "reading": {
+    "zh": "四段流水：先读入+全量静态校验（一条命令都不跑），再逐条派发，然后输出进度，最后汇总与写报告。前三段都不改变外部世界，除了派发段。",
+    "en": "Four stages: read and fully validate (running nothing), dispatch line by line, print progress, then summarise and write the report. Only the dispatch stage touches the outside world."
+  },
+  "order": [
+    "keymouse.script.run.prepare",
+    "keymouse.script.run.dispatch",
+    "keymouse.script.run.progress",
+    "keymouse.script.run.summary"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.tests.unit.parsing",
+  "updated_at": "2026-10-02T17:38:50.318Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "从入口往下看：先语法与选项，再到脚本语义，最后两组是保护 v2 不变量的（循环继承、单进程派发）。",
+    "en": "Top to bottom: entry, then syntax and options, then script semantics, and finally the two sets that protect the v2 invariants - loops/inheritance and single-process dispatch."
+  },
+  "order": [
+    "keymouse.tests.unit.parsing.entry",
+    "keymouse.tests.unit.parsing.tokenizer",
+    "keymouse.tests.unit.parsing.options",
+    "keymouse.tests.unit.parsing.script",
+    "keymouse.tests.unit.parsing.loops",
+    "keymouse.tests.unit.parsing.singleproc"
+  ],
+  "groups": [
+    {
+      "id": "syntax",
+      "title": {
+        "zh": "语法与选项",
+        "en": "Syntax & options"
+      },
+      "children": [
+        "keymouse.tests.unit.parsing.entry",
+        "keymouse.tests.unit.parsing.tokenizer",
+        "keymouse.tests.unit.parsing.options"
+      ]
+    },
+    {
+      "id": "semantics",
+      "title": {
+        "zh": "脚本语义",
+        "en": "Script semantics"
+      },
+      "children": [
+        "keymouse.tests.unit.parsing.script"
+      ]
+    },
+    {
+      "id": "invariants",
+      "title": {
+        "zh": "不变量保护",
+        "en": "Invariant cover"
+      },
+      "children": [
+        "keymouse.tests.unit.parsing.loops",
+        "keymouse.tests.unit.parsing.singleproc"
+      ]
+    }
+  ]
+}

@@ -86,6 +86,36 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 
 单元测试故意不用 xunit/NUnit：一个普通控制台程序，零依赖、离线可跑、`dotnet run` 就是全部用法。
 
+## 架构结构数据（normify）
+
+`normify-keymouse/` 是这份代码库的模块树，**与代码一起版本化**：
+
+| 文件 | 是什么 |
+| --- | --- |
+| `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
+| `tree.json` | 编译产物（含各层渲染数据） |
+| `outline.md` | 广度优先的派生索引，给 AI 导航用 |
+| `api-index.json` | 174 个 API 的索引 |
+| `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
+| `modules/` | 121 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
+
+粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
+`smoke.loops` 都各占一格。132 条箭头锚定到了具体 API 行，所以图上读到的是
+`mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
+
+改动代码后同步（伴随开发流程）：
+
+1. `normify_sync`（`repoRoot` = 本仓库）→ 脏子树 / 新增文件建议 / 失效 source / API 增删与破坏性变更清单；
+2. 按清单**局部**重建受影响模块（`normify_module_upsert` / `normify_module_patch` / `normify_module_move`），
+   并在子级变化后同轮更新那一层的渲染数据；
+3. `normify_validate` 必须 **0 error**（warning 可以留，但要能解释）；
+4. `normify_build` → `normify_render`。
+
+**不变量**：结构数据是**只读代码的派生物**——它不参与编译、不改变程序行为，
+维护它的工具只写 `normify-keymouse/`，从不修改源码。文档说的和代码不一致时，
+以代码为准，然后**两边一起改**。
+
 ## 不变量（改代码时别破坏）
 
 1. **脚本在单进程内执行**：`ScriptRunner` 通过委托调用 `Program.Main` 的派发逻辑，

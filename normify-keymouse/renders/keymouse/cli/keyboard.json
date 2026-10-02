@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.cli.keyboard",
+  "updated_at": "2026-10-02T17:35:19.965Z",
+  "mode": "grid",
+  "max_columns": 4,
+  "reading": {
+    "zh": "从最简单到最复杂：敲一下 → 单独按下/松开 → 多键组合 → 整段文本（后者绕过输入法逐字注入 Unicode）。",
+    "en": "From simplest to richest: tap, separate press/release, chords, then whole strings typed as Unicode one character at a time."
+  },
+  "order": [
+    "keymouse.cli.keyboard.press",
+    "keymouse.cli.keyboard.hold",
+    "keymouse.cli.keyboard.combo",
+    "keymouse.cli.keyboard.type"
+  ]
+}

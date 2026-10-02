@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.parse",
+  "updated_at": "2026-10-02T17:35:42.883Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "先分行（保留行号，供所有错误信息定位），再逐行分词成 argv。",
+    "en": "Split into numbered lines first, then tokenise each into argv."
+  },
+  "order": [
+    "keymouse.script.parse.lines",
+    "keymouse.script.parse.tokenize"
+  ]
+}

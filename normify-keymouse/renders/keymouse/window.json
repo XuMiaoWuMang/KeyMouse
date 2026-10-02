@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.window",
+  "updated_at": "2026-10-02T17:35:26.548Z",
+  "mode": "layers",
+  "max_columns": 3,
+  "reading": {
+    "zh": "从“哪些窗口”到“能不能用”：选择与匹配 → 快照属性 → 闸门逐项判定 → 聚焦并回读前台。最下方的 resolve 把前四步串成一次解析，供每条命令复用。",
+    "en": "From which windows to whether one is usable: select and match, snapshot the facts, run the gate, focus and read the foreground back. resolve at the bottom strings those together for every command."
+  },
+  "order": [
+    "keymouse.window.select",
+    "keymouse.window.snapshot",
+    "keymouse.window.gate",
+    "keymouse.window.focus",
+    "keymouse.window.resolve"
+  ],
+  "groups": [
+    {
+      "id": "select",
+      "title": {
+        "zh": "找到它",
+        "en": "Find it"
+      },
+      "children": [
+        "keymouse.window.select",
+        "keymouse.window.snapshot"
+      ]
+    },
+    {
+      "id": "judge",
+      "title": {
+        "zh": "判定它",
+        "en": "Judge it"
+      },
+      "children": [
+        "keymouse.window.gate"
+      ]
+    },
+    {
+      "id": "focus",
+      "title": {
+        "zh": "让它接住输入",
+        "en": "Make it take input"
+      },
+      "children": [
+        "keymouse.window.focus"
+      ]
+    },
+    {
+      "id": "resolve",
+      "title": {
+        "zh": "串起来",
+        "en": "Wire it up"
+      },
+      "children": [
+        "keymouse.window.resolve"
+      ]
+    }
+  ]
+}

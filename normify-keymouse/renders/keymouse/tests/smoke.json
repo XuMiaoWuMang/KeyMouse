@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.tests.smoke",
+  "updated_at": "2026-10-02T17:38:53.543Z",
+  "mode": "layers",
+  "max_columns": 3,
+  "reading": {
+    "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→不变量”逐段验证；最后一组同时盯住循环结果与进程数。",
+    "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety semantics, odds and ends, and finally the invariants."
+  },
+  "order": [
+    "keymouse.tests.smoke.entry",
+    "keymouse.tests.smoke.typing",
+    "keymouse.tests.smoke.safety",
+    "keymouse.tests.smoke.features",
+    "keymouse.tests.smoke.loops"
+  ],
+  "groups": [
+    {
+      "id": "setup",
+      "title": {
+        "zh": "先准备好",
+        "en": "Set up"
+      },
+      "children": [
+        "keymouse.tests.smoke.entry"
+      ]
+    },
+    {
+      "id": "core",
+      "title": {
+        "zh": "核心能力",
+        "en": "Core ability"
+      },
+      "children": [
+        "keymouse.tests.smoke.typing"
+      ]
+    },
+    {
+      "id": "safety",
+      "title": {
+        "zh": "安全语义与零散入口",
+        "en": "Safety & odds and ends"
+      },
+      "children": [
+        "keymouse.tests.smoke.safety",
+        "keymouse.tests.smoke.features"
+      ]
+    },
+    {
+      "id": "invariants",
+      "title": {
+        "zh": "不变量",
+        "en": "Invariants"
+      },
+      "children": [
+        "keymouse.tests.smoke.loops"
+      ]
+    }
+  ]
+}

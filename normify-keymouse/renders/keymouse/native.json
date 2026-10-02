@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.native",
+  "updated_at": "2026-10-02T17:35:36.826Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断。左上枚举与读取窗口信息，左下查状态与矩形；中间是聚焦与层级；右上三个查询类（DWM 遮盖、进程名、响应探测）；右下是输入 API 与结构体布局。",
+    "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, control the foreground, then three specialised queries (DWM, process name, responsiveness) and the input APIs on the right."
+  },
+  "order": [
+    "keymouse.native.user32-enumerate",
+    "keymouse.native.user32-state",
+    "keymouse.native.user32-geometry",
+    "keymouse.native.user32-focus",
+    "keymouse.native.user32-layer",
+    "keymouse.native.dwm",
+    "keymouse.native.process",
+    "keymouse.native.window-probe",
+    "keymouse.native.user32-input"
+  ],
+  "groups": [
+    {
+      "id": "read",
+      "title": {
+        "zh": "读取窗口",
+        "en": "Read windows"
+      },
+      "children": [
+        "keymouse.native.user32-enumerate",
+        "keymouse.native.user32-state",
+        "keymouse.native.user32-geometry"
+      ]
+    },
+    {
+      "id": "control",
+      "title": {
+        "zh": "前台与层级",
+        "en": "Foreground & layers"
+      },
+      "children": [
+        "keymouse.native.user32-focus",
+        "keymouse.native.user32-layer"
+      ]
+    },
+    {
+      "id": "probe",
+      "title": {
+        "zh": "专项查询",
+        "en": "Specialised queries"
+      },
+      "children": [
+        "keymouse.native.dwm",
+        "keymouse.native.process",
+        "keymouse.native.window-probe"
+      ]
+    },
+    {
+      "id": "inject",
+      "title": {
+        "zh": "输入 API",
+        "en": "Input APIs"
+      },
+      "children": [
+        "keymouse.native.user32-input"
+      ]
+    }
+  ]
+}

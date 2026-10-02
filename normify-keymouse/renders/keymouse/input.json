@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.input",
+  "updated_at": "2026-10-02T17:35:33.553Z",
+  "mode": "layers",
+  "max_columns": 4,
+  "reading": {
+    "zh": "所有事件都从左侧的 send 出口一次性投递（按下→移动→抬起必须同批，否则会被系统重排）；右侧六块是各类事件的构造器。",
+    "en": "Every event leaves through send on the left, in one ordered batch; the six units on the right build the individual event shapes."
+  },
+  "order": [
+    "keymouse.input.send",
+    "keymouse.input.mouse-move",
+    "keymouse.input.mouse-button",
+    "keymouse.input.wheel",
+    "keymouse.input.drag",
+    "keymouse.input.key",
+    "keymouse.input.text"
+  ],
+  "groups": [
+    {
+      "id": "exit",
+      "title": {
+        "zh": "唯一出口",
+        "en": "Single exit"
+      },
+      "children": [
+        "keymouse.input.send"
+      ]
+    },
+    {
+      "id": "mouse",
+      "title": {
+        "zh": "鼠标事件",
+        "en": "Mouse events"
+      },
+      "children": [
+        "keymouse.input.mouse-move",
+        "keymouse.input.mouse-button",
+        "keymouse.input.wheel",
+        "keymouse.input.drag"
+      ]
+    },
+    {
+      "id": "keyboard",
+      "title": {
+        "zh": "键盘事件",
+        "en": "Keyboard events"
+      },
+      "children": [
+        "keymouse.input.key",
+        "keymouse.input.text"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.loop",
+  "updated_at": "2026-10-02T17:35:45.336Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "先解析每个 repeat 头（次数与循环变量名），再扫一遍全脚本得出包围关系、配对表与展开总数——结构不合法就在这里终止，命令一条都还没跑。",
+    "en": "Parse each loop header first, then a single pass yields the enclosing relations, matching ends and the expansion count; an illegal structure stops here, before any command runs."
+  },
+  "order": [
+    "keymouse.script.loop.repeat",
+    "keymouse.script.loop.analyze"
+  ]
+}

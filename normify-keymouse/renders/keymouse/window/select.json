@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.window.select",
+  "updated_at": "2026-10-02T17:35:30.026Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "枚举整个桌面 → 按条件过滤 → 用句柄或屏幕点定位；右侧两块只在出错时出面（候选表与“没有匹配”提示）。",
+    "en": "Enumerate the desktop, filter by the selector, or locate by handle or screen point; the two on the right only appear when something goes wrong."
+  },
+  "order": [
+    "keymouse.window.select.enumerate",
+    "keymouse.window.select.matcher",
+    "keymouse.window.select.find",
+    "keymouse.window.select.handle",
+    "keymouse.window.select.point",
+    "keymouse.window.select.hint",
+    "keymouse.window.select.table"
+  ],
+  "groups": [
+    {
+      "id": "match",
+      "title": {
+        "zh": "枚举与匹配",
+        "en": "Enumerate & match"
+      },
+      "children": [
+        "keymouse.window.select.enumerate",
+        "keymouse.window.select.matcher",
+        "keymouse.window.select.find"
+      ]
+    },
+    {
+      "id": "locate",
+      "title": {
+        "zh": "直接定位",
+        "en": "Direct location"
+      },
+      "children": [
+        "keymouse.window.select.handle",
+        "keymouse.window.select.point"
+      ]
+    },
+    {
+      "id": "report",
+      "title": {
+        "zh": "出错时的输出",
+        "en": "When nothing matches"
+      },
+      "children": [
+        "keymouse.window.select.hint",
+        "keymouse.window.select.table"
+      ]
+    }
+  ]
+}

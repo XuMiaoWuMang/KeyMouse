@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.build",
+  "updated_at": "2026-10-02T17:36:03.464Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "左边是你手上会跑的两条命令（打包、发布前验证），右边是服务器上的两条流水线：CI 每次 push 跑，Release 只认 v* tag。",
+    "en": "On the left are the two commands you run by hand; on the right the two pipelines: CI on every push, release only on a v* tag."
+  },
+  "order": [
+    "keymouse.build.publish",
+    "keymouse.build.verify",
+    "keymouse.build.ci",
+    "keymouse.build.release"
+  ],
+  "groups": [
+    {
+      "id": "local",
+      "title": {
+        "zh": "本地手动跑",
+        "en": "Run locally"
+      },
+      "children": [
+        "keymouse.build.publish",
+        "keymouse.build.verify"
+      ]
+    },
+    {
+      "id": "pipelines",
+      "title": {
+        "zh": "CI 与发布流水线",
+        "en": "CI & release pipelines"
+      },
+      "children": [
+        "keymouse.build.ci",
+        "keymouse.build.release"
+      ]
+    }
+  ]
+}

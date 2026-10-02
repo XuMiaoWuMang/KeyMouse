@@ -1,0 +1,37 @@
+---
+uid: e9fa0b1c
+id: keymouse.cli.mouse.moveby
+parent: keymouse.cli.mouse
+tags: [mouse]
+name: {zh: "相对移动", en: "Relative move"}
+description:
+  zh: >
+      mouse moveby <dx> <dy>：以当前位置为基准移动，内部回读当前位置后计算目标，避免相对移动在边界处静默丢失。
+      
+  en: >
+      mouse moveby <dx> <dy> moves relative to the current position, reading it back first so a nudge near a screen edge does not silently vanish.
+      
+revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
+updated_at: "2026-10-02T17:37:21.449Z"
+fingerprint: ed066abe077cf617475b89420866941ec0b7c26b595508435b3db3daac6799d5
+source:
+  - path: "Program.cs"
+    line: 210
+    end_line: 219
+apis:
+  - protocol: rpc
+    path: "mouse moveby"
+    description:
+      zh: >
+          相对当前位置移动。
+          
+      en: >
+          Moves relative to the current position.
+          
+deps:
+  - kind: call
+    to: keymouse.input.mouse-move
+    from_api: "rpc:mouse moveby"
+    to_api: "rpc:NativeInput.MoveBy"
+    label: {zh: "相对移动", en: "Relative move"}
+---

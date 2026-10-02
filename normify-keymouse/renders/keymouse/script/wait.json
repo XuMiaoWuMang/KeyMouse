@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.wait",
+  "updated_at": "2026-10-02T17:35:52.460Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "解析出选择器与超时参数，然后按固定间隔重复断言直到满足或超时。",
+    "en": "Parse the selector and timeouts, then repeat the assertion at a fixed interval until it holds or time runs out."
+  },
+  "order": [
+    "keymouse.script.wait.parse",
+    "keymouse.script.wait.until"
+  ]
+}

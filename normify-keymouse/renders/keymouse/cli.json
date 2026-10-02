@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.cli",
+  "updated_at": "2026-10-02T17:35:14.097Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "入口先把全局选项（含目标选择器）从任意位置抽出来，再交给三个命令组之一；error 路线是每一次拒绝的出口。",
+    "en": "The entry pulls global options - the target selector among them - out of any position and hands over to one of three command groups; the failure path is where every refusal exits."
+  },
+  "order": [
+    "keymouse.cli.main",
+    "keymouse.cli.options",
+    "keymouse.cli.int-arg",
+    "keymouse.cli.failure",
+    "keymouse.cli.help",
+    "keymouse.cli.mouse",
+    "keymouse.cli.keyboard",
+    "keymouse.cli.window"
+  ],
+  "groups": [
+    {
+      "id": "entry",
+      "title": {
+        "zh": "入口与选项",
+        "en": "Entry & options"
+      },
+      "children": [
+        "keymouse.cli.main",
+        "keymouse.cli.options",
+        "keymouse.cli.int-arg",
+        "keymouse.cli.failure",
+        "keymouse.cli.help"
+      ]
+    },
+    {
+      "id": "groups",
+      "title": {
+        "zh": "三个命令组",
+        "en": "Three command groups"
+      },
+      "children": [
+        "keymouse.cli.mouse",
+        "keymouse.cli.keyboard",
+        "keymouse.cli.window"
+      ]
+    }
+  ]
+}

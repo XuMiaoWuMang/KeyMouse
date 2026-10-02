@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.console",
+  "updated_at": "2026-10-02T17:35:55.400Z",
+  "mode": "grid",
+  "max_columns": 2,
+  "reading": {
+    "zh": "两件互不相干的小事：写出去时用什么编码，排表时按什么宽度。两件都只在中文终端上才看得出差别。",
+    "en": "Two unrelated concerns: which encoding goes out, and which width the tables are padded to. Both only show up on a Chinese console."
+  },
+  "order": [
+    "keymouse.console.encoding",
+    "keymouse.console.width"
+  ]
+}

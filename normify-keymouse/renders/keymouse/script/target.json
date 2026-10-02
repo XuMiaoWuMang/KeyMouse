@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.target",
+  "updated_at": "2026-10-02T17:35:47.438Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "每行先抽出目标选项，再判断这条命令要不要继承当前目标（只有 mouse/key 会）。",
+    "en": "Each line first yields its target options; then the rule decides whether the command inherits the current target - only mouse and key do."
+  },
+  "order": [
+    "keymouse.script.target.extract",
+    "keymouse.script.target.inherit"
+  ]
+}

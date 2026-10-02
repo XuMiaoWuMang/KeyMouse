@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.docs",
+  "updated_at": "2026-10-02T17:36:06.012Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "阅读顺序：先概览，再按需下钻到命令参考 / 设计取舍 / 开发与发布流程，最后是可直接跑的示例脚本。",
+    "en": "Read the overview first, then drill into the reference, the design rationale or the process; the sample script is the runnable version of all of it."
+  },
+  "order": [
+    "keymouse.docs.readme",
+    "keymouse.docs.reference",
+    "keymouse.docs.design",
+    "keymouse.docs.development",
+    "keymouse.docs.sample"
+  ],
+  "groups": [
+    {
+      "id": "read",
+      "title": {
+        "zh": "读文档",
+        "en": "Read"
+      },
+      "children": [
+        "keymouse.docs.readme",
+        "keymouse.docs.reference",
+        "keymouse.docs.design",
+        "keymouse.docs.development"
+      ]
+    },
+    {
+      "id": "run",
+      "title": {
+        "zh": "跑起来",
+        "en": "Run it"
+      },
+      "children": [
+        "keymouse.docs.sample"
+      ]
+    }
+  ]
+}

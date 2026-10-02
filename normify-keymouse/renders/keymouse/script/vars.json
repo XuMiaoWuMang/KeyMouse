@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.script.vars",
+  "updated_at": "2026-10-02T17:35:50.495Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "左侧是执行前的全量校验（为了让 typo 在任何命令之前失败），右侧是执行时真正的替换（循环变量每轮不同，所以替换必须逐行做）。",
+    "en": "The left side checks every reference before anything runs so a typo cannot surface halfway; the right side does the substitution at execution time, because a loop variable changes each iteration."
+  },
+  "order": [
+    "keymouse.script.vars.validate",
+    "keymouse.script.vars.substitute"
+  ]
+}

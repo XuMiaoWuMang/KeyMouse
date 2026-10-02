@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "ok": true,
+  "project": "normify-keymouse",
+  "compiled_at": "2026-10-02T18:01:01.475Z",
+  "stats": {
+    "tree_count": 1,
+    "module_count": 121,
+    "leaf_count": 98,
+    "api_count": 174,
+    "dep_count": 132,
+    "cross_tree_dep_count": 0,
+    "max_depth": 5,
+    "layout_count": 23,
+    "planned_count": 0,
+    "deprecated_count": 0,
+    "policy_rule_count": 2,
+    "change_count": 0,
+    "open_change_count": 0
+  },
+  "warnings": {
+    "structure/leaf-too-coarse": 7,
+    "evidence/root-no-source": 1
+  },
+  "artifacts": {
+    "tree.json": {
+      "sha256": "810a9e274db26702263457446adf38a2c6a789d6c8f26a0cfadd8e6e345552e9",
+      "bytes": 329600
+    },
+    "outline.md": {
+      "sha256": "1cbdbf151b8a9db85397a9f5143a3099e26db847c6194b9a93e86397fe2d1bc3",
+      "bytes": 34047
+    },
+    "api-index.json": {
+      "sha256": "b062806d9d566bddd34667cbafff61fcf818d4c308895116b691a2bc9ecad609",
+      "bytes": 10234
+    },
+    "receipt.json": {
+      "sha256": "38d815ab5d02d46fa57632c84c49d7ef91668320cb602d9032bcdc3165c0d37b",
+      "bytes": 963
+    }
+  }
+}

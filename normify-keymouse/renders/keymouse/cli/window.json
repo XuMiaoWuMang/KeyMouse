@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.cli.window",
+  "updated_at": "2026-10-02T17:35:22.566Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "先看后动：list 列出桌面、inspect 解释某个窗口为何可用/不可用；右侧是真正会改变状态的聚焦路径，也是脚本设定当前目标的方式。",
+    "en": "Look before you leap: list and inspect explain the desktop; on the right is the path that actually changes state, and how a script sets its current target."
+  },
+  "order": [
+    "keymouse.cli.window.list",
+    "keymouse.cli.window.inspect",
+    "keymouse.cli.window.focus",
+    "keymouse.cli.window.targeting"
+  ],
+  "groups": [
+    {
+      "id": "diagnostics",
+      "title": {
+        "zh": "只读诊断",
+        "en": "Read-only diagnostics"
+      },
+      "children": [
+        "keymouse.cli.window.list",
+        "keymouse.cli.window.inspect"
+      ]
+    },
+    {
+      "id": "focus",
+      "title": {
+        "zh": "聚焦与目标准备",
+        "en": "Focus & targeting"
+      },
+      "children": [
+        "keymouse.cli.window.focus",
+        "keymouse.cli.window.targeting"
+      ]
+    }
+  ]
+}
