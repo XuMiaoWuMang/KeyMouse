@@ -12,10 +12,14 @@ internal static class KeyMap
         string n = name.Trim();
         if (Map.TryGetValue(n, out var hit)) return hit;
 
-        // escape hatch: vk:0x5B / vk:5B
-        if (n.StartsWith("vk:", StringComparison.OrdinalIgnoreCase) &&
-            ushort.TryParse(n.AsSpan(3), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort raw))
-            return (raw, false);
+        // escape hatch for keys without a name: vk:0x5B or vk:5B
+        if (n.StartsWith("vk:", StringComparison.OrdinalIgnoreCase))
+        {
+            ReadOnlySpan<char> digits = n.AsSpan(3);
+            if (digits.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) digits = digits[2..];
+            if (ushort.TryParse(digits, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort raw))
+                return (raw, false);
+        }
 
         throw new ArgumentException($"unknown key '{name}' (see 'KeyMouse help' for the key list)");
     }

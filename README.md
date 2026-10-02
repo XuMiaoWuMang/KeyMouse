@@ -1,5 +1,7 @@
 # KeyMouse
 
+[![ci](https://github.com/XuMiaoWuMang/KeyMouse/actions/workflows/ci.yml/badge.svg)](https://github.com/XuMiaoWuMang/KeyMouse/actions/workflows/ci.yml)
+
 Windows 命令行输入模拟工具：**一条命令 = 一次真实的鼠标/键盘事件**，执行完就退出。
 没有常驻进程、没有轮询、不装驱动，底层是 Win32 `SendInput`——事件进的是系统输入队列，
 和应用收到的真人操作走同一条路。
@@ -9,6 +11,17 @@ v1.1 起支持**指定焦点窗口**：先验证目标窗口是否可用、再�
 
 v1.2 起支持**脚本批量执行**：把多条命令写进一个文件（或从 stdin 灌入），
 `KeyMouse run script.txt` 顺序执行，每条命令复用同一套选择器、闸门与焦点验证。
+
+## 下载
+
+不想编译的话，去 [Releases](https://github.com/XuMiaoWuMang/KeyMouse/releases) 拿现成的：
+
+| 文件 | 需要什么 | 体积 |
+| --- | --- | --- |
+| `KeyMouse-x64.exe` | 什么都不用装 | 约 36 MB |
+| `KeyMouse-fx-x64.exe` | 需要 .NET 10 运行时 | 约 220 KB |
+
+两个都是单文件，扔到 PATH 里就能直接 `KeyMouse ...` 用。
 
 ## 构建
 
@@ -23,6 +36,21 @@ cd D:\Data\KeyMouse
 ```powershell
 [Environment]::SetEnvironmentVariable('Path', $env:Path + ';D:\Data\KeyMouse\dist', 'User')
 ```
+
+## 测试
+
+```powershell
+dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj   # 纯逻辑，不需要桌面
+pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                  # 需要交互式桌面
+```
+
+- **单元测试**（零依赖，`tests/KeyMouse.Tests`）：脚本分词器、argv/全局选项解析、
+  按键名映射、选择器匹配、候选筛选与状态串。**不需要桌面，CI 里跑的就是它。**
+- **桌面冒烟**（`tests/smoke.ps1`）：自己起一个记事本，走完整链路打字并用剪贴板回读
+  逐字符比对，另含退出码断言与 `--dry-run` 零输入验证。会临时占用剪贴板（结束会还原）。
+
+CI（`.github/workflows/ci.yml`）在每次 push 时构建解决方案并跑单元测试；
+推 `v*` tag 时 `.github/workflows/release.yml` 会跑测试、构建两个产物并挂到 Release。
 
 ## 用法
 

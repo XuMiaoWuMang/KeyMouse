@@ -4,7 +4,7 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    private const string Version = "1.2.0";
+    private const string Version = "1.2.1";
 
     internal static int Main(string[] args)
     {
@@ -65,17 +65,7 @@ internal static class Program
         var matched = WindowLocator.Find(selector);
         if (matched.Count == 0) throw new CommandFailure(3, WindowLocator.NoMatchMessage(selector));
 
-        // Prefer visible windows: an app query also matches its hidden helper windows
-        // (IME, WorkerW, tray ghosts). Only fall back to hidden ones when nothing visible
-        // matched, so "none is usable" produces the real reason instead of "ambiguous".
-        var considered = matched.Where(w => w.Visible).ToList();
-        if (considered.Count == 0) considered = matched;
-
-        // Secondary windows (dialogs, popups, composition bridges, IME UI) are owned by a
-        // primary window, so "--process notepad" must not become ambiguous just because the
-        // app opened a popup. Prefer unowned windows, fall back when nothing else matched.
-        var primary = considered.Where(w => w.Owner == IntPtr.Zero).ToList();
-        if (primary.Count > 0) considered = primary;
+        var considered = PreferCandidates(matched);
 
         var usable = new List<WindowInfo>();
         var rejected = new List<string>();
@@ -118,6 +108,22 @@ internal static class Program
             throw new CommandFailure(4, $"\"{target.Title}\" stopped responding right after focus - nothing was sent");
 
         return post;
+    }
+
+    /// <summary>
+    /// Narrows candidates without guessing which window the user meant: visible windows
+    /// first (an app also owns hidden helper windows), then unowned windows first (dialogs,
+    /// popups, composition bridges and IME UI are owned by a primary window). Each tier is
+    /// only applied when it leaves something behind, so a hidden or owned target stays
+    /// reachable when nothing else matched.
+    /// </summary>
+    internal static List<WindowInfo> PreferCandidates(IReadOnlyList<WindowInfo> matched)
+    {
+        var considered = matched.Where(w => w.Visible).ToList();
+        if (considered.Count == 0) considered = matched.ToList();
+
+        var primary = considered.Where(w => w.Owner == IntPtr.Zero).ToList();
+        return primary.Count > 0 ? primary : considered;
     }
 
     private static void FocusTarget(WindowInfo target, GlobalOptions g)
@@ -443,12 +449,9 @@ internal static class Program
                     Console.WriteLine();
                 }
 
-                // Same preference rule as the gate: hidden helper windows must not turn a
-                // single real target into "ambiguous".
-                var considered = matched.Where(w => w.Visible).ToList();
-                if (considered.Count == 0) considered = matched;
-                var primary = considered.Where(w => w.Owner == IntPtr.Zero).ToList();
-                if (primary.Count > 0) considered = primary;
+                // Same preference rule as the gate, so inspect explains what a real
+                // command would actually pick.
+                var considered = PreferCandidates(matched);
 
                 Console.WriteLine(usable == 0
                     ? "no usable window (see problems above)"
@@ -501,7 +504,7 @@ internal static class Program
     }
 
     /// <summary>Pulls window/focus options out of argv; everything else stays for the command parser.</summary>
-    private static string[] ExtractGlobalOptions(string[] args, out GlobalOptions g)
+    internal static string[] ExtractGlobalOptions(string[] args, out GlobalOptions g)
     {
         g = new GlobalOptions();
         var rest = new List<string>();
@@ -561,7 +564,7 @@ internal static class Program
     private static bool IsModifier(ushort vk) => vk is 0x10 or 0x11 or 0x12 or 0x5B or 0x5C;
 
     /// <summary>Splits argv into positional values and -flag/--flag[=value] options.</summary>
-    private static (List<string> Positional, Dictionary<string, string> Options) Parse(string[] args, params string[] valueFlags)
+    internal static (List<string> Positional, Dictionary<string, string> Options) Parse(string[] args, params string[] valueFlags)
     {
         var positional = new List<string>();
         var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

@@ -170,7 +170,7 @@ internal static class ScriptRunner
 
     // ------------------------------------------------------------- parsing
 
-    private static List<(int LineNumber, List<string> Tokens)> Parse(string[] lines)
+    internal static List<(int LineNumber, List<string> Tokens)> Parse(string[] lines)
     {
         var commands = new List<(int, List<string>)>();
         for (int i = 0; i < lines.Length; i++)
@@ -195,7 +195,7 @@ internal static class ScriptRunner
     /// Splits one line into argv. Supports "double quoted" tokens, \" and \\ escapes,
     /// '#' comments (whole line or trailing) and ignores blank lines.
     /// </summary>
-    private static List<string> Tokenize(string line)
+    internal static List<string> Tokenize(string line)
     {
         var tokens = new List<string>();
         int i = 0;

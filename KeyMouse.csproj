@@ -8,10 +8,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>1.2.0</Version>
-    <InformationalVersion>1.2.0</InformationalVersion>
+    <Version>1.2.1</Version>
+    <InformationalVersion>1.2.1</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The test project lives under tests/; without this it would be globbed into
+         this project as well and break the build with a second entry point. -->
+    <Compile Remove="tests/**" />
+    <None Remove="tests/**" />
+    <InternalsVisibleTo Include="KeyMouse.Tests" />
+  </ItemGroup>
 
 </Project>
