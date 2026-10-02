@@ -72,6 +72,7 @@ KeyMouse <group> <command> [参数] [选项]
 | `mouse wheel <delta> [-x X -y Y]` | 滚轮，120 = 一格，向上为正 |
 | `mouse hwheel <delta>` | 横向滚轮 |
 | `mouse drag <x1> <y1> <x2> <y2> [--button B] [--steps N] [--duration MS]` | 拖拽（插值轨迹） |
+| `mouse drag -wx <cx1> -wy <cy1> --wx2 <cx2> --wy2 <cy2> <选择器>` | 拖拽两个**客户区**点之间 |
 
 `button`：`left`（默认）`right` `middle` `x1` `x2`
 
@@ -117,7 +118,7 @@ KeyMouse <group> <command> [参数] [选项]
 | `--focus-policy none` | 目标必须已经是前台，否则拒绝 |
 | `--focus-attempts <n>` | 温和模式的尝试次数（默认 3） |
 | `--allow-restore` | 允许自动还原最小化窗口（默认关） |
-| `-wx <cx> -wy <cy>` | 客户区坐标，必须成对出现且必须带选择器 |
+| `-wx <cx> -wy <cy>` | 客户区坐标，必须成对出现且必须带选择器；`mouse drag` 里它是**起点**，终点用 `--wx2 <cx2> --wy2 <cy2>`（四个必须都给） |
 | `--strict-point` | 额外要求该屏幕点下方的窗口就是目标本身 |
 
 ### 脚本（v1.2，v1.3 补强）
@@ -264,7 +265,7 @@ KeyMouse window focus --process explorer --pick 3
 - **遮挡检测做不到**：窗口被别的窗口盖住一半没有可靠 API 可查；`--strict-point`
   只能校验"某个点下面的窗口是谁"。
 - 验证通过到实际注入之间有毫秒级 TOCTOU 窗口，理论上仍可能被抢焦点。
-- `mouse drag` 暂不支持窗口相对坐标。
+
 - **客户区坐标包含"窗口装饰"**：现代应用（WinUI/Electron）的客户区里有标签栏、工具栏。
   实测记事本客户区 y≈80 是工具栏，点那里之后**应用会吞掉你接着输入的第一个词**
   （`hello from…` 变成 `from…`，`A B C…` 变成 `B C…`）——这是应用自身行为，真人这么点也一样。

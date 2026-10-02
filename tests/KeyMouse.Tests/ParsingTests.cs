@@ -185,6 +185,14 @@ internal static class ParsingTests
         Harness.Equal("-wy", 20, g.Wy);
         Harness.Sequence("relative flags are consumed", new[] { "mouse", "click" }, rest);
 
+        rest = Program.ExtractGlobalOptions(
+            new[] { "mouse", "drag", "-wx", "1", "-wy", "2", "--wx2", "3", "--wy2", "4" }, out g);
+        Harness.Equal("drag start x", 1, g.Wx);
+        Harness.Equal("drag start y", 2, g.Wy);
+        Harness.Equal("drag end x", 3, g.Wx2);
+        Harness.Equal("drag end y", 4, g.Wy2);
+        Harness.Sequence("all four client flags are consumed", new[] { "mouse", "drag" }, rest);
+
         Program.ExtractGlobalOptions(new[] { "key", "press", "f24", "--focus-policy", "none", "--allow-restore", "--strict-point" }, out g);
         Harness.Equal("focus policy", "none", g.FocusPolicy);
         Harness.Check("--allow-restore", g.AllowRestore);

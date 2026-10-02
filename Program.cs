@@ -4,7 +4,7 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    private const string Version = "1.4.0";
+    private const string Version = "1.5.0";
 
     internal static int Main(string[] args)
     {
@@ -142,14 +142,24 @@ internal static class Program
         if (target is null)
             throw new CommandFailure(2, $"{command}: -wx/-wy need a window selector (--title/--class/--process/--pid/--hwnd)");
 
-        var (x, y) = WindowLocator.ClientToScreen(target.Handle, g.Wx.Value, g.Wy.Value);
+        var point = ClientPoint(target, g.Wx.Value, g.Wy.Value, command);
+        if (g.StrictPoint) RequirePointBelongsToTarget(target, point.X, point.Y, command);
+        return point;
+    }
+
+    /// <summary>Converts a client-area point to screen pixels and checks it is still inside.</summary>
+    private static (int X, int Y) ClientPoint(WindowInfo target, int clientX, int clientY, string what)
+    {
+        var (x, y) = WindowLocator.ClientToScreen(target.Handle, clientX, clientY);
         if (!WindowLocator.IsInsideClientArea(target.Handle, x, y))
-            throw new CommandFailure(4, $"client point {g.Wx},{g.Wy} falls outside the target's client area");
-
-        if (g.StrictPoint && WindowLocator.WindowAt(x, y) != NativeWindow.Root(target.Handle))
-            throw new CommandFailure(4, $"strict-point: the window at {x},{y} is not the target - nothing was sent");
-
+            throw new CommandFailure(4, $"{what}: client point {clientX},{clientY} falls outside the target's client area");
         return (x, y);
+    }
+
+    private static void RequirePointBelongsToTarget(WindowInfo target, int x, int y, string what)
+    {
+        if (WindowLocator.WindowAt(x, y) != NativeWindow.Root(target.Handle))
+            throw new CommandFailure(4, $"strict-point: the window at {x},{y} is not the target ({what}) - nothing was sent");
     }
 
     // ---------------------------------------------------------------- mouse
@@ -278,15 +288,42 @@ internal static class Program
 
             case "drag":
             {
-                EnsureTarget();
-                if (g.Wx.HasValue || g.Wy.HasValue)
-                    return Fail(2, "mouse drag does not support -wx/-wy yet (window-relative drag endpoints are not implemented)");
-                if (pos.Count != 4)
-                    return Fail(2, "usage: KeyMouse mouse drag <x1> <y1> <x2> <y2> [--button left] [--steps 20] [--duration 400]");
-
                 string button = opt.GetValueOrDefault("button") ?? "left";
                 int steps = IntOr(opt, "steps", 20);
                 int duration = IntOr(opt, "duration", 400);
+
+                bool anyRelative = g.Wx.HasValue || g.Wy.HasValue || g.Wx2.HasValue || g.Wy2.HasValue;
+                if (anyRelative)
+                {
+                    // Check the shape of the arguments first, so a usage error does not depend
+                    // on the state of the desktop.
+                    if (!g.Wx.HasValue || !g.Wy.HasValue || !g.Wx2.HasValue || !g.Wy2.HasValue)
+                        return Fail(2, "a window-relative drag needs all four of -wx -wy --wx2 --wy2");
+                    if (pos.Count != 0)
+                        return Fail(2, "give either four coordinates or the four client-relative flags, not both");
+
+                    var target = EnsureTarget()
+                        ?? throw new CommandFailure(2, "mouse drag: -wx/-wy need a window selector " +
+                                                       "(--title/--class/--process/--pid/--hwnd)");
+
+                    var from = ClientPoint(target, g.Wx.Value, g.Wy.Value, "drag start");
+                    var to = ClientPoint(target, g.Wx2.Value, g.Wy2.Value, "drag end");
+                    if (g.StrictPoint)
+                    {
+                        RequirePointBelongsToTarget(target, from.X, from.Y, "drag start");
+                        RequirePointBelongsToTarget(target, to.X, to.Y, "drag end");
+                    }
+
+                    NativeInput.Drag(from.X, from.Y, to.X, to.Y, button, steps, duration);
+                    Console.WriteLine($"dragged client {g.Wx},{g.Wy} -> {g.Wx2},{g.Wy2} " +
+                                      $"(screen {from.X},{from.Y} -> {to.X},{to.Y}) with {button}");
+                    return 0;
+                }
+
+                EnsureTarget();
+                if (pos.Count != 4)
+                    return Fail(2, "usage: KeyMouse mouse drag <x1> <y1> <x2> <y2> [--button left] [--steps 20] [--duration 400]");
+
                 NativeInput.Drag(
                     IntArg(pos[0], "x1"), IntArg(pos[1], "y1"),
                     IntArg(pos[2], "x2"), IntArg(pos[3], "y2"),
@@ -480,6 +517,10 @@ internal static class Program
         public int? Wx;
         public int? Wy;
 
+        /// <summary>Client-area end point: only `mouse drag` uses it.</summary>
+        public int? Wx2;
+        public int? Wy2;
+
         public bool HasSelector => Title is not null || TitleExact is not null || ClassName is not null ||
                                    ProcessName is not null || Pid is not null || Hwnd is not null;
 
@@ -544,6 +585,8 @@ internal static class Program
                 case "allow-restore": g.AllowRestore = true; break;
                 case "strict-point": g.StrictPoint = true; break;
                 case "wx": g.Wx = IntArg(Take("client-area x"), "-wx"); break;
+                case "wx2": g.Wx2 = IntArg(Take("client-area x of the drag end"), "--wx2"); break;
+                case "wy2": g.Wy2 = IntArg(Take("client-area y of the drag end"), "--wy2"); break;
                 case "wy": g.Wy = IntArg(Take("client-area y"), "-wy"); break;
                 default: rest.Add(arg); break;
             }
@@ -623,6 +666,8 @@ internal static class Program
           mouse wheel <delta> [-x X -y Y]             120 = one notch, + = up (scroll down = -120)
           mouse hwheel <delta>                        horizontal wheel
           mouse drag <x1> <y1> <x2> <y2> [--button B] [--steps N] [--duration MS]
+          mouse drag -wx <cx1> -wy <cy1> --wx2 <cx2> --wy2 <cy2> <selector> [--button B]
+                                                      drag between two client-area points
 
           button: left (default) | right | middle | x1 | x2
 
@@ -682,7 +727,9 @@ internal static class Program
                                       none: require it to already be foreground.
           --focus-attempts <n>        attempts for gentle mode (default 3)
           --allow-restore             let KeyMouse un-minimize the target (off by default)
-          -wx <cx> -wy <cy>           client-area coordinates (must be paired, needs a selector)
+          -wx <cx> -wy <cy>           client-area coordinates (must be paired, needs a selector);
+                                      for `mouse drag` this is the start point and
+                                      --wx2 <cx2> --wy2 <cy2> is the end point (all four required)
           --strict-point              also require the window under the point to be the target
 
         KEYS

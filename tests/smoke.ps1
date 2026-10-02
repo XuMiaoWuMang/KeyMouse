@@ -75,6 +75,38 @@ try {
     $want = "$expected1`n$expected2"
     Check 'typed text round-trips exactly' ($got -eq $want) "got [$got]"
 
+    Write-Host "`n== window-relative drag =="
+    $dragScript = Join-Path $env:TEMP 'keymouse-smoke-drag.txt'
+    $dragLines = @('mouse click left -wx 200 -wy 200 --process notepad')
+    for ($i = 1; $i -le 8; $i++) {
+        $dragLines += "key type `"drag line $i`" --process notepad"
+        $dragLines += 'key press enter --process notepad'
+    }
+    $dragLines += 'mouse drag -wx 5 -wy 130 --wx2 900 -wy2 300 --process notepad --duration 400 --steps 20'
+    $dragLines | Set-Content -Path $dragScript -Encoding utf8
+
+    $null = & $Exe key combo ctrl+a --process notepad
+    $null = & $Exe key press delete --process notepad
+    Start-Sleep -Milliseconds 300
+
+    $dragOut = & $Exe run $dragScript 2>&1
+    Check 'a window-relative drag runs' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$dragOut"
+
+    Set-Clipboard -Value '<<EMPTY>>'
+    $null = & $Exe key combo ctrl+c --process notepad
+    Start-Sleep -Milliseconds 300
+    $selection = Get-Clipboard -Raw
+    Check 'the drag really selected text' (($selection -ne '<<EMPTY>>') -and ($selection -match 'drag line')) "got [$selection]"
+
+    @('mouse drag -wx 1 -wy 1 --wx2 2') | Set-Content -Path $dragScript -Encoding utf8
+    $null = & $Exe run $dragScript 2>&1
+    Check 'an incomplete relative drag exits 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+    Remove-Item $dragScript -Force -ErrorAction SilentlyContinue
+
+    $null = & $Exe key combo ctrl+a --process notepad
+    $null = & $Exe key press delete --process notepad
+    Start-Sleep -Milliseconds 250
+
     Write-Host "`n== variables =="
     $varScript = Join-Path $env:TEMP 'keymouse-smoke-vars.txt'
     @('mouse move ${x} ${y}', 'mouse pos') | Set-Content -Path $varScript -Encoding utf8
