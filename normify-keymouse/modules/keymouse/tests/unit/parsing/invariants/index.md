@@ -1,16 +1,18 @@
 ---
 uid: f6081a2c
-id: keymouse.tests.unit.parsing.loops
+id: keymouse.tests.unit.parsing.invariants
 parent: keymouse.tests.unit.parsing
 tags: [test]
 name: {zh: "循环与目标继承用例", en: "Loops & target inheritance"}
 description:
   zh: >
       循环结构分析的断言集（配对、命名、展开计数、超限拒绝、影子变量）与目标继承规则（哪些命令继承、哪些刻意不继承）。这两组最直接护着 v2 的新语义。
+      
   en: >
       Loop analysis (pairing, naming, expansion counts, refusing an oversized expansion, shadowing) and the inheritance rules - which commands inherit and which deliberately do not. These two sets protect the v2 semantics.
+      
 revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+updated_at: "2026-10-02T18:07:55.729Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
@@ -19,23 +21,4 @@ source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
     line: 139
     end_line: 169
-apis:
-  - protocol: rpc
-    path: "Loops / TargetInheritance 用例"
-    description:
-      zh: >
-          循环与继承的断言集。
-      en: >
-          Assertions for loops and inheritance.
-deps:
-  - kind: reference
-    to: keymouse.script.loop.analyze
-    from_api: "rpc:Loops / TargetInheritance 用例"
-    to_api: "rpc:ScriptRunner.AnalyzeLoops"
-    label: {zh: "循环分析", en: "Loop analysis"}
-  - kind: reference
-    to: keymouse.script.target.inherit
-    from_api: "rpc:Loops / TargetInheritance 用例"
-    to_api: "rpc:ScriptRunner.InheritsTarget"
-    label: {zh: "继承规则", en: "Inheritance rule"}
 ---

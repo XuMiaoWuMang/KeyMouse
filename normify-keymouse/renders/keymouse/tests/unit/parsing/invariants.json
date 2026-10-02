@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.tests.unit.parsing.invariants",
+  "updated_at": "2026-10-02T18:07:58.982Z",
+  "mode": "layers",
+  "max_columns": 2,
+  "reading": {
+    "zh": "两组用例并列，各自护着一条 v2 不变量：循环的结构合法性、目标继承的边界（谁继承、谁不继承）。",
+    "en": "Two case sets side by side, each guarding one v2 invariant: that loop structure is valid before anything runs, and the exact boundary of target inheritance."
+  },
+  "order": [
+    "keymouse.tests.unit.parsing.invariants.loops",
+    "keymouse.tests.unit.parsing.invariants.inheritance"
+  ]
+}

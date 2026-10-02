@@ -9,16 +9,16 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-02T18:01:01.475Z",
+    "compiled_at": "2026-10-02T18:08:16.276Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 121,
-      "leaf_count": 98,
-      "api_count": 174,
-      "dep_count": 132,
+      "module_count": 123,
+      "leaf_count": 99,
+      "api_count": 175,
+      "dep_count": 134,
       "cross_tree_dep_count": 0,
-      "max_depth": 5,
-      "layout_count": 23,
+      "max_depth": 6,
+      "layout_count": 24,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 120,
+        "descendant_count": 122,
         "own_api_count": 0,
-        "inherited_api_count": 174,
+        "inherited_api_count": 175,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -2241,9 +2241,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T17:50:00Z",
-      "fingerprint": "e1912c0b83326f4813897a6ea6be8b078b41b77fc07117146bf272185c04bada",
+      "revision": "eab1e75695d1ef34a4b3a13c46a1981b89a24400",
+      "updated_at": "2026-10-02T18:07:17.931Z",
+      "fingerprint": "9be2d12da7b4d7ff483b2012f4b9a0280ea87140548f7f5918fa02b172aa229e",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2318,9 +2318,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T18:20:00Z",
-      "fingerprint": "e680c449191c958e537c7bf9a4b55edfd9103516efa2f199c17d45defe4b2ce2",
+      "revision": "eab1e75695d1ef34a4b3a13c46a1981b89a24400",
+      "updated_at": "2026-10-02T18:07:17.931Z",
+      "fingerprint": "5ef6d36ef05dbd86b2af8db0f274a9de95a56929a7e4b301511c7d016eb3648b",
       "apis": [
         {
           "protocol": "file",
@@ -2362,9 +2362,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T18:20:00Z",
-      "fingerprint": "7bf150c5725efb0b925113723d61f1a05c1cb801c2025133c17c50f9d5cfdd74",
+      "revision": "eab1e75695d1ef34a4b3a13c46a1981b89a24400",
+      "updated_at": "2026-10-02T18:07:17.931Z",
+      "fingerprint": "1988f43ddb15eff5f26008d5f85f309e0a98564ff01f3f6d68652946b7dc03b0",
       "apis": [
         {
           "protocol": "file",
@@ -3591,7 +3591,7 @@
       "source": [
         {
           "path": "NativeWindow.cs",
-          "line": 88,
+          "line": 90,
           "end_line": 99
         },
         {
@@ -3601,7 +3601,7 @@
         }
       ],
       "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T18:00:00Z",
+      "updated_at": "2026-10-02T18:07:37.001Z",
       "fingerprint": "47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252",
       "apis": [
         {
@@ -4241,7 +4241,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 2
+        "dep_in": 3
       }
     },
     "keymouse.script.model": {
@@ -5223,7 +5223,7 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 2
+        "dep_in": 3
       }
     },
     "keymouse.script.target.inherit": {
@@ -5657,9 +5657,9 @@
       "updated_at": "2026-10-02T17:50:00Z",
       "fingerprint": "b48d586f3a1cba4471f8ccfed57dbdae85f8eee0b879ff2a69daf0f6c9009048",
       "aggregate": {
-        "descendant_count": 19,
+        "descendant_count": 21,
         "own_api_count": 0,
-        "inherited_api_count": 19,
+        "inherited_api_count": 20,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -6207,9 +6207,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 9,
+        "descendant_count": 11,
         "own_api_count": 0,
-        "inherited_api_count": 11,
+        "inherited_api_count": 12,
         "dep_out": 1,
         "dep_in": 0
       }
@@ -6312,12 +6312,12 @@
         }
       ],
       "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T17:38:44.180Z",
+      "updated_at": "2026-10-02T18:07:55.729Z",
       "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
       "aggregate": {
-        "descendant_count": 6,
+        "descendant_count": 8,
         "own_api_count": 0,
-        "inherited_api_count": 6,
+        "inherited_api_count": 7,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -6368,9 +6368,9 @@
         "dep_in": 3
       }
     },
-    "keymouse.tests.unit.parsing.loops": {
+    "keymouse.tests.unit.parsing.invariants": {
       "uid": "f6081a2c",
-      "id": "keymouse.tests.unit.parsing.loops",
+      "id": "keymouse.tests.unit.parsing.invariants",
       "parent": "keymouse.tests.unit.parsing",
       "tree": "keymouse",
       "depth": 5,
@@ -6398,39 +6398,146 @@
         }
       ],
       "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
-      "updated_at": "2026-10-02T18:40:00Z",
+      "updated_at": "2026-10-02T18:07:55.729Z",
+      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "aggregate": {
+        "descendant_count": 2,
+        "own_api_count": 0,
+        "inherited_api_count": 2,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.tests.unit.parsing.invariants.inheritance": {
+      "uid": "e8fa2c40",
+      "id": "keymouse.tests.unit.parsing.invariants.inheritance",
+      "parent": "keymouse.tests.unit.parsing.invariants",
+      "tree": "keymouse",
+      "depth": 6,
+      "tags": [
+        "test",
+        "invariant"
+      ],
+      "name": {
+        "zh": "目标继承用例",
+        "en": "Target inheritance cases"
+      },
+      "description": {
+        "zh": "继承规则的断言集：选择器识别（含 --flag=value 与多条件）、哪些命令继承（mouse/key）与哪些刻意不继承（waitfor / waitgone / window list）、客户区坐标不算目标。\n",
+        "en": "Assertions for the inheritance rules: selector extraction (inline values, several conditions), which commands inherit (mouse and key) and which deliberately do not (waitfor, waitgone, window list).\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/ParsingTests.cs",
+          "line": 139,
+          "end_line": 169
+        }
+      ],
+      "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
+      "updated_at": "2026-10-02T18:20:00Z",
       "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
       "apis": [
         {
           "protocol": "rpc",
-          "path": "Loops / TargetInheritance 用例",
+          "path": "TargetInheritance 用例",
           "description": {
-            "zh": "循环与继承的断言集。\n",
-            "en": "Assertions for loops and inheritance.\n"
+            "zh": "目标继承规则的断言集。\n",
+            "en": "Assertions for the inheritance rules.\n"
           },
-          "key": "rpc:Loops / TargetInheritance 用例"
+          "key": "rpc:TargetInheritance 用例"
         }
       ],
       "deps": [
         {
           "kind": "reference",
-          "to": "keymouse.script.loop.analyze",
-          "from_api": "rpc:Loops / TargetInheritance 用例",
-          "to_api": "rpc:ScriptRunner.AnalyzeLoops",
+          "to": "keymouse.script.target.extract",
+          "from_api": "rpc:TargetInheritance 用例",
+          "to_api": "rpc:ScriptRunner.ExtractTargetTokens",
           "label": {
-            "zh": "循环分析",
-            "en": "Loop analysis"
+            "zh": "选择器提取",
+            "en": "Selector extraction"
           },
           "cross_tree": false
         },
         {
           "kind": "reference",
           "to": "keymouse.script.target.inherit",
-          "from_api": "rpc:Loops / TargetInheritance 用例",
+          "from_api": "rpc:TargetInheritance 用例",
           "to_api": "rpc:ScriptRunner.InheritsTarget",
           "label": {
             "zh": "继承规则",
             "en": "Inheritance rule"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
+    "keymouse.tests.unit.parsing.invariants.loops": {
+      "uid": "d7e91b3f",
+      "id": "keymouse.tests.unit.parsing.invariants.loops",
+      "parent": "keymouse.tests.unit.parsing.invariants",
+      "tree": "keymouse",
+      "depth": 6,
+      "tags": [
+        "test",
+        "invariant"
+      ],
+      "name": {
+        "zh": "循环结构用例",
+        "en": "Loop structure cases"
+      },
+      "description": {
+        "zh": "循环结构分析的断言集：配对、命名、嵌套相乘、repeat 0 跳过、展开计数、超限拒绝、影子变量报错。它护着“结构不合法就在动手前停下”这条不变量。\n",
+        "en": "Assertions for loop analysis: pairing, naming, nested multiplication, repeat 0 skipping the body, expansion counts, refusing an oversized expansion and refusing a shadowed variable.\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/ParsingTests.cs",
+          "line": 22,
+          "end_line": 92
+        }
+      ],
+      "revision": "8d69164cfe5fa0896f595c0bca51f97977ff51b9",
+      "updated_at": "2026-10-02T18:20:00Z",
+      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Loops 用例",
+          "description": {
+            "zh": "循环结构与展开计数的断言集。\n",
+            "en": "Assertions for loop structure and expansion counts.\n"
+          },
+          "key": "rpc:Loops 用例"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.script.loop.analyze",
+          "from_api": "rpc:Loops 用例",
+          "to_api": "rpc:ScriptRunner.AnalyzeLoops",
+          "label": {
+            "zh": "被测对象",
+            "en": "Subject"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.script.loop.repeat",
+          "from_api": "rpc:Loops 用例",
+          "to_api": "rpc:ScriptRunner.ParseRepeat",
+          "label": {
+            "zh": "循环头语法",
+            "en": "Loop header syntax"
           },
           "cross_tree": false
         }
@@ -7764,7 +7871,7 @@
     "rpc:KeyMouse.Fail": "keymouse.cli.failure",
     "rpc:KeyMouse.SmokeTarget.exe": "keymouse.tests.smoke-target",
     "rpc:LoopPlan": "keymouse.script.loop.analyze",
-    "rpc:Loops / TargetInheritance 用例": "keymouse.tests.unit.parsing.loops",
+    "rpc:Loops 用例": "keymouse.tests.unit.parsing.invariants.loops",
     "rpc:mouse click": "keymouse.cli.mouse.button",
     "rpc:mouse dblclick": "keymouse.cli.mouse.button",
     "rpc:mouse down": "keymouse.cli.mouse.button",
@@ -7829,6 +7936,7 @@
     "rpc:ScriptRunner.WaitUntil": "keymouse.script.wait.until",
     "rpc:ScriptRunner.WriteReport": "keymouse.script.report",
     "rpc:SingleProcessExecution 用例": "keymouse.tests.unit.parsing.singleproc",
+    "rpc:TargetInheritance 用例": "keymouse.tests.unit.parsing.invariants.inheritance",
     "rpc:Tokenizer / ScriptLines 用例": "keymouse.tests.unit.parsing.tokenizer",
     "rpc:Usage.Print": "keymouse.cli.help",
     "rpc:user32!BringWindowToTop": "keymouse.native.user32-focus",
@@ -9005,20 +9113,20 @@
       }
     },
     {
-      "from": "keymouse.tests.unit.parsing.loops",
-      "from_api": "rpc:Loops / TargetInheritance 用例",
-      "to": "keymouse.script.loop.analyze",
-      "to_api": "rpc:ScriptRunner.AnalyzeLoops",
+      "from": "keymouse.tests.unit.parsing.invariants.inheritance",
+      "from_api": "rpc:TargetInheritance 用例",
+      "to": "keymouse.script.target.extract",
+      "to_api": "rpc:ScriptRunner.ExtractTargetTokens",
       "kind": "reference",
       "cross_tree": false,
       "label": {
-        "zh": "循环分析",
-        "en": "Loop analysis"
+        "zh": "选择器提取",
+        "en": "Selector extraction"
       }
     },
     {
-      "from": "keymouse.tests.unit.parsing.loops",
-      "from_api": "rpc:Loops / TargetInheritance 用例",
+      "from": "keymouse.tests.unit.parsing.invariants.inheritance",
+      "from_api": "rpc:TargetInheritance 用例",
       "to": "keymouse.script.target.inherit",
       "to_api": "rpc:ScriptRunner.InheritsTarget",
       "kind": "reference",
@@ -9026,6 +9134,30 @@
       "label": {
         "zh": "继承规则",
         "en": "Inheritance rule"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.parsing.invariants.loops",
+      "from_api": "rpc:Loops 用例",
+      "to": "keymouse.script.loop.analyze",
+      "to_api": "rpc:ScriptRunner.AnalyzeLoops",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测对象",
+        "en": "Subject"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.parsing.invariants.loops",
+      "from_api": "rpc:Loops 用例",
+      "to": "keymouse.script.loop.repeat",
+      "to_api": "rpc:ScriptRunner.ParseRepeat",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "循环头语法",
+        "en": "Loop header syntax"
       }
     },
     {
@@ -10079,18 +10211,18 @@
     "keymouse.tests.unit.parsing": {
       "schema_version": 1,
       "id": "keymouse.tests.unit.parsing",
-      "updated_at": "2026-10-02T17:38:50.318Z",
+      "updated_at": "2026-10-02T18:08:10.238Z",
       "mode": "groups",
       "reading": {
-        "zh": "从入口往下看：先语法与选项，再到脚本语义，最后两组是保护 v2 不变量的（循环继承、单进程派发）。",
-        "en": "Top to bottom: entry, then syntax and options, then script semantics, and finally the two sets that protect the v2 invariants - loops/inheritance and single-process dispatch."
+        "zh": "从入口往下看：先语法与选项，再到脚本语义，最后两组是保护 v2 不变量的（循环与继承、单进程派发）。",
+        "en": "Top to bottom: entry, then syntax and options, then script semantics, and finally the two sets that protect the v2 invariants - loops/inheritance, and single-process dispatch."
       },
       "order": [
         "keymouse.tests.unit.parsing.entry",
         "keymouse.tests.unit.parsing.tokenizer",
         "keymouse.tests.unit.parsing.options",
         "keymouse.tests.unit.parsing.script",
-        "keymouse.tests.unit.parsing.loops",
+        "keymouse.tests.unit.parsing.invariants",
         "keymouse.tests.unit.parsing.singleproc"
       ],
       "groups": [
@@ -10123,10 +10255,25 @@
             "en": "Invariant cover"
           },
           "children": [
-            "keymouse.tests.unit.parsing.loops",
+            "keymouse.tests.unit.parsing.invariants",
             "keymouse.tests.unit.parsing.singleproc"
           ]
         }
+      ]
+    },
+    "keymouse.tests.unit.parsing.invariants": {
+      "schema_version": 1,
+      "id": "keymouse.tests.unit.parsing.invariants",
+      "updated_at": "2026-10-02T18:07:58.982Z",
+      "mode": "layers",
+      "max_columns": 2,
+      "reading": {
+        "zh": "两组用例并列，各自护着一条 v2 不变量：循环的结构合法性、目标继承的边界（谁继承、谁不继承）。",
+        "en": "Two case sets side by side, each guarding one v2 invariant: that loop structure is valid before anything runs, and the exact boundary of target inheritance."
+      },
+      "order": [
+        "keymouse.tests.unit.parsing.invariants.loops",
+        "keymouse.tests.unit.parsing.invariants.inheritance"
       ]
     },
     "keymouse.window": {
