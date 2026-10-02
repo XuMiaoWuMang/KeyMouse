@@ -6,9 +6,15 @@ namespace KeyMouse.Tests;
 /// </summary>
 internal static class TestEntry
 {
-    private static int Main()
+    private static int Main(string[] args)
     {
         try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* no console attached */ }
+
+        if (args.Length > 0 && args[0] == "bench")
+        {
+            ParseBench.Run();
+            return 0;
+        }
 
         Console.WriteLine("KeyMouse tests (no desktop required)");
         Harness.Section("parsing", ParsingTests.Run);
