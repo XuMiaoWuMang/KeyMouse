@@ -154,3 +154,19 @@ KeyMouse window focus --process explorer --pick 3
 - **v1.2**：`--verify-change`（`PrintWindow` 前后像素比对，默认关）、
   Chromium 空壳启发式（有 `Chrome_WidgetWin_*` 类名却找不到渲染子窗口）、
   UIA 探针。
+
+## 许可证
+
+**GNU Affero General Public License v3.0（AGPL-3.0）**，完整条款见 [LICENSE](LICENSE)。
+
+Copyright (C) 2026 XuMiaoWuMang
+
+要点（不是法律意见，以 LICENSE 原文为准）：
+
+- 可以自由使用、修改、再分发，包括商用；
+- **分发修改版时，必须同样以 AGPL-3.0 开源全部源码**；
+- **如果把修改版做成网络服务提供给用户，也必须向这些用户提供源码**——这是 AGPL 比 GPL 多出来的那一条；
+- 不提供任何担保。
+
+KeyMouse 是个本地命令行工具，"网络服务"那一条平时不会触发；但如果你把它改造成在线服务，
+或者集成进闭源产品再分发，AGPL 的传染性会真实生效——那时需要换协议的话，请先替换 `LICENSE`。
