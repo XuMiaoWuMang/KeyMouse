@@ -103,6 +103,37 @@ try {
     Remove-Item $retryScript, $retryReport -Force -ErrorAction SilentlyContinue
     & $Exe mouse move ($before -split ',')[0] ($before -split ',')[1] | Out-Null
 
+    Write-Host "`n== waits =="
+    $waitScript = Join-Path $env:TEMP 'keymouse-smoke-wait.txt'
+    @('waitfor --process notepad --timeout 3000', 'waitgone --process definitely-not-running-xyz --timeout 500') |
+        Set-Content -Path $waitScript -Encoding utf8
+    $waitOut = & $Exe run $waitScript 2>&1
+    Check 'waitfor finds the running Notepad and waitgone agrees' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$waitOut"
+    Check 'the wait reports how long it took' (($waitOut -join "`n") -match 'satisfied after') 'no timing line'
+
+    @('waitfor --process definitely-not-running-xyz --timeout 400 --interval 100') |
+        Set-Content -Path $waitScript -Encoding utf8
+    $null = & $Exe run $waitScript 2>&1
+    Check 'a waitfor timeout exits 3' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
+
+    @('key press f24 --process notepad', 'waitfor --timeout 100') | Set-Content -Path $waitScript -Encoding utf8
+    $null = & $Exe run $waitScript 2>&1
+    Check 'a bad wait line aborts before anything runs' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+    Remove-Item $waitScript -Force -ErrorAction SilentlyContinue
+
+    Write-Host "`n== a disabled window is refused =="
+    Add-Type -Namespace KeyMouseSmoke -Name Win -MemberDefinition '[DllImport("user32.dll")] public static extern bool EnableWindow(IntPtr h, bool e);'
+    $note = Get-Process notepad | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+    [void][KeyMouseSmoke.Win]::EnableWindow($note.MainWindowHandle, $false)
+    Start-Sleep -Milliseconds 300
+    $null = & $Exe key press f24 --process notepad 2>&1
+    Check 'a disabled window exits 4' ($LASTEXITCODE -eq 4) "exit=$LASTEXITCODE"
+    Check 'the listing flags it as DISABLED' (((& $Exe window list --process notepad) -join "`n") -match 'DISABLED') 'no DISABLED flag'
+    [void][KeyMouseSmoke.Win]::EnableWindow($note.MainWindowHandle, $true)
+    Start-Sleep -Milliseconds 300
+    $null = & $Exe window focus --process notepad 2>&1
+    Check 're-enabling makes it usable again' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
+
     Write-Host "`n== dry run sends nothing =="
     $null = & $Exe key combo ctrl+a --process notepad
     $null = & $Exe key press delete --process notepad

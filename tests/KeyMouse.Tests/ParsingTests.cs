@@ -13,6 +13,7 @@ internal static class ParsingTests
         KeyNames();
         RunOptions();
         RetryAndVariables();
+        WaitCommands();
     }
 
     private static void RunOptions()
@@ -90,6 +91,38 @@ internal static class ParsingTests
 
         Harness.Throws<CommandFailure>("an unterminated ${ is refused",
             () => ScriptRunner.Expand(ScriptRunner.Parse(new[] { "key press ${nope" }), variables));
+    }
+
+    private static void WaitCommands()
+    {
+        Harness.Group("wait pseudo-command parsing");
+
+        var parsed = ScriptRunner.ParseWait(new List<string>
+        {
+            "waitfor", "--process", "notepad", "--timeout", "1500", "--interval", "50"
+        });
+        Harness.Check("selector is parsed", parsed.Selector is not null, parsed.Error ?? "");
+        Harness.Equal("timeout", 1500, parsed.TimeoutMs);
+        Harness.Equal("interval", 50, parsed.IntervalMs);
+
+        var defaults = ScriptRunner.ParseWait(new List<string> { "waitgone", "--title", "x" });
+        Harness.Equal("timeout defaults to 5000", 5000, defaults.TimeoutMs);
+        Harness.Equal("interval defaults to 200", 200, defaults.IntervalMs);
+        Harness.Equal("zero timeout means check once", 0,
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title", "x", "--timeout", "0" }).TimeoutMs);
+
+        Harness.Check("no selector is an error",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--timeout", "100" }).Error is not null);
+        Harness.Check("non-numeric timeout is an error",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title", "x", "--timeout", "abc" }).Error is not null);
+        Harness.Check("negative timeout is an error",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title", "x", "--timeout", "-1" }).Error is not null);
+        Harness.Check("zero interval is an error",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title", "x", "--interval", "0" }).Error is not null);
+        Harness.Check("unknown argument is an error",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title", "x", "--bogus" }).Error is not null);
+        Harness.Check("a dangling selector value is an error, not a crash",
+            ScriptRunner.ParseWait(new List<string> { "waitfor", "--title" }).Error is not null);
     }
 
     private static void Tokenizer()

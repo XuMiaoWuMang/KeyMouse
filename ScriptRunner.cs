@@ -89,7 +89,7 @@ internal static class ScriptRunner
         try
         {
             commands = Expand(Parse(ReadScript(options.Path)), options.Variables);
-            ValidateSleepLines(commands);
+            ValidatePseudoCommands(commands);
         }
         catch (CommandFailure ex)
         {
@@ -133,6 +133,9 @@ internal static class ScriptRunner
                 string tag;
                 string? captured = null;
                 bool isSleep = tokens[0].Equals("sleep", StringComparison.OrdinalIgnoreCase);
+                bool isWait = tokens[0].Equals("waitfor", StringComparison.OrdinalIgnoreCase) ||
+                              tokens[0].Equals("waitgone", StringComparison.OrdinalIgnoreCase);
+                bool showDetail = false;
 
                 if (isSleep)
                 {
@@ -140,6 +143,43 @@ internal static class ScriptRunner
                     Thread.Sleep(ms);
                     record.Attempts = 1;
                     tag = "wait";
+                }
+                else if (isWait)
+                {
+                    showDetail = true;
+                    record.Attempts = 1;
+                    var (waitSelector, timeoutMs, intervalMs, _) = ParseWait(tokens);
+                    bool wantPresent = tokens[0].Equals("waitfor", StringComparison.OrdinalIgnoreCase);
+                    bool Satisfied() => wantPresent
+                        ? WindowResolver.Resolve(waitSelector!, false).Usable.Count > 0
+                        : WindowResolver.Resolve(waitSelector!, false).Usable.Count == 0;
+
+                    if (options.DryRun)
+                    {
+                        // Nothing was sent, so the UI cannot have changed: report the current
+                        // state instead of waiting for something that will never happen.
+                        tag = "DRY";
+                        record.ExitCode = 0;
+                        captured = Satisfied()
+                            ? $"current state already satisfies {tokens[0]}"
+                            : $"would wait up to {timeoutMs} ms for {tokens[0]}";
+                    }
+                    else
+                    {
+                        var (satisfied, elapsed) = WaitUntil(Satisfied, timeoutMs, intervalMs);
+                        record.ExitCode = satisfied ? 0 : 3;
+                        tag = satisfied ? "ok" : "FAIL";
+                        captured = satisfied
+                            ? $"{tokens[0]} satisfied after {elapsed} ms"
+                            : $"{tokens[0]} timed out after {timeoutMs} ms - the expected window never appeared";
+                        if (satisfied) report.Succeeded++;
+                        else
+                        {
+                            report.Failed++;
+                            if (firstFailureCode == 0) firstFailureCode = record.ExitCode;
+                        }
+                    }
+                    record.Output = captured ?? "";
                 }
                 else
                 {
@@ -182,7 +222,7 @@ internal static class ScriptRunner
 
                 string retryNote = record.Attempts > 1 ? $" (after {record.Attempts - 1} retr{(record.Attempts == 2 ? "y" : "ies")})" : "";
                 Console.WriteLine($"[{i + 1,3}/{total}] {tag,-4} {shown}{retryNote}");
-                if (captured is { Length: > 0 } && (options.Echo || tag == "FAIL"))
+                if (captured is { Length: > 0 } && (options.Echo || tag == "FAIL" || showDetail))
                     foreach (string detail in captured.Split('\n'))
                         Console.WriteLine("           " + detail.TrimEnd());
 
@@ -430,16 +470,84 @@ internal static class ScriptRunner
         return result.ToString();
     }
 
-    /// <summary>`sleep` arguments are validated before anything runs, so a typo cannot
-    /// abort a half-executed script.</summary>
-    private static void ValidateSleepLines(List<(int LineNumber, List<string> Tokens)> commands)
+    /// <summary>
+    /// `sleep` and the wait pseudo-commands are validated before anything runs, so a typo
+    /// cannot abort a half-executed script.
+    /// </summary>
+    private static void ValidatePseudoCommands(List<(int LineNumber, List<string> Tokens)> commands)
     {
         foreach (var (lineNumber, tokens) in commands)
         {
-            if (!tokens[0].Equals("sleep", StringComparison.OrdinalIgnoreCase)) continue;
-            if (tokens.Count != 2 || !int.TryParse(tokens[1], out int ms) || ms < 0)
-                throw new CommandFailure(2,
-                    $"line {lineNumber}: 'sleep' takes one non-negative number of milliseconds");
+            if (tokens[0].Equals("sleep", StringComparison.OrdinalIgnoreCase))
+            {
+                if (tokens.Count != 2 || !int.TryParse(tokens[1], out int ms) || ms < 0)
+                    throw new CommandFailure(2,
+                        $"line {lineNumber}: 'sleep' takes one non-negative number of milliseconds");
+                continue;
+            }
+
+            if (tokens[0].Equals("waitfor", StringComparison.OrdinalIgnoreCase) ||
+                tokens[0].Equals("waitgone", StringComparison.OrdinalIgnoreCase))
+            {
+                var (_, _, _, error) = ParseWait(tokens);
+                if (error is not null) throw new CommandFailure(2, $"line {lineNumber}: {error}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses `waitfor &lt;selector&gt; [--timeout MS] [--interval MS]`. The selector uses the
+    /// same global options as every other command, resolved through the same gate.
+    /// </summary>
+    internal static (WindowSelector? Selector, int TimeoutMs, int IntervalMs, string? Error) ParseWait(
+        List<string> tokens)
+    {
+        string name = tokens[0];
+        string[] rest;
+        Program.GlobalOptions global;
+        try
+        {
+            rest = Program.ExtractGlobalOptions(tokens.Skip(1).ToArray(), out global);
+        }
+        catch (ArgumentException ex)
+        {
+            return (null, 0, 0, $"{name}: {ex.Message}");
+        }
+
+        if (!global.HasSelector)
+            return (null, 0, 0, $"{name}: needs a window selector (--title/--class/--process/--pid/--hwnd)");
+
+        int timeout = 5000, interval = 200;
+        for (int i = 0; i < rest.Length; i++)
+        {
+            switch (rest[i])
+            {
+                case "--timeout":
+                    if (i + 1 >= rest.Length || !int.TryParse(rest[++i], out timeout) || timeout < 0)
+                        return (null, 0, 0, $"{name}: --timeout needs a non-negative number of milliseconds");
+                    break;
+                case "--interval":
+                    if (i + 1 >= rest.Length || !int.TryParse(rest[++i], out interval) || interval <= 0)
+                        return (null, 0, 0, $"{name}: --interval needs a positive number of milliseconds");
+                    break;
+                default:
+                    return (null, 0, 0, $"{name}: unexpected argument '{rest[i]}'");
+            }
+        }
+
+        return (global.ToSelector(), timeout, interval, null);
+    }
+
+    /// <summary>Polls until the condition holds or the timeout expires. Zero timeout = check once.</summary>
+    private static (bool Satisfied, long ElapsedMs) WaitUntil(Func<bool> satisfied, int timeoutMs, int intervalMs)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (true)
+        {
+            if (satisfied()) return (true, stopwatch.ElapsedMilliseconds);
+            long remaining = timeoutMs - stopwatch.ElapsedMilliseconds;
+            if (remaining <= 0) return (false, stopwatch.ElapsedMilliseconds);
+            Thread.Sleep((int)Math.Min(intervalMs, remaining));
         }
     }
 

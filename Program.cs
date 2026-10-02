@@ -4,7 +4,7 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    private const string Version = "1.3.0";
+    private const string Version = "1.4.0";
 
     internal static int Main(string[] args)
     {
@@ -62,26 +62,17 @@ internal static class Program
         if (!g.HasSelector) return null;
 
         var selector = g.ToSelector();
-        var matched = WindowLocator.Find(selector);
-        if (matched.Count == 0) throw new CommandFailure(3, WindowLocator.NoMatchMessage(selector));
+        var resolution = WindowResolver.Resolve(selector, g.AllowRestore);
+        if (resolution.Matched.Count == 0) throw new CommandFailure(3, WindowLocator.NoMatchMessage(selector));
 
-        var considered = PreferCandidates(matched);
-
-        var usable = new List<WindowInfo>();
-        var rejected = new List<string>();
-        foreach (var candidate in considered)
-        {
-            var verdict = WindowEligibility.Check(candidate, g.AllowRestore, out var current);
-            if (verdict.Ok) usable.Add(current);
-            else rejected.Add($"  {current.Describe()}\n      -> {verdict.Summary}");
-        }
-
+        var usable = resolution.Usable;
         if (usable.Count == 0)
         {
-            string head = considered.Count == 1
+            string head = resolution.Considered.Count == 1
                 ? "target window is not usable"
-                : $"{considered.Count} windows match but none is usable";
-            throw new CommandFailure(considered.Count == 1 ? 4 : 3, $"{head}:\n{string.Join("\n", rejected)}");
+                : $"{resolution.Considered.Count} windows match but none is usable";
+            throw new CommandFailure(resolution.Considered.Count == 1 ? 4 : 3,
+                $"{head}:\n{string.Join("\n", resolution.Rejections)}");
         }
 
         WindowInfo target;
@@ -650,10 +641,19 @@ internal static class Program
 
         SCRIPT
           run <file|-> [options]                      run commands from a file (or stdin) in order,
-                                                      one per line, '#' comments, 'sleep <ms>' lines.
+                                                      one per line, '#' comments, and three
+                                                      pseudo-commands: sleep, waitfor, waitgone.
                                                       Each line is a normal command, so selectors and
                                                       the focus gate apply per line. Scripts must be
                                                       UTF-8.
+
+          sleep <ms>                     wait between actions
+          waitfor <selector> [--timeout MS] [--interval MS]
+                                         wait until a usable window matches the selector;
+                                         exits 3 if it never appears (defaults 5000/200 ms)
+          waitgone <selector> [--timeout MS] [--interval MS]
+                                         wait until no usable window matches any more
+                                         (--timeout 0 = assert right now)
 
           --delay MS          wait between commands (default 0)
           --keep-going        keep going after a failure (default: stop at the first one)

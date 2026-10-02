@@ -15,6 +15,9 @@ internal sealed class WindowInfo
     /// <summary>Owning window, or zero when this is a primary window (see NativeWindow.GetOwner).</summary>
     public IntPtr Owner { get; init; }
 
+    /// <summary>False when the window is disabled (WS_DISABLED): it ignores input by design.</summary>
+    public bool Enabled { get; init; } = true;
+
     /// <summary>Result of the WM_NULL round-trip: null means "no answer" only when <see cref="ResponseProbed"/> is true.</summary>
     public long? ResponseMs { get; set; }
     public bool ResponseProbed { get; set; }
@@ -46,6 +49,7 @@ internal sealed class WindowInfo
             Minimized = NativeWindow.IsIconic(handle),
             Cloaked = NativeWindow.IsCloaked(handle),
             Owner = NativeWindow.GetOwner(handle),
+            Enabled = NativeWindow.IsWindowEnabled(handle),
             ResponseMs = probeTimeoutMs > 0 ? NativeWindow.ResponseMs(handle, probeTimeoutMs) : null,
             ResponseProbed = probeTimeoutMs > 0,
             Rect = rect
@@ -69,6 +73,7 @@ internal sealed class WindowInfo
             if (Minimized) flags.Add("minimized");
             if (Cloaked) flags.Add("cloaked");
             if (Owner != IntPtr.Zero) flags.Add($"owned-by=0x{Owner.ToInt64():X}");
+            if (!Enabled) flags.Add("DISABLED");
             flags.Add(!ResponseProbed ? "unprobed" : ResponseMs is null ? "NO-RESPONSE" : $"wm_null={ResponseMs}ms");
             return string.Join(", ", flags);
         }

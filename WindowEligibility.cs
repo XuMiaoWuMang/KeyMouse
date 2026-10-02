@@ -57,6 +57,9 @@ internal static class WindowEligibility
             verdict.Problems.Add("window is hidden (tray / background window) - KeyMouse refuses hidden windows, bring it up first");
         if (w.Cloaked)
             verdict.Problems.Add("window is DWM-cloaked (suspended UWP app or on another virtual desktop)");
+        if (!w.Enabled)
+            verdict.Problems.Add("window is disabled (WS_DISABLED) - it ignores input by design, " +
+                                 "which usually means a modal dialog owns it");
 
         long? response = w.ResponseProbed ? w.ResponseMs : NativeWindow.ResponseMs(w.Handle, responseTimeoutMs);
         current = w.WithResponse(response);

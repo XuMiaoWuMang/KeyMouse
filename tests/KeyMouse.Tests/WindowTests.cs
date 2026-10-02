@@ -14,6 +14,7 @@ internal static class WindowTests
         bool visible = true,
         bool minimized = false,
         bool cloaked = false,
+        bool enabled = true,
         long? responseMs = 0,
         bool probed = true)
     {
@@ -28,6 +29,7 @@ internal static class WindowTests
             Minimized = minimized,
             Cloaked = cloaked,
             Owner = owner ?? IntPtr.Zero,
+            Enabled = enabled,
             ResponseMs = responseMs,
             ResponseProbed = probed
         };
@@ -107,6 +109,12 @@ internal static class WindowTests
 
         Harness.Check("a hidden window is shouted about",
             Win("x", visible: false).StateSummary.Contains("HIDDEN"));
+
+        Harness.Check("a disabled window is shouted about",
+            Win("x", enabled: false).StateSummary.Contains("DISABLED"));
+
+        Harness.Check("an enabled window is not marked disabled",
+            !Win("x").StateSummary.Contains("DISABLED"));
 
         Harness.Check("a plain window reads as visible",
             Win("x").StateSummary.StartsWith("visible"));

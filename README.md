@@ -185,6 +185,20 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
 `injectedEvents` 是**真实注入到系统输入队列的事件数**，`--dry-run` 时它全程为 0 —— 报告本身就是
 "到底有没有发东西"的证据。
 
+**等待与断言**（v1.4）——这是"我怎么知道动作真的生效了"的答案：
+
+```text
+mouse click left -wx 200 -wy 300 --process notepad
+waitfor --title "另存为" --timeout 2000     # 没弹出保存对话框就在 2 秒后失败（exit 3）
+waitgone --title "正在加载" --timeout 5000   # 等它消失
+```
+
+- `waitfor <selector>`：等到**有**一个通过闸门的窗口匹配（默认 5000ms 超时、200ms 间隔）
+- `waitgone <selector>`：等到**没有**匹配的窗口
+- `--timeout 0` = 立刻断言，不等
+- 超时 → `exit 3`（属于"确定没发出输入"的失败，所以 `--retry` 对它也安全）
+- `--dry-run` 下**不会真的等**：只检查一次当前状态并报告"本来会等多久"
+
 其它规则：
 - `sleep <ms>` 是内置伪命令，用来等界面反应。
 - 行内 `"引号"` 把空格包成一个参数；`\` 可转义 `"` 和 `\`；`#` 之后是注释；
@@ -221,7 +235,7 @@ KeyMouse window focus --process explorer --pick 3
 | 1 | 运行时失败（如 `SendInput` 被 UIPI 拦截） |
 | 2 | 参数错误 |
 | 3 | 选择器无匹配 / 多候选未 `--pick` |
-| 4 | 目标不可用（隐藏 / 最小化 / 被 DWM cloak / 无响应） |
+| 4 | 目标不可用（隐藏 / 最小化 / 被 DWM cloak / 无响应 / **被禁用**） |
 | 5 | **焦点验证失败——未发送任何输入** |
 
 ## 设计要点
@@ -243,9 +257,7 @@ KeyMouse window focus --process explorer --pick 3
 
 ## 已知限制
 
-- **不做启发式"活体检测"**（v1.2 计划）：目前的闸门都是客观判定（可见性、最小化、
-  DWM cloak、消息队列是否响应）。"窗口只剩一帧画面"这类**没有通用 API 可以判定**，
-  所以 v1.1 只能靠"不猜、失败要响"来兜底。
+- **不做启发式"活体检测"——这是调研后的决定，不是遗漏。** 详见下一节。
 - 目标窗口若以管理员权限运行，普通权限的 KeyMouse 会被 UIPI 拦下（错误码 5，程序会提示），
   用管理员权限跑 KeyMouse 即可。
 - UAC 安全桌面（"是否允许此应用更改"弹窗）、Ctrl+Alt+Del 无法模拟，系统设计如此。
@@ -259,11 +271,34 @@ KeyMouse window focus --process explorer --pick 3
   用 `-wx/-wy` 时请瞄准内容区（记事本 y≥160 就没问题），不确定就先 `window inspect`
   或截图确认落点。
 
+## 为什么不做"这个窗口是不是只剩一帧"的启发式检测
+
+起因是一个真实案例：某个 Electron 应用把窗口缩进托盘后，`ShowWindow` 能把它"拉"出来，
+但拉出来的只是**上一帧画面**（渲染子窗口已经没了），点它、打字全都没反应。问题是：
+**能不能自动识别这种窗口？** 调研后决定：**不做**，并且这个决定有数据支撑。
+
+在本机 16 个可见窗口上实测（2026-10-02）：
+
+| 候选信号 | 实测结果 |
+| --- | --- |
+| "Chromium 类名但找不到渲染子窗口 = 空壳" | **3 个 Chromium 窗口里 2 个踩中，其中包括当时活得好好的 DSH 窗口 → 误报率 100%**，直接否决 |
+| `GetGUIThreadInfo` 的 caret 位置 | 16 个窗口全都没有 caret（它本来就是一瞬一瞬的），抓不到 |
+| `IsWindowEnabled` / `WS_DISABLED` | 全部 enabled —— 信号真实（模态对话框会禁用 owner）但罕见，**已加入闸门** |
+| UIA `WindowInteractionState`（`NotResponding` / `BlockedByModalWindow`） | 理论上最对症，但需要 COM 互操作或额外依赖，而且**手上没有已知的"壳窗口"可以验证它** |
+
+结论：**与其用没有验证过的启发式去猜，不如让脚本自己声明期望**。
+`waitfor` / `waitgone` + 既有的分级退出码，把"动作到底有没有生效"变成**可断言的确定事实**——
+这比任何猜测都可靠，代价也更低。
+
+万一以后真遇到"输入发出去了但什么都没发生"的场景，排查顺序建议是：
+先 `window inspect` 看闸门怎么说 → 再用 `waitfor` 表达你期望的结果 →
+实在需要像素级证据时，`PrintWindow` 前后比对（`--verify-change`）仍是备选，
+但它**只能当报告用**：点活窗口的空白处画面同样不会变，假阴性无法避免。
+
 ## 路线图
 
-- **v1.3**：`--verify-change`（`PrintWindow` 前后像素比对，默认关）、
-  Chromium 空壳启发式（有 `Chrome_WidgetWin_*` 类名却找不到渲染子窗口）、
-  UIA 探针。
+- 暂无排期。候选项：`--verify-change`（像素比对报告）、`mouse drag` 的窗口相对坐标、
+  录制成脚本（`record`，产物应为窗口相对坐标形式才可重放）。
 
 ## 许可证
 
