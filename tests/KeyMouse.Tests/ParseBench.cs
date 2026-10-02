@@ -56,13 +56,24 @@ internal static class ParseBench
 
         Console.WriteLine($"""
 
-            【3】"一条选择器命令为什么这么贵"的拆解
+            【3】枚举成本的构成（一条带选择器的命令必须枚举整个桌面）
             """);
 
         var windows = WindowLocator.EnumerateTopLevel();
-        double enumMs = Measure(20, () => WindowLocator.EnumerateTopLevel());
         var pids = windows.Select(w => w.ProcessId).Distinct().ToList();
-        double lookupMs = Measure(20, () =>
+        double enumMs = Measure(20, () => WindowLocator.EnumerateTopLevel());
+
+        NativeWindow.ClearProcessNameCache();
+        double coldNameMs = Measure(1, () =>
+        {
+            foreach (uint pid in pids) NativeWindow.ClearProcessNameCache();
+            foreach (uint pid in pids) _ = NativeWindow.ProcessNameOf(pid);
+        });
+        double cachedNameMs = Measure(50, () =>
+        {
+            foreach (uint pid in pids) _ = NativeWindow.ProcessNameOf(pid);
+        });
+        double dotnetMs = Measure(10, () =>
         {
             foreach (uint pid in pids)
             {
@@ -70,9 +81,12 @@ internal static class ParseBench
             }
         });
 
-        Console.WriteLine($"  顶层窗口数                        {windows.Count,9}");
-        Console.WriteLine($"  枚举全部窗口（不含探测）           {enumMs,9:F3} ms");
-        Console.WriteLine($"  其中：{pids.Count} 个不同进程的 Process.GetProcessById 查询 {lookupMs,9:F3} ms");
+        Console.WriteLine($"  顶层窗口数                                    {windows.Count,9}");
+        Console.WriteLine($"  枚举全部窗口（只取句柄/进程号/标题/类名）      {enumMs,9:F3} ms");
+        Console.WriteLine($"  ——下面三项都是 {pids.Count} 个不同进程，用于取进程名：");
+        Console.WriteLine($"    System.Diagnostics.Process.GetProcessById（旧实现） {dotnetMs,9:F3} ms");
+        Console.WriteLine($"    QueryFullProcessImageName（首次，每个 pid 一次）    {coldNameMs,9:F3} ms");
+        Console.WriteLine($"    同上但命中缓存（同一进程内后续命令）             {cachedNameMs,9:F3} ms");
 
         Console.WriteLine($"""
 

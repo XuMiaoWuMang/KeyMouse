@@ -121,6 +121,54 @@ internal static class NativeWindow
     /// </summary>
     public static IntPtr GetOwner(IntPtr h) => h == IntPtr.Zero ? IntPtr.Zero : GetWindow(h, GW_OWNER);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, StringBuilder lpExeName, ref int lpdwSize);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    private static readonly Dictionary<uint, string> ProcessNameCache = new();
+
+    /// <summary>Drops the pid cache. Only the benchmark needs this, to time a cold lookup.</summary>
+    internal static void ClearProcessNameCache() => ProcessNameCache.Clear();
+
+    /// <summary>
+    /// Image name for a pid (without extension), cached for the life of this process.
+    /// System.Diagnostics.Process.GetProcessById costs ~1.3 ms per call - a command that
+    /// enumerates a desktop with 69 distinct processes spent ~90 ms in it alone.
+    /// QueryFullProcessImageName is one syscall. A pid recycled by a different process
+    /// during a single CLI run is not a case worth the extra bookkeeping.
+    /// </summary>
+    public static string ProcessNameOf(uint pid)
+    {
+        if (ProcessNameCache.TryGetValue(pid, out string? cached)) return cached;
+
+        string name = "?";
+        IntPtr process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (process != IntPtr.Zero)
+        {
+            try
+            {
+                var buffer = new StringBuilder(512);
+                int size = buffer.Capacity;
+                if (QueryFullProcessImageName(process, 0, buffer, ref size))
+                    name = Path.GetFileNameWithoutExtension(buffer.ToString());
+            }
+            finally
+            {
+                CloseHandle(process);
+            }
+        }
+
+        ProcessNameCache[pid] = name;
+        return name;
+    }
+
     /// <summary>True when DWM considers the window cloaked (suspended UWP app, other virtual desktop).</summary>
     public static bool IsCloaked(IntPtr h)
     {

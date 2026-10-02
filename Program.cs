@@ -63,7 +63,8 @@ internal static class Program
 
         var selector = g.ToSelector();
         var resolution = WindowResolver.Resolve(selector, g.AllowRestore);
-        if (resolution.Matched.Count == 0) throw new CommandFailure(3, WindowLocator.NoMatchMessage(selector));
+        if (resolution.Matched.Count == 0)
+            throw new CommandFailure(3, WindowLocator.NoMatchMessage(resolution.All, selector));
 
         var usable = resolution.Usable;
         if (usable.Count == 0)
@@ -442,11 +443,14 @@ internal static class Program
                 string? process = opt.GetValueOrDefault("process") ?? g.ProcessName;
                 bool all = opt.ContainsKey("all");
 
-                var windows = WindowLocator.EnumerateTopLevel(100)
+                // Enumerate cheaply, filter, and only then probe the rows that are actually
+                // printed - probing every top-level window cost up to 100 ms per hung one.
+                var windows = WindowLocator.EnumerateTopLevel()
                     .Where(w => (all || (w.Visible && w.Title.Length > 0))
                                 && (filter is null || w.Title.Contains(filter, StringComparison.OrdinalIgnoreCase))
                                 && (process is null || w.ProcessName.Equals(process, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
+                foreach (var w in windows) w.WithResponse(NativeWindow.ResponseMs(w.Handle, 100));
 
                 Console.WriteLine(ConsoleText.Pad("句柄", 12) + ConsoleText.Pad("进程", 22) +
                                   ConsoleText.Pad("标题", 42) + " " + ConsoleText.Pad("类名", 26) + " 状态");
@@ -462,7 +466,8 @@ internal static class Program
                 if (!g.HasSelector) return Fail(2, "window inspect 需要一个窗口选择器（--title/--class/--process/--pid/--hwnd）");
                 var selector = g.ToSelector();
                 var matched = WindowLocator.Find(selector);
-                if (matched.Count == 0) return Fail(3, WindowLocator.NoMatchMessage(selector));
+                if (matched.Count == 0)
+                    return Fail(3, WindowLocator.NoMatchMessage(WindowLocator.EnumerateTopLevel(), selector));
 
                 Console.WriteLine($"有 {matched.Count} 个窗口匹配 {selector.Describe()}\n");
                 int usable = 0;

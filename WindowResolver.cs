@@ -2,6 +2,9 @@ namespace KeyMouse;
 
 internal sealed class WindowResolution
 {
+    /// <summary>Every top-level window on the desktop at resolution time.</summary>
+    public List<WindowInfo> All { get; } = new();
+
     /// <summary>Every top-level window the selector matched.</summary>
     public List<WindowInfo> Matched { get; } = new();
 
@@ -26,7 +29,8 @@ internal static class WindowResolver
     public static WindowResolution Resolve(WindowSelector selector, bool allowRestore)
     {
         var resolution = new WindowResolution();
-        resolution.Matched.AddRange(WindowLocator.Find(selector));
+        resolution.All.AddRange(WindowLocator.EnumerateTopLevel());
+        resolution.Matched.AddRange(resolution.All.Where(selector.Matches));
         resolution.Considered.AddRange(Program.PreferCandidates(resolution.Matched));
 
         foreach (var candidate in resolution.Considered)

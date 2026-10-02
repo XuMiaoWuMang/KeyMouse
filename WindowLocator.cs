@@ -89,9 +89,14 @@ internal static class WindowLocator
         return new IntPtr(value);
     }
 
-    public static string NoMatchMessage(WindowSelector selector, int sampleSize = 10)
+    /// <summary>
+    /// Builds the "nothing matched, here is what exists" hint from an enumeration the caller
+    /// already has - re-enumerating the desktop just to print an error doubled the cost of
+    /// every failed selector.
+    /// </summary>
+    public static string NoMatchMessage(IReadOnlyList<WindowInfo> all, WindowSelector selector, int sampleSize = 10)
     {
-        var sample = EnumerateTopLevel()
+        var sample = all
             .Where(w => w.Visible && w.Title.Length > 0)
             .Take(sampleSize)
             .ToList();
