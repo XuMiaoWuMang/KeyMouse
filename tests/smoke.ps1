@@ -125,6 +125,7 @@ try {
     $retryOut = & $Exe run $retryScript --retry 2 --retry-delay 20 --report $retryReport 2>&1
     Check 'a retryable failure still fails after the retries' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
     Check 'both retries are reported' ((($retryOut -join "`n") -match '第 1 次重试') -and (($retryOut -join "`n") -match '第 2 次重试')) 'retry lines missing'
+    Check 'a command that kept failing is not reported as succeeded' ((($retryOut -join "`n") -notmatch '后成功')) 'the note claims success for a failed command'
     Check 'report file was written' (Test-Path $retryReport) "missing $retryReport"
     if (Test-Path $retryReport) {
         $json = Get-Content $retryReport -Raw | ConvertFrom-Json

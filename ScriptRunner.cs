@@ -220,7 +220,11 @@ internal static class ScriptRunner
                 report.InjectedEvents = ExecutionMode.InjectedEvents;
                 report.SuppressedEvents = ExecutionMode.SuppressedEvents;
 
-                string retryNote = record.Attempts > 1 ? $"（重试 {record.Attempts - 1} 次后成功）" : "";
+                string retryNote = record.Attempts > 1
+                    ? record.ExitCode == 0
+                        ? $"（重试 {record.Attempts - 1} 次后成功）"
+                        : $"（重试 {record.Attempts - 1} 次仍然失败）"
+                    : "";
                 Console.WriteLine($"[{i + 1,3}/{total}] {ConsoleText.Pad(tag, 6)}{shown}{retryNote}");
                 if (captured is { Length: > 0 } && (options.Echo || tag == "失败" || showDetail))
                     foreach (string detail in captured.Split('\n'))
