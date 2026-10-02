@@ -84,7 +84,7 @@ internal static class ScriptRunner
             return Fail(2, "run：不允许脚本里再跑脚本（拒绝嵌套）");
 
         if (global.HasSelector || global.Wx.HasValue || global.Wy.HasValue || global.Pick is not null)
-            return Fail(2, "run：窗口选择器要写在每一行命令上，不能挂在 run 自己身上");
+            return Fail(2, "run：窗口选择器要写在命令上，不能挂在 run 自己身上");
 
         var options = new ScriptOptions();
         if (ParseOptions(args, options) is { } optionError) return Fail(2, optionError);

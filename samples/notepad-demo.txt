@@ -1,23 +1,42 @@
-# KeyMouse script sample.
+# KeyMouse 脚本示例
 #
 #   KeyMouse run samples\notepad-demo.txt
 #
-# One command per line, exactly the same syntax as the CLI - there is no second
-# command language to learn. '#' starts a comment, blank lines are ignored,
-# "quotes" group a token, and 'sleep <ms>' waits.
+# 一行一条命令，语法和命令行完全一样——没有第二套语言要学。
+# '#' 是注释，空行忽略，用 "引号" 把带空格的参数括起来，sleep <毫秒> 等待。
 #
-# Every line carries its own selector, so the eligibility gate and the focus
-# verification run per command: if the target is not usable or cannot be
-# focused, that line fails and nothing from it is sent.
+# 先自己开一个记事本（只开一个）。两个常见拦路虎，工具都会直接告诉你：
+#   * 窗口是最小化的      → 加 --allow-restore（默认不肯替你还原窗口）
+#   * 有多个记事本窗口    → 换成 --title "完整标题" 或加 --pick 1
 
 sleep 400
 
-# Put the caret inside the text area. Client coordinates start at the top-left of
-# the *client area*, and in modern apps that area also contains the tab strip and the
-# toolbar: in Notepad, y=80 is the toolbar, and clicking there makes the app swallow
-# the first word of whatever you type next. Aim well inside the content.
-mouse click left -wx 200 -wy 200 --process notepad
+# 1) 目标只写一次：window focus 之后，后面的 mouse / key 行不带选择器时自动继承它。
+#    继承的每一行照样各自过一遍资格闸门 + 焦点验证，失败就停在那一行、一个字节都不发。
+window focus --process notepad
 
-key type "hello from a KeyMouse script - 中文也可以" --process notepad
-key press enter --process notepad
-key type "second line: typed one command at a time" --process notepad
+# 2) 点进正文。客户区坐标从客户区左上角算起，而现代应用的客户区里还包含标签条和
+#    工具栏：记事本里 y≈80 那条就是工具栏，点在那里会让应用把接下来输入的第一个词
+#    吞掉。坐标要往正文深处给。
+mouse click left -wx 200 -wy 200
+
+key type "hello - 这是 KeyMouse 脚本打的字"
+key press enter
+
+# 3) 循环：repeat <次数> [as <名字>] … end，循环变量从 0 开始。
+#    嵌套时内层必须 as 取名，否则两个 i 会互相遮蔽，直接报错。
+repeat 3 as row
+  key type "第 ${row} 行（循环打的）"
+  key press enter
+end
+
+# 4) 行里自己写了选择器，就以自己的为准，同时把"当前目标"更新成它。
+key type "结束：最后一行" --process notepad
+
+# 5) repeat/end 不配对、次数非法、变量没定义、循环变量用在了循环外面……
+#    这些全部在第一条命令执行之前就带行号报错，不会跑到一半才发现脚本写坏了。
+#
+# 报告与演练：
+#   KeyMouse run samples\notepad-demo.txt --dry-run              # 照常检查，一个字节都不发
+#   KeyMouse run samples\notepad-demo.txt --report out.json      # 机器可读的执行报告
+#   KeyMouse run samples\notepad-demo.txt --set 别的=值           # ${...} 变量
