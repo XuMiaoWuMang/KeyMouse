@@ -34,13 +34,18 @@ function Step([string]$name, [scriptblock]$body) {
 }
 
 # 锁屏时谁也别想抢到前台，冒烟测试会以"焦点验证失败"收场——那是环境，不是产品。
-# 与其让人对着 10 条红色断言怀疑人生，不如在这里就说清楚。
-function Test-DesktopLocked {
+# 与其让人对着十几条红色断言怀疑人生，不如在这里就说清楚。
+#
+# 判据只看**前台窗口**：锁屏时它要么属于 LockApp/LogonUI，要么标题就是锁屏界面。
+# 不能用"LockApp 进程还在不在"来判断——解锁之后它常常一直挂着（实测：中午启动，
+# 晚上还在，但一个窗口都没有），那样会把好好的桌面误判成锁屏、白跳过一整关。
+function Get-LockScreenReason {
     try {
         if (-not ('KmVerify.Win' -as [type])) {
             Add-Type -Namespace KmVerify -Name Win -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
 [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
 '@
         }
 
@@ -48,11 +53,23 @@ function Test-DesktopLocked {
         $title = [System.Text.StringBuilder]::new(256)
         [void][KmVerify.Win]::GetWindowText($handle, $title, 256)
 
-        return ($title.ToString() -match '锁屏|Lock Screen') -or
-               (@(Get-Process LockApp -ErrorAction SilentlyContinue).Count -gt 0)
+        $owner = 0
+        [void][KmVerify.Win]::GetWindowThreadProcessId($handle, [ref]$owner)
+        $process = (Get-Process -Id $owner -ErrorAction SilentlyContinue).ProcessName
+
+        # 返回"为什么判定锁屏"，而不是一个光秃秃的 true：跳过关卡时必须让人能一眼看穿
+        # 这个判断对不对。刚才正是缺了这行证据，一个把 LockApp 残留当成锁屏的错判，
+        # 连续两次让冒烟测试被静悄悄跳过去——验证"看起来做完了"，其实根本没跑。
+        if ($process -in 'LockApp', 'LogonUI') {
+            return "前台窗口属于 $process：「$($title.ToString())」"
+        }
+        if ($title.ToString() -match '锁屏|Lock Screen') {
+            return "前台窗口标题是锁屏界面：「$($title.ToString())」"
+        }
+        return $null
     }
     catch {
-        return $false   # 判不出来就别拦着人跑
+        return $null   # 判不出来就别拦着人跑
     }
 }
 
@@ -80,11 +97,12 @@ try {
     Step '文档链接' { & pwsh -NoProfile -File (Join-Path $root 'tests\check-docs.ps1') }
     Step '打包 dist\KeyMouse.exe' { & pwsh -NoProfile -File (Join-Path $root 'build.ps1') | Select-Object -Last 2 }
 
+    $lockReason = Get-LockScreenReason
     if ($SkipSmoke) {
         $skipped.Add('桌面冒烟（-SkipSmoke）')
     }
-    elseif (Test-DesktopLocked) {
-        $skipped.Add('桌面冒烟（桌面锁着——冒烟测试会以"抢不到前台"失败，那是环境不是产品）')
+    elseif ($lockReason) {
+        $skipped.Add("桌面冒烟（判定为锁屏：$lockReason）")
     }
     else {
         Step '桌面冒烟' { & pwsh -NoProfile -File (Join-Path $root 'tests\smoke.ps1') }
