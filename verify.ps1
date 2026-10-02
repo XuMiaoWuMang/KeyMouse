@@ -56,6 +56,19 @@ function Test-DesktopLocked {
     }
 }
 
+# .NET SDK 的中文输出在被重定向时按 UTF-8 写，而中文 Windows 控制台默认按 GBK 解，
+# 于是"0 个错误"会显示成"0 涓敊璇?"。看着难受是小事——真出了编译错误，那堆中文信息也会
+# 是乱码，那就没法读了。所以把控制台临时切到 UTF-8，脚本结束时切回去。
+#
+# KeyMouse 自己不用这么改：它跟随控制台码页（cp936 就写 GBK，cp65001 就写 UTF-8），
+# 控制台切到 UTF-8 之后它自然跟着写 UTF-8，两边照样对得上。
+$originalCodePage = 0
+try { $originalCodePage = [int](((chcp) -split ':')[-1]).Trim() } catch { }
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+if ($originalCodePage -ne 0 -and $originalCodePage -ne 65001) {
+    Write-Host "控制台码页 $originalCodePage -> 65001（为了让 dotnet 的中文输出不乱码，结束会切回）" -ForegroundColor DarkGray
+}
+
 Push-Location $root
 try {
     $commit = (& git rev-parse --short HEAD 2>$null)
@@ -79,6 +92,9 @@ try {
 }
 finally {
     Pop-Location
+    if ($originalCodePage -gt 0 -and $originalCodePage -ne 65001) {
+        try { [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding($originalCodePage) } catch { }
+    }
 }
 
 Write-Host ''
