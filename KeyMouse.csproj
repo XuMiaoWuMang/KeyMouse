@@ -8,8 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>1.1.0</Version>
-    <InformationalVersion>1.1.0</InformationalVersion>
+    <Version>1.2.0</Version>
+    <InformationalVersion>1.2.0</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>

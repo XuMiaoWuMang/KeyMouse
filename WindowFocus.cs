@@ -22,6 +22,10 @@ internal static class WindowFocus
 
     public static FocusResult Focus(IntPtr h, int maxAttempts = DefaultAttempts)
     {
+        // A dry run must not touch the desktop either, so focus is reported as satisfied.
+        if (ExecutionMode.DryRun)
+            return new FocusResult { Ok = true, Attempts = 0, Detail = "dry-run: would focus" };
+
         if (IsForeground(h))
             return new FocusResult { Ok = true, Attempts = 0, Detail = "already foreground" };
 

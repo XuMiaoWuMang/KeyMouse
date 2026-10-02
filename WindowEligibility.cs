@@ -34,7 +34,11 @@ internal static class WindowEligibility
             return verdict;
         }
 
-        if (w.Minimized && allowRestore)
+        if (w.Minimized && allowRestore && ExecutionMode.DryRun)
+        {
+            verdict.Notes.Add("dry-run: would restore from minimized");
+        }
+        else if (w.Minimized && allowRestore)
         {
             NativeWindow.ShowWindow(w.Handle, NativeWindow.SW_RESTORE);
             Thread.Sleep(300);

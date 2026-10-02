@@ -94,6 +94,12 @@ internal static class NativeInput
 
     private static void Send(params INPUT[] inputs)
     {
+        if (ExecutionMode.DryRun)
+        {
+            ExecutionMode.NoteSkippedSend();
+            return;
+        }
+
         uint sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
         if (sent != inputs.Length)
         {

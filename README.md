@@ -7,6 +7,9 @@ Windows 命令行输入模拟工具：**一条命令 = 一次真实的鼠标/键
 v1.1 起支持**指定焦点窗口**：先验证目标窗口是否可用、再把它切到前台并**回读确认**，
 确认不了就一个字节都不发。
 
+v1.2 起支持**脚本批量执行**：把多条命令写进一个文件（或从 stdin 灌入），
+`KeyMouse run script.txt` 顺序执行，每条命令复用同一套选择器、闸门与焦点验证。
+
 ## 构建
 
 ```powershell
@@ -89,6 +92,37 @@ KeyMouse <group> <command> [参数] [选项]
 | `-wx <cx> -wy <cy>` | 客户区坐标，必须成对出现且必须带选择器 |
 | `--strict-point` | 额外要求该屏幕点下方的窗口就是目标本身 |
 
+### 脚本（v1.2）
+
+```
+KeyMouse run <文件|-> [--delay MS] [--keep-going] [--dry-run] [--echo]
+```
+
+一行一条命令，语法和命令行**完全一致**——没有第二套语言要学，选择器和闸门逐行生效：
+
+```text
+# 注释和空行会被跳过
+sleep 400
+mouse click left -wx 200 -wy 200 --process notepad
+key type "hello 中文也可以" --process notepad
+key press enter --process notepad
+```
+
+| 选项 | 说明 |
+| --- | --- |
+| `--delay MS` | 每条命令之间等这么久（默认 0） |
+| `--keep-going` | 出错也继续跑完（默认首错即停） |
+| `--dry-run` | 只做解析与资格检查，**一个字节都不发**，也不抢焦点 |
+| `--echo` | 连子命令自己的输出也打出来 |
+
+- `sleep <ms>` 是内置伪命令，用来等界面反应。
+- 行内 `"引号"` 把空格包成一个参数；`\` 可转义 `"` 和 `\`；`#` 之后是注释；
+  每行可以用 `--` 显式结束选项解析。
+- 脚本文件必须是 **UTF-8**：ANSI/GBK 会明确报错，不会静默变成乱码。
+- 退出码 = 第一条失败命令的退出码；`--dry-run` 全通过则返回 0。
+- 脚本里不能再 `run` 另一个脚本（拒绝嵌套）。
+- 样例见 `samples/notepad-demo.txt`。
+
 ## 例子
 
 ```powershell
@@ -148,10 +182,15 @@ KeyMouse window focus --process explorer --pick 3
   只能校验"某个点下面的窗口是谁"。
 - 验证通过到实际注入之间有毫秒级 TOCTOU 窗口，理论上仍可能被抢焦点。
 - `mouse drag` 暂不支持窗口相对坐标。
+- **客户区坐标包含"窗口装饰"**：现代应用（WinUI/Electron）的客户区里有标签栏、工具栏。
+  实测记事本客户区 y≈80 是工具栏，点那里之后**应用会吞掉你接着输入的第一个词**
+  （`hello from…` 变成 `from…`，`A B C…` 变成 `B C…`）——这是应用自身行为，真人这么点也一样。
+  用 `-wx/-wy` 时请瞄准内容区（记事本 y≥160 就没问题），不确定就先 `window inspect`
+  或截图确认落点。
 
 ## 路线图
 
-- **v1.2**：`--verify-change`（`PrintWindow` 前后像素比对，默认关）、
+- **v1.3**：`--verify-change`（`PrintWindow` 前后像素比对，默认关）、
   Chromium 空壳启发式（有 `Chrome_WidgetWin_*` 类名却找不到渲染子窗口）、
   UIA 探针。
 

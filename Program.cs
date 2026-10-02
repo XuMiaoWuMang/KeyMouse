@@ -4,9 +4,9 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    private const string Version = "1.1.0";
+    private const string Version = "1.2.0";
 
-    private static int Main(string[] args)
+    internal static int Main(string[] args)
     {
         try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* no console attached */ }
 
@@ -29,8 +29,10 @@ internal static class Program
                     return Keyboard(rest[1..], global);
                 case "window":
                     return WindowGroup(rest[1..], global);
+                case "run":
+                    return ScriptRunner.Run(rest[1..], global, Main);
                 default:
-                    return Fail(2, $"unknown group '{rest[0]}' (expected: mouse | key | window | help)");
+                    return Fail(2, $"unknown group '{rest[0]}' (expected: mouse | key | window | run | help)");
             }
         }
         catch (CommandFailure ex)
@@ -68,6 +70,12 @@ internal static class Program
         // matched, so "none is usable" produces the real reason instead of "ambiguous".
         var considered = matched.Where(w => w.Visible).ToList();
         if (considered.Count == 0) considered = matched;
+
+        // Secondary windows (dialogs, popups, composition bridges, IME UI) are owned by a
+        // primary window, so "--process notepad" must not become ambiguous just because the
+        // app opened a popup. Prefer unowned windows, fall back when nothing else matched.
+        var primary = considered.Where(w => w.Owner == IntPtr.Zero).ToList();
+        if (primary.Count > 0) considered = primary;
 
         var usable = new List<WindowInfo>();
         var rejected = new List<string>();
@@ -439,6 +447,8 @@ internal static class Program
                 // single real target into "ambiguous".
                 var considered = matched.Where(w => w.Visible).ToList();
                 if (considered.Count == 0) considered = matched;
+                var primary = considered.Where(w => w.Owner == IntPtr.Zero).ToList();
+                if (primary.Count > 0) considered = primary;
 
                 Console.WriteLine(usable == 0
                     ? "no usable window (see problems above)"
@@ -460,7 +470,7 @@ internal static class Program
 
     // -------------------------------------------------------------- helpers
 
-    private sealed class GlobalOptions
+    internal sealed class GlobalOptions
     {
         public string? Title;
         public string? TitleExact;
@@ -633,6 +643,16 @@ internal static class Program
           window inspect <selector>                   why a window is usable or not
           window focus <selector>                     focus it and verify (nothing else)
 
+        SCRIPT
+          run <file|-> [--delay MS] [--keep-going] [--dry-run] [--echo]
+                                                      run commands from a file (or stdin) in order,
+                                                      one per line, '#' comments, 'sleep <ms>' lines.
+                                                      Each line is a normal command, so selectors and
+                                                      the focus gate apply per line. Stops at the first
+                                                      failure unless --keep-going. --dry-run runs the
+                                                      gate checks but sends nothing. Scripts must be
+                                                      UTF-8.
+
         WINDOW SELECTOR (all given constraints are ANDed; usable by mouse/key/window commands)
           --title <substring>       case-insensitive title substring
           --title-exact <text>      exact title
@@ -671,6 +691,7 @@ internal static class Program
           2 = usage error     3 = selector matched nothing / ambiguous (use --pick)
           4 = target not usable (hidden / minimized / cloaked / not responding)
           5 = focus verification failed - nothing was sent
+          (a script returns the exit code of its first failing line)
 
         NOTES
           * Events land on whatever window is focused / under the cursor. With a selector,

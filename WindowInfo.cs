@@ -12,6 +12,9 @@ internal sealed class WindowInfo
     public bool Minimized { get; init; }
     public bool Cloaked { get; init; }
 
+    /// <summary>Owning window, or zero when this is a primary window (see NativeWindow.GetOwner).</summary>
+    public IntPtr Owner { get; init; }
+
     /// <summary>Result of the WM_NULL round-trip: null means "no answer" only when <see cref="ResponseProbed"/> is true.</summary>
     public long? ResponseMs { get; set; }
     public bool ResponseProbed { get; set; }
@@ -42,6 +45,7 @@ internal sealed class WindowInfo
             Visible = NativeWindow.IsWindowVisible(handle),
             Minimized = NativeWindow.IsIconic(handle),
             Cloaked = NativeWindow.IsCloaked(handle),
+            Owner = NativeWindow.GetOwner(handle),
             ResponseMs = probeTimeoutMs > 0 ? NativeWindow.ResponseMs(handle, probeTimeoutMs) : null,
             ResponseProbed = probeTimeoutMs > 0,
             Rect = rect
@@ -64,6 +68,7 @@ internal sealed class WindowInfo
             flags.Add(Visible ? "visible" : "HIDDEN");
             if (Minimized) flags.Add("minimized");
             if (Cloaked) flags.Add("cloaked");
+            if (Owner != IntPtr.Zero) flags.Add($"owned-by=0x{Owner.ToInt64():X}");
             flags.Add(!ResponseProbed ? "unprobed" : ResponseMs is null ? "NO-RESPONSE" : $"wm_null={ResponseMs}ms");
             return string.Join(", ", flags);
         }

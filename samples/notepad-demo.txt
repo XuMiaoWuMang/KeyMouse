@@ -1,0 +1,23 @@
+# KeyMouse script sample.
+#
+#   KeyMouse run samples\notepad-demo.txt
+#
+# One command per line, exactly the same syntax as the CLI - there is no second
+# command language to learn. '#' starts a comment, blank lines are ignored,
+# "quotes" group a token, and 'sleep <ms>' waits.
+#
+# Every line carries its own selector, so the eligibility gate and the focus
+# verification run per command: if the target is not usable or cannot be
+# focused, that line fails and nothing from it is sent.
+
+sleep 400
+
+# Put the caret inside the text area. Client coordinates start at the top-left of
+# the *client area*, and in modern apps that area also contains the tab strip and the
+# toolbar: in Notepad, y=80 is the toolbar, and clicking there makes the app swallow
+# the first word of whatever you type next. Aim well inside the content.
+mouse click left -wx 200 -wy 200 --process notepad
+
+key type "hello from a KeyMouse script - 中文也可以" --process notepad
+key press enter --process notepad
+key type "second line: typed one command at a time" --process notepad

@@ -90,6 +90,11 @@ internal static class NativeWindow
     [DllImport("user32.dll")]
     public static extern IntPtr WindowFromPoint(POINT point);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+    private const uint GW_OWNER = 4;
+
     public static string GetTitle(IntPtr h)
     {
         var sb = new StringBuilder(512);
@@ -105,6 +110,13 @@ internal static class NativeWindow
     }
 
     public static IntPtr Root(IntPtr h) => h == IntPtr.Zero ? IntPtr.Zero : GetAncestor(h, GA_ROOT);
+
+    /// <summary>
+    /// The window that owns this one, or zero for a primary window. Dialogs, popups,
+    /// composition bridges and IME UI are owned by the app's real window, which makes
+    /// this the most reliable way to tell a target from its helpers.
+    /// </summary>
+    public static IntPtr GetOwner(IntPtr h) => h == IntPtr.Zero ? IntPtr.Zero : GetWindow(h, GW_OWNER);
 
     /// <summary>True when DWM considers the window cloaked (suspended UWP app, other virtual desktop).</summary>
     public static bool IsCloaked(IntPtr h)
