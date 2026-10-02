@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyMouse.Tests", "tests\KeyMouse.Tests\KeyMouse.Tests.csproj", "{A0D29744-10D7-4F26-A15F-78E20A18838F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyMouse.SmokeTarget", "tests\KeyMouse.SmokeTarget\KeyMouse.SmokeTarget.csproj", "{6204308E-1A29-4BAD-B615-10D2ED010288}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,11 +45,24 @@ Global
 		{A0D29744-10D7-4F26-A15F-78E20A18838F}.Release|x64.Build.0 = Release|Any CPU
 		{A0D29744-10D7-4F26-A15F-78E20A18838F}.Release|x86.ActiveCfg = Release|Any CPU
 		{A0D29744-10D7-4F26-A15F-78E20A18838F}.Release|x86.Build.0 = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|x64.Build.0 = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Debug|x86.Build.0 = Debug|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|x64.ActiveCfg = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|x64.Build.0 = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|x86.ActiveCfg = Release|Any CPU
+		{6204308E-1A29-4BAD-B615-10D2ED010288}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A0D29744-10D7-4F26-A15F-78E20A18838F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{6204308E-1A29-4BAD-B615-10D2ED010288} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

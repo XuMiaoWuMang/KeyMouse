@@ -1,15 +1,20 @@
 #requires -Version 7
 <#
-    Desktop smoke test: drives a real Notepad window through KeyMouse and reads the result
-    back through the clipboard. Needs an interactive desktop session.
+    Desktop smoke test: drives a real window through KeyMouse and reads the result back
+    through the clipboard. Needs an interactive desktop session.
 
-        pwsh tests\smoke.ps1 [-Exe dist\KeyMouse.exe]
+        dotnet build KeyMouse.sln -c Release
+        pwsh tests\smoke.ps1                                  # uses dist\KeyMouse.exe
 
-    It only touches a Notepad window it starts itself, and it restores your clipboard.
+    It starts KeyMouse.SmokeTarget, drives that window, and stops that process again.
+    It never touches the applications you have open, and it restores your clipboard.
     Exit code 0 = all checks passed.
 #>
 [CmdletBinding()]
-param([string]$Exe = (Join-Path $PSScriptRoot '..\dist\KeyMouse.exe'))
+param(
+    [string]$Exe = (Join-Path $PSScriptRoot '..\dist\KeyMouse.exe'),
+    [string]$TargetExe = (Join-Path $PSScriptRoot 'KeyMouse.SmokeTarget\bin\Release\net10.0-windows\KeyMouse.SmokeTarget.exe')
+)
 
 $ErrorActionPreference = 'Stop'
 $script:passed = 0
@@ -21,13 +26,29 @@ function Check([string]$what, [bool]$ok, [string]$detail = '') {
 }
 
 if (-not (Test-Path $Exe)) { Write-Error "KeyMouse.exe not found at $Exe - build it first (.\build.ps1)"; exit 1 }
+if (-not (Test-Path $TargetExe)) { Write-Error "smoke target not found at $TargetExe - run: dotnet build KeyMouse.sln -c Release"; exit 1 }
 $Exe = (Resolve-Path $Exe).Path
+$TargetExe = (Resolve-Path $TargetExe).Path
 Write-Host "smoke testing $Exe`n"
 
+# The exe answers in the console's code page, and PowerShell decodes native output with
+# [Console]::OutputEncoding - the two agree by default, so nothing is forced here. A host that
+# has pinned them apart would otherwise fail every Chinese assertion for a reason that has
+# nothing to do with the program, so check the round-trip once and say so plainly.
+$probe = (& $Exe mouse move 1 1 2>&1) -join ''
+if ($probe -notmatch '已移动到') {
+    Write-Host "  cannot decode the program's Chinese output."
+    Write-Host "  expected [已移动到 1,1] but got [$probe]"
+    Write-Host "  console code page $(try { (chcp) } catch { '?' })" +
+                " vs [Console]::OutputEncoding $([Console]::OutputEncoding.WebName)"
+    exit 1
+}
+Check 'Chinese output decodes correctly in this host' $true
+
 $savedClipboard = Get-Clipboard -Raw -ErrorAction SilentlyContinue
-$scriptFile = Join-Path $env:TEMP 'keymouse-smoke.txt'
-$expected1 = 'line one: smoke test 中文也可以'
-$expected2 = 'line two: after Enter'
+$targetTitle = 'KeyMouse 冒烟靶子'
+$target = @('--title', $targetTitle)                 # when calling the tool directly
+$targetInScript = '--title "' + $targetTitle + '"'   # inside a script line the space needs quotes
 
 try {
     Write-Host '== exit codes =='
@@ -43,32 +64,39 @@ try {
     $null = & $Exe key press f24 --focus-policy none --title 'no-such-window-xyz' 2>&1
     Check 'unresolvable target exits 3' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
 
-    Write-Host "`n== scripted typing round-trip =="
-    Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force
-    Start-Sleep -Milliseconds 800
-    Start-Process notepad
-    Start-Sleep -Seconds 3
+    Write-Host "`n== the smoke target =="
+    Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force
+    Start-Process -FilePath $TargetExe
+    $deadline = (Get-Date).AddSeconds(20)
+    do {
+        Start-Sleep -Milliseconds 300
+        $null = & $Exe window focus @target 2>&1
+    } while ($LASTEXITCODE -ne 0 -and (Get-Date) -lt $deadline)
+    Check 'the target window is up and can be focused' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
 
-    # Notepad restores the previous unsaved tab, so clear it first.
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key press delete --process notepad
-    Start-Sleep -Milliseconds 300
+    Write-Host "`n== scripted typing round-trip =="
+    $expected1 = 'line one: smoke test 中文也可以'
+    $expected2 = 'line two: after Enter'
+    $scriptFile = Join-Path $env:TEMP 'keymouse-smoke.txt'
+
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    Start-Sleep -Milliseconds 200
 
     @(
         'sleep 300'
-        '# client 200,200 is inside the text area in Notepad (the toolbar band is above it)'
-        'mouse click left -wx 200 -wy 200 --process notepad'
-        "key type `"$expected1`" --process notepad"
-        'key press enter --process notepad'
-        "key type `"$expected2`" --process notepad"
+        'mouse click left -wx 100 -wy 100 ' + $targetInScript
+        "key type `"$expected1`" " + $targetInScript
+        'key press enter ' + $targetInScript
+        "key type `"$expected2`" " + $targetInScript
     ) | Set-Content -Path $scriptFile -Encoding utf8
 
     $out = & $Exe run $scriptFile 2>&1
     Check 'script exits 0' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$out"
 
     Set-Clipboard -Value '<<EMPTY>>'
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key combo ctrl+c --process notepad
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key combo ctrl+c @target
     Start-Sleep -Milliseconds 300
 
     $got = (Get-Clipboard -Raw).Trim() -replace "`r`n", "`n"
@@ -77,23 +105,23 @@ try {
 
     Write-Host "`n== window-relative drag =="
     $dragScript = Join-Path $env:TEMP 'keymouse-smoke-drag.txt'
-    $dragLines = @('mouse click left -wx 200 -wy 200 --process notepad')
-    for ($i = 1; $i -le 8; $i++) {
-        $dragLines += "key type `"drag line $i`" --process notepad"
-        $dragLines += 'key press enter --process notepad'
+    $dragLines = @('mouse click left -wx 100 -wy 100 ' + $targetInScript)
+    for ($i = 1; $i -le 10; $i++) {
+        $dragLines += "key type `"drag line $i`" " + $targetInScript
+        $dragLines += 'key press enter ' + $targetInScript
     }
-    $dragLines += 'mouse drag -wx 5 -wy 130 --wx2 900 -wy2 300 --process notepad --duration 400 --steps 20'
+    $dragLines += 'mouse drag -wx 5 -wy 20 --wx2 500 -wy2 160 ' + $targetInScript + ' --duration 400 --steps 20'
     $dragLines | Set-Content -Path $dragScript -Encoding utf8
 
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key press delete --process notepad
-    Start-Sleep -Milliseconds 300
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    Start-Sleep -Milliseconds 200
 
     $dragOut = & $Exe run $dragScript 2>&1
     Check 'a window-relative drag runs' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$dragOut"
 
     Set-Clipboard -Value '<<EMPTY>>'
-    $null = & $Exe key combo ctrl+c --process notepad
+    $null = & $Exe key combo ctrl+c @target
     Start-Sleep -Milliseconds 300
     $selection = Get-Clipboard -Raw
     Check 'the drag really selected text' (($selection -ne '<<EMPTY>>') -and ($selection -match 'drag line')) "got [$selection]"
@@ -101,11 +129,11 @@ try {
     @('mouse drag -wx 1 -wy 1 --wx2 2') | Set-Content -Path $dragScript -Encoding utf8
     $null = & $Exe run $dragScript 2>&1
     Check 'an incomplete relative drag exits 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
-    Remove-Item $dragScript -Force -ErrorAction SilentlyContinue
+    Remove-Item $dragScript, $scriptFile -Force -ErrorAction SilentlyContinue
 
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key press delete --process notepad
-    Start-Sleep -Milliseconds 250
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    Start-Sleep -Milliseconds 200
 
     Write-Host "`n== variables =="
     $varScript = Join-Path $env:TEMP 'keymouse-smoke-vars.txt'
@@ -138,10 +166,10 @@ try {
 
     Write-Host "`n== waits =="
     $waitScript = Join-Path $env:TEMP 'keymouse-smoke-wait.txt'
-    @('waitfor --process notepad --timeout 3000', 'waitgone --process definitely-not-running-xyz --timeout 500') |
+    @("waitfor --title `"$targetTitle`" --timeout 3000", 'waitgone --process definitely-not-running-xyz --timeout 500') |
         Set-Content -Path $waitScript -Encoding utf8
     $waitOut = & $Exe run $waitScript 2>&1
-    Check 'waitfor finds the running Notepad and waitgone agrees' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$waitOut"
+    Check 'waitfor finds the target and waitgone agrees' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$waitOut"
     Check 'the wait reports how long it took' (($waitOut -join "`n") -match '在 \d+ms 后满足') 'no timing line'
 
     @('waitfor --process definitely-not-running-xyz --timeout 400 --interval 100') |
@@ -149,52 +177,49 @@ try {
     $null = & $Exe run $waitScript 2>&1
     Check 'a waitfor timeout exits 3' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
 
-    @('key press f24 --process notepad', 'waitfor --timeout 100') | Set-Content -Path $waitScript -Encoding utf8
+    @('key press f24 ' + $targetInScript, 'waitfor --timeout 100') | Set-Content -Path $waitScript -Encoding utf8
     $null = & $Exe run $waitScript 2>&1
     Check 'a bad wait line aborts before anything runs' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
     Remove-Item $waitScript -Force -ErrorAction SilentlyContinue
 
     Write-Host "`n== a disabled window is refused =="
     Add-Type -Namespace KeyMouseSmoke -Name Win -MemberDefinition '[DllImport("user32.dll")] public static extern bool EnableWindow(IntPtr h, bool e);'
-    $note = Get-Process notepad | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+    $note = Get-Process KeyMouse.SmokeTarget | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
     [void][KeyMouseSmoke.Win]::EnableWindow($note.MainWindowHandle, $false)
     Start-Sleep -Milliseconds 300
-    $null = & $Exe key press f24 --process notepad 2>&1
+    $null = & $Exe key press f24 @target 2>&1
     Check 'a disabled window exits 4' ($LASTEXITCODE -eq 4) "exit=$LASTEXITCODE"
-    Check 'the listing flags it as disabled' (((& $Exe window list --process notepad) -join "`n") -match '已禁用') 'no disabled flag'
+    Check 'the listing flags it as disabled' (((& $Exe window list --process KeyMouse.SmokeTarget) -join "`n") -match '已禁用') 'no disabled flag'
     [void][KeyMouseSmoke.Win]::EnableWindow($note.MainWindowHandle, $true)
     Start-Sleep -Milliseconds 300
-    $null = & $Exe window focus --process notepad 2>&1
+    $null = & $Exe window focus @target 2>&1
     Check 're-enabling makes it usable again' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
 
     Write-Host "`n== dry run sends nothing =="
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key press delete --process notepad
-    Start-Sleep -Milliseconds 250
-    $dry = & $Exe run $scriptFile --dry-run 2>&1
+    $dryScript = Join-Path $env:TEMP 'keymouse-smoke-dry.txt'
+    @('key type "SHOULD NOT APPEAR" ' + $targetInScript) | Set-Content -Path $dryScript -Encoding utf8
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    Start-Sleep -Milliseconds 200
+    $dry = & $Exe run $dryScript --dry-run 2>&1
     Check 'dry run exits 0' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
-    # -match on an array returns the matching elements, so collapse it to one string first.
     Check 'dry run reports suppressed input' (($dry -join "`n") -match '共抑制 \d+ 个输入事件') 'no suppression line'
 
     Set-Clipboard -Value '<<EMPTY>>'
-    $null = & $Exe key combo ctrl+a --process notepad
-    $null = & $Exe key combo ctrl+c --process notepad
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key combo ctrl+c @target
     Start-Sleep -Milliseconds 300
-    # An empty document copies nothing, so the sentinel surviving is the expected result too.
     $after = Get-Clipboard -Raw
     Check 'dry run left the document empty' (($after -eq '<<EMPTY>>') -or ($after.Trim() -eq '')) "got [$after]"
+    Remove-Item $dryScript -Force -ErrorAction SilentlyContinue
 
     Write-Host "`n== vk: escape hatch =="
-    # Regression: vk:0x87 was documented since v1.0 but never parsed (TryParse cannot read
-    # the 0x prefix), so it always failed. F24 is the safest key to prove the path works.
-    $vkOut = & $Exe key press vk:0x87 --process notepad 2>&1
+    $vkOut = & $Exe key press vk:0x87 @target 2>&1
     Check 'a raw virtual key is accepted' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$vkOut"
-    $badVk = & $Exe key press vk:zz --process notepad 2>&1
+    $badVk = & $Exe key press vk:zz @target 2>&1
     Check 'a malformed raw virtual key is refused' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
 
     Write-Host "`n== stdin =="
-    # --echo because the runner swallows a command's own output unless asked; without it
-    # "mouse pos" prints nothing and there is no coordinate to check.
     $stdinOut = @('sleep 50', 'mouse pos') | & $Exe run - --echo 2>&1
     Check 'a script can be piped in' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$stdinOut"
     Check 'piped commands actually ran' (($stdinOut -join "`n") -match '\d+,\d+') 'no position in the output'
@@ -203,11 +228,7 @@ try {
     $keepScript = Join-Path $env:TEMP 'keymouse-smoke-keep.txt'
     $keepReport = Join-Path $env:TEMP 'keymouse-smoke-keep.json'
     Remove-Item $keepReport -Force -ErrorAction SilentlyContinue
-    @(
-        'mouse pos'
-        'key press no-such-key'
-        'mouse pos'
-    ) | Set-Content -Path $keepScript -Encoding utf8
+    @('mouse pos', 'key press no-such-key', 'mouse pos') | Set-Content -Path $keepScript -Encoding utf8
 
     $null = & $Exe run $keepScript 2>&1
     Check 'without --keep-going the run stops at the bad line' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
@@ -224,25 +245,25 @@ try {
     Remove-Item $keepScript, $keepReport -Force -ErrorAction SilentlyContinue
 
     Write-Host "`n== window inspect =="
-    $inspectOut = & $Exe window inspect --process notepad 2>&1
-    Check 'inspect finds the running Notepad and calls it usable' (($inspectOut -join "`n") -match '判定：可用') 'no usable verdict'
+    $inspectOut = & $Exe window inspect @target 2>&1
+    Check 'inspect finds the target and calls it usable' (($inspectOut -join "`n") -match '判定：可用') 'no usable verdict'
     Check 'inspect exits 0 when something is usable' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
     $null = & $Exe window inspect --process definitely-not-running-xyz 2>&1
     Check 'inspect exits 3 when nothing matches' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
 
     Write-Host "`n== window-relative move =="
-    $moveOut = & $Exe mouse move -wx 200 -wy 150 --process notepad 2>&1
+    $moveOut = & $Exe mouse move -wx 200 -wy 150 @target 2>&1
     Check 'a client-relative move runs' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$moveOut"
     if ($moveOut -match '屏幕 (\d+),(\d+)') {
         $screenX = $Matches[1]; $screenY = $Matches[2]
-        Check 'the reported screen point is where the cursor ended up' ((& $Exe mouse pos) -eq "$screenX,$screenY") "pos=$(& $Exe mouse pos) expected=$screenX,$screenY"
+        $pos = (& $Exe mouse pos).Trim()
+        Check 'the reported screen point is where the cursor ended up' ($pos -eq "$screenX,$screenY") "pos=$pos expected=$screenX,$screenY"
     } else {
         Check 'the move reports the screen point it used' $false "output was [$moveOut]"
     }
 }
 finally {
-    Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force
-    Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
+    Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force
     if ($null -ne $savedClipboard) { Set-Clipboard -Value $savedClipboard }
 }
 

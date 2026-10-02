@@ -1,3 +1,6 @@
+using System.Runtime.InteropServices;
+using System.Text;
+
 namespace KeyMouse;
 
 /// <summary>
@@ -6,6 +9,39 @@ namespace KeyMouse;
 /// </summary>
 internal static class ConsoleText
 {
+    [DllImport("kernel32.dll")]
+    private static extern uint GetConsoleOutputCP();
+
+    /// <summary>
+    /// Makes stdout speak the console's own code page.
+    ///
+    /// PowerShell decodes a native command's output with [Console]::OutputEncoding, which
+    /// follows the console code page. .NET, however, defaults to UTF-8 whenever stdout is
+    /// redirected - so capturing our output in a cp936 console decoded UTF-8 bytes as GBK and
+    /// turned "已移动到" into "宸茬Щ鍔ㄥ埌". Writing what the console expects fixes both the
+    /// captured and the on-screen case.
+    ///
+    /// With no console attached (CI, a plain pipe) GetConsoleOutputCP returns 0 and .NET's
+    /// UTF-8 default is already the right answer, so nothing is changed.
+    /// </summary>
+    public static void ConfigureOutputEncoding()
+    {
+        try
+        {
+            uint codePage = GetConsoleOutputCP();
+            if (codePage == 0 || codePage == Console.OutputEncoding.CodePage) return;
+
+            // The legacy code pages are not part of .NET's default set; the provider ships
+            // with the runtime, but has to be registered before GetEncoding can see them.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Console.OutputEncoding = Encoding.GetEncoding((int)codePage);
+        }
+        catch
+        {
+            // Display encoding is never worth taking the program down for; the default stays.
+        }
+    }
+
     /// <summary>Width of the string in terminal cells (CJK counts as two).</summary>
     public static int DisplayWidth(string text)
     {

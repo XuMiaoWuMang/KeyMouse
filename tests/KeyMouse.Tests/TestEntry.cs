@@ -8,7 +8,7 @@ internal static class TestEntry
 {
     private static int Main(string[] args)
     {
-        try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* no console attached */ }
+        ConsoleText.ConfigureOutputEncoding();
 
         if (args.Length > 0 && args[0] == "bench")
         {

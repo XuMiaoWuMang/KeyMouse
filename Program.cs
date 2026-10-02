@@ -8,7 +8,8 @@ internal static class Program
 
     internal static int Main(string[] args)
     {
-        try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* no console attached */ }
+        // Speak the console's code page, so that whoever reads us decodes what we wrote.
+        ConsoleText.ConfigureOutputEncoding();
 
         try
         {
