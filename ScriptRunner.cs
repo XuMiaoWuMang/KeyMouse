@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -41,6 +42,9 @@ internal sealed class CommandRecord
 
     /// <summary>The target options this line inherited from an earlier line, if any.</summary>
     public string? InheritedTarget { get; set; }
+
+    /// <summary>Loop variable values for this execution, e.g. { "row": 1, "col": 2 }.</summary>
+    public Dictionary<string, int>? Iterations { get; set; }
     public int ExitCode { get; set; }
     public int Attempts { get; set; }
     public long DurationMs { get; set; }
@@ -89,10 +93,13 @@ internal static class ScriptRunner
                            "[--retry 次数] [--retry-delay 毫秒] [--set 名=值] [--report 文件.json]");
 
         List<(int LineNumber, List<string> Tokens)> commands;
+        LoopPlan plan;
         try
         {
-            commands = Expand(Parse(ReadScript(options.Path)), options.Variables);
+            commands = Parse(ReadScript(options.Path));
+            plan = AnalyzeLoops(commands);
             ValidatePseudoCommands(commands);
+            ValidateVariables(commands, plan, options.Variables);
         }
         catch (CommandFailure ex)
         {
@@ -103,7 +110,7 @@ internal static class ScriptRunner
             return Fail(1, $"读不到脚本 '{options.Path}'：{ex.Message}");
         }
 
-        if (commands.Count == 0)
+        if (commands.Count == 0 || plan.TotalExecutions == 0)
             return Fail(2, $"脚本 '{options.Path}' 里没有任何命令");
 
         string source = options.Path == "-" ? "stdin" : Path.GetFullPath(options.Path);
@@ -112,7 +119,7 @@ internal static class ScriptRunner
             Script = source,
             StartedAt = DateTimeOffset.Now.ToString("O"),
             DryRun = options.DryRun,
-            Total = commands.Count
+            Total = plan.TotalExecutions
         };
 
         int firstFailureCode = 0;
@@ -122,42 +129,92 @@ internal static class ScriptRunner
         _running = true;
         try
         {
+            string scopeNote = plan.TotalExecutions == commands.Count
+                ? $"共 {commands.Count} 条命令"
+                : $"共 {commands.Count} 条命令，循环展开后 {plan.TotalExecutions} 条";
+
             Console.WriteLine(options.DryRun
-                ? $"演练模式：{source} 共 {commands.Count} 条命令——资格检查照常执行，一个字节都不会发"
-                : $"{source} 共 {commands.Count} 条命令");
+                ? $"演练模式：{source} {scopeNote}——资格检查照常执行，一个字节都不会发"
+                : $"{source} {scopeNote}");
 
-            int total = commands.Count;
+            // Every command in a script - loops included - is dispatched in this one process.
+            // Nothing here spawns a process; the count is what the progress line reports.
+            int total = plan.TotalExecutions;
+            int dispatched = 0;
             List<string>? currentTarget = null;
+            var loopStack = new List<(int BodyStart, int Remaining, int Iteration, string Name)>();
+            var scope = new Dictionary<string, string>(StringComparer.Ordinal);
 
-            for (int i = 0; i < total; i++)
+            for (int pc = 0; pc < commands.Count; pc++)
             {
-                var (lineNumber, written) = commands[i];
+                var (lineNumber, written) = commands[pc];
+                string head = written[0].ToLowerInvariant();
+
+                if (head == "repeat")
+                {
+                    var (count, name, _) = ParseRepeat(written);
+                    if (count == 0) pc = plan.EndOf[pc];   // repeat 0: skip the body entirely
+                    else loopStack.Add((pc + 1, count, 0, name));
+                    continue;
+                }
+
+                if (head == "end")
+                {
+                    var frame = loopStack[^1];
+                    loopStack.RemoveAt(loopStack.Count - 1);
+                    if (frame.Remaining > 1)
+                    {
+                        loopStack.Add((frame.BodyStart, frame.Remaining - 1, frame.Iteration + 1, frame.Name));
+                        pc = frame.BodyStart - 1;          // the for-loop's ++ lands on the body
+                    }
+                    continue;
+                }
+
+                // Loop variables exist only inside their body; everything else came from --set.
+                scope.Clear();
+                foreach (var pair in options.Variables) scope[pair.Key] = pair.Value;
+                foreach (var frame in loopStack)
+                    scope[frame.Name] = frame.Iteration.ToString(CultureInfo.InvariantCulture);
+
+                // Substitution happens here, per execution, because a loop variable changes
+                // between iterations. The scan is only worth skipping when no token mentions one.
+                List<string> expanded = written.Any(token => token.Contains("${", StringComparison.Ordinal))
+                    ? written.Select(token => Substitute(token, scope, lineNumber)).ToList()
+                    : written;
 
                 // A line that names a window becomes the script's current target; a later
                 // mouse/key line without one inherits it, so the selector is written once.
                 // Inheritance only saves typing: the inherited line still goes through the
                 // full gate and focus verification on its own.
-                List<string>? ownTarget = ExtractTargetTokens(written);
+                List<string>? ownTarget = ExtractTargetTokens(expanded);
                 if (ownTarget is not null) currentTarget = ownTarget;
 
                 string inheritedNote = "";
-                List<string> tokens = written;
-                if (ownTarget is null && currentTarget is not null && InheritsTarget(written))
+                List<string> tokens = expanded;
+                if (ownTarget is null && currentTarget is not null && InheritsTarget(expanded))
                 {
-                    tokens = new List<string>(written);
+                    tokens = new List<string>(expanded);
                     tokens.AddRange(currentTarget);
                     inheritedNote = "   ← 继承目标 " + string.Join(' ', currentTarget.Select(Quote));
                 }
 
+                dispatched++;
+                string loopNote = loopStack.Count == 0
+                    ? ""
+                    : "[" + string.Join(' ', loopStack.Select(f => $"{f.Name}={f.Iteration}")) + "] ";
+
                 // The console shows the line as written, with a note saying what was added, so
                 // the command stays readable; the report records the effective command.
-                string shown = string.Join(' ', written.Select(Quote));
+                string shown = string.Join(' ', expanded.Select(Quote));
                 var record = new CommandRecord
                 {
-                    Index = i + 1,
+                    Index = dispatched,
                     Line = lineNumber,
                     Command = string.Join(' ', tokens.Select(Quote)),
-                    InheritedTarget = inheritedNote.Length > 0 ? string.Join(' ', currentTarget!) : null
+                    InheritedTarget = inheritedNote.Length > 0 ? string.Join(' ', currentTarget!) : null,
+                    Iterations = loopStack.Count == 0
+                        ? null
+                        : loopStack.ToDictionary(frame => frame.Name, frame => frame.Iteration)
                 };
                 var stopwatch = Stopwatch.StartNew();
                 string tag;
@@ -224,7 +281,7 @@ internal static class ScriptRunner
                             break;
 
                         // Retryable means provably nothing was sent, so trying again is safe.
-                        Console.WriteLine($"[{i + 1,3}/{total}] 第 {record.Attempts} 次重试（共 {maxAttempts - 1} 次），" +
+                        Console.WriteLine($"[{dispatched,3}/{total}] 第 {record.Attempts} 次重试（共 {maxAttempts - 1} 次），" +
                                           $"上一次退出码 {record.ExitCode}（确定没有发出任何输入）");
                         if (options.RetryDelayMs > 0) Thread.Sleep(options.RetryDelayMs);
                     }
@@ -255,7 +312,7 @@ internal static class ScriptRunner
                         ? $"（重试 {record.Attempts - 1} 次后成功）"
                         : $"（重试 {record.Attempts - 1} 次仍然失败）"
                     : "";
-                Console.WriteLine($"[{i + 1,3}/{total}] {ConsoleText.Pad(tag, 6)}{shown}{retryNote}{inheritedNote}");
+                Console.WriteLine($"[{dispatched,3}/{total}] {ConsoleText.Pad(tag, 6)}{loopNote}{shown}{retryNote}{inheritedNote}");
                 if (captured is { Length: > 0 } && (options.Echo || tag == "失败" || showDetail))
                     foreach (string detail in captured.Split('\n'))
                         Console.WriteLine("           " + detail.TrimEnd());
@@ -268,7 +325,7 @@ internal static class ScriptRunner
                     break;
                 }
 
-                if (options.DelayMs > 0 && i < total - 1) Thread.Sleep(options.DelayMs);
+                if (options.DelayMs > 0 && dispatched < total) Thread.Sleep(options.DelayMs);
             }
         }
         finally
@@ -414,6 +471,121 @@ internal static class ScriptRunner
     }
 
     /// <summary>
+    /// What the repeat/end blocks of a script look like: which loops enclose each line, and how
+    /// many commands the script will dispatch once they are expanded. Analysed in full before
+    /// the first command runs, so a malformed loop cannot abort a half-executed script.
+    /// </summary>
+    internal sealed class LoopPlan
+    {
+        public LoopPlan(IReadOnlyList<List<(string Name, int Count)>> enclosing, int[] endOf, int total)
+        {
+            Enclosing = enclosing;
+            EndOf = endOf;
+            TotalExecutions = total;
+        }
+
+        /// <summary>For each line, the loops that enclose it, outermost first.</summary>
+        public IReadOnlyList<List<(string Name, int Count)>> Enclosing { get; }
+
+        /// <summary>For each `repeat` line, the index of its matching `end`.</summary>
+        public int[] EndOf { get; }
+
+        /// <summary>Commands that will be dispatched once the loops are expanded.</summary>
+        public int TotalExecutions { get; }
+    }
+
+    internal const int MaxRepeatCount = 1_000_000;
+    internal const int MaxExecutions = 100_000;
+
+    internal static LoopPlan AnalyzeLoops(List<(int LineNumber, List<string> Tokens)> commands)
+    {
+        var enclosing = new List<List<(string Name, int Count)>>(commands.Count);
+        var endOf = new int[commands.Count];
+        var open = new List<(int Index, string Name, int Count)>();
+        long total = 0;
+
+        for (int i = 0; i < commands.Count; i++)
+        {
+            var (lineNumber, tokens) = commands[i];
+            string head = tokens[0].ToLowerInvariant();
+
+            if (head == "repeat")
+            {
+                var (count, name, error) = ParseRepeat(tokens);
+                if (error is not null) throw new CommandFailure(2, $"第 {lineNumber} 行：{error}");
+                if (open.Any(frame => frame.Name == name))
+                    throw new CommandFailure(2,
+                        $"第 {lineNumber} 行：循环变量 '{name}' 与外层同名，里面那个会盖住外面的——" +
+                        $"写成 repeat {count} as 另一个名字");
+
+                open.Add((i, name, count));
+                enclosing.Add(new List<(string, int)>());
+                continue;
+            }
+
+            if (head == "end")
+            {
+                if (tokens.Count != 1)
+                    throw new CommandFailure(2, $"第 {lineNumber} 行：'end' 后面不能有参数");
+                if (open.Count == 0)
+                    throw new CommandFailure(2, $"第 {lineNumber} 行：'end' 没有对应的 repeat");
+
+                (int start, string name, int count) = open[^1];
+                open.RemoveAt(open.Count - 1);
+                endOf[start] = i;
+                enclosing.Add(new List<(string, int)>());
+                continue;
+            }
+
+            var chain = new List<(string, int)>(open.Count);
+            long multiplier = 1;
+            foreach (var frame in open)
+            {
+                chain.Add((frame.Name, frame.Count));
+                multiplier *= frame.Count;
+            }
+            enclosing.Add(chain);
+            total += multiplier;
+
+            if (total > MaxExecutions)
+                throw new CommandFailure(2,
+                    $"循环展开后要执行超过 {MaxExecutions} 条命令（已算到 {total} 条）——请减少 repeat 次数");
+        }
+
+        if (open.Count > 0)
+            throw new CommandFailure(2,
+                $"第 {commands[open[^1].Index].LineNumber} 行：'repeat' 没有对应的 'end'");
+
+        return new LoopPlan(enclosing, endOf, (int)total);
+    }
+
+    private static (int Count, string Name, string? Error) ParseRepeat(List<string> tokens)
+    {
+        if (tokens.Count < 2)
+            return (0, "", "repeat 需要一个次数：repeat 5，或 repeat 5 as 名字");
+
+        if (!int.TryParse(tokens[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int count))
+            return (0, "", $"'{tokens[1]}' 不是循环次数（需要一个整数）");
+        if (count < 0) return (0, "", "循环次数不能是负数");
+        if (count > MaxRepeatCount) return (0, "", $"循环次数最多 {MaxRepeatCount}");
+
+        string name = "i";
+        if (tokens.Count > 2)
+        {
+            if (tokens.Count != 4 || !tokens[2].Equals("as", StringComparison.OrdinalIgnoreCase))
+                return (0, "", "写法是 repeat 5 as 名字（as 与名字要么都写，要么都不写）");
+
+            name = tokens[3];
+            if (!char.IsLetter(name[0]) && name[0] != '_')
+                return (0, "", $"'{name}' 不是合法的变量名（字母或下划线开头）");
+            if (!name.All(c => char.IsLetterOrDigit(c) || c == '_'))
+                return (0, "", $"'{name}' 不是合法的变量名（只能用字母、数字、下划线）");
+        }
+
+        return (count, name, null);
+    }
+
+    /// <summary>
     /// Splits one line into argv. Supports "double quoted" tokens, \" and \\ escapes,
     /// '#' comments (whole line or trailing) and ignores blank lines.
     /// </summary>
@@ -454,27 +626,52 @@ internal static class ScriptRunner
     }
 
     /// <summary>
-    /// Replaces ${name} inside already-tokenised arguments. Substitution happens per token,
-    /// so a script that writes --title "${title}" keeps a value with spaces as one argument.
+    /// Checks every ${name} a script mentions before anything runs: a name must come from
+    /// --set, or be a loop variable that encloses that line. Loops are why this cannot simply
+    /// be a substitution pass any more - a loop variable only exists inside its body - but the
+    /// promise it keeps is the same one: a typo is reported with its line number before the
+    /// first command runs, never halfway through a script.
     /// </summary>
-    internal static List<(int LineNumber, List<string> Tokens)> Expand(
+    internal static void ValidateVariables(
         List<(int LineNumber, List<string> Tokens)> commands,
+        LoopPlan plan,
         IReadOnlyDictionary<string, string> variables)
     {
-        // Always run the pass, even with no variables defined: a script that uses ${x}
-        // without --set x must fail here with its line number, not leak a raw ${x} into
-        // the command and produce a confusing downstream error.
-        var expanded = new List<(int, List<string>)>(commands.Count);
-        foreach (var (lineNumber, tokens) in commands)
+        for (int i = 0; i < commands.Count; i++)
         {
-            var result = new List<string>(tokens.Count);
-            foreach (string token in tokens) result.Add(Substitute(token, variables, lineNumber));
-            expanded.Add((lineNumber, result));
+            var (lineNumber, tokens) = commands[i];
+            foreach (string token in tokens)
+            {
+                foreach (string name in VariableNames(token, lineNumber))
+                {
+                    if (variables.ContainsKey(name)) continue;
+                    if (plan.Enclosing[i].Any(loop => loop.Name == name)) continue;
+                    throw new CommandFailure(2,
+                        $"第 {lineNumber} 行：变量 '${{{name}}}' 没有定义——用 --set {name}=值 指定");
+                }
+            }
         }
-        return expanded;
     }
 
-    private static string Substitute(string token, IReadOnlyDictionary<string, string> variables, int lineNumber)
+    private static List<string> VariableNames(string token, int lineNumber)
+    {
+        var names = new List<string>();
+        int i = 0;
+        while (true)
+        {
+            int open = token.IndexOf("${", i, StringComparison.Ordinal);
+            if (open < 0) return names;
+
+            int close = token.IndexOf('}', open + 2);
+            if (close < 0)
+                throw new CommandFailure(2, $"第 {lineNumber} 行：'{token}' 里的 ${{...}} 没有闭合");
+
+            names.Add(token[(open + 2)..close]);
+            i = close + 1;
+        }
+    }
+
+    internal static string Substitute(string token, IReadOnlyDictionary<string, string> variables, int lineNumber)
     {
         int search = token.IndexOf("${", StringComparison.Ordinal);
         if (search < 0) return token;

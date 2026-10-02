@@ -15,6 +15,125 @@ internal static class ParsingTests
         RetryAndVariables();
         WaitCommands();
         TargetInheritance();
+        Loops();
+        SingleProcessExecution();
+    }
+
+    private static void Loops()
+    {
+        Harness.Group("repeat/end analysis");
+
+        Harness.Equal("a plain script needs no loops",
+            3, Validate(new[] { "key press a", "sleep 10", "key press b" }, new()).TotalExecutions);
+
+        Harness.Equal("a body is counted once per iteration",
+            6, Validate(new[] { "repeat 3", "key press a", "key press b", "end" }, new()).TotalExecutions);
+
+        // Nesting needs names: two unnamed loops would both bind ${i} and the inner one
+        // would silently hide the outer, which is the kind of surprise worth refusing.
+        Harness.Equal("named nested loops multiply",
+            6, Validate(new[] { "repeat 2 as row", "repeat 3 as col", "key press a", "end", "end" }, new()).TotalExecutions);
+
+        Harness.Equal("an inner loop sees the outer variable",
+            6, Validate(new[] { "repeat 2 as row", "repeat 3 as col", "key press ${row}", "end", "end" }, new()).TotalExecutions);
+
+        Harness.Equal("repeat 0 contributes nothing",
+            1, Validate(new[] { "repeat 0", "key press a", "end", "key press b" }, new()).TotalExecutions);
+
+        Harness.Equal("commands after a loop still count",
+            4, Validate(new[] { "repeat 3", "key press a", "end", "key press b" }, new()).TotalExecutions);
+
+        // Structure is checked up front, so a malformed loop cannot abort a half-run script.
+        Harness.Throws<CommandFailure>("a repeat without end is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat 3", "key press a" })));
+        Harness.Throws<CommandFailure>("an end without repeat is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "key press a", "end" })));
+        Harness.Throws<CommandFailure>("a non-numeric repeat count is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat abc", "end" })));
+        Harness.Throws<CommandFailure>("a negative repeat count is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat -1", "end" })));
+        Harness.Throws<CommandFailure>("a missing repeat count is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat", "end" })));
+        Harness.Throws<CommandFailure>("end takes no arguments",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat 2", "end 3" })));
+        Harness.Throws<CommandFailure>("shadowing a loop variable is refused",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat 2", "repeat 2", "end", "end" })));
+        Harness.Throws<CommandFailure>("an absurd loop is refused before it runs",
+            () => ScriptRunner.AnalyzeLoops(ScriptRunner.Parse(new[] { "repeat 1000000", "repeat 1000000", "key press a", "end", "end" })));
+
+        var plan = ScriptRunner.AnalyzeLoops(
+            ScriptRunner.Parse(new[] { "repeat 3 as row", "key press ${row}", "end" }));
+        Harness.Equal("a named loop exposes its name", "row", plan.Enclosing[1][0].Name);
+
+        // The variable is only in scope inside the body - outside it, validation must say so.
+        Harness.Throws<CommandFailure>("a loop variable used outside its loop is refused",
+            () => Validate(new[] { "key press ${row}", "repeat 2 as row", "key press a", "end" }, new()));
+
+        Harness.Check("a loop variable passes validation inside its body",
+            !Throws(() => Validate(new[] { "repeat 2 as row", "key press ${row}", "end" }, new())));
+
+        Harness.Check("an unclosed ${ is refused by loop-aware validation",
+            Throws(() => Validate(new[] { "repeat 2", "key press ${oops", "end" }, new())));
+
+        Harness.Check("a loop with an undefined variable is refused up front",
+            Throws(() => Validate(new[] { "repeat 2", "key press ${nope}", "end" }, new())));
+    }
+
+    private static bool Throws(Action action)
+    {
+        try { action(); return false; }
+        catch (CommandFailure) { return true; }
+    }
+
+    /// <summary>
+    /// v2 guarantee: a script runs every command in the process that started it. The runner
+    /// hands each one to the delegate it was given, so counting the calls is the assertion -
+    /// if anything ever spawned a process per line, that delegate would stop being called.
+    /// </summary>
+    private static void SingleProcessExecution()
+    {
+        Harness.Group("a script runs in one process");
+
+        string path = Path.Combine(Path.GetTempPath(), "keymouse-unit-singleproc.txt");
+        File.WriteAllLines(path,
+            new[] { "repeat 3 as row", "key type ${word}-${row}", "end", "key press b", "key type ${word}" },
+            new System.Text.UTF8Encoding(false));
+
+        var seen = new List<string>();
+        int exitCode = 0;
+
+        var writer = new StringWriter();
+        TextWriter oldOut = Console.Out;
+        TextWriter oldErr = Console.Error;
+        Console.SetOut(writer);
+        Console.SetError(writer);
+        try
+        {
+            exitCode = ScriptRunner.Run(
+                new[] { path, "--set", "word=hi" },
+                new Program.GlobalOptions(),
+                tokens => { seen.Add(string.Join(' ', tokens)); return 0; });
+        }
+        finally
+        {
+            Console.SetOut(oldOut);
+            Console.SetError(oldErr);
+            File.Delete(path);
+        }
+
+        Harness.Equal("the script succeeded", 0, exitCode);
+        Harness.Equal("every iteration ran through the in-process dispatcher", 5, seen.Count);
+        Harness.Equal("the loop variable is substituted per iteration", "key type hi-0", seen[0]);
+        Harness.Equal("the loop variable advances", "key type hi-2", seen[2]);
+        Harness.Equal("the command after the loop ran in the same process", "key press b", seen[3]);
+
+        // Regression: the execution path once skipped ${} substitution entirely when the line
+        // was not inside a loop, so --set variables only worked in loop bodies.
+        Harness.Equal("a --set variable is substituted outside a loop too", "key type hi", seen[4]);
+
+        // The loop is expanded by the runner, not by re-entering the command line parser.
+        Harness.Check("the dispatcher never saw a repeat/end line",
+            !seen.Any(line => line.StartsWith("repeat") || line == "end"));
     }
 
     private static void TargetInheritance()
@@ -96,33 +215,40 @@ internal static class ParsingTests
         Harness.Group("${variable} substitution");
         var variables = new Dictionary<string, string> { ["app"] = "notepad", ["title"] = "无标题 记事本" };
 
-        var expanded = ScriptRunner.Expand(
-            ScriptRunner.Parse(new[] { "key type \"${title}\" --process ${app}", "sleep 100" }), variables);
         Harness.Sequence("a value with spaces stays a single argument",
-            new[] { "key", "type", "无标题 记事本", "--process", "notepad" }, expanded[0].Tokens);
-        Harness.Equal("line numbers survive expansion", 2, expanded[1].LineNumber);
+            new[] { "key", "type", "无标题 记事本", "--process", "notepad" },
+            new List<string> { "key", "type", "${title}", "--process", "${app}" }
+                .Select(token => ScriptRunner.Substitute(token, variables, 1)).ToList());
+
+        Harness.Sequence("tokens without ${} pass through untouched",
+            new[] { "key", "press", "enter" },
+            new List<string> { "key", "press", "enter" }
+                .Select(token => ScriptRunner.Substitute(token, variables, 1)).ToList());
+
+        Harness.Equal("a token may use a variable twice", "notepad-notepad",
+            ScriptRunner.Substitute("${app}-${app}", variables, 1));
 
         // Regression: the pass used to be skipped entirely when no --set was given, so a raw
         // ${name} leaked into the command and failed later with a confusing message.
         Harness.Throws<CommandFailure>("a ${var} with no --set at all is still refused",
-            () => ScriptRunner.Expand(
-                ScriptRunner.Parse(new[] { "key type \"${title}\"" }), new Dictionary<string, string>()));
-
-        var untouched = ScriptRunner.Expand(
-            ScriptRunner.Parse(new[] { "key press enter" }), new Dictionary<string, string>());
-        Harness.Sequence("tokens without ${} pass through untouched",
-            new[] { "key", "press", "enter" }, untouched[0].Tokens);
-
-        var repeated = ScriptRunner.Expand(
-            ScriptRunner.Parse(new[] { "key type \"${app}-${app}\"" }), variables);
-        Harness.Sequence("a token may use a variable twice",
-            new[] { "key", "type", "notepad-notepad" }, repeated[0].Tokens);
+            () => Validate(new[] { "key type \"${title}\"" }, new Dictionary<string, string>()));
 
         Harness.Throws<CommandFailure>("an undefined variable is refused",
-            () => ScriptRunner.Expand(ScriptRunner.Parse(new[] { "key press ${nope}" }), variables));
+            () => Validate(new[] { "key press ${nope}" }, variables));
 
         Harness.Throws<CommandFailure>("an unterminated ${ is refused",
-            () => ScriptRunner.Expand(ScriptRunner.Parse(new[] { "key press ${nope" }), variables));
+            () => Validate(new[] { "key press ${nope" }, variables));
+
+        Harness.Check("a defined variable passes validation",
+            !Throws(() => Validate(new[] { "key type \"${app}\"" }, variables)));
+    }
+
+    private static ScriptRunner.LoopPlan Validate(string[] lines, Dictionary<string, string> variables)
+    {
+        var commands = ScriptRunner.Parse(lines);
+        var plan = ScriptRunner.AnalyzeLoops(commands);
+        ScriptRunner.ValidateVariables(commands, plan, variables);
+        return plan;
     }
 
     private static void WaitCommands()

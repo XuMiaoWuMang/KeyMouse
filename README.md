@@ -24,7 +24,7 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 | **闸门** | 拒绝隐藏、最小化、被 DWM cloak、无响应、**被禁用**的窗口 |
 | **焦点** | 温和尝试最多 3 次并回读验证；失败即中止，不猜 |
 | **坐标** | 绝对像素，或**窗口客户区相对**坐标（窗口移动也不失效） |
-| **脚本** | 顺序执行、注释、`sleep`、`waitfor`/`waitgone`、`${变量}`、**目标继承**（`window focus` 写一次，之后 `mouse`/`key` 不用再写）、`--dry-run`、安全重试、JSON 报告 |
+| **脚本** | 顺序执行、注释、`sleep`、`waitfor`/`waitgone`、`${变量}`、**目标继承**（`window focus` 写一次，之后 `mouse`/`key` 不再重复选择器）、**循环**（`repeat n [as 名字] … end`）、`--dry-run`、安全重试、JSON 报告 |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**

@@ -51,6 +51,15 @@ internal static class Usage
                                            后面的 mouse / key 行不带选择器时自动继承
                                            （继承的行仍然各自过一遍焦点与闸门验证）
 
+          repeat <次数> [as <名字>]        循环开始；循环变量默认叫 i，从 0 开始计
+            ...                           例如：
+          end                               repeat 3 as row
+                                              key type "第 ${row} 行"
+                                              key press enter
+                                            end
+                                           嵌套时内层必须 as 取名；结构错误在第一条
+                                           命令执行之前就会带着行号报错
+
           sleep <毫秒>                     等待
           waitfor <选择器> [--timeout 毫秒] [--interval 毫秒]
                                            等到有可用窗口匹配；超时则退出码 3（默认 5000 / 200 毫秒）

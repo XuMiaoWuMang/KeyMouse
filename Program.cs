@@ -4,7 +4,7 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    internal const string Version = "1.6.0";
+    internal const string Version = "2.0.0";
 
     internal static int Main(string[] args)
     {

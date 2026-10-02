@@ -10,7 +10,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Same DPI awareness as the tool under test: without it Windows virtualises the
+         coordinates on a scaled display and the client-area assertions would drift. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
 </Project>
