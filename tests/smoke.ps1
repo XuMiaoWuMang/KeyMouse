@@ -183,6 +183,62 @@ try {
     # An empty document copies nothing, so the sentinel surviving is the expected result too.
     $after = Get-Clipboard -Raw
     Check 'dry run left the document empty' (($after -eq '<<EMPTY>>') -or ($after.Trim() -eq '')) "got [$after]"
+
+    Write-Host "`n== vk: escape hatch =="
+    # Regression: vk:0x87 was documented since v1.0 but never parsed (TryParse cannot read
+    # the 0x prefix), so it always failed. F24 is the safest key to prove the path works.
+    $vkOut = & $Exe key press vk:0x87 --process notepad 2>&1
+    Check 'a raw virtual key is accepted' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$vkOut"
+    $badVk = & $Exe key press vk:zz --process notepad 2>&1
+    Check 'a malformed raw virtual key is refused' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+
+    Write-Host "`n== stdin =="
+    # --echo because the runner swallows a command's own output unless asked; without it
+    # "mouse pos" prints nothing and there is no coordinate to check.
+    $stdinOut = @('sleep 50', 'mouse pos') | & $Exe run - --echo 2>&1
+    Check 'a script can be piped in' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$stdinOut"
+    Check 'piped commands actually ran' (($stdinOut -join "`n") -match '\d+,\d+') 'no position in the output'
+
+    Write-Host "`n== --keep-going and the report =="
+    $keepScript = Join-Path $env:TEMP 'keymouse-smoke-keep.txt'
+    $keepReport = Join-Path $env:TEMP 'keymouse-smoke-keep.json'
+    Remove-Item $keepReport -Force -ErrorAction SilentlyContinue
+    @(
+        'mouse pos'
+        'key press no-such-key'
+        'mouse pos'
+    ) | Set-Content -Path $keepScript -Encoding utf8
+
+    $null = & $Exe run $keepScript 2>&1
+    Check 'without --keep-going the run stops at the bad line' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+
+    $null = & $Exe run $keepScript --keep-going --report $keepReport 2>&1
+    Check '--keep-going still returns the first failure code' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+    if (Test-Path $keepReport) {
+        $report = Get-Content $keepReport -Raw | ConvertFrom-Json
+        Check 'every command is in the report' ($report.commands.Count -eq 3) "count=$($report.commands.Count)"
+        Check 'the command after the failure still ran' ($report.commands[2].exitCode -eq 0) "exit=$($report.commands[2].exitCode)"
+        Check 'the report marks the failing line' ($report.commands[1].exitCode -eq 2) "exit=$($report.commands[1].exitCode)"
+        Check 'nothing was injected by the failing command' ($report.commands[1].injectedEvents -eq 0) 'injected something'
+    }
+    Remove-Item $keepScript, $keepReport -Force -ErrorAction SilentlyContinue
+
+    Write-Host "`n== window inspect =="
+    $inspectOut = & $Exe window inspect --process notepad 2>&1
+    Check 'inspect finds the running Notepad and calls it usable' (($inspectOut -join "`n") -match '判定：可用') 'no usable verdict'
+    Check 'inspect exits 0 when something is usable' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
+    $null = & $Exe window inspect --process definitely-not-running-xyz 2>&1
+    Check 'inspect exits 3 when nothing matches' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
+
+    Write-Host "`n== window-relative move =="
+    $moveOut = & $Exe mouse move -wx 200 -wy 150 --process notepad 2>&1
+    Check 'a client-relative move runs' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$moveOut"
+    if ($moveOut -match '屏幕 (\d+),(\d+)') {
+        $screenX = $Matches[1]; $screenY = $Matches[2]
+        Check 'the reported screen point is where the cursor ended up' ((& $Exe mouse pos) -eq "$screenX,$screenY") "pos=$(& $Exe mouse pos) expected=$screenX,$screenY"
+    } else {
+        Check 'the move reports the screen point it used' $false "output was [$moveOut]"
+    }
 }
 finally {
     Get-Process notepad -ErrorAction SilentlyContinue | Stop-Process -Force

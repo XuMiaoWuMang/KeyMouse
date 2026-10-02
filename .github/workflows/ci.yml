@@ -23,6 +23,9 @@ jobs:
       - name: Unit tests (no desktop required)
         run: dotnet run -c Release --project tests/KeyMouse.Tests/KeyMouse.Tests.csproj
 
+      - name: Documentation links
+        run: pwsh -NoProfile -File tests/check-docs.ps1
+
       # tests/smoke.ps1 needs an interactive desktop (it drives Notepad), so it is
       # deliberately not part of CI - run it locally before a release.
       - name: Publish check (framework-dependent)

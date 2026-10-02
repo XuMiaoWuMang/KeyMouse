@@ -28,6 +28,7 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
+改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
 
 ## 安装
 
@@ -55,14 +56,14 @@ cd D:\Data\KeyMouse
 ## 开发
 
 ```powershell
-dotnet build KeyMouse.sln -c Release
-dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj   # 单元测试，不需要桌面
-pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                  # 桌面冒烟，需要交互式桌面
+dotnet build KeyMouse.sln -c Release                                          # 构建
+dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj    # 单元测试，不需要桌面
+pwsh tests\check-docs.ps1                                                     # 文档链接检查
+pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                   # 桌面冒烟，需要交互式桌面
 ```
 
-- **单元测试**（`tests/KeyMouse.Tests`）零依赖、离线可跑，覆盖解析、选择、闸门判定等纯逻辑；
-- **桌面冒烟**（`tests/smoke.ps1`）起一个真记事本走完整链路，打字结果用剪贴板逐字符回读比对；
-- CI 每次 push 跑单元测试；推 `v*` tag 会跑测试、构建两个产物并发布 Release。
+CI 每次 push 跑前三项；**发布由 `v*` tag 触发，且必须先经过人工验证**——
+完整的改动与发布流程见 **[docs/development.md](docs/development.md)**。
 
 ## 许可证
 
