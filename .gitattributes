@@ -1,5 +1,7 @@
+# Text files are normalised to LF in the repository.
+# This project is Windows-only but is edited by tooling that writes LF, so forcing
+# CRLF on checkout produced nothing but churn and "LF will be replaced by CRLF"
+# warnings on every add. Repo-local core.autocrlf is false for the same reason.
 * text=auto
-*.ps1 text eol=crlf
-*.cs text eol=crlf
 *.exe binary
 *.png binary
