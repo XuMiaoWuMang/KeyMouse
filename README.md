@@ -120,10 +120,11 @@ KeyMouse <group> <command> [参数] [选项]
 | `-wx <cx> -wy <cy>` | 客户区坐标，必须成对出现且必须带选择器 |
 | `--strict-point` | 额外要求该屏幕点下方的窗口就是目标本身 |
 
-### 脚本（v1.2）
+### 脚本（v1.2，v1.3 补强）
 
 ```
 KeyMouse run <文件|-> [--delay MS] [--keep-going] [--dry-run] [--echo]
+                       [--retry N] [--retry-delay MS] [--set name=value] [--report file.json]
 ```
 
 一行一条命令，语法和命令行**完全一致**——没有第二套语言要学，选择器和闸门逐行生效：
@@ -142,7 +143,49 @@ key press enter --process notepad
 | `--keep-going` | 出错也继续跑完（默认首错即停） |
 | `--dry-run` | 只做解析与资格检查，**一个字节都不发**，也不抢焦点 |
 | `--echo` | 连子命令自己的输出也打出来 |
+| `--retry N` | 单条命令最多额外重试 N 次（**只对"确定没发出任何输入"的失败重试**） |
+| `--retry-delay MS` | 重试前等多久（默认 300） |
+| `--set name=value` | 定义变量，脚本里用 `${name}` 引用（可重复给） |
+| `--report file.json` | 写一份机器可读的执行报告 |
 
+**安全重试**是这里的重点：只有退出码 **3/4/5**（选择器没匹配、目标不可用、焦点验证失败）
+才会重试——这三类失败**构造上保证一个字节都没发出去**，所以重试绝不会重复执行一个"做了一半"的动作
+（比如"点了按钮但还没输入完"）。退出码 1/2 永不重试。
+
+**变量**在**分词之后**替换，所以带空格的值仍然是**一个参数**：
+
+```text
+key type "${text}" --process ${app}
+```
+```powershell
+KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
+```
+
+未定义的变量（哪怕一次 `--set` 都没给）会**带行号报错**，不会把 `${x}` 原样漏给下游命令。
+
+**报告**长这样（中文不会被转义成 `\uXXXX`）：
+
+```json
+{
+  "script": "D:\\demo.txt",
+  "total": 3,
+  "succeeded": 2,
+  "failed": 1,
+  "retriedCommands": 1,
+  "injectedEvents": 14,
+  "exitCode": 3,
+  "stoppedAtLine": 3,
+  "commands": [
+    { "index": 1, "line": 2, "command": "key type \"hi\" --process notepad",
+      "exitCode": 0, "attempts": 1, "durationMs": 412, "injectedEvents": 4, "output": "typed 2 chars" }
+  ]
+}
+```
+
+`injectedEvents` 是**真实注入到系统输入队列的事件数**，`--dry-run` 时它全程为 0 —— 报告本身就是
+"到底有没有发东西"的证据。
+
+其它规则：
 - `sleep <ms>` 是内置伪命令，用来等界面反应。
 - 行内 `"引号"` 把空格包成一个参数；`\` 可转义 `"` 和 `\`；`#` 之后是注释；
   每行可以用 `--` 显式结束选项解析。

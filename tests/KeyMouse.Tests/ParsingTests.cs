@@ -11,6 +11,85 @@ internal static class ParsingTests
         GlobalOptions();
         CommandOptions();
         KeyNames();
+        RunOptions();
+        RetryAndVariables();
+    }
+
+    private static void RunOptions()
+    {
+        Harness.Group("run option parsing");
+
+        var options = new ScriptOptions();
+        Harness.Check("a plain script path is accepted", ScriptRunner.ParseOptions(new[] { "s.txt" }, options) is null);
+        Harness.Equal("script path is kept", "s.txt", options.Path);
+        Harness.Equal("retry defaults to 0", 0, options.Retry);
+        Harness.Equal("retry delay defaults to 300", 300, options.RetryDelayMs);
+        Harness.Check("dry run defaults to off", !options.DryRun);
+
+        options = new ScriptOptions();
+        ScriptRunner.ParseOptions(
+            new[] { "-", "--retry", "2", "--retry-delay", "50", "--set", "app=notepad", "--set", "t=a=b", "--dry-run" },
+            options);
+        Harness.Equal("stdin marker is kept as the path", "-", options.Path);
+        Harness.Equal("retry count", 2, options.Retry);
+        Harness.Equal("retry delay", 50, options.RetryDelayMs);
+        Harness.Equal("variable value", "notepad", options.Variables["app"]);
+        Harness.Equal("a value may contain '='", "a=b", options.Variables["t"]);
+        Harness.Check("dry run is recorded", options.DryRun);
+
+        Harness.Check("--set without '=' is refused",
+            ScriptRunner.ParseOptions(new[] { "s.txt", "--set", "oops" }, new ScriptOptions()) is not null);
+        Harness.Check("unknown option is refused",
+            ScriptRunner.ParseOptions(new[] { "s.txt", "--nope" }, new ScriptOptions()) is not null);
+        Harness.Check("two scripts are refused",
+            ScriptRunner.ParseOptions(new[] { "a.txt", "b.txt" }, new ScriptOptions()) is not null);
+        Harness.Check("a non-numeric retry count is refused",
+            ScriptRunner.ParseOptions(new[] { "s.txt", "--retry", "x" }, new ScriptOptions()) is not null);
+        Harness.Check("a negative retry count is refused",
+            ScriptRunner.ParseOptions(new[] { "s.txt", "--retry", "-1" }, new ScriptOptions()) is not null);
+    }
+
+    private static void RetryAndVariables()
+    {
+        Harness.Group("retry policy");
+        Harness.Check("selector failure is retryable", ScriptRunner.IsRetryable(3));
+        Harness.Check("unusable target is retryable", ScriptRunner.IsRetryable(4));
+        Harness.Check("focus failure is retryable", ScriptRunner.IsRetryable(5));
+        Harness.Check("success is never retried", !ScriptRunner.IsRetryable(0));
+        Harness.Check("runtime failure is never retried (it may have sent something)",
+            !ScriptRunner.IsRetryable(1));
+        Harness.Check("usage error is never retried", !ScriptRunner.IsRetryable(2));
+
+        Harness.Group("${variable} substitution");
+        var variables = new Dictionary<string, string> { ["app"] = "notepad", ["title"] = "无标题 记事本" };
+
+        var expanded = ScriptRunner.Expand(
+            ScriptRunner.Parse(new[] { "key type \"${title}\" --process ${app}", "sleep 100" }), variables);
+        Harness.Sequence("a value with spaces stays a single argument",
+            new[] { "key", "type", "无标题 记事本", "--process", "notepad" }, expanded[0].Tokens);
+        Harness.Equal("line numbers survive expansion", 2, expanded[1].LineNumber);
+
+        // Regression: the pass used to be skipped entirely when no --set was given, so a raw
+        // ${name} leaked into the command and failed later with a confusing message.
+        Harness.Throws<CommandFailure>("a ${var} with no --set at all is still refused",
+            () => ScriptRunner.Expand(
+                ScriptRunner.Parse(new[] { "key type \"${title}\"" }), new Dictionary<string, string>()));
+
+        var untouched = ScriptRunner.Expand(
+            ScriptRunner.Parse(new[] { "key press enter" }), new Dictionary<string, string>());
+        Harness.Sequence("tokens without ${} pass through untouched",
+            new[] { "key", "press", "enter" }, untouched[0].Tokens);
+
+        var repeated = ScriptRunner.Expand(
+            ScriptRunner.Parse(new[] { "key type \"${app}-${app}\"" }), variables);
+        Harness.Sequence("a token may use a variable twice",
+            new[] { "key", "type", "notepad-notepad" }, repeated[0].Tokens);
+
+        Harness.Throws<CommandFailure>("an undefined variable is refused",
+            () => ScriptRunner.Expand(ScriptRunner.Parse(new[] { "key press ${nope}" }), variables));
+
+        Harness.Throws<CommandFailure>("an unterminated ${ is refused",
+            () => ScriptRunner.Expand(ScriptRunner.Parse(new[] { "key press ${nope" }), variables));
     }
 
     private static void Tokenizer()

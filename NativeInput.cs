@@ -96,10 +96,11 @@ internal static class NativeInput
     {
         if (ExecutionMode.DryRun)
         {
-            ExecutionMode.NoteSkippedSend();
+            ExecutionMode.NoteSuppressed(inputs.Length);
             return;
         }
 
+        ExecutionMode.NoteInjected(inputs.Length);
         uint sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
         if (sent != inputs.Length)
         {

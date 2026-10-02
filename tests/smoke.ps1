@@ -75,6 +75,34 @@ try {
     $want = "$expected1`n$expected2"
     Check 'typed text round-trips exactly' ($got -eq $want) "got [$got]"
 
+    Write-Host "`n== variables =="
+    $varScript = Join-Path $env:TEMP 'keymouse-smoke-vars.txt'
+    @('mouse move ${x} ${y}', 'mouse pos') | Set-Content -Path $varScript -Encoding utf8
+    $before = (& $Exe mouse pos).Trim()
+    $varOut = & $Exe run $varScript --set x=321 --set y=234 2>&1
+    Check 'variable substitution runs' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$varOut"
+    $movedTo = (& $Exe mouse pos).Trim()
+    Check 'the cursor really moved to the substituted coordinates' ($movedTo -eq '321,234') "pos=$movedTo"
+    Remove-Item $varScript -Force -ErrorAction SilentlyContinue
+
+    Write-Host "`n== retry only repeats what sent nothing =="
+    $retryScript = Join-Path $env:TEMP 'keymouse-smoke-retry.txt'
+    @('key press f24 --process definitely-not-running-xyz') | Set-Content -Path $retryScript -Encoding utf8
+    $retryReport = Join-Path $env:TEMP 'keymouse-smoke-report.json'
+    Remove-Item $retryReport -Force -ErrorAction SilentlyContinue
+    $retryOut = & $Exe run $retryScript --retry 2 --retry-delay 20 --report $retryReport 2>&1
+    Check 'a retryable failure still fails after the retries' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
+    Check 'both retries are reported' ((($retryOut -join "`n") -match 'retry 1 of 2') -and (($retryOut -join "`n") -match 'retry 2 of 2')) 'retry lines missing'
+    Check 'report file was written' (Test-Path $retryReport) "missing $retryReport"
+    if (Test-Path $retryReport) {
+        $json = Get-Content $retryReport -Raw | ConvertFrom-Json
+        Check 'report counts the attempts' ($json.commands[0].attempts -eq 3) "attempts=$($json.commands[0].attempts)"
+        Check 'report proves nothing was injected' ($json.commands[0].injectedEvents -eq 0) "injected=$($json.commands[0].injectedEvents)"
+        Check 'report records the exit code' ($json.exitCode -eq 3) "exitCode=$($json.exitCode)"
+    }
+    Remove-Item $retryScript, $retryReport -Force -ErrorAction SilentlyContinue
+    & $Exe mouse move ($before -split ',')[0] ($before -split ',')[1] | Out-Null
+
     Write-Host "`n== dry run sends nothing =="
     $null = & $Exe key combo ctrl+a --process notepad
     $null = & $Exe key press delete --process notepad

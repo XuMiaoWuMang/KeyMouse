@@ -4,7 +4,7 @@ namespace KeyMouse;
 
 internal static class Program
 {
-    private const string Version = "1.2.1";
+    private const string Version = "1.3.0";
 
     internal static int Main(string[] args)
     {
@@ -613,8 +613,10 @@ internal static class Program
         return code;
     }
 
-    private static void PrintUsage() => Console.WriteLine($"""
-        KeyMouse {Version} - inject real mouse & keyboard events on Windows (one shot, no polling, no daemon)
+    // $$""" because the text itself contains ${name}, which a single-$ interpolated
+    // raw string would try to evaluate as a hole.
+    private static void PrintUsage() => Console.WriteLine($$"""
+        KeyMouse {{Version}} - inject real mouse & keyboard events on Windows (one shot, no polling, no daemon)
 
         USAGE
           KeyMouse <group> <command> [arguments] [options]
@@ -647,14 +649,23 @@ internal static class Program
           window focus <selector>                     focus it and verify (nothing else)
 
         SCRIPT
-          run <file|-> [--delay MS] [--keep-going] [--dry-run] [--echo]
-                                                      run commands from a file (or stdin) in order,
+          run <file|-> [options]                      run commands from a file (or stdin) in order,
                                                       one per line, '#' comments, 'sleep <ms>' lines.
                                                       Each line is a normal command, so selectors and
-                                                      the focus gate apply per line. Stops at the first
-                                                      failure unless --keep-going. --dry-run runs the
-                                                      gate checks but sends nothing. Scripts must be
+                                                      the focus gate apply per line. Scripts must be
                                                       UTF-8.
+
+          --delay MS          wait between commands (default 0)
+          --keep-going        keep going after a failure (default: stop at the first one)
+          --dry-run           run the gate checks but send nothing and take no focus
+          --echo              also print each command's own output
+          --retry N           retry a command up to N extra times, but only when the failure
+                              provably sent nothing (exit 3/4/5); a half-done action is
+                              never repeated
+          --retry-delay MS    wait before a retry (default 300)
+          --set name=value    define ${name} for substitution inside script arguments
+                              (repeatable; values with spaces stay one argument)
+          --report file.json  write a machine-readable run report
 
         WINDOW SELECTOR (all given constraints are ANDed; usable by mouse/key/window commands)
           --title <substring>       case-insensitive title substring
