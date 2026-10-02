@@ -74,16 +74,16 @@ internal static class ScriptRunner
     public static int Run(string[] args, Program.GlobalOptions global, Func<string[], int> execute)
     {
         if (_running)
-            return Fail(2, "run: nested scripts are refused - a script cannot start another script");
+            return Fail(2, "run：不允许脚本里再跑脚本（拒绝嵌套）");
 
         if (global.HasSelector || global.Wx.HasValue || global.Wy.HasValue || global.Pick is not null)
-            return Fail(2, "run: window options belong on the individual lines, not on 'run' itself");
+            return Fail(2, "run：窗口选择器要写在每一行命令上，不能挂在 run 自己身上");
 
         var options = new ScriptOptions();
         if (ParseOptions(args, options) is { } optionError) return Fail(2, optionError);
         if (options.Path is null)
-            return Fail(2, "usage: KeyMouse run <file|-> [--delay MS] [--keep-going] [--dry-run] [--echo] " +
-                           "[--retry N] [--retry-delay MS] [--set name=value] [--report file.json]");
+            return Fail(2, "用法：KeyMouse run <文件|-> [--delay 毫秒] [--keep-going] [--dry-run] [--echo] " +
+                           "[--retry 次数] [--retry-delay 毫秒] [--set 名=值] [--report 文件.json]");
 
         List<(int LineNumber, List<string> Tokens)> commands;
         try
@@ -97,11 +97,11 @@ internal static class ScriptRunner
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Fail(1, $"cannot read script '{options.Path}': {ex.Message}");
+            return Fail(1, $"读不到脚本 '{options.Path}'：{ex.Message}");
         }
 
         if (commands.Count == 0)
-            return Fail(2, $"script '{options.Path}' contains no commands");
+            return Fail(2, $"脚本 '{options.Path}' 里没有任何命令");
 
         string source = options.Path == "-" ? "stdin" : Path.GetFullPath(options.Path);
         var report = new ScriptReport
@@ -120,8 +120,8 @@ internal static class ScriptRunner
         try
         {
             Console.WriteLine(options.DryRun
-                ? $"DRY RUN: {commands.Count} command(s) from {source} - gate checks still run, nothing will be sent"
-                : $"{commands.Count} command(s) from {source}");
+                ? $"演练模式：{source} 共 {commands.Count} 条命令——资格检查照常执行，一个字节都不会发"
+                : $"{source} 共 {commands.Count} 条命令");
 
             int total = commands.Count;
             for (int i = 0; i < total; i++)
@@ -142,7 +142,7 @@ internal static class ScriptRunner
                     int ms = int.Parse(tokens[1]);
                     Thread.Sleep(ms);
                     record.Attempts = 1;
-                    tag = "wait";
+                    tag = "等待";
                 }
                 else if (isWait)
                 {
@@ -158,20 +158,20 @@ internal static class ScriptRunner
                     {
                         // Nothing was sent, so the UI cannot have changed: report the current
                         // state instead of waiting for something that will never happen.
-                        tag = "DRY";
+                        tag = "演练";
                         record.ExitCode = 0;
                         captured = Satisfied()
-                            ? $"current state already satisfies {tokens[0]}"
-                            : $"would wait up to {timeoutMs} ms for {tokens[0]}";
+                            ? $"当前状态已经满足 {tokens[0]}"
+                            : $"{tokens[0]} 本来最多等 {timeoutMs}ms";
                     }
                     else
                     {
                         var (satisfied, elapsed) = WaitUntil(Satisfied, timeoutMs, intervalMs);
                         record.ExitCode = satisfied ? 0 : 3;
-                        tag = satisfied ? "ok" : "FAIL";
+                        tag = satisfied ? "成功" : "失败";
                         captured = satisfied
-                            ? $"{tokens[0]} satisfied after {elapsed} ms"
-                            : $"{tokens[0]} timed out after {timeoutMs} ms - the expected window never appeared";
+                            ? $"{tokens[0]} 在 {elapsed}ms 后满足"
+                            : $"{tokens[0]} 等了 {timeoutMs}ms 超时——期望中的窗口始终没有出现";
                         if (satisfied) report.Succeeded++;
                         else
                         {
@@ -194,13 +194,13 @@ internal static class ScriptRunner
                             break;
 
                         // Retryable means provably nothing was sent, so trying again is safe.
-                        Console.WriteLine($"[{i + 1,3}/{total}] retry {record.Attempts} of {maxAttempts - 1} " +
-                                          $"after exit {record.ExitCode} (nothing was sent)");
+                        Console.WriteLine($"[{i + 1,3}/{total}] 第 {record.Attempts} 次重试（共 {maxAttempts - 1} 次），" +
+                                          $"上一次退出码 {record.ExitCode}（确定没有发出任何输入）");
                         if (options.RetryDelayMs > 0) Thread.Sleep(options.RetryDelayMs);
                     }
 
                     record.Output = captured ?? "";
-                    tag = record.ExitCode == 0 ? (options.DryRun ? "DRY" : "ok") : "FAIL";
+                    tag = record.ExitCode == 0 ? (options.DryRun ? "演练" : "成功") : "失败";
                     if (record.Attempts > 1) report.RetriedCommands++;
                     if (record.ExitCode != 0)
                     {
@@ -220,17 +220,17 @@ internal static class ScriptRunner
                 report.InjectedEvents = ExecutionMode.InjectedEvents;
                 report.SuppressedEvents = ExecutionMode.SuppressedEvents;
 
-                string retryNote = record.Attempts > 1 ? $" (after {record.Attempts - 1} retr{(record.Attempts == 2 ? "y" : "ies")})" : "";
-                Console.WriteLine($"[{i + 1,3}/{total}] {tag,-4} {shown}{retryNote}");
-                if (captured is { Length: > 0 } && (options.Echo || tag == "FAIL" || showDetail))
+                string retryNote = record.Attempts > 1 ? $"（重试 {record.Attempts - 1} 次后成功）" : "";
+                Console.WriteLine($"[{i + 1,3}/{total}] {ConsoleText.Pad(tag, 6)}{shown}{retryNote}");
+                if (captured is { Length: > 0 } && (options.Echo || tag == "失败" || showDetail))
                     foreach (string detail in captured.Split('\n'))
                         Console.WriteLine("           " + detail.TrimEnd());
 
-                if (tag == "FAIL" && !options.KeepGoing)
+                if (tag == "失败" && !options.KeepGoing)
                 {
                     report.StoppedAtLine = lineNumber;
-                    Console.WriteLine($"stop: first failure at line {lineNumber} (exit {firstFailureCode}); " +
-                                      "use --keep-going to run the rest");
+                    Console.WriteLine($"停止：第 {lineNumber} 行首次失败（退出码 {firstFailureCode}）；" +
+                                      "加 --keep-going 可以继续跑后面的");
                     break;
                 }
 
@@ -244,7 +244,7 @@ internal static class ScriptRunner
         }
 
         if (options.DryRun)
-            Console.WriteLine($"\ndry run finished - {ExecutionMode.SuppressedEvents} input event(s) suppressed, nothing was sent");
+            Console.WriteLine($"\n演练结束——共抑制 {ExecutionMode.SuppressedEvents} 个输入事件，什么都没有发送");
 
         int exitCode = firstFailureCode == 0 ? 0 : firstFailureCode;
         report.ExitCode = exitCode;
@@ -255,14 +255,14 @@ internal static class ScriptRunner
         {
             if (!options.DryRun)
                 Console.WriteLine(report.RetriedCommands == 0
-                    ? $"\nall {report.Total} command(s) succeeded"
-                    : $"\nall {report.Total} command(s) succeeded ({report.RetriedCommands} needed a retry)");
+                    ? $"\n全部 {report.Total} 条命令执行成功"
+                    : $"\n全部 {report.Total} 条命令执行成功（其中 {report.RetriedCommands} 条靠重试才成功）");
             return 0;
         }
 
-        Console.WriteLine($"\n{report.Failed} command(s) failed:");
+        Console.WriteLine($"\n有 {report.Failed} 条命令失败：");
         foreach (var failure in report.Commands.Where(c => c.ExitCode != 0))
-            Console.WriteLine($"  line {failure.Line}: {failure.Command}");
+            Console.WriteLine($"  第 {failure.Line} 行：{failure.Command}");
         return exitCode;
     }
 
@@ -305,35 +305,35 @@ internal static class ScriptRunner
             {
                 case "--delay":
                 {
-                    if (!int.TryParse(Value("ms"), out int delay) || delay < 0)
-                        return "--delay needs a non-negative number of milliseconds";
+                    if (!int.TryParse(Value("毫秒"), out int delay) || delay < 0)
+                        return "--delay 需要一个非负的毫秒数";
                     options.DelayMs = delay;
                     break;
                 }
                 case "--retry":
                 {
-                    if (!int.TryParse(Value("count"), out int retry) || retry < 0)
-                        return "--retry needs a non-negative count";
+                    if (!int.TryParse(Value("次数"), out int retry) || retry < 0)
+                        return "--retry 需要一个非负的次数";
                     options.Retry = retry;
                     break;
                 }
                 case "--retry-delay":
                 {
-                    if (!int.TryParse(Value("ms"), out int retryDelay) || retryDelay < 0)
-                        return "--retry-delay needs a non-negative number of milliseconds";
+                    if (!int.TryParse(Value("毫秒"), out int retryDelay) || retryDelay < 0)
+                        return "--retry-delay 需要一个非负的毫秒数";
                     options.RetryDelayMs = retryDelay;
                     break;
                 }
                 case "--report":
-                    options.ReportPath = Value("path");
-                    if (options.ReportPath is null) return "--report needs a file path";
+                    options.ReportPath = Value("路径");
+                    if (options.ReportPath is null) return "--report 需要一个文件路径";
                     break;
                 case "--set":
                 {
-                    string? assignment = Value("name=value");
-                    if (assignment is null) return "--set needs name=value";
+                    string? assignment = Value("名=值");
+                    if (assignment is null) return "--set 需要 名=值";
                     int eq = assignment.IndexOf('=');
-                    if (eq <= 0) return $"--set expects name=value (got '{assignment}')";
+                    if (eq <= 0) return $"--set 的格式是 名=值（收到 '{assignment}'）";
                     options.Variables[assignment[..eq]] = assignment[(eq + 1)..];
                     break;
                 }
@@ -347,8 +347,8 @@ internal static class ScriptRunner
                     options.Echo = true;
                     break;
                 default:
-                    if (arg.Length > 1 && arg[0] == '-') return $"run: unknown option '{arg}'";
-                    if (options.Path is not null) return "run: only one script can be given";
+                    if (arg.Length > 1 && arg[0] == '-') return $"run：未知选项 '{arg}'";
+                    if (options.Path is not null) return "run：只能给一个脚本文件";
                     options.Path = arg;
                     break;
             }
@@ -413,7 +413,7 @@ internal static class ScriptRunner
                 token.Append(c);
                 i++;
             }
-            if (inQuotes) throw new CommandFailure(2, $"unbalanced quote in line: {line.Trim()}");
+            if (inQuotes) throw new CommandFailure(2, $"引号没有闭合：{line.Trim()}");
             tokens.Add(token.ToString());
         }
         return tokens;
@@ -457,13 +457,13 @@ internal static class ScriptRunner
             }
             int close = token.IndexOf('}', open + 2);
             if (close < 0)
-                throw new CommandFailure(2, $"line {lineNumber}: unterminated ${{...}} in '{token}'");
+                throw new CommandFailure(2, $"第 {lineNumber} 行：'{token}' 里的 ${{...}} 没有闭合");
 
             result.Append(token, i, open - i);
             string name = token[(open + 2)..close];
             if (!variables.TryGetValue(name, out string? value))
                 throw new CommandFailure(2,
-                    $"line {lineNumber}: variable '${{{name}}}' is not set - pass --set {name}=value");
+                    $"第 {lineNumber} 行：变量 '${{{name}}}' 没有定义——用 --set {name}=值 指定");
             result.Append(value);
             i = close + 1;
         }
@@ -482,7 +482,7 @@ internal static class ScriptRunner
             {
                 if (tokens.Count != 2 || !int.TryParse(tokens[1], out int ms) || ms < 0)
                     throw new CommandFailure(2,
-                        $"line {lineNumber}: 'sleep' takes one non-negative number of milliseconds");
+                        $"第 {lineNumber} 行：'sleep' 只接受一个非负的毫秒数");
                 continue;
             }
 
@@ -515,7 +515,7 @@ internal static class ScriptRunner
         }
 
         if (!global.HasSelector)
-            return (null, 0, 0, $"{name}: needs a window selector (--title/--class/--process/--pid/--hwnd)");
+            return (null, 0, 0, $"{name}：需要一个窗口选择器（--title/--class/--process/--pid/--hwnd）");
 
         int timeout = 5000, interval = 200;
         for (int i = 0; i < rest.Length; i++)
@@ -524,14 +524,14 @@ internal static class ScriptRunner
             {
                 case "--timeout":
                     if (i + 1 >= rest.Length || !int.TryParse(rest[++i], out timeout) || timeout < 0)
-                        return (null, 0, 0, $"{name}: --timeout needs a non-negative number of milliseconds");
+                        return (null, 0, 0, $"{name}：--timeout 需要一个非负的毫秒数");
                     break;
                 case "--interval":
                     if (i + 1 >= rest.Length || !int.TryParse(rest[++i], out interval) || interval <= 0)
-                        return (null, 0, 0, $"{name}: --interval needs a positive number of milliseconds");
+                        return (null, 0, 0, $"{name}：--interval 需要一个正的毫秒数");
                     break;
                 default:
-                    return (null, 0, 0, $"{name}: unexpected argument '{rest[i]}'");
+                    return (null, 0, 0, $"{name}：多余的参数 '{rest[i]}'");
             }
         }
 
@@ -568,8 +568,8 @@ internal static class ScriptRunner
         }
         catch (DecoderFallbackException)
         {
-            throw new CommandFailure(2, "the script is not valid UTF-8 - save it as UTF-8 " +
-                                        "(ANSI/GBK will not decode, and Chinese text needs UTF-8)");
+            throw new CommandFailure(2, "脚本不是合法的 UTF-8——请另存为 UTF-8" +
+                                        "（ANSI/GBK 无法解码，中文必须用 UTF-8）");
         }
 
         if (text.Length > 0 && text[0] == '\uFEFF') text = text[1..];
@@ -596,12 +596,12 @@ internal static class ScriptRunner
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
             File.WriteAllText(path, json + Environment.NewLine, new UTF8Encoding(false));
-            Console.WriteLine($"report written to {Path.GetFullPath(path)}");
+            Console.WriteLine($"报告已写入 {Path.GetFullPath(path)}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // The script's own result stays authoritative; a broken report path must not hide it.
-            Console.Error.WriteLine($"error: cannot write report '{path}': {ex.Message}");
+            Console.Error.WriteLine($"错误：写不了报告 '{path}'：{ex.Message}");
         }
     }
 
@@ -610,7 +610,7 @@ internal static class ScriptRunner
 
     private static int Fail(int code, string message)
     {
-        Console.Error.WriteLine("error: " + message);
+        Console.Error.WriteLine("错误：" + message);
         return code;
     }
 }

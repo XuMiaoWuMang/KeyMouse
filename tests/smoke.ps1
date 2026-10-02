@@ -124,7 +124,7 @@ try {
     Remove-Item $retryReport -Force -ErrorAction SilentlyContinue
     $retryOut = & $Exe run $retryScript --retry 2 --retry-delay 20 --report $retryReport 2>&1
     Check 'a retryable failure still fails after the retries' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
-    Check 'both retries are reported' ((($retryOut -join "`n") -match 'retry 1 of 2') -and (($retryOut -join "`n") -match 'retry 2 of 2')) 'retry lines missing'
+    Check 'both retries are reported' ((($retryOut -join "`n") -match '第 1 次重试') -and (($retryOut -join "`n") -match '第 2 次重试')) 'retry lines missing'
     Check 'report file was written' (Test-Path $retryReport) "missing $retryReport"
     if (Test-Path $retryReport) {
         $json = Get-Content $retryReport -Raw | ConvertFrom-Json
@@ -141,7 +141,7 @@ try {
         Set-Content -Path $waitScript -Encoding utf8
     $waitOut = & $Exe run $waitScript 2>&1
     Check 'waitfor finds the running Notepad and waitgone agrees' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$waitOut"
-    Check 'the wait reports how long it took' (($waitOut -join "`n") -match 'satisfied after') 'no timing line'
+    Check 'the wait reports how long it took' (($waitOut -join "`n") -match '在 \d+ms 后满足') 'no timing line'
 
     @('waitfor --process definitely-not-running-xyz --timeout 400 --interval 100') |
         Set-Content -Path $waitScript -Encoding utf8
@@ -160,7 +160,7 @@ try {
     Start-Sleep -Milliseconds 300
     $null = & $Exe key press f24 --process notepad 2>&1
     Check 'a disabled window exits 4' ($LASTEXITCODE -eq 4) "exit=$LASTEXITCODE"
-    Check 'the listing flags it as DISABLED' (((& $Exe window list --process notepad) -join "`n") -match 'DISABLED') 'no DISABLED flag'
+    Check 'the listing flags it as disabled' (((& $Exe window list --process notepad) -join "`n") -match '已禁用') 'no disabled flag'
     [void][KeyMouseSmoke.Win]::EnableWindow($note.MainWindowHandle, $true)
     Start-Sleep -Milliseconds 300
     $null = & $Exe window focus --process notepad 2>&1
@@ -173,7 +173,7 @@ try {
     $dry = & $Exe run $scriptFile --dry-run 2>&1
     Check 'dry run exits 0' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
     # -match on an array returns the matching elements, so collapse it to one string first.
-    Check 'dry run reports suppressed input' (($dry -join "`n") -match 'input event\(s\) suppressed') 'no suppression line'
+    Check 'dry run reports suppressed input' (($dry -join "`n") -match '共抑制 \d+ 个输入事件') 'no suppression line'
 
     Set-Clipboard -Value '<<EMPTY>>'
     $null = & $Exe key combo ctrl+a --process notepad

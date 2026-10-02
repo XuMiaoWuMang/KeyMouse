@@ -69,8 +69,8 @@ KeyMouse <group> <command> [参数] [选项]
 | `window inspect <选择器>` | 逐条打印资格判定：每个匹配窗口为什么可用 / 不可用 |
 | `window focus <选择器>` | 只做聚焦 + 验证，不发送任何输入 |
 
-`window list` 的 `state` 列会标出：`visible` / `HIDDEN`、`minimized`、`cloaked`、`DISABLED`、
-`owned-by=0x...`（该窗口属于某个主窗口，即次要窗口）、`wm_null=Nms` / `NO-RESPONSE` / `unprobed`。
+`window list` 的`状态`列会标出：`可见` / `隐藏`、`最小化`、`已遮盖`、`已禁用`、
+`属主=0x...`（该窗口属于某个主窗口，即次要窗口）、`响应=Nms` / `无响应` / `未探测`。
 
 ---
 
@@ -174,7 +174,7 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
   "stoppedAtLine": 3,
   "commands": [
     { "index": 1, "line": 2, "command": "key type \"hi\" --process notepad",
-      "exitCode": 0, "attempts": 1, "durationMs": 412, "injectedEvents": 4, "output": "typed 2 chars" }
+      "exitCode": 0, "attempts": 1, "durationMs": 412, "injectedEvents": 4, "output": "已输入 2 个字符" }
   ]
 }
 ```

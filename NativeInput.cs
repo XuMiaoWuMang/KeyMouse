@@ -106,9 +106,9 @@ internal static class NativeInput
         {
             int err = Marshal.GetLastWin32Error();
             string hint = err == 5
-                ? " - blocked by UIPI: the target window probably runs elevated; run KeyMouse elevated too"
+                ? "——被 UIPI 拦截：目标窗口大概是以管理员权限运行的，请也用管理员权限运行 KeyMouse"
                 : "";
-            throw new InvalidOperationException($"SendInput injected {sent}/{inputs.Length} events (win32 error {err}){hint}");
+            throw new InvalidOperationException($"SendInput 只注入了 {sent}/{inputs.Length} 个事件（Win32 错误 {err}）{hint}");
         }
     }
 
@@ -161,7 +161,7 @@ internal static class NativeInput
         "middle" => (0x0020u, 0x0040u, 0u),
         "x1" => (0x0080u, 0x0100u, 1u),
         "x2" => (0x0080u, 0x0100u, 2u),
-        _ => throw new ArgumentException($"unknown mouse button '{button}' (use left|right|middle|x1|x2)")
+        _ => throw new ArgumentException($"未知鼠标键 '{button}'（可用 left|right|middle|x1|x2）")
     };
 
     public static void ButtonDown(string button)

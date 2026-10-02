@@ -21,7 +21,7 @@ internal static class KeyMap
                 return (raw, false);
         }
 
-        throw new ArgumentException($"unknown key '{name}' (see 'KeyMouse help' for the key list)");
+        throw new ArgumentException($"未知按键 '{name}'（按键名列表见 KeyMouse help）");
     }
 
     public static IEnumerable<string> Names => Map.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase);

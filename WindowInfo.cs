@@ -69,22 +69,24 @@ internal sealed class WindowInfo
         get
         {
             var flags = new List<string>();
-            flags.Add(Visible ? "visible" : "HIDDEN");
-            if (Minimized) flags.Add("minimized");
-            if (Cloaked) flags.Add("cloaked");
-            if (Owner != IntPtr.Zero) flags.Add($"owned-by=0x{Owner.ToInt64():X}");
-            if (!Enabled) flags.Add("DISABLED");
-            flags.Add(!ResponseProbed ? "unprobed" : ResponseMs is null ? "NO-RESPONSE" : $"wm_null={ResponseMs}ms");
-            return string.Join(", ", flags);
+            flags.Add(Visible ? "可见" : "隐藏");
+            if (Minimized) flags.Add("最小化");
+            if (Cloaked) flags.Add("已遮盖");
+            if (Owner != IntPtr.Zero) flags.Add($"属主=0x{Owner.ToInt64():X}");
+            if (!Enabled) flags.Add("已禁用");
+            flags.Add(!ResponseProbed ? "未探测" : ResponseMs is null ? "无响应" : $"响应={ResponseMs}ms");
+            return string.Join("，", flags);
         }
     }
 
     public string Describe() =>
-        $"0x{Handle.ToInt64():X}  {ProcessName}({ProcessId})  \"{Title}\"  class={ClassName}  [{StateSummary}]";
+        $"0x{Handle.ToInt64():X}  {ProcessName}({ProcessId})  \"{Title}\"  类名={ClassName}  [{StateSummary}]";
 
     /// <summary>One row for `window list`.</summary>
     public string TableRow() =>
-        $"0x{Handle.ToInt64():X8}  {ProcessName,-20} {Truncate(Title, 42),-42} {ClassName,-26} {StateSummary}";
-
-    private static string Truncate(string s, int max) => s.Length <= max ? s : s[..(max - 1)] + "…";
+        $"0x{Handle.ToInt64():X8}  " +
+        ConsoleText.Pad(ProcessName, 22) +
+        ConsoleText.Pad(ConsoleText.Truncate(Title, 42), 42) + " " +
+        ConsoleText.Pad(ClassName, 26) + " " +
+        StateSummary;
 }

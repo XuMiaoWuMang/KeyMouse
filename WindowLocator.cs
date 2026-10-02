@@ -60,7 +60,7 @@ internal static class WindowLocator
     {
         var point = new NativeWindow.POINT { X = x, Y = y };
         if (!NativeWindow.ClientToScreen(h, ref point))
-            throw new CommandFailure(1, "ClientToScreen failed for the target window");
+            throw new CommandFailure(1, "对目标窗口调用 ClientToScreen 失败");
         return (point.X, point.Y);
     }
 
@@ -79,12 +79,12 @@ internal static class WindowLocator
         if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
             if (!long.TryParse(v.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value))
-                throw new ArgumentException($"'{raw}' is not a valid window handle");
+                throw new ArgumentException($"'{raw}' 不是合法的窗口句柄");
         }
         else if (!long.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out value) &&
                  !long.TryParse(v, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value))
         {
-            throw new ArgumentException($"'{raw}' is not a valid window handle");
+            throw new ArgumentException($"'{raw}' 不是合法的窗口句柄");
         }
         return new IntPtr(value);
     }
@@ -96,9 +96,9 @@ internal static class WindowLocator
             .Take(sampleSize)
             .ToList();
         string listing = sample.Count == 0
-            ? "  (no visible titled windows on this desktop)"
+            ? "  （当前桌面上没有可见且有标题的窗口）"
             : string.Join("\n", sample.Select(w => "  " + w.Describe()));
-        return $"no window matches {selector.Describe()}\n\nvisible windows right now:\n{listing}";
+        return $"没有窗口匹配 {selector.Describe()}\n\n当前可见的窗口：\n{listing}";
     }
 
     public static string CandidateTable(IEnumerable<WindowInfo> windows) =>

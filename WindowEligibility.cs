@@ -7,8 +7,8 @@ internal sealed class EligibilityVerdict
     public bool Ok => Problems.Count == 0;
 
     public string Summary => Ok
-        ? (Notes.Count > 0 ? "usable (" + string.Join("; ", Notes) + ")" : "usable")
-        : string.Join("; ", Problems);
+        ? (Notes.Count > 0 ? "可用（" + string.Join("；", Notes) + "）" : "可用")
+        : string.Join("；", Problems);
 }
 
 /// <summary>
@@ -29,7 +29,7 @@ internal static class WindowEligibility
 
         if (!NativeWindow.IsWindow(w.Handle))
         {
-            verdict.Problems.Add("handle is no longer a window");
+            verdict.Problems.Add("句柄已不再是窗口");
             current = w;
             return verdict;
         }
@@ -44,30 +44,29 @@ internal static class WindowEligibility
             Thread.Sleep(300);
             w = WindowInfo.Capture(w.Handle);
             if (w.Minimized || !w.Visible)
-                verdict.Problems.Add("--allow-restore could not bring the window back on screen");
+                verdict.Problems.Add("--allow-restore 没能把窗口恢复到屏幕上");
             else
-                verdict.Notes.Add("restored by --allow-restore (apps that keep their window hidden may paint blank)");
+                verdict.Notes.Add("已按 --allow-restore 还原（把窗口藏在托盘的应用可能只画出一片空白）");
         }
         else if (w.Minimized)
         {
-            verdict.Problems.Add("window is minimized - pass --allow-restore to let KeyMouse restore it");
+            verdict.Problems.Add("窗口已最小化——加 --allow-restore 允许 KeyMouse 还原它");
         }
 
         if (!w.Visible)
-            verdict.Problems.Add("window is hidden (tray / background window) - KeyMouse refuses hidden windows, bring it up first");
+            verdict.Problems.Add("窗口是隐藏的（托盘/后台窗口）——KeyMouse 拒绝隐藏窗口，请先让它显示出来");
         if (w.Cloaked)
-            verdict.Problems.Add("window is DWM-cloaked (suspended UWP app or on another virtual desktop)");
+            verdict.Problems.Add("窗口被 DWM 遮盖（挂起的 UWP 应用，或位于其他虚拟桌面）");
         if (!w.Enabled)
-            verdict.Problems.Add("window is disabled (WS_DISABLED) - it ignores input by design, " +
-                                 "which usually means a modal dialog owns it");
+            verdict.Problems.Add("窗口已被禁用（WS_DISABLED）——它设计上就忽略输入，通常意味着有模态对话框占着它");
 
         long? response = w.ResponseProbed ? w.ResponseMs : NativeWindow.ResponseMs(w.Handle, responseTimeoutMs);
         current = w.WithResponse(response);
 
         if (response is null)
-            verdict.Problems.Add($"window does not answer WM_NULL within {responseTimeoutMs} ms (not responding)");
+            verdict.Problems.Add($"窗口在 {responseTimeoutMs}ms 内没有应答 WM_NULL（无响应）");
         else if (response > 400)
-            verdict.Notes.Add($"slow to respond ({response} ms)");
+            verdict.Notes.Add($"响应偏慢（{response}ms）");
 
         return verdict;
     }

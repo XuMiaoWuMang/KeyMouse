@@ -96,27 +96,27 @@ internal static class WindowTests
         Harness.Group("window state summary");
 
         Harness.Check("an unprobed window is not reported as dead",
-            Win("x", responseMs: null, probed: false).StateSummary.Contains("unprobed"));
+            Win("x", responseMs: null, probed: false).StateSummary.Contains("未探测"));
 
-        Harness.Check("a timed-out probe is reported as NO-RESPONSE",
-            Win("x", responseMs: null, probed: true).StateSummary.Contains("NO-RESPONSE"));
+        Harness.Check("a timed-out probe is reported as not responding",
+            Win("x", responseMs: null, probed: true).StateSummary.Contains("无响应"));
 
         Harness.Check("a probed window reports its latency",
-            Win("x", responseMs: 3, probed: true).StateSummary.Contains("wm_null=3ms"));
+            Win("x", responseMs: 3, probed: true).StateSummary.Contains("响应=3ms"));
 
         Harness.Check("an owner is surfaced",
-            Win("x", owner: new IntPtr(0xABCD)).StateSummary.Contains("owned-by=0xABCD"));
+            Win("x", owner: new IntPtr(0xABCD)).StateSummary.Contains("属主=0xABCD"));
 
         Harness.Check("a hidden window is shouted about",
-            Win("x", visible: false).StateSummary.Contains("HIDDEN"));
+            Win("x", visible: false).StateSummary.Contains("隐藏"));
 
         Harness.Check("a disabled window is shouted about",
-            Win("x", enabled: false).StateSummary.Contains("DISABLED"));
+            Win("x", enabled: false).StateSummary.Contains("已禁用"));
 
         Harness.Check("an enabled window is not marked disabled",
-            !Win("x").StateSummary.Contains("DISABLED"));
+            !Win("x").StateSummary.Contains("已禁用"));
 
         Harness.Check("a plain window reads as visible",
-            Win("x").StateSummary.StartsWith("visible"));
+            Win("x").StateSummary.StartsWith("可见"));
     }
 }

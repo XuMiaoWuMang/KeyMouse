@@ -24,10 +24,10 @@ internal static class WindowFocus
     {
         // A dry run must not touch the desktop either, so focus is reported as satisfied.
         if (ExecutionMode.DryRun)
-            return new FocusResult { Ok = true, Attempts = 0, Detail = "dry-run: would focus" };
+            return new FocusResult { Ok = true, Attempts = 0, Detail = "演练模式：本来会聚焦" };
 
         if (IsForeground(h))
-            return new FocusResult { Ok = true, Attempts = 0, Detail = "already foreground" };
+            return new FocusResult { Ok = true, Attempts = 0, Detail = "已经是前台窗口" };
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
@@ -36,7 +36,7 @@ internal static class WindowFocus
             Thread.Sleep(WaitAfterCallMs);
 
             if (IsForeground(h))
-                return new FocusResult { Ok = true, Attempts = attempt, Detail = $"foreground after {attempt} gentle attempt(s)" };
+                return new FocusResult { Ok = true, Attempts = attempt, Detail = $"第 {attempt} 次温和尝试后成为前台窗口" };
         }
 
         IntPtr fg = NativeWindow.GetForegroundWindow();
@@ -44,7 +44,7 @@ internal static class WindowFocus
         {
             Ok = false,
             Attempts = maxAttempts,
-            Detail = $"still not foreground after {maxAttempts} attempts (foreground is \"{NativeWindow.GetTitle(fg)}\")"
+            Detail = $"尝试 {maxAttempts} 次仍未成为前台窗口（当前前台是「{NativeWindow.GetTitle(fg)}」）"
         };
     }
 }
