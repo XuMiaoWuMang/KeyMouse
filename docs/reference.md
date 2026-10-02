@@ -136,6 +136,35 @@ key press enter --process notepad
 | `--set name=value` | 定义变量，脚本里用 `${name}` 引用（可重复给） |
 | `--report file.json` | 写一份机器可读的执行报告 |
 
+### 目标继承（脚本内）
+
+脚本里**只需要写一次选择器**：
+
+```
+window focus --title "记事本"
+key type "第一行"
+key press enter
+key type "第二行"
+mouse click left -wx 100 -wy 100
+```
+
+规则：
+
+- 任何一行只要带了**目标选择器**（`--title` / `--title-exact` / `--class` / `--process` /
+  `--pid` / `--hwnd` / `--pick`），它就成为脚本的**当前目标**；最后一次写的覆盖之前的；
+- 之后的 `mouse` / `key`（含 `keyboard`）行**不带选择器时自动继承**它；
+- 行里自己写了选择器，就以自己的为准（并同时更新当前目标）；
+- **继承不是降低验证**：继承来的目标每一行都要重新过一遍**资格闸门 + 焦点验证**，
+  失败照样以退出码 `3/4/5` 停在那一行；
+- `waitfor` / `waitgone` / `window list` **不继承**——等哪个窗口、列出哪些窗口，
+  是值得明说的意图；
+- 日志会标出继承：`key type "第二行"   ← 继承目标 --title "记事本"`，
+  报告 JSON 里的 `command` 是**实际执行**的完整命令，另有 `inheritedTarget` 字段。
+
+> 跨**进程**（`KeyMouse key type ...` 分开敲）不继承：每次调用都是独立进程，
+> 没有"上一次"；而且靠隐藏状态记住目标，正是这个工具最该避免的失败模式
+> （输入发到了你以为不是它的窗口）。
+
 ### 伪命令
 
 | 伪命令 | 说明 |

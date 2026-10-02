@@ -14,6 +14,38 @@ internal static class ParsingTests
         RunOptions();
         RetryAndVariables();
         WaitCommands();
+        TargetInheritance();
+    }
+
+    private static void TargetInheritance()
+    {
+        Harness.Group("script target inheritance");
+
+        Harness.Check("a selector is recognised in a line",
+            ScriptRunner.ExtractTargetTokens(new[] { "key", "type", "hi", "--process", "notepad" })
+                is { Count: 2 } t1 && t1[0] == "--process" && t1[1] == "notepad");
+
+        Harness.Check("--flag=value keeps its inline value",
+            ScriptRunner.ExtractTargetTokens(new[] { "mouse", "click", "--title=My Window" })
+                is { Count: 1 } t2 && t2[0] == "--title=My Window");
+
+        Harness.Check("every selector of a line is kept",
+            ScriptRunner.ExtractTargetTokens(new[] { "window", "focus", "--class", "Notepad", "--pick", "2" })
+                is { Count: 4 } t3 && t3[2] == "--pick" && t3[3] == "2");
+
+        Harness.Check("a line without a selector yields no target",
+            ScriptRunner.ExtractTargetTokens(new[] { "key", "type", "hi" }) is null);
+
+        Harness.Check("client-area flags are not a target",
+            ScriptRunner.ExtractTargetTokens(new[] { "mouse", "click", "-wx", "10", "-wy", "20" }) is null);
+
+        Harness.Check("mouse inherits", ScriptRunner.InheritsTarget(new[] { "mouse", "click", "left" }));
+        Harness.Check("key inherits", ScriptRunner.InheritsTarget(new[] { "key", "type", "hi" }));
+        Harness.Check("keyboard alias inherits", ScriptRunner.InheritsTarget(new[] { "keyboard", "press", "a" }));
+
+        Harness.Check("window list does not inherit", !ScriptRunner.InheritsTarget(new[] { "window", "list" }));
+        Harness.Check("waitfor does not inherit", !ScriptRunner.InheritsTarget(new[] { "waitfor", "--timeout", "100" }));
+        Harness.Check("window focus does not inherit", !ScriptRunner.InheritsTarget(new[] { "window", "focus" }));
     }
 
     private static void RunOptions()

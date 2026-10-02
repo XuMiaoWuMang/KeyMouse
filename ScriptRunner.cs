@@ -38,6 +38,9 @@ internal sealed class CommandRecord
     public int Index { get; set; }
     public int Line { get; set; }
     public string Command { get; set; } = "";
+
+    /// <summary>The target options this line inherited from an earlier line, if any.</summary>
+    public string? InheritedTarget { get; set; }
     public int ExitCode { get; set; }
     public int Attempts { get; set; }
     public long DurationMs { get; set; }
@@ -124,11 +127,38 @@ internal static class ScriptRunner
                 : $"{source} 共 {commands.Count} 条命令");
 
             int total = commands.Count;
+            List<string>? currentTarget = null;
+
             for (int i = 0; i < total; i++)
             {
-                var (lineNumber, tokens) = commands[i];
-                string shown = string.Join(' ', tokens.Select(Quote));
-                var record = new CommandRecord { Index = i + 1, Line = lineNumber, Command = shown };
+                var (lineNumber, written) = commands[i];
+
+                // A line that names a window becomes the script's current target; a later
+                // mouse/key line without one inherits it, so the selector is written once.
+                // Inheritance only saves typing: the inherited line still goes through the
+                // full gate and focus verification on its own.
+                List<string>? ownTarget = ExtractTargetTokens(written);
+                if (ownTarget is not null) currentTarget = ownTarget;
+
+                string inheritedNote = "";
+                List<string> tokens = written;
+                if (ownTarget is null && currentTarget is not null && InheritsTarget(written))
+                {
+                    tokens = new List<string>(written);
+                    tokens.AddRange(currentTarget);
+                    inheritedNote = "   ← 继承目标 " + string.Join(' ', currentTarget.Select(Quote));
+                }
+
+                // The console shows the line as written, with a note saying what was added, so
+                // the command stays readable; the report records the effective command.
+                string shown = string.Join(' ', written.Select(Quote));
+                var record = new CommandRecord
+                {
+                    Index = i + 1,
+                    Line = lineNumber,
+                    Command = string.Join(' ', tokens.Select(Quote)),
+                    InheritedTarget = inheritedNote.Length > 0 ? string.Join(' ', currentTarget!) : null
+                };
                 var stopwatch = Stopwatch.StartNew();
                 string tag;
                 string? captured = null;
@@ -225,7 +255,7 @@ internal static class ScriptRunner
                         ? $"（重试 {record.Attempts - 1} 次后成功）"
                         : $"（重试 {record.Attempts - 1} 次仍然失败）"
                     : "";
-                Console.WriteLine($"[{i + 1,3}/{total}] {ConsoleText.Pad(tag, 6)}{shown}{retryNote}");
+                Console.WriteLine($"[{i + 1,3}/{total}] {ConsoleText.Pad(tag, 6)}{shown}{retryNote}{inheritedNote}");
                 if (captured is { Length: > 0 } && (options.Echo || tag == "失败" || showDetail))
                     foreach (string detail in captured.Split('\n'))
                         Console.WriteLine("           " + detail.TrimEnd());
@@ -473,6 +503,51 @@ internal static class ScriptRunner
         }
         return result.ToString();
     }
+
+    /// <summary>
+    /// The options that name a target window. A line carrying one sets the script's current
+    /// target; a later mouse/key line without one inherits it instead of repeating it.
+    /// </summary>
+    private static readonly string[] TargetOptions =
+    {
+        "title", "title-exact", "class", "process", "pid", "hwnd", "pick"
+    };
+
+    /// <summary>
+    /// Returns the target options of a line (each flag with its value), or null when the line
+    /// names no target. Handles both --flag value and --flag=value.
+    /// </summary>
+    internal static List<string>? ExtractTargetTokens(IReadOnlyList<string> tokens)
+    {
+        List<string>? found = null;
+
+        for (int i = 0; i < tokens.Count; i++)
+        {
+            string token = tokens[i];
+            if (token.Length < 2 || token[0] != '-') continue;
+
+            string name = token.TrimStart('-');
+            int equals = name.IndexOf('=');
+            bool inlineValue = equals >= 0;
+            if (inlineValue) name = name[..equals];
+            if (!TargetOptions.Contains(name, StringComparer.OrdinalIgnoreCase)) continue;
+
+            found ??= new List<string>();
+            found.Add(token);
+            if (!inlineValue && i + 1 < tokens.Count) found.Add(tokens[++i]);
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// Commands that may fall back to the script's current target: the ones that act on a
+    /// window the script already named. `waitfor` / `waitgone` are deliberately excluded -
+    /// which window you are waiting for is a statement worth making explicitly - and so is
+    /// `window list`, which describes every window and would be narrowed by inheritance.
+    /// </summary>
+    internal static bool InheritsTarget(IReadOnlyList<string> tokens) =>
+        tokens.Count > 0 && tokens[0].ToLowerInvariant() is "mouse" or "key" or "keyboard";
 
     /// <summary>
     /// `sleep` and the wait pseudo-commands are validated before anything runs, so a typo

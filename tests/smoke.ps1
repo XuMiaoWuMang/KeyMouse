@@ -261,6 +261,31 @@ try {
     } else {
         Check 'the move reports the screen point it used' $false "output was [$moveOut]"
     }
+
+    Write-Host "`n== a script focuses once and inherits the target =="
+    $inheritScript = Join-Path $env:TEMP 'keymouse-smoke-inherit.txt'
+    @(
+        'window focus ' + $targetInScript
+        'key type "inherited target works"'
+        'key press enter'
+        'key type "second line, same window"'
+    ) | Set-Content -Path $inheritScript -Encoding utf8
+
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    Start-Sleep -Milliseconds 200
+
+    $inheritOut = & $Exe run $inheritScript 2>&1
+    Check 'a script runs with the selector written once' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE`n$inheritOut"
+    Check 'the log says the target was inherited' (($inheritOut -join "`n") -match '继承目标') 'no inheritance note'
+
+    Set-Clipboard -Value '<<EMPTY>>'
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key combo ctrl+c @target
+    Start-Sleep -Milliseconds 300
+    $inherited = Get-Clipboard -Raw
+    Check 'inherited commands really reached the target' ($inherited -match 'inherited target works') "got [$inherited]"
+    Remove-Item $inheritScript -Force -ErrorAction SilentlyContinue
 }
 finally {
     Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force

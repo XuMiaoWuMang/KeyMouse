@@ -47,6 +47,10 @@ internal static class Usage
                                                       sleep、waitfor、waitgone。
                                                       选择器与焦点闸门逐行生效；脚本必须是 UTF-8。
 
+          window focus <选择器>            脚本里只要写一次：它同时成为"当前目标"，
+                                           后面的 mouse / key 行不带选择器时自动继承
+                                           （继承的行仍然各自过一遍焦点与闸门验证）
+
           sleep <毫秒>                     等待
           waitfor <选择器> [--timeout 毫秒] [--interval 毫秒]
                                            等到有可用窗口匹配；超时则退出码 3（默认 5000 / 200 毫秒）
