@@ -11,9 +11,9 @@ description:
   en: >
       Maps client-relative coordinates onto the capture, checks them against the real client size and refuses out-of-bounds regions instead of truncating them. The bounds check is the tool's stance in miniature: no guessing, no silent clamping.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:51.237Z"
-fingerprint: 55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94
+revision: 7a1a124eb7b20fcbebed310d012cbf3926b69a0b
+updated_at: "2026-10-03T08:34:07.493Z"
+fingerprint: b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae
 source:
   - path: "Probe.cs"
     line: 294

@@ -56,6 +56,10 @@ internal static class Usage
           --tessdata-dir <目录>    模型目录；默认 %LOCALAPPDATA%\KeyMouse\tessdata
           --min-conf N             置信度地板，默认 30；低于它判为没看清
           --scale N / --pad N      放大倍数（默认 3）与白边像素（默认 16）
+          --resample nearest|bilinear
+                                   放大时怎么取样：默认 nearest（每个源像素复制成
+                                   N×N 方块，不发明新像素、不产生重影）；bilinear 更
+                                   柔和，但会把 ClearType 的彩边抹成光晕
           --capture screen|print   取像方式：默认 screen；print 用 PrintWindow 不画光标，
                                    但它不能用于 --space window（标题栏），且本机几何对不齐
                                    （见 docs/design.md）

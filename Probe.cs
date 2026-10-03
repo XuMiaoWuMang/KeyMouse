@@ -45,7 +45,7 @@ internal static class Probe
     internal static int Run(string[] args, Program.GlobalOptions g)
     {
         var (positional, options) = Program.Parse(
-            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "space", "capture");
+            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "space", "capture", "resample");
 
         if (positional.Count > 0)
             throw new ArgumentException($"probe 不接受位置参数 '{positional[0]}'");
@@ -57,6 +57,12 @@ internal static class Probe
         int minConfidence = Math.Clamp(Program.IntOr(options, "min-conf", DefaultMinConfidence), 0, 100);
         int scale = Math.Clamp(Program.IntOr(options, "scale", 3), 1, 8);
         int pad = Math.Clamp(Program.IntOr(options, "pad", 16), 0, 200);
+        string resample = options.TryGetValue("resample", out string? sampling) && sampling.Length > 0
+            ? sampling.ToLowerInvariant()
+            : "nearest";
+        if (resample is not ("nearest" or "bilinear"))
+            throw new ArgumentException($"--resample 只接受 nearest 或 bilinear，收到 '{resample}'");
+        bool nearest = resample == "nearest";
         string languages = options.TryGetValue("lang", out string? lang) && lang.Length > 0 ? lang : "eng+chi_sim";
         string engineCommand = ResolveEngine(
             options.TryGetValue("engine", out string? engine) && engine.Length > 0 ? engine : "tesseract");
@@ -205,7 +211,7 @@ internal static class Probe
                             $"屏幕区域 {screenOriginX + region.X},{screenOriginY + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
                 }
 
-                prepared = Preprocess(Normalize(frame), scale, pad);
+                prepared = Preprocess(Normalize(frame), scale, pad, nearest);
                 WriteBmp(imagePath, prepared);
 
                 var read = RunEngine(engineCommand, imagePath, languages, tessdata);
@@ -399,13 +405,20 @@ internal static class Probe
     }
 
     /// <summary>
-    /// 3x bilinear upscale plus a white border.
+    /// Upscale plus a white border.
     ///
-    /// Measured: Tesseract is comfortable near 300 DPI and a screen region is 96 DPI, and this
-    /// step rescued three of four failing real samples. Bilinear keeps it dependency-free and
-    /// deterministic, which matters more here than the last few percent of sharpness.
+    /// Measured: Tesseract is comfortable near 300 DPI and a screen region is 96 DPI, and this step
+    /// rescued three of four failing real samples. Two samplers are available because the default
+    /// one is a *quality* decision, not a size one:
+    ///
+    /// * `nearest` replicates each source pixel into a scale x scale block. Nothing is invented, so
+    ///   the glyph edges the engine sees are exactly the edges that were on screen, and the image a
+    ///   human inspects (`--keep-image`) shows no smearing.
+    /// * `bilinear` interpolates, which reads smoother to the eye but smears ClearType subpixel
+    ///   fringes into halos - the "ghosting" that is plainly visible at 3x on small regions.
     /// </summary>
-    internal static NativeCapture.Frame Preprocess(NativeCapture.Frame source, int scale, int pad)
+    internal static NativeCapture.Frame Preprocess(
+        NativeCapture.Frame source, int scale, int pad, bool nearest = true)
     {
         int scaledWidth = source.Width * scale;
         int scaledHeight = source.Height * scale;
@@ -420,6 +433,7 @@ internal static class Probe
 
         for (int y = 0; y < scaledHeight; y++)
         {
+            int nearestY = Math.Min(source.Height - 1, y / scale);
             double sourceY = (y + 0.5) / scale - 0.5;
             int y0 = Math.Clamp((int)Math.Floor(sourceY), 0, source.Height - 1);
             int y1 = Math.Clamp(y0 + 1, 0, source.Height - 1);
@@ -427,12 +441,23 @@ internal static class Probe
 
             for (int x = 0; x < scaledWidth; x++)
             {
+                int destination = ((y + pad) * width + (x + pad)) * 4;
+
+                if (nearest)
+                {
+                    int nearestX = Math.Min(source.Width - 1, x / scale);
+                    int source4 = (nearestY * source.Width + nearestX) * 4;
+                    pixels[destination] = source.Bgra[source4];
+                    pixels[destination + 1] = source.Bgra[source4 + 1];
+                    pixels[destination + 2] = source.Bgra[source4 + 2];
+                    continue;
+                }
+
                 double sourceX = (x + 0.5) / scale - 0.5;
                 int x0 = Math.Clamp((int)Math.Floor(sourceX), 0, source.Width - 1);
                 int x1 = Math.Clamp(x0 + 1, 0, source.Width - 1);
                 double fx = Math.Clamp(sourceX - x0, 0, 1);
 
-                int destination = ((y + pad) * width + (x + pad)) * 4;
                 for (int channel = 0; channel < 3; channel++)
                 {
                     int i00 = (y0 * source.Width + x0) * 4 + channel;

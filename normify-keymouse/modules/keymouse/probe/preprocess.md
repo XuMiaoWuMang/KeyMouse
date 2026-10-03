@@ -6,18 +6,18 @@ tags: [perception, ocr]
 name: {zh: "对比度、放大与白边", en: "Contrast, upscale, padding"}
 description:
   zh: >
-      三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、3× 双线性放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。
+      三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。放大默认用**最近邻**：每个源像素复制成 N×N 方块，不发明像素，所以 --keep-image 里看不到屏幕上没有的光晕；实测 10 个真实样本 3× 最近邻 9/10 逐字正确，双线性只有 6/10（重影就是在丢分），完全不放大 7/10。
       
   en: >
-      Three transforms, each forced by a measurement: contrast normalisation against the background mode (a percentile stretch failed because the window icon pinned the histogram), 3x bilinear upscale with padding (the engine wants ~300 DPI, a screen region is 96), and a hand-written BMP writer so no image library is needed.
+      Three transforms, each forced by measurement: contrast normalisation against the background mode, an upscale with padding (the engine wants ~300 DPI, a screen region is 96), and a hand-written BMP writer so no image library is needed. The upscale samples nearest by default: each source pixel becomes an N x N block, nothing is invented, so --keep-image shows no halo that was not on screen. Over 10 real samples: 9/10 exact at 3x nearest, 6/10 bilinear, 7/10 with no upscale.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:51.237Z"
-fingerprint: 55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94
+revision: 7a1a124eb7b20fcbebed310d012cbf3926b69a0b
+updated_at: "2026-10-03T08:34:11.271Z"
+fingerprint: b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae
 source:
   - path: "Probe.cs"
-    line: 355
-    end_line: 488
+    line: 361
+    end_line: 513
 apis:
   - protocol: rpc
     path: "Probe.Normalize"
@@ -32,10 +32,10 @@ apis:
     path: "Probe.Preprocess"
     description:
       zh: >
-          3× 双线性放大加白边。
+          放大（默认最近邻复制）+ 白边，另可切 bilinear。
           
       en: >
-          3x bilinear upscale plus a white border.
+          Upscale (nearest replication by default, bilinear optional) plus a white border.
           
   - protocol: rpc
     path: "Probe.WriteBmp"

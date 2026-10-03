@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-nearest-upscale",
+  "title": {
+    "zh": "放大改用最近邻：去掉重影，读数更好",
+    "en": "Nearest-neighbour upscale: no ghosting, better reads"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "用户报告小区域放大后有肉眼可见的\"重影\"（--keep-image 出来的图），要求不要把截图放大。实测确认重影来自 3× 双线性插值把 ClearType 彩边抹成光晕；同一批 10 个真实样本：3× 最近邻 9/10 逐字正确（conf 91.2）、3× 双线性 6/10（50.4）、完全不放大 7/10（63.4）。放大保留（96→300 DPI 是引擎需要的），只把取样换成最近邻，--resample bilinear 仍可切换。",
+    "en": "The user reported visible ghosting when a small region is upscaled (visible in --keep-image) and asked not to enlarge the capture. Measurement pinned it on 3x bilinear interpolation smearing ClearType fringes into halos; over 10 real samples: 9/10 exact with 3x nearest (conf 91.2), 6/10 with 3x bilinear (50.4), 7/10 with no upscale (63.4). The upscale stays (96 -> ~300 DPI is what the engine wants); only the sampler changes, with --resample bilinear still available."
+  },
+  "modules": {
+    "modify": [
+      "keymouse.probe.preprocess",
+      "keymouse.probe",
+      "keymouse.docs",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.tests.unit.parsing"
+    ]
+  },
+  "acceptance": [
+    "默认取样是最近邻：单元测试断言放大不产生中间值，bilinear 会产生",
+    "--resample 只接受 nearest|bilinear，其余退出码 2",
+    "实测记录进 design.md 与 reference.md（9/10 vs 6/10 vs 7/10）",
+    "verify.ps1 全绿（单元 236、冒烟 82），normify_validate 0 error"
+  ],
+  "note": "放大取样从双线性改成最近邻（--resample，默认 nearest）：重影消失，同一批真实样本逐字正确 6/10 → 9/10。probe.preprocess 模块说明与 API 描述同步；文档记录实测数据。",
+  "revision": {
+    "before": null,
+    "after": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b"
+  },
+  "created_at": "2026-10-03T08:33:58.148Z",
+  "updated_at": "2026-10-03T08:34:11.899Z",
+  "closed_at": "2026-10-03T08:34:11.899Z"
+}

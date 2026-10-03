@@ -2,7 +2,7 @@
   "schema_version": 1,
   "ok": true,
   "project": "normify-keymouse",
-  "compiled_at": "2026-10-03T08:15:52.800Z",
+  "compiled_at": "2026-10-03T08:34:12.031Z",
   "stats": {
     "tree_count": 1,
     "module_count": 134,
@@ -15,7 +15,7 @@
     "planned_count": 0,
     "deprecated_count": 0,
     "policy_rule_count": 2,
-    "change_count": 3,
+    "change_count": 4,
     "open_change_count": 0
   },
   "warnings": {
@@ -25,19 +25,19 @@
   },
   "artifacts": {
     "tree.json": {
-      "sha256": "d37ae08e3b1cd255fdb1bb927dc503efac84ce619539a0a5bacbd778294516d2",
-      "bytes": 374783
+      "sha256": "0fd5d4eca90f48e1c31ea99d667cd98882aee588c5971b69aeb8d4307fa3e305",
+      "bytes": 375574
     },
     "outline.md": {
-      "sha256": "4b7711d25ff18db6f3ed4a206375937c8168e6dcff77c09779f3c6024910de3b",
-      "bytes": 38223
+      "sha256": "82ca671e4f9201783c06260d0485a8749aea8759bcccbb5eaf14fa29448b21a8",
+      "bytes": 38222
     },
     "api-index.json": {
       "sha256": "a04c1a7e568749deb6a226d48cb0d7128b6616fcd0047b32e645eb5110b14fcc",
       "bytes": 11359
     },
     "receipt.json": {
-      "sha256": "869deef08b4572cf79a142efde0d3554a5de674f0f844af32d62d6476df54f39",
+      "sha256": "f12596858982e08b7180829c22bd0f86210d8b88525681f81e429821fd959a64",
       "bytes": 989
     }
   }

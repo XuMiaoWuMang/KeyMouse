@@ -398,6 +398,8 @@ try {
         Check 'an unmatched selector is exit 3' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE"
         $null = & $Exe probe @target --region 0,0,600,40 --engine 'definitely-not-an-engine' 2>&1
         Check 'a missing OCR engine is exit 6' ($LASTEXITCODE -eq 6) "exit=$LASTEXITCODE"
+        $null = & $Exe probe @target --region 0,0,600,40 --resample 'spline' 2>&1
+        Check 'an unknown resampler is exit 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
     }
 
     # Region selection: --rect drives the same conversion the overlay drives, the interactive paths

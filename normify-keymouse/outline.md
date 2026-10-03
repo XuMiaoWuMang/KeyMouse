@@ -70,7 +70,7 @@
     - keymouse.probe.capture — 区域定位与采集 / Region mapping and capture — 把客户区相对坐标映射到取像请求上，用真实客户区尺寸校验，越界就拒绝而不是截断。这个边界检查就是工具态度的缩影：不猜、不静默截断。 — [模块 1 · API 1]
     - keymouse.probe.consensus — 共识判定与置信度地板 / Consensus and confidence floor — N 次重新采集必须逐字一致才算“看清”，置信度还需过 30 的地板。两个数字都是实测定的：合成图上 60 以下全是垃圾，但真实屏幕上一次读对的只有 55.8，所… — [模块 1 · API 1]
     - keymouse.probe.engine — 外部 OCR 引擎调用 / External OCR engine — 调用显式配置的外部引擎（默认 Tesseract）并读 tsv 拿逐词置信度。不打包任何模型；引擎版本、tessdata 目录与模型体积都进输出，否则事后“为什… — [模块 1 · API 3]
-    - keymouse.probe.preprocess — 对比度、放大与白边 / Contrast, upscale, padding — 三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、3× 双线性放大加白边（引擎舒适区约 300 DPI，屏幕区… — [模块 1 · API 3]
+    - keymouse.probe.preprocess — 对比度、放大与白边 / Contrast, upscale, padding — 三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）… — [模块 1 · API 3]
   - keymouse.script — 脚本执行器 / Script runner — run 命令的实现：读脚本 → 分词与结构分析（含 repeat/end 循环）→ 变量与目标继承 → 在一个进程内逐条派发，支持 --dry-run、安全重试… — [模块 30 · API 36]
     - keymouse.script.capture — 子命令输出捕获与重试 / Output capture & retry — 执行一条命令并捕获它的 stdout/stderr（不是直接往终端喷），供日志与 JSON 报告使用；同时实现安全重试：只有退出码 3/4/5（可证明一个字节都… — [模块 1 · API 1]
     - keymouse.script.display — 回显与错误输出 / Echo & error output — 把 token 重新拼回可读文本（带空格的值加引号，日志才能无歧义地复现），以及脚本层面的错误输出。 — [模块 1 · API 2]

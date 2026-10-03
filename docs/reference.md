@@ -324,6 +324,7 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 | `--tessdata-dir` | `%LOCALAPPDATA%\KeyMouse\tessdata` | 模型目录，**两套模型就是两个目录** |
 | `--min-conf N` | 30 | 置信度地板，只用来抓"彻底没读出来" |
 | `--scale` / `--pad` | 3 / 16 | 放大与白边，实测必需（屏幕文字约 96 DPI，引擎舒适区约 300 DPI） |
+| `--resample` | `nearest` | 放大时怎么取样：`nearest` 把每个源像素复制成 N×N 方块（**不发明像素、不出重影**）；`bilinear` 更柔和，但会把 ClearType 彩边抹成光晕——实测更差 |
 | `--capture` | `screen` | `print` 用 PrintWindow（不画光标，但本机几何对不齐，见 design.md）；**`print` 与 `--space window` 不能同用**（退出码 `2`） |
 | `--pick-region` | 关 | 先打开全屏选区浮层（拖动框选 / 单击选整个客户区 / `ESC` 取消），再读选中的那块；**不要再给选择器、`--region` 或 `--space`** |
 | `--json` | 关 | 输出引擎身份、几何、逐词置信度 |
@@ -342,6 +343,9 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 - 量级参考：记事本一条 600×80 的区域，`--reads 2`、退出码 `0`、置信度 76.9、耗时 689 ms。
 - `--engine` 目前只有 Tesseract 真正跑过；JSON 里 `kind` 对任何外部命令都写 `external`，
   引擎身份由 `command` / `version` / `models` 自证。
+- **放大用最近邻复制，不是插值**：10 个真实样本里，3× 最近邻 **9/10 逐字正确**（平均 conf 91.2），
+  3× 双线性 6/10（50.4），完全不放大 7/10（63.4）。小区域放大后肉眼可见的"重影"就是双线性抹出来的，
+  **它不只是难看——它就是在丢分**；而放大本身仍然必要，别把 `--scale` 关掉。
 - `--pick-region` 选到标题栏（窗口坐标）时不能配 `--capture print`（退出码 `2`）；取消选区（`ESC` / 右键）
   是退出码 `3`，一个字也没读。
 

@@ -9,7 +9,7 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T08:15:52.800Z",
+    "compiled_at": "2026-10-03T08:34:12.031Z",
     "stats": {
       "tree_count": 1,
       "module_count": 134,
@@ -22,7 +22,7 @@
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 3,
+      "change_count": 4,
       "open_change_count": 0
     }
   },
@@ -588,9 +588,9 @@
           "end_line": 128
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.845Z",
-      "fingerprint": "c7495a321b83d74409aa3c4dfa152d2d2748eb6ba846ac9c2ea4345275096238",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.493Z",
+      "fingerprint": "7c55943e80c562d7dcb0b775f6833af391ec21be069a3c75b57c6dd97cff24b5",
       "apis": [
         {
           "protocol": "rpc",
@@ -2084,9 +2084,9 @@
           "end_line": 128
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.854Z",
-      "fingerprint": "826eff4da757c6f76e88ff06d4712276fa2c9d87f25edd481433970acd2606e9",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.493Z",
+      "fingerprint": "a034fec2d814315e36b150e269c78ea5b66208eaeaea34675d31a44871704dde",
       "deps": [
         {
           "kind": "call",
@@ -2261,9 +2261,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.238Z",
-      "fingerprint": "e268512bb1c1508c1ab2bc196188e929c7c24270660c4ad87e33ebf481d55dac",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.272Z",
+      "fingerprint": "800aac5693ce4ba144a677391f31d9c4b1a1647b04a3f53cf5157f77bcfbdb6e",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2296,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.239Z",
-      "fingerprint": "92d7dc5964596531cd32243c22818ce04af2727758578e37a89d2d6ff12ddcb7",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.272Z",
+      "fingerprint": "6f909276d0bd69db52514b27ccc39e79a34884017df8bca4056b55a39c1327ca",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2428,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.239Z",
-      "fingerprint": "648da58d76765eee7c649dae3c0aeb9efd7819d9266d16b59e921ec0974f5db2",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.272Z",
+      "fingerprint": "857419c4e72e6a926134b76940cedd8a8632402d649e1f1736530986c69b6368",
       "apis": [
         {
           "protocol": "file",
@@ -4126,9 +4126,9 @@
           "end_line": 240
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.271Z",
+      "fingerprint": "b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae",
       "deps": [
         {
           "kind": "call",
@@ -4183,9 +4183,9 @@
           "end_line": 322
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.493Z",
+      "fingerprint": "b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae",
       "apis": [
         {
           "protocol": "rpc",
@@ -4243,9 +4243,9 @@
           "end_line": 292
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.493Z",
+      "fingerprint": "b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae",
       "apis": [
         {
           "protocol": "rpc",
@@ -4291,9 +4291,9 @@
           "end_line": 628
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.493Z",
+      "fingerprint": "b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae",
       "apis": [
         {
           "protocol": "rpc",
@@ -4346,19 +4346,19 @@
         "en": "Contrast, upscale, padding"
       },
       "description": {
-        "zh": "三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、3× 双线性放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。\n",
-        "en": "Three transforms, each forced by a measurement: contrast normalisation against the background mode (a percentile stretch failed because the window icon pinned the histogram), 3x bilinear upscale with padding (the engine wants ~300 DPI, a screen region is 96), and a hand-written BMP writer so no image library is needed.\n"
+        "zh": "三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。放大默认用**最近邻**：每个源像素复制成 N×N 方块，不发明像素，所以 --keep-image 里看不到屏幕上没有的光晕；实测 10 个真实样本 3× 最近邻 9/10 逐字正确，双线性只有 6/10（重影就是在丢分），完全不放大 7/10。\n",
+        "en": "Three transforms, each forced by measurement: contrast normalisation against the background mode, an upscale with padding (the engine wants ~300 DPI, a screen region is 96), and a hand-written BMP writer so no image library is needed. The upscale samples nearest by default: each source pixel becomes an N x N block, nothing is invented, so --keep-image shows no halo that was not on screen. Over 10 real samples: 9/10 exact at 3x nearest, 6/10 bilinear, 7/10 with no upscale.\n"
       },
       "source": [
         {
           "path": "Probe.cs",
-          "line": 355,
-          "end_line": 488
+          "line": 361,
+          "end_line": 513
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.271Z",
+      "fingerprint": "b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae",
       "apis": [
         {
           "protocol": "rpc",
@@ -4373,8 +4373,8 @@
           "protocol": "rpc",
           "path": "Probe.Preprocess",
           "description": {
-            "zh": "3× 双线性放大加白边。\n",
-            "en": "3x bilinear upscale plus a white border.\n"
+            "zh": "放大（默认最近邻复制）+ 白边，另可切 bilinear。\n",
+            "en": "Upscale (nearest replication by default, bilinear optional) plus a white border.\n"
           },
           "key": "rpc:Probe.Preprocess"
         },
@@ -6268,9 +6268,9 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.881Z",
-      "fingerprint": "ea9e462f98f382ade996fc6787dc9754f16fa29469c4fccf753f9d7ac914c0f8",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.494Z",
+      "fingerprint": "34fc2e81dfac6250c9db957da4ec3cbdbd7bc7cbad801b62db5f63552289cfbc",
       "aggregate": {
         "descendant_count": 23,
         "own_api_count": 0,
@@ -6422,9 +6422,9 @@
           "end_line": 343
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.239Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.494Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "aggregate": {
         "descendant_count": 6,
         "own_api_count": 0,
@@ -6505,9 +6505,9 @@
           "end_line": 76
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.882Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -6565,9 +6565,9 @@
           "end_line": 289
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.883Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -6626,9 +6626,9 @@
           "end_line": 343
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.890Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -6687,9 +6687,9 @@
           "end_line": 515
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.236Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -6766,9 +6766,9 @@
           "end_line": 215
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.890Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -6826,9 +6826,9 @@
           "end_line": 166
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
-      "fingerprint": "2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:07.495Z",
+      "fingerprint": "ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a",
       "apis": [
         {
           "protocol": "rpc",
@@ -7006,8 +7006,8 @@
           "end_line": 403
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
+      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
+      "updated_at": "2026-10-03T08:34:11.272Z",
       "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
       "aggregate": {
         "descendant_count": 8,
@@ -11458,6 +11458,15 @@
         "zh": "交互式选区：region pick 与 probe --pick-region"
       },
       "updated_at": "2026-10-03T08:15:52.673Z"
+    },
+    {
+      "id": "2026-10-03-nearest-upscale",
+      "status": "verified",
+      "title": {
+        "zh": "放大改用最近邻：去掉重影，读数更好",
+        "en": "Nearest-neighbour upscale: no ghosting, better reads"
+      },
+      "updated_at": "2026-10-03T08:34:11.899Z"
     },
     {
       "id": "2026-10-03-probe-minimal-perception-exit-region-capture-tesseract-consensus",
