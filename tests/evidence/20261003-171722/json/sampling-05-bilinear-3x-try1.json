@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "放大 3× + 白边 16px（bilinear） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 95.8,
+  "minConfidence": 30,
+  "elapsedMs": 582,
+  "note": null,
+  "lines": [
+    {
+      "text": "Order #4471 shipped",
+      "rect": [
+        47,
+        47,
+        202,
+        51
+      ],
+      "words": [
+        {
+          "text": "Order",
+          "conf": 96.1,
+          "rect": [
+            47,
+            47,
+            202,
+            51
+          ]
+        },
+        {
+          "text": "#4471",
+          "conf": 95,
+          "rect": [
+            290,
+            51,
+            200,
+            47
+          ]
+        },
+        {
+          "text": "shipped",
+          "conf": 96.2,
+          "rect": [
+            538,
+            46,
+            276,
+            66
+          ]
+        }
+      ]
+    }
+  ]
+}
+

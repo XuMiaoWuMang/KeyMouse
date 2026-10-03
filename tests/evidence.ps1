@@ -23,7 +23,7 @@
 param(
     [string]$Exe = (Join-Path $PSScriptRoot '..\dist\KeyMouse.exe'),
     [string]$TargetExe = (Join-Path $PSScriptRoot 'KeyMouse.SmokeTarget\bin\Release\net10.0-windows\KeyMouse.SmokeTarget.exe'),
-    [int]$Samples = 10,
+    [int]$Samples = 20,
     [int]$Attempts = 3
 )
 
@@ -118,14 +118,24 @@ $sampleTexts = @(
     '新建 文本文档.txt'
     '247 * 119'
     '圆角 阴影 重影'
+    'error: 找不到文件 (0x2)'
+    '用户名或密码不正确'
+    'KeyMouse v2.0.0 已就绪'
+    '导出为 PNG/JPG，质量 85%'
+    '第 3 步：确认后点击"下一步"'
+    'C:\Users\xumiao\Desktop\报告.docx'
+    '总计 1,234.56 元'
+    '是否保存更改？[是] [否] [取消]'
+    '连接超时，请重试（第 2/5 次）'
+    'Ctrl+S 保存，Ctrl+Z 撤销'
 ) | Select-Object -First $Samples
 
 $configs = [ordered]@{
-    'raw-1x'      = @('--scale', '1', '--pad', '0', '--resample', 'nearest')
-    'nearest-2x'  = @('--scale', '2', '--pad', '16', '--resample', 'nearest')
-    'nearest-3x'  = @('--scale', '3', '--pad', '16', '--resample', 'nearest')
-    'nearest-4x'  = @('--scale', '4', '--pad', '16', '--resample', 'nearest')
-    'bilinear-3x' = @('--scale', '3', '--pad', '16', '--resample', 'bilinear')
+    'default'          = @()
+    'default+normalize' = @('--normalize')
+    'nearest-3x'       = @('--scale', '3', '--pad', '16', '--resample', 'nearest')
+    'bilinear-3x'      = @('--scale', '3', '--pad', '16', '--resample', 'bilinear')
+    'bilinear-3x+normalize' = @('--scale', '3', '--pad', '16', '--resample', 'bilinear', '--normalize')
 }
 
 $firstExact = @{}; $eventualExact = @{}; $confSum = @{}; $confCount = @{}; $msSum = @{}; $exitSix = @{}
@@ -237,6 +247,26 @@ try {
         }
     }
 
+    # ---------------------------------------------------------------- languages
+    Write-Log '== who decides Chinese vs English (the engine, not us) =='
+    $null = Invoke-Tool -Arguments @('key', 'combo', 'ctrl+a', '--title', $targetTitle)
+    $null = Invoke-Tool -Arguments @('key', 'press', 'delete', '--title', $targetTitle)
+    $null = Invoke-Tool -Arguments @('key', 'type', '你好abc世界123 ABC', '--title', $targetTitle)
+    $null = Invoke-Tool -Arguments @('key', 'press', 'enter', '-n', '3', '--title', $targetTitle)
+    Start-Sleep -Milliseconds 400
+    $languageRows = @()
+    foreach ($lang in @('eng', 'chi_sim', 'eng+chi_sim')) {
+        $tag = $lang -replace '\+', '-'
+        $bmp = Join-Path $env:TEMP "ev-lang-$tag.bmp"
+        Remove-Item $bmp -ErrorAction SilentlyContinue
+        $result = Invoke-Tool -Arguments @('probe', '--title', $targetTitle, '--region', '0,0,400,32', '--lang', $lang,
+            '--keep-image', $bmp, '--json') -JsonName "language-$tag" -WantJson
+        $png = Save-Image -BmpPath $bmp -Name "language-$tag-raw"
+        $languageRows += [pscustomobject]@{
+            Lang = $lang; Exit = $result.Exit; Text = (Get-Read $result.Json)
+            Conf = $result.Json.confidence; Engine = $result.Json.engine.languages; Png = $png }
+    }
+
     # ---------------------------------------------------------------- region picker
     Write-Log '== region pick =='
     $pickClient = Invoke-Tool -Arguments @('region', 'pick', '--rect',
@@ -255,6 +285,21 @@ try {
     $overlayShot = Invoke-Tool -Arguments @('probe', '--title', 'KeyMouse 选区', '--scale', '1', '--pad', '0',
         '--reads', '1', '--keep-image', $overlayBmp, '--json') -JsonName 'region-overlay-screenshot' -WantJson
     $overlayPng = Save-Image -BmpPath $overlayBmp -Name 'region-picker-overlay'
+
+    # The overlay is the one dark background we control: white text on a dark band. It is where the
+    # question "does raw pixels still read light-on-dark" gets a reproducible answer.
+    $darkRows = @()
+    foreach ($darkName in 'raw', 'normalized') {
+        $darkFlag = if ($darkName -eq 'normalized') { @('--normalize') } else { @() }
+        $darkBmp = Join-Path $env:TEMP "ev-dark-$darkName.bmp"
+        Remove-Item $darkBmp -ErrorAction SilentlyContinue
+        $darkArguments = @('probe', '--title', 'KeyMouse 选区', '--region', '1000,10,700,40') + $darkFlag +
+                         @('--keep-image', $darkBmp, '--json')
+        $darkRead = Invoke-Tool -Arguments $darkArguments -JsonName "dark-$darkName" -WantJson
+        $darkPng = Save-Image -BmpPath $darkBmp -Name "dark-$darkName-raw"
+        $darkRows += [pscustomobject]@{ Mode = $darkName; Exit = $darkRead.Exit
+            Text = (Get-Read $darkRead.Json); Conf = $darkRead.Json.confidence; Png = $darkPng }
+    }
     $null = Invoke-Tool -Arguments @('mouse', 'drag',
         ($clientOrigin.X + 60), ($clientOrigin.Y + 200), ($clientOrigin.X + 260), ($clientOrigin.Y + 230),
         '--duration', '250', '--steps', '8')
@@ -346,6 +391,30 @@ try {
     $lines.Add('')
     $lines.Add('A band that is too short clips the glyphs and reads as garbage too: 400x20 over the same line gave')
     $lines.Add('`4eim+s` where 400x32 reads it correctly, so the height has to cover the full line box.')
+    $lines.Add('')
+    $lines.Add('## Who decides Chinese vs English')
+    $lines.Add('')
+    $lines.Add('The same mixed line (`你好abc世界123 ABC`) read with three language sets. KeyMouse passes `--lang`')
+    $lines.Add('straight to the engine, never classifies a character itself, and echoes the set in the JSON.')
+    $lines.Add('')
+    $lines.Add('| --lang | engine languages | exit | read back | conf | screenshot |')
+    $lines.Add('| --- | --- | --- | --- | --- | --- |')
+    foreach ($row in $languageRows) {
+        $lines.Add(('| {0} | {1} | {2} | {3} | {4} | ``images/{5}.png`` |' -f
+            $row.Lang, $row.Engine, $row.Exit, ($row.Text -replace '\|', '\|'), $row.Conf, $row.Png))
+    }
+    $lines.Add('')
+    $lines.Add('## Dark background (light text on dark), read raw versus normalised')
+    $lines.Add('')
+    $lines.Add('The picker overlay draws white text on a dark band, so it is a dark-background sample whose')
+    $lines.Add('wording is known. `--normalize` is off by default now; this is what it buys.')
+    $lines.Add('')
+    $lines.Add('| mode | exit | read back | conf | screenshot |')
+    $lines.Add('| --- | --- | --- | --- | --- |')
+    foreach ($row in $darkRows) {
+        $lines.Add(('| {0} | {1} | {2} | {3} | ``images/{4}.png`` |' -f
+            $row.Mode, $row.Exit, ($row.Text -replace '\|', '\|'), $row.Conf, $row.Png))
+    }
     $lines.Add('')
     $lines.Add('## Region picker')
     $lines.Add('')

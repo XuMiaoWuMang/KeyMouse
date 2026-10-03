@@ -6,14 +6,14 @@ tags: [perception, ocr]
 name: {zh: "感知出口", en: "Perception exit"}
 description:
   zh: >
-      `probe` 命令：把一块客户区区域读成结构化文本并诚实报告可信度。三条硬边界在这里汇合——只报告不判断、读不到就是退出码 6、读到空是事实而不是失败。
+      `probe` 命令：把一块区域读成结构化文本并诚实报告可信度。三条硬边界在这里汇合——只报告不判断、读不到就是退出码 6、读到空是事实而不是失败。默认把抓到的**原始像素**交给引擎（放大与归一化都是选项），读到的文字原样回报，两次读取必须逐字节一致。
       
   en: >
-      The `probe` command: reads a client-relative region into structured text and honestly reports how trustworthy the read is. Three hard boundaries meet here - it reports and never judges, an unreadable region exits 6, and an empty region is a fact rather than a failure.
+      The `probe` command: reads a region into structured text and honestly reports how trustworthy the read is. Three hard boundaries meet here - it reports and never judges, an unreadable region exits 6, and an empty region is a fact rather than a failure. The captured pixels go to the engine unchanged by default (upscaling and normalisation are options), and the text comes back verbatim: two reads must agree byte for byte.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:37.641Z"
-fingerprint: b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:21:00.898Z"
+fingerprint: dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692
 source:
   - path: "Probe.cs"
     line: 45

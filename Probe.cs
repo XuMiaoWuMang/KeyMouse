@@ -55,14 +55,15 @@ internal static class Probe
         bool asJson = options.ContainsKey("json");
         int reads = Math.Clamp(Program.IntOr(options, "reads", 2), 1, 9);
         int minConfidence = Math.Clamp(Program.IntOr(options, "min-conf", DefaultMinConfidence), 0, 100);
-        int scale = Math.Clamp(Program.IntOr(options, "scale", 3), 1, 8);
-        int pad = Math.Clamp(Program.IntOr(options, "pad", 16), 0, 200);
+        int scale = Math.Clamp(Program.IntOr(options, "scale", 1), 1, 8);
+        int pad = Math.Clamp(Program.IntOr(options, "pad", 0), 0, 200);
         string resample = options.TryGetValue("resample", out string? sampling) && sampling.Length > 0
             ? sampling.ToLowerInvariant()
-            : "nearest";
+            : "bilinear";
         if (resample is not ("nearest" or "bilinear"))
             throw new ArgumentException($"--resample 只接受 nearest 或 bilinear，收到 '{resample}'");
         bool nearest = resample == "nearest";
+        bool normalize = options.ContainsKey("normalize");
         string languages = options.TryGetValue("lang", out string? lang) && lang.Length > 0 ? lang : "eng+chi_sim";
         string engineCommand = ResolveEngine(
             options.TryGetValue("engine", out string? engine) && engine.Length > 0 ? engine : "tesseract");
@@ -217,7 +218,9 @@ internal static class Probe
                 // behind what was actually on screen - which is the point of a diagnostic image.
                 if (keepImage is not null) WriteBmp(Path.GetFullPath(keepImage), frame);
 
-                prepared = Preprocess(Normalize(frame), scale, pad, nearest);
+                // The engine sees the pixels that were captured unless the caller asks for more:
+                // no upscale, no padding, no contrast stretch. Anything else is opt-in.
+                prepared = Preprocess(normalize ? Normalize(frame) : frame, scale, pad, nearest);
                 WriteBmp(imagePath, prepared);
 
                 var read = RunEngine(engineCommand, imagePath, languages, tessdata);
@@ -240,10 +243,11 @@ internal static class Probe
         if (!IsSeen(attempts.Select(a => a.Text).ToList(), attempts[0].Confidence, minConfidence, reads, out string reason))
             throw new CommandFailure(ExitUnreadable, reason);
 
-        string first = Normalize(attempts[0].Text);
-        bool consistent = attempts.All(a => Normalize(a.Text) == first);
+        string first = attempts[0].Text;
+        bool consistent = attempts.All(a => a.Text == first);
         double? confidence = attempts[0].Confidence;
         bool anythingRead = attempts[0].Lines.Length > 0;
+        string preparation = DescribePreparation(scale, pad, normalize, resample);
 
         var report = new ProbeReport(
             Ok: true,
@@ -251,6 +255,7 @@ internal static class Probe
             Window: new WindowReference($"0x{window.Handle.ToInt64():X}", window.Title, window.ProcessId),
             Geometry: geometry,
             Region: new RegionReference(windowSpace ? "window" : "client", [region.X, region.Y, region.W, region.H]),
+            Prepared: preparation,
             Reads: reads,
             Consistent: consistent,
             Confidence: confidence,
@@ -260,7 +265,7 @@ internal static class Probe
             Lines: attempts[0].Lines);
 
         if (asJson) Console.WriteLine(JsonSerializer.Serialize(report, JsonOptions));
-        else PrintHuman(report, attempts[0].Text, engineInfo, window, region, scale, pad, spaceName);
+        else PrintHuman(report, attempts[0].Text, engineInfo, window, region, preparation, spaceName);
 
         return 0;
     }
@@ -270,9 +275,16 @@ internal static class Probe
     /// <summary>
     /// The whole "did we see it" policy, in one testable place.
     ///
-    /// Two rules, both measured: the reads must agree (a disagreement means the picture was not
-    /// stable, so there is nothing to report), and the confidence must clear the floor. The floor
-    /// is deliberately low - it answers "did it read anything at all", not "is it correct".
+    /// Two rules: the reads must be **identical**, character for character - a disagreement means
+    /// the picture was not stable, so there is nothing to report - and the confidence must clear
+    /// the floor. The floor is deliberately low: it answers "did it read anything at all", not
+    /// "is it correct".
+    ///
+    /// The comparison is literal on purpose. It used to fold whitespace and strip a trailing caret
+    /// bar; both were the tool second-guessing the caller. A blinking caret inside the region now
+    /// simply makes the two reads differ, which is reported as "not seen" (exit 6) and left to the
+    /// caller to retry - the tool reads the image it was given and does nothing else with it.
+    ///
     /// An empty read passes: nothing on screen is a fact, not a failure.
     /// </summary>
     internal static bool IsSeen(
@@ -285,8 +297,8 @@ internal static class Probe
             return false;
         }
 
-        string first = Normalize(reads[0]);
-        if (reads.Any(r => Normalize(r) != first))
+        string first = reads[0];
+        if (reads.Any(r => r != first))
         {
             string seen = string.Join("\n", reads.Select((r, i) => $"  第 {i + 1} 次：{Show(r)}"));
             reason = $"{requested} 次读取结果不一致，判定为没看清（未做出任何判断）：\n{seen}";
@@ -412,20 +424,18 @@ internal static class Probe
     }
 
     /// <summary>
-    /// Upscale plus a white border.
+    /// Upscale plus an optional white border, both opt-in: the default path hands the engine the
+    /// pixels exactly as captured, so anything this does to them is something the caller asked for.
     ///
-    /// Measured: Tesseract is comfortable near 300 DPI and a screen region is 96 DPI, and this step
-    /// rescued three of four failing real samples. Two samplers are available because the default
-    /// one is a *quality* decision, not a size one:
+    /// Kept because it was measured to help on hard samples (three of four failing real samples
+    /// were rescued by 3x upscaling) even though the current corpus cannot tell the two apart
+    /// (10 samples: raw 9/10, upscaled 9~10/10 - see tests/evidence).
     ///
-    /// * `nearest` replicates each source pixel into a scale x scale block. Nothing is invented, so
-    ///   the glyph edges the engine sees are exactly the edges that were on screen, and the image a
-    ///   human inspects (`--keep-image`) shows no smearing.
-    /// * `bilinear` interpolates, which reads smoother to the eye but smears ClearType subpixel
-    ///   fringes into halos - the "ghosting" that is plainly visible at 3x on small regions.
+    /// Two samplers: `nearest` replicates each source pixel into a scale x scale block and invents
+    /// nothing; `bilinear` interpolates, which measured one sample better on the current corpus.
     /// </summary>
     internal static NativeCapture.Frame Preprocess(
-        NativeCapture.Frame source, int scale, int pad, bool nearest = true)
+        NativeCapture.Frame source, int scale, int pad, bool nearest = false)
     {
         int scaledWidth = source.Width * scale;
         int scaledHeight = source.Height * scale;
@@ -645,25 +655,17 @@ internal static class Probe
         return new EngineInfo("external", command, version, languages, tessdata, [.. models]);
     }
 
+    /// <summary>What, if anything, was done to the pixels before the engine saw them.</summary>
+    private static string DescribePreparation(int scale, int pad, bool normalize, string resample)
+    {
+        var parts = new List<string>();
+        if (normalize) parts.Add("对比度归一化");
+        if (scale > 1 || pad > 0) parts.Add($"放大 {scale}× + 白边 {pad}px（{resample}）");
+        return parts.Count == 0 ? "原始像素直送引擎" : string.Join(" + ", parts) + " 后直送引擎";
+    }
+
     private static int Int(string raw) =>
         int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v) ? v : 0;
-
-    /// <summary>
-    /// Two normalisations, both measured rather than stylistic.
-    ///
-    /// Whitespace is not evidence: CJK arrives one character per word, so a space appears and
-    /// disappears between identical reads.
-    ///
-    /// A trailing bar is not evidence either. A screen grab of a focused window includes the text
-    /// caret, and the caret blinks - two reads of unchanged text differed by exactly that bar
-    /// ("|" against nothing), which made the consensus rule reject good reads. It is stripped from
-    /// the comparison only, never from the reported text, so it cannot corrupt an answer.
-    /// </summary>
-    private static string Normalize(string text)
-    {
-        string squashed = new(text.Where(c => !char.IsWhiteSpace(c)).ToArray());
-        return squashed.TrimEnd('|', 'l', 'I', '1');
-    }
 
     private static string Show(string text)
     {
@@ -673,7 +675,7 @@ internal static class Probe
 
     private static void PrintHuman(
         ProbeReport report, string text, EngineInfo engine, WindowInfo window,
-        (int X, int Y, int W, int H) region, int scale, int pad, string spaceName)
+        (int X, int Y, int W, int H) region, string preparation, string spaceName)
     {
         Console.WriteLine($"引擎      {engine.Command} {engine.Version}".TrimEnd());
         Console.WriteLine($"语言      {engine.Languages}" +
@@ -683,7 +685,7 @@ internal static class Probe
             Console.WriteLine("模型      " + string.Join("  ", engine.Models.Select(m => $"{m.Name} {m.Bytes / 1024.0 / 1024.0:0.0} MB")));
         }
         Console.WriteLine($"目标      「{window.Title}」 {report.Window.Handle}");
-        Console.WriteLine($"区域      {spaceName} {region.X},{region.Y},{region.W}x{region.H}  →  放大 {scale}× + 白边 {pad}px");
+        Console.WriteLine($"区域      {spaceName} {region.X},{region.Y},{region.W}x{region.H}  →  {preparation}");
         Console.WriteLine($"读取      {report.Reads} 次，{(report.Consistent ? "逐字一致 ✓" : "不一致")}" +
                           (report.Confidence is double c ? $"  置信度 {c:0.0}（下限 {report.MinConfidence}）" : "  置信度 n/a"));
         Console.WriteLine($"耗时      {report.ElapsedMs} ms");
@@ -716,6 +718,7 @@ internal static class Probe
         WindowReference Window,
         GeometryReference Geometry,
         RegionReference Region,
+        string Prepared,
         int Reads,
         bool Consistent,
         double? Confidence,

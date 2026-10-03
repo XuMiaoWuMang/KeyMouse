@@ -6,14 +6,14 @@ tags: [perception, ocr]
 name: {zh: "对比度、放大与白边", en: "Contrast, upscale, padding"}
 description:
   zh: >
-      三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。放大默认用**最近邻**：每个源像素复制成 N×N 方块，不发明像素——选它的理由是这个性质，不是"更准"：10 个真实样本里双线性 10/10、最近邻 9/10，差别只有 1 个样本（早先那次"最近邻明显更准"把光标噪声算了进去，已作废，见 tests/evidence）。
+      三个变换，全部是**选项**：默认把抓到的原始像素直接交给引擎（`--scale 1 --pad 0`、不归一化）。放大（96→引擎舒适的 ~300 DPI）、白边、对比度归一化（含暗底反相）都按需打开。取样可切 `bilinear`/`nearest`，实测两者在真实语料上没量出精度差别；深底浅字不归一化也能读（实测 72~74 vs 归一化 75~79）。
       
   en: >
-      Three transforms, each forced by measurement: contrast normalisation against the background mode, an upscale with padding, and a hand-written BMP writer so no image library is needed. The upscale samples nearest by default: each source pixel becomes an N x N block, nothing is invented - chosen for that property, not for accuracy: over 10 real samples bilinear scored 10/10 and nearest 9/10, a one-sample gap (an earlier claim that nearest reads better was caret noise; see tests/evidence).
+      Three transforms, all opt-in: by default the captured pixels go straight to the engine (scale 1, no padding, no normalisation). Upscaling (96 -> the ~300 DPI the engine likes), padding and contrast normalisation (including inverting dark backgrounds) are switched on when wanted. The sampler can be bilinear or nearest; measured, the two show no accuracy difference on the real corpus. Light-on-dark reads without normalisation too (72~74 versus 75~79 with it).
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:37.640Z"
-fingerprint: b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:21:00.898Z"
+fingerprint: dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692
 source:
   - path: "Probe.cs"
     line: 361

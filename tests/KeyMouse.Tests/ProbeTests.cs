@@ -42,8 +42,13 @@ internal static class ProbeTests
                 Probe.IsSeen(["另存为"], 95, 60, 1, out _));
             Harness.Check("two agreeing reads: seen",
                 Probe.IsSeen(["另存为", "另存为"], 95, 60, 2, out _));
-            Harness.Check("whitespace differences are not disagreements",
-                Probe.IsSeen(["Save As", "SaveAs"], 95, 60, 2, out _));
+            // The comparison is literal: the tool reads the image it was handed and does nothing
+            // else with it. Whitespace and a blinking caret used to be folded away; now they simply
+            // make the reads disagree, which is reported as "not seen" and left to the caller.
+            Harness.Check("whitespace differences are disagreements",
+                !Probe.IsSeen(["Save As", "SaveAs"], 95, 60, 2, out _));
+            Harness.Check("a caret that blinked is a disagreement, not something to strip",
+                !Probe.IsSeen(["你好，世界|", "你好，世界"], 95, 60, 2, out _));
 
             Harness.Check("disagreeing reads: not seen",
                 !Probe.IsSeen(["另存为", "另存力"], 95, 60, 2, out string mismatch));
@@ -119,7 +124,7 @@ internal static class ProbeTests
             // inspects (--keep-image) cannot show halos that were not on screen. Measured on a real
             // corpus, that also reads better: 9/10 exact with nearest, 6/10 with bilinear.
             var twoTone = Frame(2, 1, (x, _) => (byte)(x == 0 ? 0 : 200));
-            var blocky = Probe.Preprocess(twoTone, 3, 0);
+            var blocky = Probe.Preprocess(twoTone, 3, 0, nearest: true);
             Harness.Equal("nearest widens by the scale factor", 6, blocky.Width);
             Harness.Equal("nearest keeps the left pixel exactly", (byte)0, blocky.Bgra[0]);
             Harness.Equal("nearest keeps the right pixel exactly", (byte)200, blocky.Bgra[5 * 4]);

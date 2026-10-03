@@ -1,0 +1,180 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 79.4,
+  "minConfidence": 30,
+  "elapsedMs": 641,
+  "note": null,
+  "lines": [
+    {
+      "text": "请 输入 文件 名 后 点 击 保 存 近 钮",
+      "rect": [
+        11,
+        7,
+        26,
+        22
+      ],
+      "words": [
+        {
+          "text": "请",
+          "conf": 93.8,
+          "rect": [
+            11,
+            7,
+            26,
+            22
+          ]
+        },
+        {
+          "text": "输入",
+          "conf": 96.7,
+          "rect": [
+            50,
+            7,
+            41,
+            22
+          ]
+        },
+        {
+          "text": "文件",
+          "conf": 95.2,
+          "rect": [
+            103,
+            7,
+            57,
+            22
+          ]
+        },
+        {
+          "text": "名",
+          "conf": 96.4,
+          "rect": [
+            159,
+            3,
+            24,
+            29
+          ]
+        },
+        {
+          "text": "后",
+          "conf": 96.8,
+          "rect": [
+            182,
+            7,
+            24,
+            22
+          ]
+        },
+        {
+          "text": "点",
+          "conf": 93.1,
+          "rect": [
+            211,
+            7,
+            14,
+            22
+          ]
+        },
+        {
+          "text": "击",
+          "conf": 91.4,
+          "rect": [
+            237,
+            7,
+            16,
+            22
+          ]
+        },
+        {
+          "text": "保",
+          "conf": 92.2,
+          "rect": [
+            264,
+            7,
+            16,
+            22
+          ]
+        },
+        {
+          "text": "存",
+          "conf": 91.3,
+          "rect": [
+            291,
+            7,
+            15,
+            22
+          ]
+        },
+        {
+          "text": "近",
+          "conf": 26.8,
+          "rect": [
+            315,
+            7,
+            18,
+            23
+          ]
+        },
+        {
+          "text": "钮",
+          "conf": 0,
+          "rect": [
+            340,
+            7,
+            21,
+            22
+          ]
+        }
+      ]
+    }
+  ]
+}
+

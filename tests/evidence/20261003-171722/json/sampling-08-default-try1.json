@@ -1,0 +1,120 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 92.2,
+  "minConfidence": 30,
+  "elapsedMs": 599,
+  "note": null,
+  "lines": [
+    {
+      "text": "新 建 文本 文档 .txt",
+      "rect": [
+        11,
+        7,
+        53,
+        23
+      ],
+      "words": [
+        {
+          "text": "新",
+          "conf": 90.8,
+          "rect": [
+            11,
+            7,
+            53,
+            23
+          ]
+        },
+        {
+          "text": "建",
+          "conf": 91.1,
+          "rect": [
+            52,
+            3,
+            19,
+            29
+          ]
+        },
+        {
+          "text": "文本",
+          "conf": 95.7,
+          "rect": [
+            90,
+            7,
+            42,
+            23
+          ]
+        },
+        {
+          "text": "文档",
+          "conf": 95.7,
+          "rect": [
+            142,
+            7,
+            42,
+            22
+          ]
+        },
+        {
+          "text": ".txt",
+          "conf": 87.9,
+          "rect": [
+            190,
+            12,
+            49,
+            15
+          ]
+        }
+      ]
+    }
+  ]
+}
+

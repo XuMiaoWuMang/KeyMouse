@@ -6,6 +6,11 @@
     files nobody re-reads. This needs no desktop and no build, so CI runs it on
     every push.
 
+    tests/evidence/ is skipped on purpose: those are generated archives, and their
+    summary tables quote whatever the OCR read - which can look exactly like a
+    markdown link (measured: a sample reading "[是](3)[取消]" was reported as a
+    broken link to "3").
+
         pwsh tests/check-docs.ps1
 #>
 [CmdletBinding()]
@@ -15,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path $Root).Path
 
 $files = Get-ChildItem -Path $root -Filter *.md -Recurse -File |
-    Where-Object { $_.FullName -notmatch '\\(bin|obj|dist|out|\.git|\.vs)\\' }
+    Where-Object { $_.FullName -notmatch '\\(bin|obj|dist|out|\.git|\.vs|evidence)\\' }
 
 $checked = 0
 $broken = 0

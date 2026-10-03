@@ -1,0 +1,120 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "对比度归一化 + 放大 3× + 白边 16px（bilinear） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 82.6,
+  "minConfidence": 30,
+  "elapsedMs": 603,
+  "note": null,
+  "lines": [
+    {
+      "text": "你 好 ， 世 界",
+      "rect": [
+        47,
+        37,
+        190,
+        70
+      ],
+      "words": [
+        {
+          "text": "你",
+          "conf": 96.4,
+          "rect": [
+            47,
+            37,
+            190,
+            70
+          ]
+        },
+        {
+          "text": "好",
+          "conf": 93,
+          "rect": [
+            170,
+            31,
+            61,
+            97
+          ]
+        },
+        {
+          "text": "，",
+          "conf": 90.2,
+          "rect": [
+            230,
+            31,
+            74,
+            97
+          ]
+        },
+        {
+          "text": "世",
+          "conf": 58.5,
+          "rect": [
+            290,
+            37,
+            163,
+            71
+          ]
+        },
+        {
+          "text": "界",
+          "conf": 74.9,
+          "rect": [
+            388,
+            31,
+            68,
+            97
+          ]
+        }
+      ]
+    }
+  ]
+}
+

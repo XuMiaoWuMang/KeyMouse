@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 93.4,
+  "minConfidence": 30,
+  "elapsedMs": 560,
+  "note": null,
+  "lines": [
+    {
+      "text": "247 * 119",
+      "rect": [
+        12,
+        12,
+        38,
+        15
+      ],
+      "words": [
+        {
+          "text": "247",
+          "conf": 92.2,
+          "rect": [
+            12,
+            12,
+            38,
+            15
+          ]
+        },
+        {
+          "text": "*",
+          "conf": 92.2,
+          "rect": [
+            66,
+            10,
+            10,
+            11
+          ]
+        },
+        {
+          "text": "119",
+          "conf": 95.8,
+          "rect": [
+            93,
+            12,
+            38,
+            15
+          ]
+        }
+      ]
+    }
+  ]
+}
+

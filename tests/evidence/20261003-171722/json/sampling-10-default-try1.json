@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 77,
+  "minConfidence": 30,
+  "elapsedMs": 601,
+  "note": null,
+  "lines": [
+    {
+      "text": "aA 阴影 重 影",
+      "rect": [
+        13,
+        7,
+        49,
+        23
+      ],
+      "words": [
+        {
+          "text": "aA",
+          "conf": 41,
+          "rect": [
+            13,
+            7,
+            49,
+            23
+          ]
+        },
+        {
+          "text": "阴影",
+          "conf": 88.3,
+          "rect": [
+            81,
+            7,
+            50,
+            23
+          ]
+        },
+        {
+          "text": "重",
+          "conf": 88.3,
+          "rect": [
+            146,
+            7,
+            53,
+            22
+          ]
+        },
+        {
+          "text": "影",
+          "conf": 90.2,
+          "rect": [
+            181,
+            3,
+            22,
+            29
+          ]
+        }
+      ]
+    }
+  ]
+}
+

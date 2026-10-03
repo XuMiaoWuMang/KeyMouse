@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-raw-pixels-default",
+  "title": {
+    "zh": "原始像素直送引擎；比较改成逐字节；语料扩到 20 个样本",
+    "en": "Raw pixels to the engine, literal comparison, 20-sample corpus"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "按使用者要求：① 引擎只吃抓到的原始像素（--scale/--pad/--normalize 全部改成选项）；② 文字比较不再做任何归一化——不折叠空白、不剔光标，两次读取必须逐字节相同，不一致就是退出码 6；③ 语料从 10 个样本扩到 20 个并复测，结论写进文档：原始像素 12/20，而 3× 双线性+归一化 15/20（默认仍是原图直送，选择权与数据一起交给使用者）；④ JSON 新增 prepared 字段说明引擎拿到的是原图还是变换过的图。",
+    "en": "By user request: (1) the engine only gets the pixels as captured (scale/pad/normalize are now options); (2) the text comparison normalises nothing - no whitespace folding, no caret stripping: two reads must agree byte for byte, otherwise exit 6; (3) the corpus grew from 10 to 20 samples and was re-measured, with the result written into the docs: raw pixels 12/20 versus 15/20 for 3x bilinear + normalize (the default stays raw; the choice and the data go to the user together); (4) the JSON gained a prepared field saying whether the engine saw the original or a transformed image."
+  },
+  "modules": {
+    "modify": [
+      "keymouse.probe",
+      "keymouse.probe.preprocess",
+      "keymouse.probe.consensus",
+      "keymouse.tests.evidence",
+      "keymouse.tests",
+      "keymouse.docs",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "默认不给引擎做任何变换：--scale 1 --pad 0 且不归一化，JSON 的 prepared 写明\"原始像素直送引擎\"",
+    "比较逐字节：单元测试断言空白差异与光标差异都算不一致（exit 6）",
+    "20 个样本的复测结果写进 design.md 与 reference.md，并标明默认与最优配置的差距",
+    "verify.ps1 全绿，normify_validate 0 error"
+  ],
+  "note": "默认改成原始像素直送引擎（放大/白边/归一化变选项，JSON 新增 prepared）；两次读取改成逐字节比较，不再折叠空白或剔光标；语料扩到 20 个样本复测，原始 12/20 vs 3× 双线性+归一化 15/20 的差距连同数据一起写进 design.md 与 reference.md。",
+  "revision": {
+    "before": null,
+    "after": "df4356ba04850d65df87f2c6f6d4e83f34b0f709"
+  },
+  "created_at": "2026-10-03T09:20:55.081Z",
+  "updated_at": "2026-10-03T09:21:01.748Z",
+  "closed_at": "2026-10-03T09:21:01.748Z"
+}

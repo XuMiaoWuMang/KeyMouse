@@ -11,9 +11,9 @@ description:
   en: >
       Turns one measurement run into evidence a human can re-read: every command with its exit code, the JSON of every call plus stderr on failure, every screenshot (-raw is the pixels as captured) and a table of numbers, under tests/evidence/<timestamp>/. It only drives its own smoke target. The two rules it enforces: keep the text caret out of the read region (it blinks, and a frame with it can misread the whole line), and make the region cover the whole line box.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:37.640Z"
-fingerprint: 4b3e6774fbabc9290fb2b2a995a4073398cbde48e45e4ae03e30d3c4cfd8ac9d
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:21:00.898Z"
+fingerprint: 82c7ca94e4d2cc1bdcc71302b688f99198f8e3ca3e76fe6efed0cfba816488b0
 source:
   - path: "tests/evidence.ps1"
 apis:

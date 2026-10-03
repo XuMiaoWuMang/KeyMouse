@@ -1,0 +1,200 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 90.3,
+  "minConfidence": 30,
+  "elapsedMs": 631,
+  "note": null,
+  "lines": [
+    {
+      "text": "第 3 步 : 确认 后 点 击 \" 下 一 步 \"",
+      "rect": [
+        11,
+        7,
+        25,
+        23
+      ],
+      "words": [
+        {
+          "text": "第",
+          "conf": 75.4,
+          "rect": [
+            11,
+            7,
+            25,
+            23
+          ]
+        },
+        {
+          "text": "3",
+          "conf": 92.3,
+          "rect": [
+            52,
+            12,
+            11,
+            15
+          ]
+        },
+        {
+          "text": "步",
+          "conf": 85.6,
+          "rect": [
+            79,
+            7,
+            34,
+            23
+          ]
+        },
+        {
+          "text": ":",
+          "conf": 88.9,
+          "rect": [
+            117,
+            3,
+            8,
+            29
+          ]
+        },
+        {
+          "text": "确认",
+          "conf": 95,
+          "rect": [
+            142,
+            7,
+            43,
+            23
+          ]
+        },
+        {
+          "text": "后",
+          "conf": 95.1,
+          "rect": [
+            195,
+            7,
+            32,
+            23
+          ]
+        },
+        {
+          "text": "点",
+          "conf": 93.3,
+          "rect": [
+            241,
+            7,
+            13,
+            22
+          ]
+        },
+        {
+          "text": "击",
+          "conf": 91.8,
+          "rect": [
+            269,
+            10,
+            4,
+            7
+          ]
+        },
+        {
+          "text": "\"",
+          "conf": 91.3,
+          "rect": [
+            274,
+            10,
+            4,
+            7
+          ]
+        },
+        {
+          "text": "下",
+          "conf": 91.5,
+          "rect": [
+            289,
+            9,
+            17,
+            20
+          ]
+        },
+        {
+          "text": "一",
+          "conf": 92.9,
+          "rect": [
+            316,
+            7,
+            34,
+            23
+          ]
+        },
+        {
+          "text": "步",
+          "conf": 91.7,
+          "rect": [
+            364,
+            10,
+            4,
+            7
+          ]
+        },
+        {
+          "text": "\"",
+          "conf": 89.5,
+          "rect": [
+            369,
+            10,
+            4,
+            7
+          ]
+        }
+      ]
+    }
+  ]
+}
+

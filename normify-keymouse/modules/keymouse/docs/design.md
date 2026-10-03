@@ -11,9 +11,9 @@ description:
   en: >
       Why fail-closed, why the exit code is a promise, what the gate checks, why there is no liveness heuristic, the four v2 decisions, and the full design for perception and control flow (OCR): three hard boundaries, measured consistency numbers, the probe JSON shape, consensus reading, engine adapters and exit code 6.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:37.643Z"
-fingerprint: 380a523f5a6e8814a65809649b73cc67c490c604bbfd5cf48405c9417d06470d
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:21:00.900Z"
+fingerprint: 94af8a5c72cb4802f8689d475cf28862b4c1e0b2048c68924793a59fd6c840b3
 source:
   - path: "docs/design.md"
 apis:

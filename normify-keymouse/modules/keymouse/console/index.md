@@ -11,9 +11,9 @@ description:
   en: >
       Two console concerns: speak the console code page (UTF-8 bytes into a cp936 terminal is mojibake), and pad/truncate by display width because a CJK glyph is two cells wide. Also holds the built-in help text.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:33.640Z"
-fingerprint: 95aed5c9adbe0019f050305f23c6e9efe9f94dc3922ce862b8582dee68acf265
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:20:55.384Z"
+fingerprint: 16b534734631e3b2bf5d823af3ac4b78199327dbb37e76f04ead8f55c3a88b25
 source:
   - path: "ConsoleText.cs"
     line: 1

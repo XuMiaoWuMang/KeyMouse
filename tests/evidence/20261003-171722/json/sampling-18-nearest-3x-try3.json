@@ -1,0 +1,190 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "放大 3× + 白边 16px（nearest） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 91.8,
+  "minConfidence": 30,
+  "elapsedMs": 671,
+  "note": null,
+  "lines": [
+    {
+      "text": "是 否 保存 更 改 ? [是 ] [ 否 ] [取消",
+      "rect": [
+        52,
+        37,
+        75,
+        66
+      ],
+      "words": [
+        {
+          "text": "是",
+          "conf": 93,
+          "rect": [
+            52,
+            37,
+            75,
+            66
+          ]
+        },
+        {
+          "text": "否",
+          "conf": 90.1,
+          "rect": [
+            166,
+            40,
+            39,
+            63
+          ]
+        },
+        {
+          "text": "保存",
+          "conf": 93.2,
+          "rect": [
+            211,
+            37,
+            363,
+            69
+          ]
+        },
+        {
+          "text": "更",
+          "conf": 93,
+          "rect": [
+            410,
+            33,
+            90,
+            95
+          ]
+        },
+        {
+          "text": "改",
+          "conf": 92.1,
+          "rect": [
+            499,
+            33,
+            66,
+            95
+          ]
+        },
+        {
+          "text": "?",
+          "conf": 92.6,
+          "rect": [
+            564,
+            33,
+            31,
+            95
+          ]
+        },
+        {
+          "text": "[是",
+          "conf": 93.2,
+          "rect": [
+            625,
+            37,
+            141,
+            75
+          ]
+        },
+        {
+          "text": "]",
+          "conf": 89.7,
+          "rect": [
+            760,
+            33,
+            31,
+            95
+          ]
+        },
+        {
+          "text": "[",
+          "conf": 89.7,
+          "rect": [
+            826,
+            46,
+            24,
+            66
+          ]
+        },
+        {
+          "text": "否",
+          "conf": 85.7,
+          "rect": [
+            891,
+            40,
+            72,
+            72
+          ]
+        },
+        {
+          "text": "]",
+          "conf": 93.3,
+          "rect": [
+            962,
+            33,
+            36,
+            95
+          ]
+        },
+        {
+          "text": "[取消",
+          "conf": 95.4,
+          "rect": [
+            1030,
+            37,
+            186,
+            75
+          ]
+        }
+      ]
+    }
+  ]
+}
+

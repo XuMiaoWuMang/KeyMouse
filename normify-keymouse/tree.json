@@ -9,7 +9,7 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T08:58:46.678Z",
+    "compiled_at": "2026-10-03T09:21:01.890Z",
     "stats": {
       "tree_count": 1,
       "module_count": 135,
@@ -22,7 +22,7 @@
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 5,
+      "change_count": 6,
       "open_change_count": 0
     }
   },
@@ -588,9 +588,9 @@
           "end_line": 128
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.640Z",
-      "fingerprint": "4ffa997318cd666b5e011e443a8590c9228738a3c16f68b761abc465ad66e4c2",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:20:55.383Z",
+      "fingerprint": "d86fb9c26bb57e53f613895b0f6b0de951ceee7c641485726de32dca74c27508",
       "apis": [
         {
           "protocol": "rpc",
@@ -2084,9 +2084,9 @@
           "end_line": 128
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.640Z",
-      "fingerprint": "95aed5c9adbe0019f050305f23c6e9efe9f94dc3922ce862b8582dee68acf265",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:20:55.384Z",
+      "fingerprint": "16b534734631e3b2bf5d823af3ac4b78199327dbb37e76f04ead8f55c3a88b25",
       "deps": [
         {
           "kind": "call",
@@ -2261,9 +2261,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:46.285Z",
-      "fingerprint": "1521bd82b0711afdedf7908fe84b2cdec54a6a2e649387811017d37db30a75f4",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.900Z",
+      "fingerprint": "26255b70f78a378e239284962b029b1d5b704b8230de848b21a4bb7c3e052dd7",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2296,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.643Z",
-      "fingerprint": "380a523f5a6e8814a65809649b73cc67c490c604bbfd5cf48405c9417d06470d",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.900Z",
+      "fingerprint": "94af8a5c72cb4802f8689d475cf28862b4c1e0b2048c68924793a59fd6c840b3",
       "apis": [
         {
           "protocol": "file",
@@ -2340,9 +2340,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:46.285Z",
-      "fingerprint": "980376496f7373fceae8427ca88be566936bf6ccd81792244b2728841eda2dde",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.900Z",
+      "fingerprint": "f1730bb64460c5dc77991f296c40b6f04279739b28aec3611edab5b56462c759",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2428,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.643Z",
-      "fingerprint": "98269fd45589f819ac110a1cf29825f52891c971a812cfdcb367767a6a2429e5",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.900Z",
+      "fingerprint": "6b2b021e8dfd8d6d2b254e90fef1a0fc52bf2ac83abc0c08bbb6604ec43efa55",
       "apis": [
         {
           "protocol": "file",
@@ -4116,8 +4116,8 @@
         "en": "Perception exit"
       },
       "description": {
-        "zh": "`probe` 命令：把一块客户区区域读成结构化文本并诚实报告可信度。三条硬边界在这里汇合——只报告不判断、读不到就是退出码 6、读到空是事实而不是失败。\n",
-        "en": "The `probe` command: reads a client-relative region into structured text and honestly reports how trustworthy the read is. Three hard boundaries meet here - it reports and never judges, an unreadable region exits 6, and an empty region is a fact rather than a failure.\n"
+        "zh": "`probe` 命令：把一块区域读成结构化文本并诚实报告可信度。三条硬边界在这里汇合——只报告不判断、读不到就是退出码 6、读到空是事实而不是失败。默认把抓到的**原始像素**交给引擎（放大与归一化都是选项），读到的文字原样回报，两次读取必须逐字节一致。\n",
+        "en": "The `probe` command: reads a region into structured text and honestly reports how trustworthy the read is. Three hard boundaries meet here - it reports and never judges, an unreadable region exits 6, and an empty region is a fact rather than a failure. The captured pixels go to the engine unchanged by default (upscaling and normalisation are options), and the text comes back verbatim: two reads must agree byte for byte.\n"
       },
       "source": [
         {
@@ -4126,9 +4126,9 @@
           "end_line": 240
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.641Z",
-      "fingerprint": "b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.898Z",
+      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
       "deps": [
         {
           "kind": "call",
@@ -4183,9 +4183,9 @@
           "end_line": 322
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.642Z",
-      "fingerprint": "b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:20:55.385Z",
+      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
       "apis": [
         {
           "protocol": "rpc",
@@ -4233,8 +4233,8 @@
         "en": "Consensus and confidence floor"
       },
       "description": {
-        "zh": "N 次重新采集必须逐字一致才算“看清”，置信度还需过 30 的地板。两个数字都是实测定的：合成图上 60 以下全是垃圾，但真实屏幕上一次读对的只有 55.8，所以地板降到只抓彻底失败；闪烁的光标只从比较里剔除，绝不从输出里剔除。\n",
-        "en": "N re-captures must agree character for character before a read counts as seen, and confidence must clear a floor of 30. Both numbers are measured: everything under 60 was garbage on synthetic images, but a correct real read scored 55.8, so the floor moved down to catch only outright failures; a blinking caret is stripped from the comparison, never from the output.\n"
+        "zh": "N 次重新采集必须**逐字节一致**才算“看清”，置信度还需过 30 的地板。地板是实测定的：合成图上 60 以下全是垃圾，但真实屏幕上一次读对的只有 55.8，所以降到只抓彻底失败。比较本身不做任何加工——不折叠空白、不剔光标：工具读到的文字原样回报，两次不一致就是退出码 6（可重试），由调用方决定怎么办。\n",
+        "en": "N re-captures must agree byte for byte before a read counts as seen, and confidence must clear a floor of 30. The floor is measured: everything under 60 was garbage on synthetic images while a correct real read scored 55.8, so it only catches outright failures. The comparison itself normalises nothing - no whitespace folding, no caret stripping: the text the engine produced is the text that is compared, and a disagreement is exit 6 for the caller to retry.\n"
       },
       "source": [
         {
@@ -4243,16 +4243,16 @@
           "end_line": 292
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.642Z",
-      "fingerprint": "b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.898Z",
+      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
       "apis": [
         {
           "protocol": "rpc",
           "path": "Probe.IsSeen",
           "description": {
-            "zh": "把“到底看清了没”的策略集中在一处可单测的地方：多次读必须一致，置信度需过地板。\n",
-            "en": "The whole did-we-see-it policy in one testable place: reads must agree, and confidence must clear the floor.\n"
+            "zh": "把“到底看清了没”的策略集中在一处可单测的地方：多次读取必须逐字节一致，置信度需过地板。\n",
+            "en": "The whole did-we-see-it policy in one testable place: reads must agree byte for byte and confidence must clear the floor.\n"
           },
           "key": "rpc:Probe.IsSeen"
         }
@@ -4291,9 +4291,9 @@
           "end_line": 628
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.642Z",
-      "fingerprint": "b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:20:55.385Z",
+      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
       "apis": [
         {
           "protocol": "rpc",
@@ -4346,8 +4346,8 @@
         "en": "Contrast, upscale, padding"
       },
       "description": {
-        "zh": "三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、放大加白边（引擎舒适区约 300 DPI，屏幕区域是 96）、手写 BMP 写出器因而无需图像库依赖。放大默认用**最近邻**：每个源像素复制成 N×N 方块，不发明像素——选它的理由是这个性质，不是\"更准\"：10 个真实样本里双线性 10/10、最近邻 9/10，差别只有 1 个样本（早先那次\"最近邻明显更准\"把光标噪声算了进去，已作废，见 tests/evidence）。\n",
-        "en": "Three transforms, each forced by measurement: contrast normalisation against the background mode, an upscale with padding, and a hand-written BMP writer so no image library is needed. The upscale samples nearest by default: each source pixel becomes an N x N block, nothing is invented - chosen for that property, not for accuracy: over 10 real samples bilinear scored 10/10 and nearest 9/10, a one-sample gap (an earlier claim that nearest reads better was caret noise; see tests/evidence).\n"
+        "zh": "三个变换，全部是**选项**：默认把抓到的原始像素直接交给引擎（`--scale 1 --pad 0`、不归一化）。放大（96→引擎舒适的 ~300 DPI）、白边、对比度归一化（含暗底反相）都按需打开。取样可切 `bilinear`/`nearest`，实测两者在真实语料上没量出精度差别；深底浅字不归一化也能读（实测 72~74 vs 归一化 75~79）。\n",
+        "en": "Three transforms, all opt-in: by default the captured pixels go straight to the engine (scale 1, no padding, no normalisation). Upscaling (96 -> the ~300 DPI the engine likes), padding and contrast normalisation (including inverting dark backgrounds) are switched on when wanted. The sampler can be bilinear or nearest; measured, the two show no accuracy difference on the real corpus. Light-on-dark reads without normalisation too (72~74 versus 75~79 with it).\n"
       },
       "source": [
         {
@@ -4356,9 +4356,9 @@
           "end_line": 513
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.640Z",
-      "fingerprint": "b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.898Z",
+      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
       "apis": [
         {
           "protocol": "rpc",
@@ -6268,8 +6268,8 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.642Z",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.899Z",
       "fingerprint": "93ea566e8beb0f488f1e7b1e9eca656626cd5beac61e2e91c3f1b8206f481427",
       "aggregate": {
         "descendant_count": 24,
@@ -6421,9 +6421,9 @@
           "path": "tests/evidence.ps1"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:37.640Z",
-      "fingerprint": "4b3e6774fbabc9290fb2b2a995a4073398cbde48e45e4ae03e30d3c4cfd8ac9d",
+      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
+      "updated_at": "2026-10-03T09:21:00.898Z",
+      "fingerprint": "82c7ca94e4d2cc1bdcc71302b688f99198f8e3ca3e76fe6efed0cfba816488b0",
       "apis": [
         {
           "protocol": "rpc",
@@ -11595,6 +11595,15 @@
         "zh": "probe：感知出口最小版（截图区域 → Tesseract → 共识判定 → JSON）"
       },
       "updated_at": "2026-10-03T07:31:03.742Z"
+    },
+    {
+      "id": "2026-10-03-raw-pixels-default",
+      "status": "verified",
+      "title": {
+        "zh": "原始像素直送引擎；比较改成逐字节；语料扩到 20 个样本",
+        "en": "Raw pixels to the engine, literal comparison, 20-sample corpus"
+      },
+      "updated_at": "2026-10-03T09:21:01.748Z"
     }
   ]
 }

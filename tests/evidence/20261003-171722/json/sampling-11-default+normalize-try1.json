@@ -1,0 +1,130 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "对比度归一化 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 87.8,
+  "minConfidence": 30,
+  "elapsedMs": 610,
+  "note": null,
+  "lines": [
+    {
+      "text": "error: 找 不 到 文件 (ex2)",
+      "rect": [
+        10,
+        16,
+        77,
+        12
+      ],
+      "words": [
+        {
+          "text": "error:",
+          "conf": 95.3,
+          "rect": [
+            10,
+            16,
+            77,
+            12
+          ]
+        },
+        {
+          "text": "找",
+          "conf": 92.5,
+          "rect": [
+            112,
+            7,
+            19,
+            22
+          ]
+        },
+        {
+          "text": "不",
+          "conf": 88.3,
+          "rect": [
+            143,
+            7,
+            16,
+            22
+          ]
+        },
+        {
+          "text": "到",
+          "conf": 96.6,
+          "rect": [
+            167,
+            7,
+            18,
+            22
+          ]
+        },
+        {
+          "text": "文件",
+          "conf": 92.9,
+          "rect": [
+            186,
+            7,
+            54,
+            23
+          ]
+        },
+        {
+          "text": "(ex2)",
+          "conf": 60.9,
+          "rect": [
+            256,
+            8,
+            63,
+            24
+          ]
+        }
+      ]
+    }
+  ]
+}
+

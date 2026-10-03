@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "放大 3× + 白边 16px（nearest） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 91.8,
+  "minConfidence": 30,
+  "elapsedMs": 601,
+  "note": null,
+  "lines": [
+    {
+      "text": "文件 编辑 查看 H1",
+      "rect": [
+        49,
+        37,
+        159,
+        66
+      ],
+      "words": [
+        {
+          "text": "文件",
+          "conf": 96.4,
+          "rect": [
+            49,
+            37,
+            159,
+            66
+          ]
+        },
+        {
+          "text": "编辑",
+          "conf": 89.5,
+          "rect": [
+            253,
+            37,
+            156,
+            66
+          ]
+        },
+        {
+          "text": "查看",
+          "conf": 90.6,
+          "rect": [
+            457,
+            37,
+            156,
+            66
+          ]
+        },
+        {
+          "text": "H1",
+          "conf": 90.6,
+          "rect": [
+            655,
+            52,
+            78,
+            45
+          ]
+        }
+      ]
+    }
+  ]
+}
+

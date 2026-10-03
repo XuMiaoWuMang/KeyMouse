@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "对比度归一化 + 放大 3× + 白边 16px（bilinear） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 90.6,
+  "minConfidence": 30,
+  "elapsedMs": 610,
+  "note": null,
+  "lines": [
+    {
+      "text": "总 计 1,234.56 元",
+      "rect": [
+        48,
+        37,
+        162,
+        66
+      ],
+      "words": [
+        {
+          "text": "总",
+          "conf": 90.7,
+          "rect": [
+            48,
+            37,
+            162,
+            66
+          ]
+        },
+        {
+          "text": "计",
+          "conf": 85.7,
+          "rect": [
+            155,
+            31,
+            65,
+            85
+          ]
+        },
+        {
+          "text": "1,234.56",
+          "conf": 91.1,
+          "rect": [
+            253,
+            50,
+            322,
+            62
+          ]
+        },
+        {
+          "text": "元",
+          "conf": 95.1,
+          "rect": [
+            614,
+            41,
+            82,
+            67
+          ]
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "对比度归一化 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 69,
+  "minConfidence": 30,
+  "elapsedMs": 623,
+  "note": null,
+  "lines": [
+    {
+      "text": "Ctrl+sS 保存 ，Ctrl+Z 撤销",
+      "rect": [
+        10,
+        10,
+        82,
+        18
+      ],
+      "words": [
+        {
+          "text": "Ctrl+sS",
+          "conf": 46.6,
+          "rect": [
+            10,
+            10,
+            82,
+            18
+          ]
+        },
+        {
+          "text": "保存",
+          "conf": 91.4,
+          "rect": [
+            105,
+            7,
+            63,
+            22
+          ]
+        },
+        {
+          "text": "，Ctrl+Z",
+          "conf": 72.1,
+          "rect": [
+            186,
+            10,
+            81,
+            18
+          ]
+        },
+        {
+          "text": "撤销",
+          "conf": 66,
+          "rect": [
+            280,
+            7,
+            53,
+            23
+          ]
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,140 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "对比度归一化 + 放大 3× + 白边 16px（bilinear） 后直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 93.8,
+  "minConfidence": 30,
+  "elapsedMs": 646,
+  "note": null,
+  "lines": [
+    {
+      "text": "用 户 名 或 密码 不 正确",
+      "rect": [
+        47,
+        37,
+        74,
+        69
+      ],
+      "words": [
+        {
+          "text": "用",
+          "conf": 93.1,
+          "rect": [
+            47,
+            37,
+            74,
+            69
+          ]
+        },
+        {
+          "text": "户",
+          "conf": 86.5,
+          "rect": [
+            149,
+            37,
+            53,
+            70
+          ]
+        },
+        {
+          "text": "名",
+          "conf": 92.1,
+          "rect": [
+            233,
+            37,
+            50,
+            66
+          ]
+        },
+        {
+          "text": "或",
+          "conf": 96.7,
+          "rect": [
+            322,
+            37,
+            50,
+            66
+          ]
+        },
+        {
+          "text": "密码",
+          "conf": 95.2,
+          "rect": [
+            405,
+            37,
+            130,
+            66
+          ]
+        },
+        {
+          "text": "不",
+          "conf": 96.3,
+          "rect": [
+            565,
+            37,
+            50,
+            66
+          ]
+        },
+        {
+          "text": "正确",
+          "conf": 96.6,
+          "rect": [
+            648,
+            37,
+            126,
+            70
+          ]
+        }
+      ]
+    }
+  ]
+}
+

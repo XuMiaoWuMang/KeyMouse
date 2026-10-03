@@ -11,9 +11,9 @@ description:
   en: >
       Invokes the explicitly configured external engine (Tesseract by default) and reads tsv for per-word confidence. Nothing is bundled; engine version, tessdata directory and model sizes go into the output, or a later 'why did this work yesterday' has no answer. A model directory without configs/ produces no tsv at all - that trap cost a whole debugging round.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:33.642Z"
-fingerprint: b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1
+revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
+updated_at: "2026-10-03T09:20:55.385Z"
+fingerprint: dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692
 source:
   - path: "Probe.cs"
     line: 491

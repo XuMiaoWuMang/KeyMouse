@@ -1,0 +1,130 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0xA20A06",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 15272
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "prepared": "原始像素直送引擎",
+  "reads": 2,
+  "consistent": true,
+  "confidence": 81.4,
+  "minConfidence": 30,
+  "elapsedMs": 614,
+  "note": null,
+  "lines": [
+    {
+      "text": "error: 找 不 到 文件 (0x2)",
+      "rect": [
+        11,
+        16,
+        76,
+        11
+      ],
+      "words": [
+        {
+          "text": "error:",
+          "conf": 96.1,
+          "rect": [
+            11,
+            16,
+            76,
+            11
+          ]
+        },
+        {
+          "text": "找",
+          "conf": 56.4,
+          "rect": [
+            113,
+            7,
+            18,
+            22
+          ]
+        },
+        {
+          "text": "不",
+          "conf": 91,
+          "rect": [
+            142,
+            8,
+            16,
+            21
+          ]
+        },
+        {
+          "text": "到",
+          "conf": 96.4,
+          "rect": [
+            168,
+            7,
+            17,
+            22
+          ]
+        },
+        {
+          "text": "文件",
+          "conf": 94.3,
+          "rect": [
+            187,
+            7,
+            53,
+            22
+          ]
+        },
+        {
+          "text": "(0x2)",
+          "conf": 54.1,
+          "rect": [
+            256,
+            9,
+            62,
+            23
+          ]
+        }
+      ]
+    }
+  ]
+}
+
