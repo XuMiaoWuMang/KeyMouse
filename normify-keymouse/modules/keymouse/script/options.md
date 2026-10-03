@@ -6,14 +6,14 @@ tags: [script, parsing]
 name: {zh: "run 选项解析", en: "run option parsing"}
 description:
   zh: >
-      run 自己的选项：--delay / --keep-going / --dry-run / --echo / --retry / --retry-delay / --set 名=值 / --report 文件。--set 的值允许含 “=”（只按第一个等号切），并拒绝把窗口选择器挂在 run 上。
+      脚本与流程运行器的选项：路径、延迟、`--keep-going`、`--dry-run`、`--echo`、`--retry[--delay]`、`--report`、`--set`，以及 `--allow-restore`（允许还原最小化窗口，默认关——还原是在改用户的桌面，所以要明说）。同一份选项既服务文本脚本，也服务流程。
       
   en: >
-      The options run itself takes: delay, keep-going, dry-run, echo, retry, retry-delay, --set and --report. A --set value may contain '='; a window selector on run itself is refused.
+      Options for the script and flow runners: path, delay, --keep-going, --dry-run, --echo, --retry[--delay], --report, --set, and --allow-restore (may a minimized window be restored? off by default, because that changes someone desktop). The same options serve the text script and the flow.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:16.005Z"
-fingerprint: 77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.971Z"
+fingerprint: 460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8
 source:
   - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 384

@@ -20,6 +20,7 @@
   "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
   "rpc:脚本循环断言组": "keymouse.tests.smoke.loops",
   "rpc:进度与详情输出": "keymouse.script.run.progress",
+  "rpc:聚焦与还原断言组": "keymouse.tests.smoke.focus",
   "rpc:零散入口断言组": "keymouse.tests.smoke.features",
   "rpc:流程、谓词与录制规则断言组": "keymouse.tests.unit.flow",
   "rpc:录制与回放断言组": "keymouse.tests.smoke.record",

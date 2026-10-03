@@ -151,6 +151,13 @@ internal sealed class FlowDocument
     /// <summary>Document-level variables. A value is a string, or an array of strings when a
     /// `foreach` needs a list. `--set name=value` overrides a string one (and reduces a list to a
     /// single element, documented rather than surprising).</summary>
+    /// <summary>
+    /// Whether this flow may restore a minimized window. Off by default - bringing a window back is a
+    /// visible change to someone's desktop, so it is opted into, exactly like `--allow-restore` on the
+    /// command line. Set it when the flow starts from a window the user left minimized.
+    /// </summary>
+    public bool AllowRestore { get; set; }
+
     public Dictionary<string, JsonElement>? Variables { get; set; }
 
     [JsonIgnore] internal Dictionary<string, string> Texts { get; } = new(StringComparer.Ordinal);

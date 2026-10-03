@@ -8,9 +8,10 @@ internal sealed class FocusResult
 }
 
 /// <summary>
-/// Gentle focus: SetForegroundWindow (+ BringWindowToTop from the second attempt on),
-/// then re-read the real foreground window. No thread-input attachment, no synthetic
-/// Alt key, no retry storms - three attempts and out.
+/// Focus that is verified rather than assumed: SetForegroundWindow (with BringWindowToTop as the
+/// attempts wear on), preceded by attaching our input queue to whatever holds the foreground - the
+/// documented way to make the call legal without sending a keystroke anywhere. Then the **real**
+/// foreground window is read back: the only evidence that counts. Three attempts and out.
 /// </summary>
 internal static class WindowFocus
 {
@@ -31,12 +32,28 @@ internal static class WindowFocus
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            if (attempt > 1) NativeWindow.BringWindowToTop(h);
-            NativeWindow.SetForegroundWindow(h);
-            Thread.Sleep(WaitAfterCallMs);
+            // Measured: with another window holding the foreground, three plain SetForegroundWindow
+            // attempts all failed (exit 5) - the foreground lock refuses a caller that does not own the
+            // foreground. Attaching our input queue to that thread first makes the same call legal, and
+            // it sends nothing anywhere, so it is tried before the gentle path gives up.
+            uint attached = NativeWindow.AttachToForegroundThread();
+            try
+            {
+                if (attempt > 1) NativeWindow.BringWindowToTop(h);
+                NativeWindow.SetForegroundWindow(h);
+                if (attempt == maxAttempts) NativeWindow.BringWindowToTop(h);
+            }
+            finally
+            {
+                NativeWindow.DetachFromThread(attached);
+            }
 
+            Thread.Sleep(WaitAfterCallMs);
             if (IsForeground(h))
-                return new FocusResult { Ok = true, Attempts = attempt, Detail = $"第 {attempt} 次温和尝试后成为前台窗口" };
+            {
+                string how = attached != 0 ? $"{attempt} 次尝试（含线程输入附着）" : $"{attempt} 次尝试";
+                return new FocusResult { Ok = true, Attempts = attempt, Detail = $"经过 {how} 后成为前台窗口" };
+            }
         }
 
         IntPtr fg = NativeWindow.GetForegroundWindow();
@@ -44,7 +61,8 @@ internal static class WindowFocus
         {
             Ok = false,
             Attempts = maxAttempts,
-            Detail = $"尝试 {maxAttempts} 次仍未成为前台窗口（当前前台是「{NativeWindow.GetTitle(fg)}」）"
+            Detail = $"尝试 {maxAttempts} 次仍未成为前台窗口（当前前台是「{NativeWindow.GetTitle(fg)}」）" +
+                     "；若目标以管理员身份运行，请同样以管理员身份运行 KeyMouse（UIPI 会挡住前台切换与输入注入）"
         };
     }
 }

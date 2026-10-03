@@ -75,6 +75,39 @@ internal static class NativeWindow
     public static extern bool BringWindowToTop(IntPtr hWnd);
 
     [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
+
+    [DllImport("user32.dll")]
+    private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    /// <summary>
+    /// Joins our input queue to the foreground window's thread. Windows refuses SetForegroundWindow
+    /// whenever the caller does not already own the foreground ("foreground lock"); attaching is the
+    /// documented way to make that call legal, and it does it **without injecting a single keystroke** -
+    /// which is why it belongs before giving up, not after.
+    /// </summary>
+    /// <returns>The thread id we attached to, or 0 when nothing was attached.</returns>
+    public static uint AttachToForegroundThread()
+    {
+        IntPtr foreground = GetForegroundWindow();
+        if (foreground == IntPtr.Zero) return 0;
+        uint other = GetWindowThreadProcessId(foreground, IntPtr.Zero);
+        uint self = GetCurrentThreadId();
+        if (other == 0 || other == self) return 0;
+        return AttachThreadInput(other, self, true) ? other : 0;
+    }
+
+    /// <summary>Detaches from the **same** thread we attached to (the foreground may have moved on).</summary>
+    public static void DetachFromThread(uint threadId)
+    {
+        if (threadId == 0) return;
+        AttachThreadInput(threadId, GetCurrentThreadId(), false);
+    }
+
+    [DllImport("user32.dll")]
     public static extern IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
 
     [DllImport("user32.dll")]

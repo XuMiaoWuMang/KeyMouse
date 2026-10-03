@@ -173,6 +173,12 @@ internal static class ParsingTests
 
         var options = new ScriptOptions();
         Harness.Check("a plain script path is accepted", ScriptRunner.ParseOptions(new[] { "s.txt" }, options) is null);
+
+        // 还原最小化窗口是要"同意"的：命令行开关与流程文件里的 allowRestore 任一生效。
+        options = new ScriptOptions();
+        Harness.Check("run: --allow-restore is accepted",
+            ScriptRunner.ParseOptions(new[] { "s.txt", "--allow-restore" }, options) is null && options.AllowRestore);
+        Harness.Check("run: it is off unless asked for", !new ScriptOptions().AllowRestore);
         Harness.Equal("script path is kept", "s.txt", options.Path);
         Harness.Equal("retry defaults to 0", 0, options.Retry);
         Harness.Equal("retry delay defaults to 300", 300, options.RetryDelayMs);

@@ -6,14 +6,14 @@ tags: [flow, json]
 name: {zh: "流程文档与编译器", en: "Document and compiler"}
 description:
   zh: >
-      流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 `call` 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里、`read-text` 的 into 与 `call` 的 export 对后续步骤可见、子流程必须存在且不成环）。另负责按帧解析。分组只检查自己的字段：子步骤在它们自己的作用域里单独校验。
+      流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 `call` 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里、`read-text` 的 into 与 `call` 的 export 对后续步骤可见、子流程必须存在且不成环）。另负责按帧解析。`allowRestore` 是**同意**开关：默认关，还原别人的最小化窗口要明说。
       
   en: >
-      Validating a flow at load time: format, version, step types, conditions, preconditions, loops, variables and calls - including the region/text/match rules, the times cap, a foreach list that must exist, a group that cannot carry a when, placeholders that must be in scope, a read-text into and a call export later steps may use, and a subflow that must exist without cycles. Placeholders resolve against a frame, and a group is checked only for the placeholders in its own fields.
+      Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, loops, variables and calls (region/text/match rules, the times cap, a foreach list that must exist, a group that cannot carry a when, placeholders in scope, a read-text into and a call export later steps may use, and a subflow without cycles). Placeholders resolve against a frame; allowRestore carries the consent to bring a minimized window back.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.517Z"
-fingerprint: 553948866419b34f39c26b888689b5bf2ff249b451583c560599296f43adcfb1
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.970Z"
+fingerprint: 6d745f8021564c393850fb425fa2a4459d4fd25098adef60f24030999f435719
 source:
   - path: "src/KeyMouse.Core/FlowModel.cs"
   - path: "src/KeyMouse.Core/TextPredicate.cs"

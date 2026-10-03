@@ -11,9 +11,9 @@ description:
   en: >
       One pass over the script: which loops enclose each line, each repeat's matching end, and how many commands the loops will dispatch. Unpaired blocks, bad counts, shadowed variables and expansions beyond 100k all fail here, before anything runs.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:16.004Z"
-fingerprint: 77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.316Z"
+fingerprint: 460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8
 source:
   - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 478

@@ -6,14 +6,14 @@ tags: [win32, focus]
 name: {zh: "前台窗口控制", en: "Foreground control"}
 description:
   zh: >
-      读取当前前台窗口、请求把它换成目标（SetForegroundWindow/BringWindowToTop），以及取根窗口/属主/窗口线程进程号——聚焦验证的全部依据。
+      前台相关的 P/Invoke：GetForegroundWindow / SetForegroundWindow / BringWindowToTop / GetWindowThreadProcessId / AttachThreadInput / GetCurrentThreadId。后三个是"前台锁"的官方绕法：把调用者的输入队列接到当前前台线程上，`SetForegroundWindow` 才会被接受。
       
   en: >
-      Reads the current foreground window, asks for the target to become it, and resolves root/owner/thread-pid - the whole basis of focus verification.
+      The foreground P/Invokes: GetForegroundWindow, SetForegroundWindow, BringWindowToTop, GetWindowThreadProcessId, AttachThreadInput and GetCurrentThreadId. The last three are the documented way around the foreground lock: join the caller input queue to the foreground thread and SetForegroundWindow is accepted.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.203Z"
-fingerprint: d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.970Z"
+fingerprint: f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535
 source:
   - path: "src/KeyMouse.Core/NativeWindow.cs"
     line: 69

@@ -61,6 +61,8 @@ internal static class FlowRunner
         {
             // --set wins over the document variables, so one file can be reused with other data.
             document = FlowDocument.Load(options.Path, options.Variables);
+            // The document's own intent joins the command line's: either may allow a restore.
+            if (document.AllowRestore) options.AllowRestore = true;
         }
         catch (CommandFailure ex)
         {
@@ -131,7 +133,7 @@ internal static class FlowRunner
                 // retry without wondering whether half of something happened.
                 if (step.When is { } condition)
                 {
-                    PollResult when = EvaluateWhen(step, condition, options.DryRun, stepNo);
+                    PollResult when = EvaluateWhen(step, condition, options.DryRun, options.AllowRestore, stepNo);
                     if (!when.Found)
                     {
                         if ((condition.Else ?? "skip") == "fail")
@@ -251,6 +253,11 @@ internal static class FlowRunner
 
             default:
                 string[] argv = FlowDocument.ToArguments(step);
+                // The document's consent has to travel with the compiled command line too: the step is
+                // dispatched through the same parser as a hand-typed command, and that parser keeps its own
+                // idea of whether restoring a minimized window is allowed. Measured: without this, a flow
+                // with "allowRestore": true still exited 4.
+                if (options.AllowRestore) argv = [.. argv, "--allow-restore"];
                 if (options.DryRun) argv = [.. argv, "--dry-run"];
                 var tokens = new List<string>(argv);
                 return ScriptRunner.RunOnce(execute, tokens);
@@ -271,7 +278,7 @@ internal static class FlowRunner
 
         if (options.DryRun)
         {
-            var dry = WindowResolver.Resolve(selector, allowRestore: false);
+            var dry = WindowResolver.Resolve(selector, options.AllowRestore);
             if (dry.Usable.Count == 0) return (4, $"（dry-run）目标窗口现在不可用：{selector.Describe()}");
             try
             {
@@ -284,7 +291,7 @@ internal static class FlowRunner
             return (0, $"（dry-run）会把 {step.Into} 设成读到的内容（区域已校验）");
         }
 
-        var resolution = WindowResolver.Resolve(selector, allowRestore: false);
+        var resolution = WindowResolver.Resolve(selector, options.AllowRestore);
         if (resolution.Usable.Count == 0) return (4, $"目标窗口现在不可用：{selector.Describe()}");
 
         try
@@ -325,7 +332,7 @@ internal static class FlowRunner
         var clock = Stopwatch.StartNew();
         while (true)
         {
-            var resolution = WindowResolver.Resolve(windowSelector, allowRestore: false);
+            var resolution = WindowResolver.Resolve(windowSelector, options.AllowRestore);
             if (resolution.Usable.Count > 0)
             {
                 return (0, $"等到「{resolution.Usable[0].Title}」（{clock.ElapsedMilliseconds} ms）");
@@ -352,13 +359,13 @@ internal static class FlowRunner
     /// </summary>
     private static PollResult PollForText(
         WindowSelector selector, FlowRegion region, string expected, string mode, int maxErrors,
-        int timeoutMs, int intervalMs, int confirm, bool dryRun, int stepIndex)
+        int timeoutMs, int intervalMs, int confirm, bool dryRun, bool allowRestore, int stepIndex)
     {
         if (dryRun)
         {
             // No engine call in a dry run: resolve the window and check the rectangle, which is what a
             // dry run can honestly verify about a condition.
-            var resolution = WindowResolver.Resolve(selector, allowRestore: false);
+            var resolution = WindowResolver.Resolve(selector, allowRestore);
             if (resolution.Usable.Count == 0)
                 return new PollResult(false, null, 4, $"（dry-run）目标窗口现在不可用：{selector.Describe()}", "");
             try
@@ -383,7 +390,7 @@ internal static class FlowRunner
             // A long wait has to be cancellable (and pausable) like any other step.
             Execution.BetweenSteps(stepIndex);
 
-            var resolution = WindowResolver.Resolve(selector, allowRestore: false);
+            var resolution = WindowResolver.Resolve(selector, allowRestore);
             if (resolution.Usable.Count == 0)
             {
                 consecutive = 0;
@@ -454,11 +461,11 @@ internal static class FlowRunner
     private static bool HasSelector(WindowSelector selector) =>
         selector.ProcessName is not null || selector.ClassName is not null;
 
-    private static PollResult PollStep(FlowStep step, bool dryRun, int stepIndex) => PollForText(
+    private static PollResult PollStep(FlowStep step, bool dryRun, bool allowRestore, int stepIndex) => PollForText(
         SelectorOf(step.Target), step.Region!, step.Text ?? "",
         step.Match ?? TextPredicate.Contains, Math.Clamp(step.MaxErrors ?? 1, 0, 20),
         Math.Clamp(step.TimeoutMs ?? 5000, 0, 600_000), Math.Clamp(step.IntervalMs ?? 250, 0, 5000),
-        Math.Clamp(step.Confirm ?? 2, 1, 10), dryRun, stepIndex);
+        Math.Clamp(step.Confirm ?? 2, 1, 10), dryRun, allowRestore, stepIndex);
 
     private static (int ExitCode, string Output) WaitText(FlowStep step, ScriptOptions options, int stepIndex)
     {
@@ -466,7 +473,7 @@ internal static class FlowRunner
         if (!HasSelector(selector))
             return (2, "wait-text 需要 target（至少给 process 或 class，否则不知道该读哪个窗口）");
 
-        PollResult poll = PollStep(step, options.DryRun, stepIndex);
+        PollResult poll = PollStep(step, options.DryRun, options.AllowRestore, stepIndex);
         return poll.ExitCode == 0 ? (0, poll.Detail) : (poll.ExitCode, poll.Detail);
     }
 
@@ -482,7 +489,7 @@ internal static class FlowRunner
         if (!HasSelector(selector))
             return (2, "click-text 需要 target（至少给 process 或 class，否则不知道该读哪个窗口）");
 
-        PollResult poll = PollStep(step, options.DryRun, stepIndex);
+        PollResult poll = PollStep(step, options.DryRun, options.AllowRestore, stepIndex);
         if (!poll.Found) return (poll.ExitCode, poll.Detail);
         if (poll.Match is null)
         {
@@ -509,12 +516,12 @@ internal static class FlowRunner
     /// text conditions: it either holds (run the step) or it does not (skip it, or fail with exit 3 -
     /// which still means "nothing was sent").
     /// </summary>
-    private static PollResult EvaluateWhen(FlowStep step, FlowCondition condition, bool dryRun, int stepIndex) =>
+    private static PollResult EvaluateWhen(FlowStep step, FlowCondition condition, bool dryRun, bool allowRestore, int stepIndex) =>
         PollForText(
             SelectorOf(condition.Target ?? step.Target), condition.Region!, condition.Text ?? "",
             condition.Match ?? TextPredicate.Contains, Math.Clamp(condition.MaxErrors ?? 1, 0, 20),
             Math.Clamp(condition.TimeoutMs ?? 2000, 0, 600_000), Math.Clamp(condition.IntervalMs ?? 250, 0, 5000),
-            Math.Clamp(condition.Confirm ?? 2, 1, 10), dryRun, stepIndex);
+            Math.Clamp(condition.Confirm ?? 2, 1, 10), dryRun, allowRestore, stepIndex);
 
     private static string Describe(FlowStep step) => step.Type switch
     {

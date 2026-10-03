@@ -11,9 +11,9 @@ description:
   en: >
       Overview README, command reference, design rationale, development and release process, and a runnable sample script. When docs and behaviour disagree, behaviour wins and the docs get fixed.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:50:56.985Z"
-fingerprint: 277686e1fe2e041829f344313fcd68d3705ed6d4bd37be594754c94c44137b32
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.311Z"
+fingerprint: 3e0e9d606d3112312a907ab094d27ee4f9892be72751ec874cf873eb0523b06e
 source:
   - path: "README.md"
   - path: "docs/reference.md"

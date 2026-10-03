@@ -31,6 +31,16 @@ internal sealed class ScriptOptions
     public int Retry;
     public int RetryDelayMs = 300;
     public string? ReportPath;
+
+    /// <summary>
+    /// May a minimized window be restored? Opt-in from two places - `--allow-restore` on the command
+    /// line, or `"allowRestore": true` in a flow file - because bringing a window back is a visible
+    /// change to someone's desktop.
+    /// </summary>
+    public bool AllowRestore;
+
+    /// <summary>The flow asked for it; the command line asked for it; either is enough.</summary>
+    public void AllowRestoreFrom(bool document) => AllowRestore |= document;
     public Dictionary<string, string> Variables { get; } = new(StringComparer.Ordinal);
 }
 
@@ -442,6 +452,9 @@ internal static class ScriptRunner
                     break;
                 case "--echo":
                     options.Echo = true;
+                    break;
+                case "--allow-restore":
+                    options.AllowRestore = true;
                     break;
                 default:
                     if (arg.Length > 1 && arg[0] == '-') return $"run：未知选项 '{arg}'";

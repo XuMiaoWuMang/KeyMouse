@@ -11,9 +11,9 @@ description:
   en: >
       QueryFullProcessImageName resolves a process name in one syscall - over thirty times faster than Process.GetProcessById - and the answer is cached per pid for the life of the run.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.203Z"
-fingerprint: d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.314Z"
+fingerprint: f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535
 source:
   - path: "src/KeyMouse.Core/NativeWindow.cs"
     line: 125

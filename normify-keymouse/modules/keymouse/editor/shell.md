@@ -6,14 +6,14 @@ tags: [editor, winui, ui]
 name: {zh: "窗口外壳与交互", en: "Shell and interactions"}
 description:
   zh: >
-      Mica 背景 + 自定义标题栏 + 工具栏（打开/保存/另存为/添加步骤/上移下移复制删除/取区域/试运行/播放/停止）+ 状态 InfoBar 与运行日志。退出码按 CLI 的同一套含义解释给用户看；有未保存改动时关窗先问；"试运行/播放"在未保存时写临时文件，绝不悄悄覆盖正在编辑的文件。
+      编辑器的窗口外壳：工具栏（打开/保存/试运行/播放/暂停/停止）、步骤列表、检查器、JSON 预览、运行输出面板与信息条。快捷键：Ctrl+O 打开、Ctrl+S 保存、**F5 播放**；命令行带上一个流程文件即可直接打开它（`KeyMouse flow edit x.json` 也走这条）。
       
   en: >
-      Mica backdrop, custom title bar and toolbar (open/save/save-as/add/move/duplicate/delete/pick-region/dry-run/play/stop) plus a status InfoBar and a run log. Exit codes are explained with the same meanings the CLI documents, closing with unsaved changes asks first, and dry-run/play write a scratch file rather than silently overwriting the file being edited.
+      The editor window shell: toolbar (open, save, dry run, play, pause, stop), step list, inspector, JSON preview, run output panel and info bar. Shortcuts: Ctrl+O open, Ctrl+S save, F5 play; a flow file on the command line opens straight away (so does KeyMouse flow edit x.json).
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:09.824Z"
-fingerprint: ee7ca3e44b026bf31763ee8ace9995548fd652494c11b6d67d66da17b27f8e27
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.971Z"
+fingerprint: 5c543b6ca06910092c7fad7820afeaaeae488f20cf5e71482cbb671fcf593e33
 source:
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml"
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"

@@ -6,14 +6,14 @@ tags: [flow, cli]
 name: {zh: "流程执行器", en: "Flow runner"}
 description:
   zh: >
-      执行一个流程：先展平循环、内联子流程，再逐步按帧解析变量、编译成命令交给同一份派发；失败即停或 `--keep-going`，可重试退出码按 `--retry`。每步之间经过执行接缝（暂停阻塞、取消抛退出码 7、边界作为事件上报），编号按**实际步数**（`call` 的导出项是账目，不算一步）。文本条件共用同一个轮询：`wait-text` 等它、`click-text` 点到匹配框中心、`when` 不成立则跳过或退出码 3；`read-text` 把读到的东西存进当前帧。
+      执行一个流程：先展平循环、内联子流程，再逐步按帧解析变量、编译成命令交给同一份派发；失败即停或 `--keep-going`，可重试退出码按 `--retry`。编号按实际步数，文本条件共用一个轮询。文档里的 `allowRestore` 会**跟着编译出的命令行一起走**（步骤交给同一个命令行解析器执行，它有自己对"能不能还原"的判断——这里踩过坑：只在运行器里设标志仍然退出码 4）。
       
   en: >
-      Runs a flow: loops expanded and subflows inlined first, then each step resolves its variables against its frame and is compiled for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam and numbers steps by what really runs (a call export is bookkeeping). Text conditions share one polling loop, and read-text stores into the current frame.
+      Runs a flow: loops expanded and subflows inlined first, then each step resolves its variables against its frame and is compiled for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam, numbers steps by what really runs, and all text conditions share one polling loop. The document allowRestore travels with the compiled command line.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.517Z"
-fingerprint: b085a45e1dbf1489536fcaea4135b549c5a73ac74a5fb51d0883088f929203d6
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.971Z"
+fingerprint: 57a3c71696d205ab8bcbbc4370f0e072b8c1fc5d13f68c0b68c26008afa8218e
 source:
   - path: "src/KeyMouse.Core/FlowRunner.cs"
 apis:

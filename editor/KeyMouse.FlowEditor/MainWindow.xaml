@@ -130,7 +130,11 @@
                         <TextBlock Text="试运行" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,6">
+                <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,6"
+                        ToolTipService.ToolTip="播放（F5）">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F5" />
+                    </Button.KeyboardAccelerators>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE768;" FontSize="14" />
                         <TextBlock Text="播放" />

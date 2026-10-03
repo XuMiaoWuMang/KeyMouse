@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T12:50:57.725Z",
+    "compiled_at": "2026-10-03T13:37:50.553Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 168,
-      "leaf_count": 138,
-      "api_count": 254,
-      "dep_count": 192,
+      "module_count": 169,
+      "leaf_count": 139,
+      "api_count": 255,
+      "dep_count": 194,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
       "layout_count": 30,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 15,
+      "change_count": 16,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 167,
+        "descendant_count": 168,
         "own_api_count": 0,
-        "inherited_api_count": 254,
+        "inherited_api_count": 255,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -678,9 +678,9 @@
           "end_line": 656
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.194Z",
-      "fingerprint": "d18c4d85defa1fa5de06d5c1406a2cea2d98c26c59968fc7e3054ff89b23dd2b",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.310Z",
+      "fingerprint": "76d50b8e49ed3d7a4bc46bb2652373a2bac9af4793c9742a6c6ef703b35ca71c",
       "apis": [
         {
           "protocol": "rpc",
@@ -779,9 +779,9 @@
           "end_line": 128
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.195Z",
-      "fingerprint": "7d2aaaca86d67355fa8f5733fa6016e537b1b30a8a48cf1602066cb3149364db",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.310Z",
+      "fingerprint": "a2cfe9e632206485327c509915ce0070a177a1c96cdf354b77421538e65d0b6b",
       "apis": [
         {
           "protocol": "rpc",
@@ -2341,9 +2341,9 @@
           "end_line": 128
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.198Z",
-      "fingerprint": "86ceb3eb6160cec7f728764fa3401a8b943c8a1eb147ee921f9070b7b33e4cdd",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.310Z",
+      "fingerprint": "a53c7adcf9a5b12674832b00a82f08b886e73fce4c9cb917a559b3490b448654",
       "deps": [
         {
           "kind": "call",
@@ -2518,9 +2518,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:50:56.985Z",
-      "fingerprint": "277686e1fe2e041829f344313fcd68d3705ed6d4bd37be594754c94c44137b32",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.311Z",
+      "fingerprint": "3e0e9d606d3112312a907ab094d27ee4f9892be72751ec874cf873eb0523b06e",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2553,9 +2553,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.519Z",
-      "fingerprint": "c2c5a322955c19d8135ddcd71df24160b3db12d4e50ded3bdfc2faf152a29de4",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.972Z",
+      "fingerprint": "b99a941a850d29b42c0520ced132a3a8f87b8a78a5143271bca4f6d21e35ec0b",
       "apis": [
         {
           "protocol": "file",
@@ -2597,9 +2597,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:50:56.984Z",
-      "fingerprint": "18f7180dcc7345d8be6c059098039d544f60ade13af3276aaf2f7cbe6af8a679",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.972Z",
+      "fingerprint": "59b28464e33a191b63c2ff2b5317421f6e761d9f4090aeb50d004201f2681472",
       "apis": [
         {
           "protocol": "file",
@@ -2685,9 +2685,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.519Z",
-      "fingerprint": "c618334d61287ed8459d4c99f07bfda1a06203c41b71c7e28e00021b30def3d3",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.972Z",
+      "fingerprint": "9de4b3d0e8e8e566a3a3c858b3f2965f210898dc364c56ecfc0deed2df90c866",
       "apis": [
         {
           "protocol": "file",
@@ -2886,8 +2886,8 @@
         "en": "Shell and interactions"
       },
       "description": {
-        "zh": "Mica 背景 + 自定义标题栏 + 工具栏（打开/保存/另存为/添加步骤/上移下移复制删除/取区域/试运行/播放/停止）+ 状态 InfoBar 与运行日志。退出码按 CLI 的同一套含义解释给用户看；有未保存改动时关窗先问；\"试运行/播放\"在未保存时写临时文件，绝不悄悄覆盖正在编辑的文件。\n",
-        "en": "Mica backdrop, custom title bar and toolbar (open/save/save-as/add/move/duplicate/delete/pick-region/dry-run/play/stop) plus a status InfoBar and a run log. Exit codes are explained with the same meanings the CLI documents, closing with unsaved changes asks first, and dry-run/play write a scratch file rather than silently overwriting the file being edited.\n"
+        "zh": "编辑器的窗口外壳：工具栏（打开/保存/试运行/播放/暂停/停止）、步骤列表、检查器、JSON 预览、运行输出面板与信息条。快捷键：Ctrl+O 打开、Ctrl+S 保存、**F5 播放**；命令行带上一个流程文件即可直接打开它（`KeyMouse flow edit x.json` 也走这条）。\n",
+        "en": "The editor window shell: toolbar (open, save, dry run, play, pause, stop), step list, inspector, JSON preview, run output panel and info bar. Shortcuts: Ctrl+O open, Ctrl+S save, F5 play; a flow file on the command line opens straight away (so does KeyMouse flow edit x.json).\n"
       },
       "source": [
         {
@@ -2900,9 +2900,9 @@
           "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.824Z",
-      "fingerprint": "ee7ca3e44b026bf31763ee8ace9995548fd652494c11b6d67d66da17b27f8e27",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.971Z",
+      "fingerprint": "5c543b6ca06910092c7fad7820afeaaeae488f20cf5e71482cbb671fcf593e33",
       "apis": [
         {
           "protocol": "rpc",
@@ -3134,9 +3134,9 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:08.811Z",
-      "fingerprint": "0bd0838b8d02e352e42a1ef97ac3851202757065ceb9aa48661979cc0be839ec",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.313Z",
+      "fingerprint": "16453d4f8d002642655def878b25ffa8df81923b5720e4a1bbe706f0c676e05a",
       "aggregate": {
         "descendant_count": 4,
         "own_api_count": 0,
@@ -3160,8 +3160,8 @@
         "en": "Document and compiler"
       },
       "description": {
-        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 `call` 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里、`read-text` 的 into 与 `call` 的 export 对后续步骤可见、子流程必须存在且不成环）。另负责按帧解析。分组只检查自己的字段：子步骤在它们自己的作用域里单独校验。\n",
-        "en": "Validating a flow at load time: format, version, step types, conditions, preconditions, loops, variables and calls - including the region/text/match rules, the times cap, a foreach list that must exist, a group that cannot carry a when, placeholders that must be in scope, a read-text into and a call export later steps may use, and a subflow that must exist without cycles. Placeholders resolve against a frame, and a group is checked only for the placeholders in its own fields.\n"
+        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 `call` 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里、`read-text` 的 into 与 `call` 的 export 对后续步骤可见、子流程必须存在且不成环）。另负责按帧解析。`allowRestore` 是**同意**开关：默认关，还原别人的最小化窗口要明说。\n",
+        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, loops, variables and calls (region/text/match rules, the times cap, a foreach list that must exist, a group that cannot carry a when, placeholders in scope, a read-text into and a call export later steps may use, and a subflow without cycles). Placeholders resolve against a frame; allowRestore carries the consent to bring a minimized window back.\n"
       },
       "source": [
         {
@@ -3171,9 +3171,9 @@
           "path": "src/KeyMouse.Core/TextPredicate.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.517Z",
-      "fingerprint": "553948866419b34f39c26b888689b5bf2ff249b451583c560599296f43adcfb1",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.970Z",
+      "fingerprint": "6d745f8021564c393850fb425fa2a4459d4fd25098adef60f24030999f435719",
       "apis": [
         {
           "protocol": "rpc",
@@ -3422,17 +3422,17 @@
         "en": "Flow runner"
       },
       "description": {
-        "zh": "执行一个流程：先展平循环、内联子流程，再逐步按帧解析变量、编译成命令交给同一份派发；失败即停或 `--keep-going`，可重试退出码按 `--retry`。每步之间经过执行接缝（暂停阻塞、取消抛退出码 7、边界作为事件上报），编号按**实际步数**（`call` 的导出项是账目，不算一步）。文本条件共用同一个轮询：`wait-text` 等它、`click-text` 点到匹配框中心、`when` 不成立则跳过或退出码 3；`read-text` 把读到的东西存进当前帧。\n",
-        "en": "Runs a flow: loops expanded and subflows inlined first, then each step resolves its variables against its frame and is compiled for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam and numbers steps by what really runs (a call export is bookkeeping). Text conditions share one polling loop, and read-text stores into the current frame.\n"
+        "zh": "执行一个流程：先展平循环、内联子流程，再逐步按帧解析变量、编译成命令交给同一份派发；失败即停或 `--keep-going`，可重试退出码按 `--retry`。编号按实际步数，文本条件共用一个轮询。文档里的 `allowRestore` 会**跟着编译出的命令行一起走**（步骤交给同一个命令行解析器执行，它有自己对\"能不能还原\"的判断——这里踩过坑：只在运行器里设标志仍然退出码 4）。\n",
+        "en": "Runs a flow: loops expanded and subflows inlined first, then each step resolves its variables against its frame and is compiled for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam, numbers steps by what really runs, and all text conditions share one polling loop. The document allowRestore travels with the compiled command line.\n"
       },
       "source": [
         {
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.517Z",
-      "fingerprint": "b085a45e1dbf1489536fcaea4135b549c5a73ac74a5fb51d0883088f929203d6",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.971Z",
+      "fingerprint": "57a3c71696d205ab8bcbbc4370f0e072b8c1fc5d13f68c0b68c26008afa8218e",
       "apis": [
         {
           "protocol": "rpc",
@@ -4166,9 +4166,9 @@
           "end_line": 193
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.313Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "aggregate": {
         "descendant_count": 11,
         "own_api_count": 0,
@@ -4264,9 +4264,9 @@
           "end_line": 185
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.313Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4375,9 +4375,9 @@
           "end_line": 171
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4444,9 +4444,9 @@
           "end_line": 114
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4508,8 +4508,8 @@
         "en": "Foreground control"
       },
       "description": {
-        "zh": "读取当前前台窗口、请求把它换成目标（SetForegroundWindow/BringWindowToTop），以及取根窗口/属主/窗口线程进程号——聚焦验证的全部依据。\n",
-        "en": "Reads the current foreground window, asks for the target to become it, and resolves root/owner/thread-pid - the whole basis of focus verification.\n"
+        "zh": "前台相关的 P/Invoke：GetForegroundWindow / SetForegroundWindow / BringWindowToTop / GetWindowThreadProcessId / AttachThreadInput / GetCurrentThreadId。后三个是\"前台锁\"的官方绕法：把调用者的输入队列接到当前前台线程上，`SetForegroundWindow` 才会被接受。\n",
+        "en": "The foreground P/Invokes: GetForegroundWindow, SetForegroundWindow, BringWindowToTop, GetWindowThreadProcessId, AttachThreadInput and GetCurrentThreadId. The last three are the documented way around the foreground lock: join the caller input queue to the foreground thread and SetForegroundWindow is accepted.\n"
       },
       "source": [
         {
@@ -4518,9 +4518,9 @@
           "end_line": 83
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.970Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4601,9 +4601,9 @@
           "end_line": 68
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.203Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4762,9 +4762,9 @@
           "end_line": 123
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.204Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4844,9 +4844,9 @@
           "end_line": 56
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.204Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -4923,9 +4923,9 @@
           "end_line": 193
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.204Z",
-      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.314Z",
+      "fingerprint": "f12933cbfe805c69639883c4ebb1067cc0d0444cd218652f941cddfa7ca49535",
       "apis": [
         {
           "protocol": "rpc",
@@ -5589,9 +5589,9 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:08.811Z",
-      "fingerprint": "e6138b020b93a2d2a485fb30d932de0826258a8a90b104ced6c38e90a7f804d3",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.315Z",
+      "fingerprint": "0f0885519e1a92b477c11f7ebec1434e3b2d029c47e76448b38bfde77bb4d9a4",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -5981,9 +5981,9 @@
           "end_line": 892
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.954Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.315Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "deps": [
         {
           "kind": "call",
@@ -6082,9 +6082,9 @@
           "end_line": 383
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.315Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6142,9 +6142,9 @@
           "end_line": 892
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.315Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6197,9 +6197,9 @@
           "end_line": 22
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.315Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6262,9 +6262,9 @@
           "end_line": 591
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "deps": [
         {
           "kind": "call",
@@ -6309,9 +6309,9 @@
           "end_line": 561
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6378,9 +6378,9 @@
           "end_line": 591
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6434,9 +6434,9 @@
           "end_line": 80
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6489,8 +6489,8 @@
         "en": "run option parsing"
       },
       "description": {
-        "zh": "run 自己的选项：--delay / --keep-going / --dry-run / --echo / --retry / --retry-delay / --set 名=值 / --report 文件。--set 的值允许含 “=”（只按第一个等号切），并拒绝把窗口选择器挂在 run 上。\n",
-        "en": "The options run itself takes: delay, keep-going, dry-run, echo, retry, retry-delay, --set and --report. A --set value may contain '='; a window selector on run itself is refused.\n"
+        "zh": "脚本与流程运行器的选项：路径、延迟、`--keep-going`、`--dry-run`、`--echo`、`--retry[--delay]`、`--report`、`--set`，以及 `--allow-restore`（允许还原最小化窗口，默认关——还原是在改用户的桌面，所以要明说）。同一份选项既服务文本脚本，也服务流程。\n",
+        "en": "Options for the script and flow runners: path, delay, --keep-going, --dry-run, --echo, --retry[--delay], --report, --set, and --allow-restore (may a minimized window be restored? off by default, because that changes someone desktop). The same options serve the text script and the flow.\n"
       },
       "source": [
         {
@@ -6499,9 +6499,9 @@
           "end_line": 451
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.971Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6560,9 +6560,9 @@
           "end_line": 634
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "deps": [
         {
           "kind": "call",
@@ -6607,9 +6607,9 @@
           "end_line": 477
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.316Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6654,9 +6654,9 @@
           "end_line": 634
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6700,9 +6700,9 @@
           "end_line": 777
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.005Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6760,9 +6760,9 @@
           "end_line": 862
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.006Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "file",
@@ -6816,9 +6816,9 @@
           "end_line": 883
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.006Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "file",
@@ -6885,9 +6885,9 @@
           "end_line": 835
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.006Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -6931,9 +6931,9 @@
           "end_line": 360
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.006Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "aggregate": {
         "descendant_count": 4,
         "own_api_count": 0,
@@ -6966,9 +6966,9 @@
           "end_line": 305
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.006Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.317Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7080,9 +7080,9 @@
           "end_line": 141
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.007Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7203,9 +7203,9 @@
           "end_line": 333
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.007Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7273,9 +7273,9 @@
           "end_line": 360
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.007Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7333,9 +7333,9 @@
           "end_line": 752
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -7369,9 +7369,9 @@
           "end_line": 745
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.007Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7416,9 +7416,9 @@
           "end_line": 752
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.318Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7463,9 +7463,9 @@
           "end_line": 716
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -7499,9 +7499,9 @@
           "end_line": 716
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7546,9 +7546,9 @@
           "end_line": 673
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7606,9 +7606,9 @@
           "end_line": 833
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.008Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "deps": [
         {
           "kind": "call",
@@ -7662,9 +7662,9 @@
           "end_line": 817
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.009Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7740,9 +7740,9 @@
           "end_line": 833
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.009Z",
-      "fingerprint": "77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.319Z",
+      "fingerprint": "460dacfdc9a8f322adac95634e9cc16d4d25d40c8aba413878ef14a5332d4df8",
       "apis": [
         {
           "protocol": "rpc",
@@ -7818,13 +7818,13 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:08.814Z",
-      "fingerprint": "f934c4265d9a8bda8f341ab01d5ab6a42ab8c03a570f16e94a885b4f6927c022",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.320Z",
+      "fingerprint": "51cfbc1fb112f024ddf0d6b1ad029f4dcb24ab60e2a281d3bff2c44f077e0825",
       "aggregate": {
-        "descendant_count": 35,
+        "descendant_count": 36,
         "own_api_count": 0,
-        "inherited_api_count": 34,
+        "inherited_api_count": 35,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -8046,13 +8046,13 @@
           "path": "tests/smoke.ps1"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.518Z",
-      "fingerprint": "d21cd254e94a93807f9c3e824978a6833e6d4334d1fa261543a004090aebdfac",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.971Z",
+      "fingerprint": "c6772acfadbfb4c3bd3677f01b4d8d533c438dbd640477df4e8ca98b9ae756e2",
       "aggregate": {
-        "descendant_count": 12,
+        "descendant_count": 13,
         "own_api_count": 0,
-        "inherited_api_count": 12,
+        "inherited_api_count": 13,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -8281,7 +8281,7 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 1
+        "dep_in": 2
       }
     },
     "keymouse.tests.smoke.entry": {
@@ -8454,6 +8454,73 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 1,
+        "dep_in": 0
+      }
+    },
+    "keymouse.tests.smoke.focus": {
+      "uid": "7a1f3001",
+      "id": "keymouse.tests.smoke.focus",
+      "parent": "keymouse.tests.smoke",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "desktop"
+      ],
+      "name": {
+        "zh": "聚焦与还原冒烟",
+        "en": "Focus and restore smoke"
+      },
+      "description": {
+        "zh": "用真窗口验证 Windows 上最容易\"假成功\"的一件事：把靶子最小化后，① 流程没说允许就**不还原**（退出码 4，信息里告诉你加 --allow-restore，这条断言直接问 CLI 要原话，因为运行日志会截短）；② 说了允许（`\"allowRestore\": true`）就能还原 + 聚焦 + **把点击真的发出去**（聚焦校验通过才会发送，退出码 0）；③ 结束后窗口恢复可见且是前台。\n",
+        "en": "On a real window, the thing Windows fakes most easily: minimize the target, then 1) a flow that did not ask must not restore it (exit 4, with a message saying how to allow it - asserted against the CLI own words, because run logs truncate), 2) a flow that carries \"allowRestore\": true restores, focuses and really sends the click (the focus gate decides that, exit 0), 3) the window ends visible and in the foreground.\n"
+      },
+      "source": [
+        {
+          "path": "tests/smoke/focus.ps1"
+        }
+      ],
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.969Z",
+      "fingerprint": "173ff3659f0b9425597d971a3505e95df46561bb0a5becd5b23cc3cb7f87b294",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "聚焦与还原断言组",
+          "description": {
+            "zh": "同意语义、还原聚焦与点击、结束后状态。\n",
+            "en": "Consent, restore/focus with a click, and the state afterwards.\n"
+          },
+          "key": "rpc:聚焦与还原断言组"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.window.focus",
+          "to_api": "rpc:WindowFocus.Focus",
+          "label": {
+            "zh": "被测的聚焦",
+            "en": "Focus under test"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.tests.smoke.common",
+          "to_api": "rpc:Check",
+          "label": {
+            "zh": "断言与靶子",
+            "en": "Assertions and target"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
         "dep_in": 0
       }
     },
@@ -8946,9 +9013,9 @@
           "path": "tests/KeyMouse.Tests/FlowTests.cs"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.955Z",
-      "fingerprint": "9bfb5699e6a30ddd941c7db9337362f64261788426decf6e9d1053f2ae0b7218",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.972Z",
+      "fingerprint": "97f3082beeb9c5b123c89a26bd2debf62eab6e554fbbbc50f31b84551ed6130a",
       "apis": [
         {
           "protocol": "rpc",
@@ -9211,9 +9278,9 @@
           "end_line": 403
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.215Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.971Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "aggregate": {
         "descendant_count": 8,
         "own_api_count": 0,
@@ -9246,9 +9313,9 @@
           "end_line": 21
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.215Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.321Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9297,9 +9364,9 @@
           "end_line": 169
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.215Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.321Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -9333,9 +9400,9 @@
           "end_line": 169
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.215Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.321Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9404,9 +9471,9 @@
           "end_line": 92
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.321Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9474,9 +9541,9 @@
           "end_line": 403
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.321Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9544,9 +9611,9 @@
           "end_line": 253
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.322Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9615,9 +9682,9 @@
           "end_line": 138
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.322Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9674,9 +9741,9 @@
           "end_line": 319
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.322Z",
+      "fingerprint": "1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59",
       "apis": [
         {
           "protocol": "rpc",
@@ -9938,9 +10005,9 @@
           "end_line": 45
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.217Z",
-      "fingerprint": "6692d144ec17705369634114dc7eb57f4627ad94f1e4ded28cd7a3d826886f0c",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:44.322Z",
+      "fingerprint": "970518c65fc0a1ad5e18bb6ba7025be9c52db851a63d3c4246cf770394574e0a",
       "deps": [
         {
           "kind": "call",
@@ -9993,8 +10060,8 @@
         "en": "Focus & foreground read-back"
       },
       "description": {
-        "zh": "抢前台并回读验证：SetForegroundWindow 后重新问系统“现在谁是前台”，最多重试若干次；成功与否以真实前台窗口为准，而不是调用的返回值。\n",
-        "en": "Takes the foreground and verifies it by asking the system who is actually foreground now, retrying a few times. Success is judged by the real foreground window, not by the API's return value.\n"
+        "zh": "聚焦**验证过**而不是假设过：调完 SetForegroundWindow 会回读真实前台窗口，只有真的变成目标才返回成功；失败时点名当前占着前台的是谁。调用前先 AttachThreadInput 把当前前台线程的输入队列接上，让这次调用合法——不注入任何按键（实测：不接输入队列时三次温和尝试全败，退出码 5，前台是别的进程；接上后同一条命令退出码 0）。\n",
+        "en": "Focus that is verified rather than assumed: after SetForegroundWindow it reads the real foreground window back and only succeeds if the target got it; a failure names whoever holds the foreground. Before the call it attaches our input queue to the foreground thread, which makes the call legal and injects no keys (measured: without attaching, three gentle attempts failed with exit 5 while another process held the foreground; with it, the same command exits 0).\n"
       },
       "source": [
         {
@@ -10003,9 +10070,9 @@
           "end_line": 52
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.216Z",
-      "fingerprint": "3c23d3ba0bfa991fcdd14654409713ca0a20afb302f4aafacd056057428e7af4",
+      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
+      "updated_at": "2026-10-03T13:37:48.970Z",
+      "fingerprint": "5387a81602659f248bfb731a7d430eb132d7b649b7f24d42246b32f2fe826482",
       "apis": [
         {
           "protocol": "rpc",
@@ -10044,7 +10111,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 1,
-        "dep_in": 0
+        "dep_in": 1
       }
     },
     "keymouse.window.gate": {
@@ -10859,6 +10926,7 @@
     "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
     "rpc:脚本循环断言组": "keymouse.tests.smoke.loops",
     "rpc:进度与详情输出": "keymouse.script.run.progress",
+    "rpc:聚焦与还原断言组": "keymouse.tests.smoke.focus",
     "rpc:零散入口断言组": "keymouse.tests.smoke.features",
     "rpc:流程、谓词与录制规则断言组": "keymouse.tests.unit.flow",
     "rpc:录制与回放断言组": "keymouse.tests.smoke.record",
@@ -12654,6 +12722,28 @@
       }
     },
     {
+      "from": "keymouse.tests.smoke.focus",
+      "to": "keymouse.tests.smoke.common",
+      "to_api": "rpc:Check",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "断言与靶子",
+        "en": "Assertions and target"
+      }
+    },
+    {
+      "from": "keymouse.tests.smoke.focus",
+      "to": "keymouse.window.focus",
+      "to_api": "rpc:WindowFocus.Focus",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的聚焦",
+        "en": "Focus under test"
+      }
+    },
+    {
       "from": "keymouse.tests.smoke.record",
       "to": "keymouse.flow.runner",
       "to_api": "rpc:FlowRunner.Run",
@@ -13962,7 +14052,7 @@
     "keymouse.tests.smoke": {
       "schema_version": 1,
       "id": "keymouse.tests.smoke",
-      "updated_at": "2026-10-03T12:49:08.301Z",
+      "updated_at": "2026-10-03T13:37:43.832Z",
       "mode": "groups",
       "max_columns": 3,
       "order": [
@@ -13977,7 +14067,8 @@
         "keymouse.tests.smoke.serve",
         "keymouse.tests.smoke.act",
         "keymouse.tests.smoke.flowloops",
-        "keymouse.tests.smoke.calls"
+        "keymouse.tests.smoke.calls",
+        "keymouse.tests.smoke.focus"
       ]
     },
     "keymouse.tests.unit": {
@@ -14323,6 +14414,15 @@
         "en": "Restructure into three layers: Core / Runner / CLI with two entry points"
       },
       "updated_at": "2026-10-03T11:13:19.001Z"
+    },
+    {
+      "id": "2026-10-03-verified-focus",
+      "status": "verified",
+      "title": {
+        "zh": "聚焦：抢前台要抢得到，还原要经过同意",
+        "en": "Focus: win the foreground, and restore only with consent"
+      },
+      "updated_at": "2026-10-03T13:37:50.383Z"
     },
     {
       "id": "2026-10-03-wait-text-predicate",

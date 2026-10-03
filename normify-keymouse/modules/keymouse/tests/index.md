@@ -11,9 +11,9 @@ description:
   en: >
       Two layers of protection: a dependency-free unit suite for logic, and a desktop smoke suite that drives the project's own target window end to end. Plus a docs-link check and a parse/execution benchmark.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:08.814Z"
-fingerprint: f934c4265d9a8bda8f341ab01d5ab6a42ab8c03a570f16e94a885b4f6927c022
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.320Z"
+fingerprint: 51cfbc1fb112f024ddf0d6b1ad029f4dcb24ab60e2a281d3bff2c44f077e0825
 source:
   - path: "tests/KeyMouse.Tests/TestEntry.cs"
   - path: "tests/KeyMouse.Tests/Harness.cs"

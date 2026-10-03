@@ -108,6 +108,25 @@ internal static class FlowTests
         Harness.Throws<CommandFailure>("wait steps are the runner's business, not the compiler's",
             () => FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }));
 
+        Harness.Group("flow: restoring a minimized window is opt-in");
+
+        string restorePath = Path.Combine(Path.GetTempPath(), $"keymouse-restore-test-{Environment.ProcessId}.json");
+        try
+        {
+            File.WriteAllText(restorePath,
+                """{"format":"keymouse-flow","version":1,"steps":[{"type":"focus","target":{"process":"notepad"}}]}""");
+            Harness.Check("a flow does not restore windows unless it says so",
+                !FlowDocument.Load(restorePath).AllowRestore);
+
+            File.WriteAllText(restorePath,
+                """{"format":"keymouse-flow","version":1,"allowRestore":true,"steps":[{"type":"focus","target":{"process":"notepad"}}]}""");
+            Harness.Check("...and does when it carries the flag", FlowDocument.Load(restorePath).AllowRestore);
+        }
+        finally
+        {
+            if (File.Exists(restorePath)) File.Delete(restorePath);
+        }
+
         Harness.Group("flow: loading and the trajectory rule");
 
         string path = Path.Combine(Path.GetTempPath(), $"keymouse-flow-test-{Environment.ProcessId}.json");

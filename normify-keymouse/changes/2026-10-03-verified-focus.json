@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-verified-focus",
+  "title": {
+    "zh": "聚焦：抢前台要抢得到，还原要经过同意",
+    "en": "Focus: win the foreground, and restore only with consent"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "真机暴露的两个问题：① `focus` 在别的窗口占着前台时永远失败（实测三次温和 SetForegroundWindow 全败，退出码 5，前台是 zerolaunch-rs）——Windows 前台锁拒绝不持有前台的调用者；② 流程格式里根本没有\"允许还原最小化窗口\"的表达（只有 CLI 有 `--allow-restore`），所以从编辑器跑一个目标最小化的流程必然失败。修法：调用前 AttachThreadInput 接上前台线程的输入队列（不注入按键）并回读真实前台窗口验证；文档加 `allowRestore`，且这份同意要**跟着编译出的命令行**走（步骤由同一个命令行解析器执行，这里有坑：只在运行器里设标志仍然退出码 4）。顺带：编辑器 F5 = 播放，失败信息点名当前前台并提示 UIPI/提权。",
+    "en": "Two problems the real machine exposed: 1) focus always failed while another window held the foreground (three gentle SetForegroundWindow attempts, exit 5, foreground was zerolaunch-rs) - Windows refuses the call from a caller that does not own the foreground; 2) the flow format had no way to say \"you may restore a minimized window\" (only the CLI had --allow-restore), so a flow started from the editor against a minimized target could only fail. The fix: attach our input queue to the foreground thread before the call (no keys injected) and verify by reading the real foreground window back; the document gained allowRestore, and that consent must travel with the compiled command line. Also: F5 plays in the editor, and the failure message names the current foreground and mentions UIPI/elevation."
+  },
+  "modules": {
+    "create": [
+      "keymouse.tests.smoke.focus"
+    ],
+    "modify": [
+      "keymouse.window.focus",
+      "keymouse.native.user32-focus",
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.script.options",
+      "keymouse.editor.shell",
+      "keymouse.tests.smoke",
+      "keymouse.tests.unit.parsing",
+      "keymouse.tests.unit.flow",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "实测：别的窗口占着前台时，focus 仍能成功（AttachThreadInput），并且是回读真实前台窗口后才报成功",
+    "实测：最小化目标 + 流程未声明允许 → 退出码 4 且信息里给出如何允许；声明 allowRestore → 还原+聚焦+点击成功",
+    "流程文件里的同意必须跟着编译出的命令行走（否则退出码 4）",
+    "编辑器 F5 播放；CLI 带上流程文件直接打开",
+    "focus 冒烟模块 7 项全过；单元与全量冒烟全绿"
+  ],
+  "note": "聚焦修复落地：AttachThreadInput + 回读前台；流程 allowRestore 与命令行同步；F5 播放；focus 冒烟模块。",
+  "revision": {
+    "before": null,
+    "after": "96c306061d63c034a01c2369e4abc295251e2f35"
+  },
+  "created_at": "2026-10-03T13:37:43.917Z",
+  "updated_at": "2026-10-03T13:37:50.383Z",
+  "closed_at": "2026-10-03T13:37:50.383Z"
+}

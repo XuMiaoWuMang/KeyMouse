@@ -11,9 +11,9 @@ description:
   en: >
       Assertions for the inheritance rules: selector extraction (inline values, several conditions), which commands inherit (mouse and key) and which deliberately do not (waitfor, waitgone, window list).
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.215Z"
-fingerprint: 36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.321Z"
+fingerprint: 1263671f94fb9ec06ca4072a554642c69297a717af171eff59c55c582848dc59
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
     line: 139

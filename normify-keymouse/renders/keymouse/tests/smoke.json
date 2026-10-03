@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.smoke",
-  "updated_at": "2026-10-03T12:49:08.301Z",
+  "updated_at": "2026-10-03T13:37:43.832Z",
   "mode": "groups",
   "max_columns": 3,
   "order": [
@@ -16,6 +16,7 @@
     "keymouse.tests.smoke.serve",
     "keymouse.tests.smoke.act",
     "keymouse.tests.smoke.flowloops",
-    "keymouse.tests.smoke.calls"
+    "keymouse.tests.smoke.calls",
+    "keymouse.tests.smoke.focus"
   ]
 }

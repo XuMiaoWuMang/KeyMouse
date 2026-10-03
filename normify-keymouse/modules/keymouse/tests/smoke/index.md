@@ -11,9 +11,9 @@ description:
   en: >
       The smoke runner: `-Only module[,...]` runs just those (the everyday case), `-List` lists them, and no arguments runs everything (part of the full test). It loads common, dot-sources the selected modules in order, then tears down (stops the target, restores the clipboard) and reports the pass/fail counts.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.518Z"
-fingerprint: d21cd254e94a93807f9c3e824978a6833e6d4334d1fa261543a004090aebdfac
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:48.971Z"
+fingerprint: c6772acfadbfb4c3bd3677f01b4d8d533c438dbd640477df4e8ca98b9ae756e2
 source:
   - path: "tests/smoke.ps1"
 ---

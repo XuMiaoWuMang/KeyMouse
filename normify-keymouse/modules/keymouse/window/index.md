@@ -11,9 +11,9 @@ description:
   en: >
       Answers whether a window may safely receive input: enumerate top-level windows, match the selector, judge visibility/minimized/cloaked/disabled/responding, then focus and read the foreground window back to confirm.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.217Z"
-fingerprint: 6692d144ec17705369634114dc7eb57f4627ad94f1e4ded28cd7a3d826886f0c
+revision: 96c306061d63c034a01c2369e4abc295251e2f35
+updated_at: "2026-10-03T13:37:44.322Z"
+fingerprint: 970518c65fc0a1ad5e18bb6ba7025be9c52db851a63d3c4246cf770394574e0a
 source:
   - path: "src/KeyMouse.Core/WindowInfo.cs"
     line: 1

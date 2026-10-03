@@ -28,6 +28,7 @@ $modules = [ordered]@{
     'typing'    = '打字与拖拽的真实往返'
     'safety'    = '重试/等待/禁用窗口/dry-run/stdin 等安全语义'
     'features'  = 'window inspect、窗口相对移动、脚本继承目标'
+    'focus'     = '聚焦与还原：最小化窗口的同意语义、抢前台的实测'
     'loops'     = '脚本循环与"一个进程跑到底"'
     'region'    = '选区浮层：拖拽/单击/ESC 与坐标系回归'
     'record'    = '录制与回放（含 wait-text）'
