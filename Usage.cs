@@ -74,11 +74,23 @@ internal static class Usage
                                                       坐标系里，并给出一条可直接粘贴的 probe 命令。
                                                       只报坐标；--rect 跳过浮层（脚本与测试用）
 
+        录制（把一次操作变成可回放的 JSON 流程）
+          record [--out 流程.json] [--duration 毫秒] [--no-shots]
+                 [--min-gap 毫秒] [--move-threshold 像素]
+                                    开始录制：全局监听键鼠（只观察、不拦截，你照常操作），
+                                    每个动作连同它发生的窗口与客户区相对坐标写成 JSON。
+                                    Ctrl+Alt+Q 停止（连按两次 ESC 也停）；--duration 到点自动停。
+                                    鼠标轨迹按距离抽稀后一起录；点击/输入等步骤会在
+                                    <流程>.shots/ 里各存一张 320x200 的截图。
+                                    回放就是：KeyMouse run 流程.json
+
         脚本
           run <文件|-> [选项]                          按行顺序执行文件（或 stdin）里的命令；
                                                       一行一条命令，# 开头是注释，另有三个伪命令：
                                                       sleep、waitfor、waitgone。
                                                       选择器与焦点闸门逐行生效；脚本必须是 UTF-8。
+                                                      **给 .json 文件就是回放录制出来的流程**，
+                                                      选项含义相同（--dry-run / --report / --retry）。
 
           window focus <选择器>            脚本里只要写一次：它同时成为"当前目标"，
                                            后面的 mouse / key 行不带选择器时自动继承

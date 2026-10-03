@@ -11,9 +11,9 @@ description:
   en: >
       The core group: type into the target and read the clipboard back to compare, check that a window-relative drag really selected text, and that a substituted variable really moved the cursor to those coordinates.
       
-revision: b3cd2155a6af67fad97967d1a820875c076ceccf
-updated_at: "2026-10-03T08:58:33.645Z"
-fingerprint: 6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9
+revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
+updated_at: "2026-10-03T10:11:54.011Z"
+fingerprint: eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c
 source:
   - path: "tests/smoke.ps1"
     line: 77

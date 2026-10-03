@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T09:42:11.472Z",
+    "compiled_at": "2026-10-03T10:12:05.089Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 135,
-      "leaf_count": 109,
-      "api_count": 194,
-      "dep_count": 152,
+      "module_count": 143,
+      "leaf_count": 115,
+      "api_count": 206,
+      "dep_count": 162,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
-      "layout_count": 26,
+      "layout_count": 28,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 7,
+      "change_count": 8,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 134,
+        "descendant_count": 142,
         "own_api_count": 0,
-        "inherited_api_count": 194,
+        "inherited_api_count": 206,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -444,9 +444,9 @@
           "end_line": 658
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.998Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "deps": [
         {
           "kind": "call",
@@ -532,9 +532,9 @@
           "end_line": 656
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.845Z",
-      "fingerprint": "bc80c4db619360d432ea3dad1aeb3b59a85325696679649122ab7b6c1ea6deae",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.998Z",
+      "fingerprint": "c17273cdf9eb4cd83950f52fc835104500242160feb510e93b0a14201af05463",
       "apis": [
         {
           "protocol": "rpc",
@@ -588,9 +588,9 @@
           "end_line": 128
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:20:55.383Z",
-      "fingerprint": "d86fb9c26bb57e53f613895b0f6b0de951ceee7c641485726de32dca74c27508",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
+      "fingerprint": "9645ae0ab6eb4ce394724b190e9325811c2bf44f429d8dc628ea2d25e7dca361",
       "apis": [
         {
           "protocol": "rpc",
@@ -635,9 +635,9 @@
           "end_line": 650
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.846Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -690,9 +690,9 @@
           "end_line": 430
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.848Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "deps": [
         {
           "kind": "call",
@@ -754,9 +754,9 @@
           "end_line": 413
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.847Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -813,9 +813,9 @@
           "end_line": 399
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.847Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -881,9 +881,9 @@
           "end_line": 379
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.848Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -941,9 +941,9 @@
           "end_line": 430
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.848Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:53.999Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1000,9 +1000,9 @@
           "end_line": 63
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.237Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.455Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1092,7 +1092,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 5,
-        "dep_in": 5
+        "dep_in": 6
       }
     },
     "keymouse.cli.mouse": {
@@ -1119,9 +1119,9 @@
           "end_line": 341
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.851Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "deps": [
         {
           "kind": "call",
@@ -1174,9 +1174,9 @@
           "end_line": 260
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.849Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1260,9 +1260,9 @@
           "end_line": 341
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.850Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1343,9 +1343,9 @@
           "end_line": 349
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.850Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1418,9 +1418,9 @@
           "end_line": 209
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.851Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1495,9 +1495,9 @@
           "end_line": 219
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.851Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1554,9 +1554,9 @@
           "end_line": 188
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.852Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.000Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1613,9 +1613,9 @@
           "end_line": 290
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.852Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1682,9 +1682,9 @@
           "end_line": 604
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.852Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1737,9 +1737,9 @@
           "end_line": 545
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.853Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "deps": [
         {
           "kind": "call",
@@ -1784,9 +1784,9 @@
           "end_line": 545
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.852Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1855,9 +1855,9 @@
           "end_line": 496
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.853Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1922,9 +1922,9 @@
           "end_line": 464
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.853Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.001Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -1990,9 +1990,9 @@
           "end_line": 160
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.853Z",
-      "fingerprint": "1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.002Z",
+      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
       "apis": [
         {
           "protocol": "rpc",
@@ -2084,9 +2084,9 @@
           "end_line": 128
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:20:55.384Z",
-      "fingerprint": "16b534734631e3b2bf5d823af3ac4b78199327dbb37e76f04ead8f55c3a88b25",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.002Z",
+      "fingerprint": "eaeb85e79e9ba8710dbb026e1fc3df0bae858efa3a68148fae4e0d70fc476609",
       "deps": [
         {
           "kind": "call",
@@ -2261,9 +2261,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.583Z",
-      "fingerprint": "4c1efa4a5565f0df31f5a577be596ca25cc023d7b9e659e2c88e90fb2a737497",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.003Z",
+      "fingerprint": "95e8a9241deb844d8f293ff73041e169ba94c84ccbfefaaa31f668d53480b9e5",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2296,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.583Z",
-      "fingerprint": "cc3f203322fa8cfd466e21a05260fd22efa329c500382cfb0e01ea0cb298c1c6",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.457Z",
+      "fingerprint": "21cf67bbee3cc99bd3439c4cdfe0084dd37950179320678bed82dadc050263f0",
       "apis": [
         {
           "protocol": "file",
@@ -2384,9 +2384,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.583Z",
-      "fingerprint": "77990d0946a07341b8cb3359a93234e8efe015163cfdcf905ede7a2295731ed3",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
+      "fingerprint": "c8084548d30886afc6b2784adf618f9dcf55167fa8cc7cd48b520e6bd4449213",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2428,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.583Z",
-      "fingerprint": "f7610d25af8393ba2cf506c3a92ad4562256aee7de4ff735ca850f1b0556d797",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.457Z",
+      "fingerprint": "025f212b5c079759661a799037dd784ec206360b81f86726e4c7276998b4ccb2",
       "apis": [
         {
           "protocol": "file",
@@ -2493,6 +2493,182 @@
         "inherited_api_count": 0,
         "dep_out": 0,
         "dep_in": 0
+      }
+    },
+    "keymouse.flow": {
+      "uid": "7a1f0c53",
+      "id": "keymouse.flow",
+      "parent": "keymouse",
+      "tree": "keymouse",
+      "depth": 2,
+      "tags": [
+        "flow",
+        "json",
+        "cli"
+      ],
+      "name": {
+        "zh": "JSON 流程",
+        "en": "JSON flow"
+      },
+      "description": {
+        "zh": "`keymouse-flow` v1：录制产物与手写/编辑的载体。它刻意不是第二套执行语义——每一步都会编译成一条人类会敲的命令，因此选择器、焦点闸门、退出码与 `--dry-run` / `--report` / `--retry` 全部与手打命令一致；只有 sleep / wait-window 这类没有命令行等价物的步骤由执行器自己处理。\n",
+        "en": "`keymouse-flow` v1: what recording writes and what a human edits. Deliberately not a second execution semantic - every step compiles into a command a human would type, so selectors, the focus gate, exit codes and `--dry-run` / `--report` / `--retry` mean the same thing as when typed by hand; only steps without a command-line equivalent (sleep, wait-window) are handled by the runner itself.\n"
+      },
+      "source": [
+        {
+          "path": "FlowModel.cs"
+        },
+        {
+          "path": "FlowRunner.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.454Z",
+      "fingerprint": "d1f6b78f1a29ec8cd4883034edac8a12024b64e2cd074fa5b53c88c92ade03f8",
+      "aggregate": {
+        "descendant_count": 2,
+        "own_api_count": 0,
+        "inherited_api_count": 5,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.flow.model": {
+      "uid": "7a1f0c54",
+      "id": "keymouse.flow.model",
+      "parent": "keymouse.flow",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "flow",
+        "json"
+      ],
+      "name": {
+        "zh": "流程文档与编译器",
+        "en": "Document and compiler"
+      },
+      "description": {
+        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；编译器把一步翻成 argv（客户区坐标 → `-wx/-wy` 加选择器，屏幕坐标 → 绝对坐标，拖拽带时长，组合键与单键分流）。纯函数，可离线单测；客户区坐标没有选择器时直接报错，因为坐标无从换算。\n",
+        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and the compiler turns one step into argv (client coordinates become -wx/-wy plus a selector, screen coordinates stay absolute, a drag carries its duration, combinations and single keys split). Pure and unit-tested; client coordinates without a selector are refused because there is nothing to convert against.\n"
+      },
+      "source": [
+        {
+          "path": "FlowModel.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.455Z",
+      "fingerprint": "8a860c091224e57d74f0b90ed8892f40b2bf1fd8e69e12860546fc2138c06348",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "FlowDocument.Load",
+          "description": {
+            "zh": "读并校验流程文件（格式、版本、步骤类型）。\n",
+            "en": "Loads and validates a flow file (format, version, step types).\n"
+          },
+          "key": "rpc:FlowDocument.Load"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowDocument.Save",
+          "description": {
+            "zh": "把流程写成规范化 JSON（录制与编辑器都走它）。\n",
+            "en": "Writes the flow as canonical JSON (recorder and editor both use it).\n"
+          },
+          "key": "rpc:FlowDocument.Save"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowDocument.ToArguments",
+          "description": {
+            "zh": "把一步编译成命令行参数。\n",
+            "en": "Compiles one step into command-line arguments.\n"
+          },
+          "key": "rpc:FlowDocument.ToArguments"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 3
+      }
+    },
+    "keymouse.flow.runner": {
+      "uid": "7a1f0c55",
+      "id": "keymouse.flow.runner",
+      "parent": "keymouse.flow",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "flow",
+        "cli"
+      ],
+      "name": {
+        "zh": "流程执行器",
+        "en": "Flow runner"
+      },
+      "description": {
+        "zh": "`run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码（3/4/5/6）按 `--retry` 重试，输出报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用为止，超时退出码 3；wait-text 还没有实现，遇到就明确报错而不是装作跑过。\n",
+        "en": "`run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes (3/4/5/6) per --retry, and writing the same report shape as the text runner. sleep does not really wait under --dry-run; wait-window polls until a usable window appears and exits 3 on timeout; wait-text is not implemented yet and says so instead of pretending.\n"
+      },
+      "source": [
+        {
+          "path": "FlowRunner.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.455Z",
+      "fingerprint": "2498471aac9f04d718e85f9575f848fab9cbdb6b895f85fafffbfc3513273ab6",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "FlowRunner.LooksLikeJson",
+          "description": {
+            "zh": "按内容判断 run 拿到的是不是流程（只认第一个参数是路径的形式）。\n",
+            "en": "Content-based detection of a flow handed to run (only the documented first-argument form).\n"
+          },
+          "key": "rpc:FlowRunner.LooksLikeJson"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowRunner.Run",
+          "description": {
+            "zh": "执行整个流程并返回退出码。\n",
+            "en": "Runs the whole flow and returns its exit code.\n"
+          },
+          "key": "rpc:FlowRunner.Run"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.ToArguments",
+          "label": {
+            "zh": "步骤编译成命令",
+            "en": "Compile a step"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.cli.main",
+          "label": {
+            "zh": "同一条派发路径",
+            "en": "The same dispatch"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 1
       }
     },
     "keymouse.input": {
@@ -3082,9 +3258,9 @@
           "end_line": 73
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.859Z",
-      "fingerprint": "8eb086e5f124d33d5d48b2b08f2c073cc70ca31f6a960d344a71c4801c105c34",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.003Z",
+      "fingerprint": "25a839f445b22a732ec61ead6f2a2bcc99cff347f76627cd9fa8fc1b4e5b22cc",
       "apis": [
         {
           "protocol": "rpc",
@@ -3138,13 +3314,13 @@
           "end_line": 193
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.860Z",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
       "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
       "aggregate": {
-        "descendant_count": 10,
+        "descendant_count": 11,
         "own_api_count": 0,
-        "inherited_api_count": 36,
+        "inherited_api_count": 38,
         "dep_out": 0,
         "dep_in": 3
       }
@@ -3203,7 +3379,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 3
+        "dep_in": 4
       }
     },
     "keymouse.native.dwm": {
@@ -3265,6 +3441,61 @@
         "inherited_api_count": 0,
         "dep_out": 0,
         "dep_in": 2
+      }
+    },
+    "keymouse.native.hooks": {
+      "uid": "7a1f0c52",
+      "id": "keymouse.native.hooks",
+      "parent": "keymouse.native",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "native",
+        "recording",
+        "hooks"
+      ],
+      "name": {
+        "zh": "全局键鼠钩子",
+        "en": "Global input hooks"
+      },
+      "description": {
+        "zh": "WH_KEYBOARD_LL / WH_MOUSE_LL：装钩子、把事件原样传给下一个钩子（不吞输入）、用一个 PeekMessage 轮询泵维持钩子线程——低级钩子必须有消息泵，而录制还要在没有任何输入时注意到自己的停止条件。事件带钩子自己的时间戳，录制出来的停顿才是用户真实留下的。\n",
+        "en": "WH_KEYBOARD_LL / WH_MOUSE_LL: install, pass every event through untouched (never swallow input), and keep the hook thread alive with a PeekMessage poll - low-level hooks need a pumping thread, and a recorder also has to notice its stop conditions while no input arrives. Events carry the hook timestamps, so the recorded pauses are the ones the user really left.\n"
+      },
+      "source": [
+        {
+          "path": "NativeHooks.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.454Z",
+      "fingerprint": "85b2ee3aa9408b096642b96ef1661761d5b6428d5e05d4e9f3727686c9819ab3",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "NativeHooks.Record",
+          "description": {
+            "zh": "装两个低级钩子并泵消息直到停止。\n",
+            "en": "Installs both low-level hooks and pumps messages until stopped.\n"
+          },
+          "key": "rpc:NativeHooks.Record"
+        },
+        {
+          "protocol": "rpc",
+          "path": "NativeHooks.ToUnicodeEx",
+          "description": {
+            "zh": "按当前布局把按键翻成字符。\n",
+            "en": "Turns a key into its character under the active layout.\n"
+          },
+          "key": "rpc:NativeHooks.ToUnicodeEx"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 1
       }
     },
     "keymouse.native.process": {
@@ -4407,6 +4638,154 @@
         "dep_in": 1
       }
     },
+    "keymouse.record": {
+      "uid": "7a1f0c50",
+      "id": "keymouse.record",
+      "parent": "keymouse",
+      "tree": "keymouse",
+      "depth": 2,
+      "tags": [
+        "recording",
+        "flow",
+        "cli"
+      ],
+      "name": {
+        "zh": "录制",
+        "en": "Recording"
+      },
+      "description": {
+        "zh": "把一次真实操作变成可回放、可编辑的数据，而不是再造一门自动化语言：全局钩子只观察不拦截，每个动作记下它发生在哪个窗口（进程 + 类名，标题只给人看）与客户区相对坐标，轨迹按距离抽稀，关键步骤各存一张小图。流程回放时编译成一条条命令，与手打命令走同一条派发路径。\n",
+        "en": "Turns one real session into replayable, editable data instead of inventing another automation language: global hooks observe without swallowing, each action records which window it happened in (process + class, the title only for humans) and client-relative coordinates, the trajectory is thinned by distance, and key steps keep a small screenshot. Replay compiles the flow into the same command lines a human would type.\n"
+      },
+      "source": [
+        {
+          "path": "Recorder.cs"
+        },
+        {
+          "path": "NativeHooks.cs"
+        },
+        {
+          "path": "FlowModel.cs"
+        },
+        {
+          "path": "FlowRunner.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.454Z",
+      "fingerprint": "cf02474e9c68245410864f0eb1993e1a09ae623dc729398ccc55975937a0b79c",
+      "aggregate": {
+        "descendant_count": 1,
+        "own_api_count": 0,
+        "inherited_api_count": 3,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.record.session": {
+      "uid": "7a1f0c51",
+      "id": "keymouse.record.session",
+      "parent": "keymouse.record",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "recording"
+      ],
+      "name": {
+        "zh": "录制会话与步骤合成",
+        "en": "Session and step synthesis"
+      },
+      "description": {
+        "zh": "把钩子事件流变成步骤：按键按当前布局翻成字符（Unicode 注入也认）、组合键记键名、按钮按下与抬起配对成点击或拖拽、轨迹按阈值抽稀并就近插入、停顿超过阈值才记 sleep、每个动作解析出所属窗口与相对坐标。抽稀与拖拽判定是纯函数，可离线单测。\n",
+        "en": "Turns the hook stream into steps: keys become the characters the active layout produces (Unicode injection included), combinations keep their key names, button down/up pairs become a click or a drag, the trajectory is thinned and emitted in place, only pauses past the threshold become sleeps, and every action resolves its window and relative coordinates. Thinning and drag detection are pure functions, testable without a desktop.\n"
+      },
+      "source": [
+        {
+          "path": "Recorder.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.454Z",
+      "fingerprint": "58c8b1dd5878b04b57e5016e94ab766152608c969070cd71fe66230f6139395e",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Recorder.Run",
+          "description": {
+            "zh": "录制命令入口：装钩子、跑到停止、写 JSON 与截图。\n",
+            "en": "Entry point: install hooks, run until stopped, write the JSON and the screenshots.\n"
+          },
+          "key": "rpc:Recorder.Run"
+        },
+        {
+          "protocol": "rpc",
+          "path": "Recorder.ThinTrajectoryIndices",
+          "description": {
+            "zh": "轨迹抽稀规则（保留哪些点）。\n",
+            "en": "Which trajectory points survive thinning.\n"
+          },
+          "key": "rpc:Recorder.ThinTrajectoryIndices"
+        },
+        {
+          "protocol": "rpc",
+          "path": "Recorder.IsDrag",
+          "description": {
+            "zh": "按下到抬起的位移够不够算拖拽。\n",
+            "en": "Whether a press-release travelled far enough to be a drag.\n"
+          },
+          "key": "rpc:Recorder.IsDrag"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.native.hooks",
+          "to_api": "rpc:NativeHooks.Record",
+          "label": {
+            "zh": "装钩子并泵消息",
+            "en": "Install hooks and pump"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.native.capture",
+          "to_api": "rpc:NativeCapture.TryCaptureScreen",
+          "label": {
+            "zh": "取步骤截图",
+            "en": "Take the step shot"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.window.select.point",
+          "to_api": "rpc:WindowLocator.WindowAt",
+          "label": {
+            "zh": "解析动作所属窗口",
+            "en": "Resolve the window"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.Save",
+          "label": {
+            "zh": "写流程文件",
+            "en": "Write the flow"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 4,
+        "dep_in": 2
+      }
+    },
     "keymouse.script": {
       "uid": "6f708192",
       "id": "keymouse.script",
@@ -4431,9 +4810,9 @@
           "end_line": 892
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.868Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "deps": [
         {
           "kind": "call",
@@ -4532,9 +4911,9 @@
           "end_line": 383
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.867Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.004Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4592,9 +4971,9 @@
           "end_line": 892
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.867Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.005Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4647,9 +5026,9 @@
           "end_line": 22
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.867Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.005Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4712,9 +5091,9 @@
           "end_line": 591
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.868Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.006Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "deps": [
         {
           "kind": "call",
@@ -4759,9 +5138,9 @@
           "end_line": 561
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.868Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.006Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4828,9 +5207,9 @@
           "end_line": 591
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.869Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.006Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4884,9 +5263,9 @@
           "end_line": 80
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.869Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.006Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4949,9 +5328,9 @@
           "end_line": 451
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.870Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.006Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5010,9 +5389,9 @@
           "end_line": 634
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.870Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "deps": [
         {
           "kind": "call",
@@ -5057,9 +5436,9 @@
           "end_line": 477
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.870Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5104,9 +5483,9 @@
           "end_line": 634
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.871Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5150,9 +5529,9 @@
           "end_line": 777
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.871Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5210,9 +5589,9 @@
           "end_line": 862
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.872Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "file",
@@ -5266,9 +5645,9 @@
           "end_line": 883
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.872Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.007Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "file",
@@ -5335,9 +5714,9 @@
           "end_line": 835
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.873Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5381,9 +5760,9 @@
           "end_line": 360
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.873Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "aggregate": {
         "descendant_count": 4,
         "own_api_count": 0,
@@ -5416,9 +5795,9 @@
           "end_line": 305
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.873Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5530,9 +5909,9 @@
           "end_line": 141
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.874Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5653,9 +6032,9 @@
           "end_line": 333
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.874Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5723,9 +6102,9 @@
           "end_line": 360
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.874Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5783,9 +6162,9 @@
           "end_line": 752
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.875Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -5819,9 +6198,9 @@
           "end_line": 745
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.875Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.008Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5866,9 +6245,9 @@
           "end_line": 752
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.875Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5913,9 +6292,9 @@
           "end_line": 716
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.875Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -5949,9 +6328,9 @@
           "end_line": 716
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.876Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -5996,9 +6375,9 @@
           "end_line": 673
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.876Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6056,9 +6435,9 @@
           "end_line": 833
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.876Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "deps": [
         {
           "kind": "call",
@@ -6112,9 +6491,9 @@
           "end_line": 817
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.877Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.009Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6190,9 +6569,9 @@
           "end_line": 833
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.877Z",
-      "fingerprint": "0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.010Z",
+      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6268,13 +6647,13 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.582Z",
-      "fingerprint": "44ae2c9fb858a03cd549cbc70722ce56f87c924c3b2ef2f4e968d201380e9cb3",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.010Z",
+      "fingerprint": "1b43d16283f7cef483816fcd908ae660eb950cf67a756e9032b9205e591182b7",
       "aggregate": {
-        "descendant_count": 24,
+        "descendant_count": 26,
         "own_api_count": 0,
-        "inherited_api_count": 23,
+        "inherited_api_count": 25,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -6498,13 +6877,13 @@
           "end_line": 343
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "aggregate": {
-        "descendant_count": 6,
+        "descendant_count": 7,
         "own_api_count": 0,
-        "inherited_api_count": 6,
+        "inherited_api_count": 7,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -6581,9 +6960,9 @@
           "end_line": 76
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6641,9 +7020,9 @@
           "end_line": 289
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6702,9 +7081,9 @@
           "end_line": 343
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6737,6 +7116,76 @@
         "dep_in": 0
       }
     },
+    "keymouse.tests.smoke.record": {
+      "uid": "7a1f0c57",
+      "id": "keymouse.tests.smoke.record",
+      "parent": "keymouse.tests.smoke",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "desktop",
+        "recording"
+      ],
+      "name": {
+        "zh": "录制与回放冒烟",
+        "en": "Record and replay smoke"
+      },
+      "description": {
+        "zh": "用 KeyMouse 自己的输入驱动录制器（钩子不过滤注入事件，所以合成会话就是真会话）：录一次点击与打字 → 检查 JSON 里有对应步骤、点击是客户区坐标、步骤带窗口上下文 → 原样 `--dry-run` 回放必须干净 → 再拿一份手写流程真回放，回读剪贴板确认字真的打进了靶子窗口。\n",
+        "en": "Drives the recorder with KeyMouse input (the hooks do not filter injected events, so a synthetic session is a real one): record a click and some typing, check the JSON holds those steps with client-relative coordinates and window context, dry-run the recording clean, then replay a hand-written flow for real and read the clipboard back to prove the text landed in the target window.\n"
+      },
+      "source": [
+        {
+          "path": "tests/smoke.ps1",
+          "line": 523,
+          "end_line": 568
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.455Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "录制与回放断言组",
+          "description": {
+            "zh": "录制产物内容 + 回放真的生效。\n",
+            "en": "What the recording holds, and that replay really works.\n"
+          },
+          "key": "rpc:录制与回放断言组"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.record.session",
+          "to_api": "rpc:Recorder.Run",
+          "label": {
+            "zh": "启动录制",
+            "en": "Start the recorder"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.runner",
+          "to_api": "rpc:FlowRunner.Run",
+          "label": {
+            "zh": "回放流程",
+            "en": "Replay the flow"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.smoke.region": {
       "uid": "7a1f0c41",
       "id": "keymouse.tests.smoke.region",
@@ -6763,9 +7212,9 @@
           "end_line": 515
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6842,9 +7291,9 @@
           "end_line": 215
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.644Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6902,9 +7351,9 @@
           "end_line": 166
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:33.645Z",
-      "fingerprint": "6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:11:54.011Z",
+      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
       "apis": [
         {
           "protocol": "rpc",
@@ -6961,9 +7410,9 @@
           "end_line": 25
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.239Z",
-      "fingerprint": "48264d714746c83ad50a0679610a7fbe6e055d5c11a2aefdc825f81944ec07f7",
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.456Z",
+      "fingerprint": "2a78fb0e938bdf1ed60e25eaba54f9f94c5398d37f1e0d4af1195a77de2d2b54",
       "deps": [
         {
           "kind": "call",
@@ -6978,10 +7427,77 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 12,
+        "descendant_count": 13,
         "own_api_count": 0,
-        "inherited_api_count": 13,
+        "inherited_api_count": 14,
         "dep_out": 1,
+        "dep_in": 0
+      }
+    },
+    "keymouse.tests.unit.flow": {
+      "uid": "7a1f0c56",
+      "id": "keymouse.tests.unit.flow",
+      "parent": "keymouse.tests.unit",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "unit"
+      ],
+      "name": {
+        "zh": "流程编译与录制规则单测",
+        "en": "Flow and recorder unit tests"
+      },
+      "description": {
+        "zh": "不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本的拒绝、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及\"退出码 6 可重试\"这条文档承诺。真正的钩子与回放由 smoke 覆盖。\n",
+        "en": "The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats and future versions, the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit code 6 is retryable. The hooks and the actual replay live in smoke.\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/FlowTests.cs"
+        }
+      ],
+      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
+      "updated_at": "2026-10-03T10:12:03.455Z",
+      "fingerprint": "cd3419e243c55c937f13018b39caf1728d6a4afa901607877467c84433b3e83c",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "流程编译与录制规则断言组",
+          "description": {
+            "zh": "步骤→命令、加载校验、抽稀与拖拽。\n",
+            "en": "Steps to commands, load validation, thinning and drags.\n"
+          },
+          "key": "rpc:流程编译与录制规则断言组"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.ToArguments",
+          "label": {
+            "zh": "被测的编译器",
+            "en": "The compiler under test"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.record.session",
+          "to_api": "rpc:Recorder.ThinTrajectoryIndices",
+          "label": {
+            "zh": "被测的抽稀规则",
+            "en": "The thinning rule"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
         "dep_in": 0
       }
     },
@@ -8456,7 +8972,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 2,
-        "dep_in": 2
+        "dep_in": 3
       }
     },
     "keymouse.window.select.table": {
@@ -8657,6 +9173,8 @@
     "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
     "rpc:进度与详情输出": "keymouse.script.run.progress",
     "rpc:零散入口断言组": "keymouse.tests.smoke.features",
+    "rpc:流程编译与录制规则断言组": "keymouse.tests.unit.flow",
+    "rpc:录制与回放断言组": "keymouse.tests.smoke.record",
     "rpc:退出码与失败清单": "keymouse.script.run.summary",
     "rpc:选区浮层与坐标系回归断言组": "keymouse.tests.smoke.region",
     "rpc:选区坐标换算断言组": "keymouse.tests.unit.region",
@@ -8674,6 +9192,11 @@
     "rpc:ExecutionMode.NoteInjected": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteSuppressed": "keymouse.script.execution-mode",
     "rpc:ExtractGlobalOptions": "keymouse.cli.options",
+    "rpc:FlowDocument.Load": "keymouse.flow.model",
+    "rpc:FlowDocument.Save": "keymouse.flow.model",
+    "rpc:FlowDocument.ToArguments": "keymouse.flow.model",
+    "rpc:FlowRunner.LooksLikeJson": "keymouse.flow.runner",
+    "rpc:FlowRunner.Run": "keymouse.flow.runner",
     "rpc:FocusTarget": "keymouse.cli.window.targeting",
     "rpc:GlobalOptions / CommandOptions / KeyNames 用例": "keymouse.tests.unit.parsing.options",
     "rpc:GlobalOptions.ToSelector": "keymouse.cli.options",
@@ -8717,6 +9240,8 @@
     "rpc:mouse wheel": "keymouse.cli.mouse.wheel",
     "rpc:NativeCapture.TryCapture": "keymouse.native.capture",
     "rpc:NativeCapture.TryCaptureScreen": "keymouse.native.capture",
+    "rpc:NativeHooks.Record": "keymouse.native.hooks",
+    "rpc:NativeHooks.ToUnicodeEx": "keymouse.native.hooks",
     "rpc:NativeInput.ButtonDown": "keymouse.input.mouse-button",
     "rpc:NativeInput.ButtonUp": "keymouse.input.mouse-button",
     "rpc:NativeInput.Chord": "keymouse.input.key",
@@ -8749,6 +9274,9 @@
     "rpc:Probe.WriteBmp": "keymouse.probe.preprocess",
     "rpc:pwsh tests/check-docs.ps1": "keymouse.tests.docs-link",
     "rpc:pwsh tests/smoke.ps1": "keymouse.tests.smoke.entry",
+    "rpc:Recorder.IsDrag": "keymouse.record.session",
+    "rpc:Recorder.Run": "keymouse.record.session",
+    "rpc:Recorder.ThinTrajectoryIndices": "keymouse.record.session",
     "rpc:RegionCommand.Classify": "keymouse.pick.placement",
     "rpc:RegionCommand.ClientBounds": "keymouse.pick.placement",
     "rpc:RegionCommand.Describe": "keymouse.pick.placement",
@@ -9370,6 +9898,27 @@
       }
     },
     {
+      "from": "keymouse.flow.runner",
+      "to": "keymouse.cli.main",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "同一条派发路径",
+        "en": "The same dispatch"
+      }
+    },
+    {
+      "from": "keymouse.flow.runner",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.ToArguments",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "步骤编译成命令",
+        "en": "Compile a step"
+      }
+    },
+    {
       "from": "keymouse.input",
       "to": "keymouse.native",
       "kind": "call",
@@ -9613,6 +10162,50 @@
       "label": {
         "zh": "像素进出",
         "en": "pixels in, pixels out"
+      }
+    },
+    {
+      "from": "keymouse.record.session",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.Save",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "写流程文件",
+        "en": "Write the flow"
+      }
+    },
+    {
+      "from": "keymouse.record.session",
+      "to": "keymouse.native.capture",
+      "to_api": "rpc:NativeCapture.TryCaptureScreen",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "取步骤截图",
+        "en": "Take the step shot"
+      }
+    },
+    {
+      "from": "keymouse.record.session",
+      "to": "keymouse.native.hooks",
+      "to_api": "rpc:NativeHooks.Record",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "装钩子并泵消息",
+        "en": "Install hooks and pump"
+      }
+    },
+    {
+      "from": "keymouse.record.session",
+      "to": "keymouse.window.select.point",
+      "to_api": "rpc:WindowLocator.WindowAt",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "解析动作所属窗口",
+        "en": "Resolve the window"
       }
     },
     {
@@ -10081,6 +10674,28 @@
       }
     },
     {
+      "from": "keymouse.tests.smoke.record",
+      "to": "keymouse.flow.runner",
+      "to_api": "rpc:FlowRunner.Run",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "回放流程",
+        "en": "Replay the flow"
+      }
+    },
+    {
+      "from": "keymouse.tests.smoke.record",
+      "to": "keymouse.record.session",
+      "to_api": "rpc:Recorder.Run",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "启动录制",
+        "en": "Start the recorder"
+      }
+    },
+    {
       "from": "keymouse.tests.smoke.region",
       "to": "keymouse.pick.overlay",
       "to_api": "rpc:RegionPicker.Pick",
@@ -10147,6 +10762,28 @@
       "label": {
         "zh": "用统一断言",
         "en": "Use the harness"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.flow",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.ToArguments",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的编译器",
+        "en": "The compiler under test"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.flow",
+      "to": "keymouse.record.session",
+      "to_api": "rpc:Recorder.ThinTrajectoryIndices",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的抽稀规则",
+        "en": "The thinning rule"
       }
     },
     {
@@ -10575,19 +11212,20 @@
     "keymouse": {
       "schema_version": 1,
       "id": "keymouse",
-      "updated_at": "2026-10-03T08:15:15.544Z",
+      "updated_at": "2026-10-03T10:11:47.581Z",
       "mode": "groups",
-      "max_columns": 4,
       "reading": {
-        "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（可选的批量编排）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作。下方三组是工程支撑。",
-        "en": "One invocation flows left to right: the CLI resolves target and action, the script runner batches them, the window layer verifies the target, perception reads the screen and only reports (or lets a human draw the region), input injects, native does the syscalls. The lower group is engineering support."
+        "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制是从另一端进入这条链（钩子 → JSON 流程）。下方三组是工程支撑。",
+        "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer verifies the target, perception reads the screen and only reports (or lets a human draw the region), input injects, native does the syscalls. Recording enters the same chain from the other end (hooks -> JSON flow). The lower group is engineering support."
       },
       "order": [
         "keymouse.cli",
         "keymouse.script",
+        "keymouse.flow",
         "keymouse.window",
         "keymouse.probe",
         "keymouse.pick",
+        "keymouse.record",
         "keymouse.input",
         "keymouse.native",
         "keymouse.keys",
@@ -10606,9 +11244,11 @@
           "children": [
             "keymouse.cli",
             "keymouse.script",
+            "keymouse.flow",
             "keymouse.window",
             "keymouse.probe",
             "keymouse.pick",
+            "keymouse.record",
             "keymouse.input",
             "keymouse.native",
             "keymouse.keys",
@@ -10851,6 +11491,20 @@
         }
       ]
     },
+    "keymouse.flow": {
+      "schema_version": 1,
+      "id": "keymouse.flow",
+      "updated_at": "2026-10-03T10:11:47.712Z",
+      "mode": "layers",
+      "reading": {
+        "zh": "文件进来先过校验（格式/版本/步骤类型），再由执行器逐步编译成命令交给同一个派发；没有命令行等价物的步骤（sleep、wait-window）由执行器自己处理。",
+        "en": "A file is validated first (format, version, step types), then the runner compiles each step into a command for the shared dispatch; steps without a command-line equivalent (sleep, wait-window) are handled by the runner itself."
+      },
+      "order": [
+        "keymouse.flow.model",
+        "keymouse.flow.runner"
+      ]
+    },
     "keymouse.input": {
       "schema_version": 1,
       "id": "keymouse.input",
@@ -10910,11 +11564,11 @@
     "keymouse.native": {
       "schema_version": 1,
       "id": "keymouse.native",
-      "updated_at": "2026-10-03T07:30:56.882Z",
+      "updated_at": "2026-10-03T10:11:47.515Z",
       "mode": "groups",
       "reading": {
-        "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断。左上枚举与读取窗口信息，左下查状态与矩形；紧接着是取像（窗口渲染与屏幕拷贝）；中间是聚焦与层级；中右三个查询类（DWM 遮盖、进程名、响应探测）；右下是输入 API 与结构体布局。",
-        "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, then capture pixels (window render and screen copy), then the foreground and layer calls, three specialised queries (DWM, process name, responsiveness) and the input APIs on the right."
+        "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断：枚举与读取窗口信息、查状态与矩形、取像、聚焦与层级、专项查询、输入 API；右下的钩子层负责全局键鼠观察（录制用）。",
+        "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, capture pixels, foreground and layer calls, specialised queries, input APIs - plus the hook layer that observes global input for recording."
       },
       "order": [
         "keymouse.native.user32-enumerate",
@@ -10926,7 +11580,8 @@
         "keymouse.native.dwm",
         "keymouse.native.process",
         "keymouse.native.window-probe",
-        "keymouse.native.user32-input"
+        "keymouse.native.user32-input",
+        "keymouse.native.hooks"
       ],
       "groups": [
         {
@@ -10977,11 +11632,12 @@
         {
           "id": "inject",
           "title": {
-            "zh": "输入 API",
-            "en": "Input APIs"
+            "zh": "输入 API 与钩子",
+            "en": "Input APIs & hooks"
           },
           "children": [
-            "keymouse.native.user32-input"
+            "keymouse.native.user32-input",
+            "keymouse.native.hooks"
           ]
         }
       ]
@@ -11039,6 +11695,19 @@
             "keymouse.probe.consensus"
           ]
         }
+      ]
+    },
+    "keymouse.record": {
+      "schema_version": 1,
+      "id": "keymouse.record",
+      "updated_at": "2026-10-03T10:11:47.647Z",
+      "mode": "layers",
+      "reading": {
+        "zh": "钩子把事件交给会话，会话把事件流合成步骤并写成流程文件：抽稀、配对、解析窗口都在会话里，钩子层只管\"看到了什么\"。",
+        "en": "The hooks hand events to the session, which synthesises steps and writes the flow file: thinning, pairing and window resolution all live in the session; the hook layer only reports what it saw."
+      },
+      "order": [
+        "keymouse.record.session"
       ]
     },
     "keymouse.script": {
@@ -11256,12 +11925,12 @@
     "keymouse.tests.smoke": {
       "schema_version": 1,
       "id": "keymouse.tests.smoke",
-      "updated_at": "2026-10-03T08:15:15.731Z",
+      "updated_at": "2026-10-03T10:11:47.844Z",
       "mode": "layers",
       "max_columns": 3,
       "reading": {
-        "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→感知与选区→不变量”逐段验证；选区那一段用 KeyMouse 自己的鼠标键盘驱动浮层。",
-        "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety, odds and ends, perception and region selection, invariants. The region band drives the overlay with KeyMouse own input."
+        "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→感知与选区→录制与回放→不变量”逐段验证；录制那一段用 KeyMouse 自己的输入驱动钩子。",
+        "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety, odds and ends, perception and region selection, recording and replay, invariants. The recording band drives the hooks with KeyMouse own input."
       },
       "order": [
         "keymouse.tests.smoke.entry",
@@ -11269,6 +11938,7 @@
         "keymouse.tests.smoke.safety",
         "keymouse.tests.smoke.features",
         "keymouse.tests.smoke.region",
+        "keymouse.tests.smoke.record",
         "keymouse.tests.smoke.loops"
       ],
       "groups": [
@@ -11306,11 +11976,12 @@
         {
           "id": "perception",
           "title": {
-            "zh": "感知与选区",
-            "en": "Perception & region"
+            "zh": "感知、选区与录制",
+            "en": "Perception, region & recording"
           },
           "children": [
-            "keymouse.tests.smoke.region"
+            "keymouse.tests.smoke.region",
+            "keymouse.tests.smoke.record"
           ]
         },
         {
@@ -11328,16 +11999,17 @@
     "keymouse.tests.unit": {
       "schema_version": 1,
       "id": "keymouse.tests.unit",
-      "updated_at": "2026-10-03T08:15:15.669Z",
+      "updated_at": "2026-10-03T10:11:47.778Z",
       "mode": "layers",
       "reading": {
-        "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区那一组只测不需要桌面的换算规则。",
-        "en": "The entry runs each case set; they share one assertion harness. The region set covers only the conversion rules that need no desktop."
+        "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区与流程那两组只测不需要桌面的规则。",
+        "en": "The entry runs each case set; they share one assertion harness. The region and flow sets cover only rules that need no desktop."
       },
       "order": [
         "keymouse.tests.unit.harness",
         "keymouse.tests.unit.parsing",
         "keymouse.tests.unit.region",
+        "keymouse.tests.unit.flow",
         "keymouse.tests.unit.window"
       ]
     },
@@ -11604,6 +12276,15 @@
         "en": "Raw pixels to the engine, literal comparison, 20-sample corpus"
       },
       "updated_at": "2026-10-03T09:21:01.748Z"
+    },
+    {
+      "id": "2026-10-03-record-to-json-flow",
+      "status": "verified",
+      "title": {
+        "zh": "录制：键鼠操作 → 可回放的 JSON 流程",
+        "en": "Recording: input to a replayable JSON flow"
+      },
+      "updated_at": "2026-10-03T10:12:04.934Z"
     },
     {
       "id": "2026-10-03-release-2-0-0",

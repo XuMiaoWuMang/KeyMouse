@@ -11,8 +11,8 @@ description:
   en: >
       Every P/Invoke declaration and its thin wrapper: user32 input/window APIs, DWM cloaking, the WM_NULL responsiveness probe, and process names via QueryFullProcessImageName with a pid cache.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.860Z"
+revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
+updated_at: "2026-10-03T10:12:03.456Z"
 fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"

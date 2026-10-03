@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "id": "keymouse.native",
-  "updated_at": "2026-10-03T07:30:56.882Z",
+  "updated_at": "2026-10-03T10:11:47.515Z",
   "mode": "groups",
   "reading": {
-    "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断。左上枚举与读取窗口信息，左下查状态与矩形；紧接着是取像（窗口渲染与屏幕拷贝）；中间是聚焦与层级；中右三个查询类（DWM 遮盖、进程名、响应探测）；右下是输入 API 与结构体布局。",
-    "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, then capture pixels (window render and screen copy), then the foreground and layer calls, three specialised queries (DWM, process name, responsiveness) and the input APIs on the right."
+    "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断：枚举与读取窗口信息、查状态与矩形、取像、聚焦与层级、专项查询、输入 API；右下的钩子层负责全局键鼠观察（录制用）。",
+    "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, capture pixels, foreground and layer calls, specialised queries, input APIs - plus the hook layer that observes global input for recording."
   },
   "order": [
     "keymouse.native.user32-enumerate",
@@ -17,7 +17,8 @@
     "keymouse.native.dwm",
     "keymouse.native.process",
     "keymouse.native.window-probe",
-    "keymouse.native.user32-input"
+    "keymouse.native.user32-input",
+    "keymouse.native.hooks"
   ],
   "groups": [
     {
@@ -68,11 +69,12 @@
     {
       "id": "inject",
       "title": {
-        "zh": "输入 API",
-        "en": "Input APIs"
+        "zh": "输入 API 与钩子",
+        "en": "Input APIs & hooks"
       },
       "children": [
-        "keymouse.native.user32-input"
+        "keymouse.native.user32-input",
+        "keymouse.native.hooks"
       ]
     }
   ]

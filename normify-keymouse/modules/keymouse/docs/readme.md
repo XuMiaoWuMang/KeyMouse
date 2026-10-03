@@ -11,9 +11,9 @@ description:
   en: >
       One page covering what it is, how it differs from ordinary automation scripts, the feature table, install and quick start - with links out to the three detailed documents.
       
-revision: 85e950e25a3270a308e88673382b52020c16d9c6
-updated_at: "2026-10-03T09:42:10.583Z"
-fingerprint: 77990d0946a07341b8cb3359a93234e8efe015163cfdcf905ede7a2295731ed3
+revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
+updated_at: "2026-10-03T10:12:03.456Z"
+fingerprint: c8084548d30886afc6b2784adf618f9dcf55167fa8cc7cd48b520e6bd4449213
 source:
   - path: "README.md"
 apis:

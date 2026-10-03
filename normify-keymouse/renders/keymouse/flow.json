@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.flow",
+  "updated_at": "2026-10-03T10:11:47.712Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "文件进来先过校验（格式/版本/步骤类型），再由执行器逐步编译成命令交给同一个派发；没有命令行等价物的步骤（sleep、wait-window）由执行器自己处理。",
+    "en": "A file is validated first (format, version, step types), then the runner compiles each step into a command for the shared dispatch; steps without a command-line equivalent (sleep, wait-window) are handled by the runner itself."
+  },
+  "order": [
+    "keymouse.flow.model",
+    "keymouse.flow.runner"
+  ]
+}

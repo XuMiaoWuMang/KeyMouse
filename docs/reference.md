@@ -360,6 +360,76 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 - `--pick-region` 选到标题栏（窗口坐标）时不能配 `--capture print`（退出码 `2`）；取消选区（`ESC` / 右键）
   是退出码 `3`，一个字也没读。
 
+## record（录制：把一次操作变成可回放的 JSON）
+
+```
+KeyMouse record --out flow.json                 # 开始录，Ctrl+Alt+Q 停止（连按两次 ESC 也停）
+KeyMouse record --out flow.json --duration 10000
+KeyMouse run flow.json                          # 回放
+```
+
+全局监听键盘与鼠标（`WH_KEYBOARD_LL` / `WH_MOUSE_LL`），**只观察、不拦截**：你照常操作，
+记录下来的每个动作都带三样东西——**它发生在哪个窗口**（进程 + 类名，标题另存供人看）、
+**客户区相对坐标**（客户区之外的点击记为屏幕坐标并写明原因）、以及**与上一步的间隔**
+（超过 `--min-gap` 就落成一个 `sleep` 步骤）。
+
+| 选项 | 默认 | 说明 |
+| --- | --- | --- |
+| `--out <路径>` | `flow.json` | 流程文件；截图放在同目录的 `<名字>.shots/` |
+| `--duration <毫秒>` | 关 | 到点自动停（无人值守/自动化用；也可以按停止键） |
+| `--no-shots` | 开 | 不存关键步骤的截图 |
+| `--min-gap <毫秒>` | 300 | 多长的间隔值得记成 `sleep` |
+| `--move-threshold <像素>` | 8 | 鼠标轨迹按这个距离抽稀（越短越忠实、文件越大） |
+
+**停止键**：`Ctrl+Alt+Q`，或连按两次 `ESC`。停止键本身不会被录进流程。
+
+**录进去的步骤**：`focus`（切换窗口）、`click`、`drag`（按住移动超过阈值就是一个 drag，
+带起点/终点/时长）、`move`（抽稀后的轨迹）、`wheel`、`type`（连续输入的字符合成一步，
+并记下你实际的输入速度）、`key`（特殊键与组合键）、`sleep`。
+
+**两条要记住的事**：
+
+- 录制期间**你敲的每个键都会被记录**（包括密码这种敏感内容），流程文件是明文，
+  关键步骤的截图也可能含敏感画面——录完自己看一眼再分享。
+- 回放走的还是同一条路：流程被编译成一条条命令，**选择器、焦点闸门、退出码语义与手打命令完全一致**，
+  `--dry-run` / `--report` / `--retry` 也照常工作。（`wait-text` 还没实现，见 design.md 的下一步。）
+
+## 流程 JSON（`keymouse-flow`）
+
+```json
+{
+  "format": "keymouse-flow",
+  "version": 1,
+  "recordedAt": "2026-10-03T18:10:23+08:00",
+  "screen": { "width": 2560, "height": 1440 },
+  "options": { "minGapMs": 300, "moveThresholdPx": 8, "shots": true },
+  "steps": [
+    { "type": "click", "button": "left", "at": { "space": "client", "x": 120, "y": 159 },
+      "target": { "process": "notepad", "class": "Notepad", "title": "新建 文本文档.txt - Notepad" },
+      "shot": "flow.shots/0001-click.png" }
+  ]
+}
+```
+
+| `type` | 字段 | 回放成 |
+| --- | --- | --- |
+| `focus` | `target` | `window focus` |
+| `click` | `button`、`at` | `mouse click` |
+| `move` | `at` | `mouse move`（屏幕坐标时是位置参数写法） |
+| `wheel` | `delta`、`at` | `mouse wheel`（连续滚动会合并成一个 delta） |
+| `drag` | `from`、`to`、`durationMs` | `mouse drag --duration` |
+| `type` | `text`、`intervalMs` | `key type --interval` |
+| `key` | `combo`（组合）或 `text`（单个键） | `key combo` / `key press` |
+| `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
+| `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
+| `wait-text` | `at`、`text`、`match`、`maxErrors`、`timeoutMs` | **尚未实现**（需要 probe 的判定谓词，下一步） |
+
+`at` / `from` / `to` 的 `space` 只认 `client`（客户区相对，窗口一动也不失效）与 `screen`
+（绝对屏幕坐标，窗口移动后就失效——录制器只在客户区之外才用它，并会写进 `note`）。
+`target` 里的 `process` + `class` 是回放真正用的选择器；`title` 只给人看。
+
+---
+
 ## region（选区：给人挑坐标，不读文字）
 
 坐标写不准是个真问题：实测里三次凭记忆挑区域，三次都落在壁纸或空白上。`region pick` 把这件事交给鼠标——

@@ -357,8 +357,10 @@ internal static class ScriptRunner
         return exitCode;
     }
 
-    /// <summary>Runs one command with its output captured, so the runner can format it itself.</summary>
-    private static (int ExitCode, string Output) RunOnce(Func<string[], int> execute, List<string> tokens)
+    /// <summary>Runs one command with its output captured, so a runner can format it itself.
+    /// Shared with the flow runner: a JSON flow is another way to produce command lines, not a
+    /// second execution engine.</summary>
+    internal static (int ExitCode, string Output) RunOnce(Func<string[], int> execute, List<string> tokens)
     {
         var stdout = new StringWriter();
         var stderr = new StringWriter();
@@ -831,7 +833,13 @@ internal static class ScriptRunner
     /// Only failures that provably sent nothing may be retried: 3 (selector), 4 (not usable),
     /// 5 (focus verification). A retry can never repeat a half-executed action.
     /// </summary>
-    internal static bool IsRetryable(int exitCode) => exitCode is 3 or 4 or 5;
+    /// <summary>
+    /// Exit codes that prove nothing was sent, so trying again is safe: 3 (no match / cancelled),
+    /// 4 (target unusable), 5 (focus not verified) and 6 (could not read). The invariant is written
+    /// down in docs/development.md; 6 was missing here while the docs promised it, which is exactly
+    /// the kind of drift this comment exists to stop.
+    /// </summary>
+    internal static bool IsRetryable(int exitCode) => exitCode is 3 or 4 or 5 or 6;
 
     private static string[] ReadScript(string path)
     {
@@ -860,7 +868,7 @@ internal static class ScriptRunner
         return buffer.ToArray();
     }
 
-    private static void WriteReport(string path, ScriptReport report)
+    internal static void WriteReport(string path, ScriptReport report)
     {
         try
         {

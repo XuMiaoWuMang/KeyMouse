@@ -2,10 +2,26 @@ using System.Globalization;
 
 namespace KeyMouse;
 
-/// <summary>Maps readable key names to virtual-key codes.</summary>
+/// <summary>Maps readable key names to virtual-key codes, and back for the recorder.</summary>
 internal static class KeyMap
 {
     private static readonly Dictionary<string, (ushort Vk, bool Ext)> Map = Build();
+    private static readonly Dictionary<ushort, string> Reverse = BuildReverse();
+
+    /// <summary>The canonical name for a virtual key, or null when it has none.</summary>
+    public static string? NameOf(int vk) =>
+        Reverse.TryGetValue((ushort)vk, out string? name) ? name : null;
+
+    private static Dictionary<ushort, string> BuildReverse()
+    {
+        var reverse = new Dictionary<ushort, string>();
+        foreach (var (name, entry) in Map)
+        {
+            // First name wins: the map lists "enter" before "return", "esc" before "escape".
+            if (!reverse.ContainsKey(entry.Vk)) reverse[entry.Vk] = name;
+        }
+        return reverse;
+    }
 
     public static (ushort Vk, bool Ext) Resolve(string name)
     {

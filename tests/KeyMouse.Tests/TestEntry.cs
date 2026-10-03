@@ -21,6 +21,7 @@ internal static class TestEntry
         Harness.Section("windows", WindowTests.Run);
         Harness.Section("probe", ProbeTests.Run);
         Harness.Section("region", RegionTests.Run);
+        Harness.Section("flow", FlowTests.Run);
 
         return Harness.Summary();
     }

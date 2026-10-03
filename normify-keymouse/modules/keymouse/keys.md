@@ -11,9 +11,9 @@ description:
   en: >
       Maps key names to virtual-key codes and the extended-key flag: letters, F1-F24, arrows, modifiers, numpad, symbol names, plus the raw vk:0x5B escape hatch.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.859Z"
-fingerprint: 8eb086e5f124d33d5d48b2b08f2c073cc70ca31f6a960d344a71c4801c105c34
+revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
+updated_at: "2026-10-03T10:11:54.003Z"
+fingerprint: 25a839f445b22a732ec61ead6f2a2bcc99cff347f76627cd9fa8fc1b4e5b22cc
 source:
   - path: "KeyMap.cs"
     line: 1

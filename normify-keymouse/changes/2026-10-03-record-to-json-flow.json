@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-record-to-json-flow",
+  "title": {
+    "zh": "录制：键鼠操作 → 可回放的 JSON 流程",
+    "en": "Recording: input to a replayable JSON flow"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "新增 record：全局低级钩子只观察不拦截，把一次真实操作写成 keymouse-flow JSON（窗口上下文、客户区相对坐标、抽稀轨迹、关键步骤截图、停顿成 sleep）；run 认出 .json 就交给流程执行器，每一步编译成手打命令走同一条派发，因此闸门/焦点/退出码/--dry-run/--report/--retry 全部共享。顺带修掉\"退出码 6 不可重试\"与文档承诺不一致的问题。wait-text 与表格式编辑器是下一步。",
+    "en": "Adds record: global low-level hooks observe without swallowing, writing a session out as a keymouse-flow JSON (window context, client-relative coordinates, thinned trajectory, screenshots of key steps, pauses as sleeps); run detects a .json and hands it to the flow runner, which compiles every step into the command a human would type and dispatches it the same way, so the gate, focus, exit codes, --dry-run, --report and --retry are all shared. Also fixes exit code 6 not being retryable while the docs promised it. wait-text and the table editor are next."
+  },
+  "modules": {
+    "create": [
+      "keymouse.record",
+      "keymouse.record.session",
+      "keymouse.native.hooks",
+      "keymouse.flow",
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.tests.unit.flow",
+      "keymouse.tests.smoke.record"
+    ],
+    "modify": [
+      "keymouse.cli.main",
+      "keymouse.cli.help",
+      "keymouse.script",
+      "keymouse.native",
+      "keymouse.tests.unit",
+      "keymouse.tests.smoke",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design"
+    ]
+  },
+  "acceptance": [
+    "record 录下点击/打字/拖拽/轨迹，写出 keymouse-flow JSON，关键步骤带截图",
+    "拖拽不再漏出多余的 move 步骤（实测 21 个 → 0）",
+    "run flow.json 回放真的把字打进靶子窗口（smoke 回读剪贴板）",
+    "未知步骤类型/外来格式/未来版本在加载时退出码 2",
+    "退出码 6 可重试（与文档承诺一致），verify.ps1 全绿，validate 0 error"
+  ],
+  "note": "录制与 JSON 回放落地：新增 keymouse.record（会话与钩子）、keymouse.flow（文档编译与执行器）与两组测试模块；六个布局同步；顺带修掉退出码 6 不可重试与文档承诺不一致的问题。wait-text 谓词与表格式编辑器列为下一步。",
+  "revision": {
+    "before": null,
+    "after": "8138caf9efa304f3487fcf5c6320ee4ac39f036b"
+  },
+  "created_at": "2026-10-03T10:11:53.710Z",
+  "updated_at": "2026-10-03T10:12:04.934Z",
+  "closed_at": "2026-10-03T10:12:04.934Z"
+}

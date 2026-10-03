@@ -36,13 +36,19 @@ internal static class Program
                 case "window":
                     return WindowGroup(rest[1..], global);
                 case "run":
+                    // One `run`, two file formats: the text syntax, or a recorded JSON flow. The flow
+                    // is detected by content and both go through the same dispatcher below.
+                    if (FlowRunner.LooksLikeJson(rest[1..]))
+                        return FlowRunner.Run(rest[1..], global, Main);
                     return ScriptRunner.Run(rest[1..], global, Main);
+                case "record":
+                    return Recorder.Run(rest[1..], global);
                 case "probe":
                     return Probe.Run(rest[1..], global);
                 case "region":
                     return RegionCommand.Run(rest[1..], global);
                 default:
-                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | probe | region | help）");
+                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | record | probe | region | help）");
             }
         }
         catch (CommandFailure ex)
@@ -658,7 +664,7 @@ internal static class Program
             ? v
             : fallback;
 
-    private static int Fail(int code, string message)
+    internal static int Fail(int code, string message)
     {
         Console.Error.WriteLine("错误：" + message);
         return code;

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.record",
+  "updated_at": "2026-10-03T10:11:47.647Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "钩子把事件交给会话，会话把事件流合成步骤并写成流程文件：抽稀、配对、解析窗口都在会话里，钩子层只管\"看到了什么\"。",
+    "en": "The hooks hand events to the session, which synthesises steps and writes the flow file: thinning, pairing and window resolution all live in the session; the hook layer only reports what it saw."
+  },
+  "order": [
+    "keymouse.record.session"
+  ]
+}
