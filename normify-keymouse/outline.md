@@ -38,7 +38,7 @@
     - keymouse.console.encoding — 输出编码适配 / Output encoding — 把 stdout 切到控制台自己的码页：PowerShell 用 [Console]::OutputEncoding 解码原生命令输出，而 .NET 在重定向时… — [模块 1 · API 2]
     - keymouse.console.width — 显示宽度计算 / Display width — 中文一个字占两个终端格但只算一个 char，用 PadRight 排表会逐列漂移（中文越多偏得越多）。这里按终端格宽计算并补白/截断，让 window list… — [模块 1 · API 3]
   - keymouse.docs — 文档与示例 / Docs & samples — 概览 README、命令参考、设计取舍、开发与发布流程，以及一份可直接运行的示例脚本。文档与行为不一致时以行为为准，文档必须跟着改。 — [模块 6 · API 5]
-    - keymouse.docs.design — 设计取舍 / Design rationale — 为什么是 fail-closed、退出码为何是承诺、闸门查什么、为什么不做“只剩一帧”的启发式检测，以及 v2 的四个决定（单进程、继承只限脚本内、循环必有界、… — [模块 1 · API 1]
+    - keymouse.docs.design — 设计取舍 / Design rationale — 为什么是 fail-closed、退出码为何是承诺、闸门查什么、为什么不做“只剩一帧”的启发式检测，v2 的四个决定（单进程、继承只限脚本内、循环必有界、嵌套必… — [模块 1 · API 1]
     - keymouse.docs.development — 开发与发布流程 / Development & release process — 四道关卡、不变量清单（单进程、失败即关闭、报错先于动手、不碰用户东西）、发布流程（tag 触发 + 人工验证），以及“新检查该放哪”的决策表。 — [模块 1 · API 1]
     - keymouse.docs.readme — 概览 README / README overview — 一页说清“它是什么、和常见自动化脚本的区别、能力一览、安装与快速开始”，并把细节链接到另外三份文档。 — [模块 1 · API 1]
     - keymouse.docs.reference — 命令参考 / Command reference — 逐条命令与选项的完整说明：选择器、窗口策略、退出码、脚本（含目标继承、循环、变量、报告与 API 约定）。与内置帮助互补：帮助给了概要，这里给了细节与理由。 — [模块 1 · API 1]

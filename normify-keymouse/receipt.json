@@ -2,7 +2,7 @@
   "schema_version": 1,
   "ok": true,
   "project": "normify-keymouse",
-  "compiled_at": "2026-10-02T18:08:16.276Z",
+  "compiled_at": "2026-10-03T05:33:53.651Z",
   "stats": {
     "tree_count": 1,
     "module_count": 123,
@@ -24,19 +24,19 @@
   },
   "artifacts": {
     "tree.json": {
-      "sha256": "5ca1df433bdac269eaa67ecfde81c6f12d4428822ff47a667bc9fc962cbb53f1",
-      "bytes": 334958
+      "sha256": "f514614f81579153495bbde751febacbec1d89bb69d59ceda54e50a220b11747",
+      "bytes": 335278
     },
     "outline.md": {
-      "sha256": "da11f5ccec8af130c708b9a4de98a2202fcd46275d765a8db42c7a8b193dc71f",
-      "bytes": 34691
+      "sha256": "6a6244794b0ea6dd14e6ce927ec3db861c238526a8e11186d08a63a92927dc59",
+      "bytes": 34693
     },
     "api-index.json": {
       "sha256": "20004bb642080e00f6b19976425a95e41bb082bd343408d626076e03eb72a5e9",
       "bytes": 10313
     },
     "receipt.json": {
-      "sha256": "98c12764826e7c25e60f9caba595e6f99e7021fb492c3e49c52283ce21605359",
+      "sha256": "58c179c4f8c60c30414ed46b1ef87635d31c46746814a9bd1001480fa7c16992",
       "bytes": 963
     }
   }
