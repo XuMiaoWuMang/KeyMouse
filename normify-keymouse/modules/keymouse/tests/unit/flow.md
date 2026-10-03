@@ -11,9 +11,9 @@ description:
   en: >
       The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule (including a string past the stack buffer), the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit 6 is retryable. The hooks, the OCR and the replay live in smoke.
       
-revision: 96c306061d63c034a01c2369e4abc295251e2f35
-updated_at: "2026-10-03T13:37:48.972Z"
-fingerprint: 97f3082beeb9c5b123c89a26bd2debf62eab6e554fbbbc50f31b84551ed6130a
+revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
+updated_at: "2026-10-03T14:00:46.182Z"
+fingerprint: e2b7d660e8c1526b5765587dfad138dac818dab5c8fe0eb0ac2b8b6d543c7c44
 source:
   - path: "tests/KeyMouse.Tests/FlowTests.cs"
 apis:

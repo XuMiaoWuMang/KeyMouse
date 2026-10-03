@@ -6,14 +6,14 @@ tags: [editor, ui]
 name: {zh: "步骤视图模型与目录", en: "Step view model and catalogue"}
 description:
   zh: >
-      列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段；每个 setter 先比一次值（折叠卡片也会回写默认值，实测过）。分组（`repeat`/`foreach`）与 `read-text` 在这里有摘要与字段；**子步骤原样保留**（视图模型包的是整对象，保存不会丢循环体）。
+      列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。**显示哪些字段由 `FlowStepSchema` 决定**（不再手写条件），标签按类型说人话（"要找的文字"不是"要输入的文字"），分组/子流程/`read-text`/`when` 都有字段——`when` 是后来补的：以前界面里根本没有它。保存时会**用加载器自检一遍**：编辑器能造出格式会拒绝的东西（半填的 `when` 最容易），这件事该在按下保存的一秒内知道，而不是跑到一半才知道。
       
   en: >
-      The editable model behind the list and the inspector: every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first (collapsed cards do write defaults back - measured). Groups and read-text get their own summaries and fields, and child steps are preserved verbatim: the view model wraps whole objects, so saving never loses a loop body.
+      The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first. Which fields appear comes from FlowStepSchema rather than hand-written conditions, labels speak per type, and groups, subflows, read-text and when have fields. A save is read back through the loader, so a half-filled when costs a second instead of a failed run.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.519Z"
-fingerprint: 7f785b14625f81571c79580f2f3eaa14957572be6879d17a5367e6586f9b46d5
+revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
+updated_at: "2026-10-03T14:00:46.181Z"
+fingerprint: dc1553bbee28cf70dee23c7f93f11af81dff0c2dac7d40082d7627427b98429d
 source:
   - path: "editor/KeyMouse.FlowEditor/StepVm.cs"
   - path: "editor/KeyMouse.FlowEditor/EditorModel.cs"

@@ -108,6 +108,27 @@ internal static class FlowTests
         Harness.Throws<CommandFailure>("wait steps are the runner's business, not the compiler's",
             () => FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }));
 
+        Harness.Group("flow: every step type declares the fields it uses");
+
+        foreach (string type in FlowDocument.KnownTypes)
+        {
+            Harness.Check($"'{type}' declares its fields", FlowStepSchema.For(type) != StepFields.None, type);
+        }
+
+        // 这三个正是"界面里改不了参数"出过问题的类型：检查器问的就是这张表。
+        Harness.Check("click-text (find the text and click it) carries region, text, match, timeout and button",
+            Has("click-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Timeout | StepFields.Button));
+        Harness.Check("read-text carries region, text, match and into",
+            Has("read-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Into));
+        Harness.Check("wait-text carries region, text, match and timeout",
+            Has("wait-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Timeout));
+        Harness.Check("call carries the subflow field only", Has("call", StepFields.Call) && Has("call", StepFields.Note));
+        Harness.Check("sleep is just a duration (and a precondition)",
+            FlowStepSchema.For("sleep") == (StepFields.Ms | StepFields.When));
+        Harness.Check("an unknown type still gets target, precondition and note",
+            FlowStepSchema.For("something-new") == (StepFields.Target | StepFields.When | StepFields.Note));
+
+        static bool Has(string type, StepFields fields) => (FlowStepSchema.For(type) & fields) == fields;
         Harness.Group("flow: restoring a minimized window is opt-in");
 
         string restorePath = Path.Combine(Path.GetTempPath(), $"keymouse-restore-test-{Environment.ProcessId}.json");

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-inspector-fields",
+  "title": {
+    "zh": "检查器：字段由格式驱动，补上 when 与按类型的标签",
+    "en": "Inspector: field visibility driven by the format, plus when and per-type labels"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "\"找字并点击它\"在界面上改不了参数：编辑器手写的可见性条件早已和格式脱节——`click-text` 只剩目标与备注，区域/文字/匹配/容错/上限/按钮全被藏着（`read-text` 同样缺区域）。修法是把\"哪种步骤用哪些字段\"放回格式自己（`FlowStepSchema` 一张表），检查器只问它；单元测试遍历 KnownTypes 拒绝无声明的类型，并钉住这三个文本类步骤必须带区域/文字/匹配/上限。顺带同一类问题两处：字段标签按类型说人话；`when`（前提条件）在界面里根本没有——现在有卡片，并且保存时用加载器自检（半填的 when 会在保存时被指出）。",
+    "en": "\"Find the text and click it\" could not be edited in the UI: the editor hand-wrote its field visibility and had drifted from the format - click-text showed only a target and a note while its region, text, match mode, tolerance, timeout and button stayed hidden (read-text had the same hole in the region). The fix puts \"which type uses which fields\" back in the format itself (one FlowStepSchema table) and has the inspector ask it; a unit test walks KnownTypes and pins region/text/match onto the text-reading steps. Two more of the same kind: labels now speak per type, and when - a step precondition the UI simply did not have - got a card, with the loader checking the saved file so a half-filled when is caught at save time."
+  },
+  "modules": {
+    "create": [
+      "keymouse.flow.schema"
+    ],
+    "modify": [
+      "keymouse.editor.steps",
+      "keymouse.editor.shell",
+      "keymouse.tests.unit.flow",
+      "keymouse.docs.design"
+    ]
+  },
+  "acceptance": [
+    "click-text 在界面里可改：区域（X/Y/宽/高）、文字、匹配方式、容错、上限、间隔、确认、鼠标键",
+    "read-text 也有区域与匹配字段；字段可见性由 FlowStepSchema 决定，编辑器不再手写条件",
+    "单元测试遍历 KnownTypes：任何类型没有字段声明就失败；click-text/read-text/wait-text 必须带区域/文字/匹配/上限",
+    "when（前提条件）在界面里可编辑（文字/匹配/容错/上限/else/目标/区域）",
+    "保存时用加载器自检：半填的 when 在保存时被指出，不会留到运行时"
+  ],
+  "note": "检查器字段改由 FlowStepSchema 驱动；补 when 编辑与按类型标签；保存时自检。",
+  "revision": {
+    "before": null,
+    "after": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3"
+  },
+  "created_at": "2026-10-03T14:00:32.636Z",
+  "updated_at": "2026-10-03T14:00:47.199Z",
+  "closed_at": "2026-10-03T14:00:47.199Z"
+}

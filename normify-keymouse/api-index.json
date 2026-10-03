@@ -61,6 +61,7 @@
   "rpc:FlowPlan.StepCount": "keymouse.flow.plan",
   "rpc:FlowRunner.LooksLikeJson": "keymouse.flow.runner",
   "rpc:FlowRunner.Run": "keymouse.flow.runner",
+  "rpc:FlowStepSchema.For": "keymouse.flow.schema",
   "rpc:FocusTarget": "keymouse.cli.window.targeting",
   "rpc:GlobalOptions / CommandOptions / KeyNames 用例": "keymouse.tests.unit.parsing.options",
   "rpc:GlobalOptions.ToSelector": "keymouse.cli.options",

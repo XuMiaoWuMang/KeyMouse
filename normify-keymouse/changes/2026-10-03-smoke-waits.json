@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-smoke-waits",
+  "title": {
+    "zh": "冒烟：等窗口出现，而不是睡固定时长",
+    "en": "Smoke: wait for the window instead of sleeping a fixed time"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "聚焦改动让区域拾取覆盖层就绪稍晚（最多多约 0.4 秒：先接线程输入队列再 SetForegroundWindow），而区域模块用 1500ms 固定睡眠等它 —— 于是\"拖动返回客户区矩形\"和\"单击选中整个客户区\"两条断言开始挂（拾取器还在跑，exited=False）。修法不是把 1500 改大，而是 `common.ps1` 提供 `Wait-ForWindow`：轮询窗口列表直到覆盖层出现，再留 250ms 让它装好鼠标捕获。三处固定睡眠都换掉了，区域模块 27 项、全量 129 项全过。",
+    "en": "The focus change made the region-picker overlay ready slightly later (up to about 0.4s: attach the thread input queue, then SetForegroundWindow), while the region module waited a fixed 1500ms - so the dragged-rectangle and click-selects-all checks started failing with the picker still running. The fix is not a bigger sleep: common.ps1 now offers Wait-ForWindow, which polls the window list until the overlay exists and then gives it 250ms to arm. All three fixed sleeps are gone; the region module is back to 27 checks and the full suite to 129."
+  },
+  "modules": {
+    "modify": [
+      "keymouse.tests.smoke.region",
+      "keymouse.tests.smoke.common"
+    ]
+  },
+  "acceptance": [
+    "区域拾取的两条交互断言重新通过（拖动 / 单击）",
+    "冒烟里不再有\"等覆盖层\"的固定睡眠；三处都换成等窗口出现",
+    "全量冒烟 129 项 0 失败"
+  ],
+  "note": "冒烟不再睡固定时长：等覆盖层出现再动手。",
+  "revision": {
+    "before": null,
+    "after": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3"
+  },
+  "created_at": "2026-10-03T14:07:10.476Z",
+  "updated_at": "2026-10-03T14:07:11.231Z",
+  "closed_at": "2026-10-03T14:07:11.231Z"
+}

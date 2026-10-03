@@ -1,16 +1,13 @@
 {
   "schema_version": 1,
   "id": "keymouse.flow",
-  "updated_at": "2026-10-03T12:49:08.093Z",
+  "updated_at": "2026-10-03T14:00:33.535Z",
   "mode": "layers",
-  "reading": {
-    "zh": "先看\"文档与编译器\"，再看\"执行计划与变量帧\"（内联与作用域都在这里），最后是\"执行器\"（按帧跑并上报）。",
-    "en": "Read the document and compiler first, then the execution plan (inlining and scope), then the runner."
-  },
   "order": [
     "keymouse.flow.model",
     "keymouse.flow.runner",
     "keymouse.flow.predicate",
-    "keymouse.flow.plan"
+    "keymouse.flow.plan",
+    "keymouse.flow.schema"
   ]
 }

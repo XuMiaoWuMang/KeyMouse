@@ -9,12 +9,12 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T13:37:50.553Z",
+    "compiled_at": "2026-10-03T14:07:11.422Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 169,
-      "leaf_count": 139,
-      "api_count": 255,
+      "module_count": 170,
+      "leaf_count": 140,
+      "api_count": 256,
       "dep_count": 194,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
@@ -22,7 +22,7 @@
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 16,
+      "change_count": 18,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 168,
+        "descendant_count": 169,
         "own_api_count": 0,
-        "inherited_api_count": 255,
+        "inherited_api_count": 256,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -2518,9 +2518,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:44.311Z",
-      "fingerprint": "3e0e9d606d3112312a907ab094d27ee4f9892be72751ec874cf873eb0523b06e",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:01:01.912Z",
+      "fingerprint": "962167f08e8b8ed2a06b361017dadf99135c9b19330cce91ec3bd3e8c27fb73f",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2553,9 +2553,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.972Z",
-      "fingerprint": "b99a941a850d29b42c0520ced132a3a8f87b8a78a5143271bca4f6d21e35ec0b",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:46.182Z",
+      "fingerprint": "96e868d4ef435e9fdbfeaa6ba385f0457250b188f46bd513dbc69b39e371e386",
       "apis": [
         {
           "protocol": "file",
@@ -2597,9 +2597,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.972Z",
-      "fingerprint": "59b28464e33a191b63c2ff2b5317421f6e761d9f4090aeb50d004201f2681472",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:52.638Z",
+      "fingerprint": "2c84a2aca9d184df293b655c1b12ac9c1ff63a4155416f5bf7f96cd9870c1dbc",
       "apis": [
         {
           "protocol": "file",
@@ -2641,9 +2641,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:50:56.986Z",
-      "fingerprint": "9153b8b91e58a0ce6d0b511c262b21f95d8e0ea52ae28b3e9b996a5810719b5a",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:52.638Z",
+      "fingerprint": "2443fa48998fb1f7dd53955151cb4ac16a2df8db9eedf42bbd4e97f563e4dd4b",
       "apis": [
         {
           "protocol": "file",
@@ -2900,9 +2900,9 @@
           "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.971Z",
-      "fingerprint": "5c543b6ca06910092c7fad7820afeaaeae488f20cf5e71482cbb671fcf593e33",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:46.182Z",
+      "fingerprint": "319beac10b0dc04a80ced5fed389341035601cc446b9b9672210a0d537b583b8",
       "apis": [
         {
           "protocol": "rpc",
@@ -2968,8 +2968,8 @@
         "en": "Step view model and catalogue"
       },
       "description": {
-        "zh": "列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段；每个 setter 先比一次值（折叠卡片也会回写默认值，实测过）。分组（`repeat`/`foreach`）与 `read-text` 在这里有摘要与字段；**子步骤原样保留**（视图模型包的是整对象，保存不会丢循环体）。\n",
-        "en": "The editable model behind the list and the inspector: every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first (collapsed cards do write defaults back - measured). Groups and read-text get their own summaries and fields, and child steps are preserved verbatim: the view model wraps whole objects, so saving never loses a loop body.\n"
+        "zh": "列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。**显示哪些字段由 `FlowStepSchema` 决定**（不再手写条件），标签按类型说人话（\"要找的文字\"不是\"要输入的文字\"），分组/子流程/`read-text`/`when` 都有字段——`when` 是后来补的：以前界面里根本没有它。保存时会**用加载器自检一遍**：编辑器能造出格式会拒绝的东西（半填的 `when` 最容易），这件事该在按下保存的一秒内知道，而不是跑到一半才知道。\n",
+        "en": "The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first. Which fields appear comes from FlowStepSchema rather than hand-written conditions, labels speak per type, and groups, subflows, read-text and when have fields. A save is read back through the loader, so a half-filled when costs a second instead of a failed run.\n"
       },
       "source": [
         {
@@ -2982,9 +2982,9 @@
           "path": "editor/KeyMouse.FlowEditor/Compat.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.519Z",
-      "fingerprint": "7f785b14625f81571c79580f2f3eaa14957572be6879d17a5367e6586f9b46d5",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:46.181Z",
+      "fingerprint": "dc1553bbee28cf70dee23c7f93f11af81dff0c2dac7d40082d7627427b98429d",
       "apis": [
         {
           "protocol": "rpc",
@@ -3138,9 +3138,9 @@
       "updated_at": "2026-10-03T13:37:44.313Z",
       "fingerprint": "16453d4f8d002642655def878b25ffa8df81923b5720e4a1bbe706f0c676e05a",
       "aggregate": {
-        "descendant_count": 4,
+        "descendant_count": 5,
         "own_api_count": 0,
-        "inherited_api_count": 15,
+        "inherited_api_count": 16,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -3521,6 +3521,51 @@
         "inherited_api_count": 0,
         "dep_out": 6,
         "dep_in": 5
+      }
+    },
+    "keymouse.flow.schema": {
+      "uid": "7a1f4001",
+      "id": "keymouse.flow.schema",
+      "parent": "keymouse.flow",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "flow",
+        "core"
+      ],
+      "name": {
+        "zh": "步骤字段表",
+        "en": "Step field schema"
+      },
+      "description": {
+        "zh": "哪种步骤用哪些字段——一张只有格式自己维护的表。检查器不再手写\"显示什么\"的条件：编辑器问它，于是加类型或加字段时改的是同一处，界面不会悄悄漏掉参数（曾经漏过：`click-text` 在界面上只剩目标与备注，区域、文字、匹配、上限、按钮全部藏着）。一个单元测试遍历 `KnownTypes`，拒绝任何没有声明的类型，并钉住 `click-text`/`read-text`/`wait-text` 必须带区域、文字、匹配、上限这些字段。\n",
+        "en": "Which step type uses which fields - one table the format itself maintains. The inspector no longer hand-writes hide/show conditions: it asks this table, so a type or a field changes in one place and the UI cannot silently lose parameters (it did: click-text showed only a target and a note while its region, text, match mode, timeout and button stayed hidden). A unit test walks KnownTypes and refuses a type without an entry.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Core/FlowStepSchema.cs"
+        }
+      ],
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:46.180Z",
+      "fingerprint": "bb5056a358f7c4ac4b6eaae616d1bd0bfc72b1e85d9f1916dbeb7deac6ce251f",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "FlowStepSchema.For",
+          "description": {
+            "zh": "某个步骤类型用到哪些字段（位标志）。\n",
+            "en": "Which fields a step type uses (a flag set).\n"
+          },
+          "key": "rpc:FlowStepSchema.For"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
       }
     },
     "keymouse.input": {
@@ -8254,17 +8299,17 @@
         "en": "Smoke common"
       },
       "description": {
-        "zh": "模块共享的准备与工具：`Check`、`$Exe`/`$target`、宿主编码自检（中文输出解码不对就立刻停，否则后面每条断言都会以假失败收场）、剪贴板保存，以及**启动冒烟靶子**——它是基建而不是某个模块的职责，所以放在这里，任何模块单独跑都不会缺靶子。\n",
-        "en": "What every module shares: Check, $Exe/$target, the host encoding self-check (a host that decodes Chinese wrongly fails everything downstream for the wrong reason), clipboard saving, and starting the smoke target - infrastructure rather than one module duty, so any module can run on its own.\n"
+        "zh": "模块共享的准备与工具：`Check`、`$Exe`/`$target`、宿主编码自检、剪贴板保存、**启动冒烟靶子**，以及 `Wait-ForWindow`——等某个窗口出现（可选再等一小会儿让它装好鼠标捕获）而不是睡固定时长。固定睡眠在\"起来需要多久取决于抢前台快不快\"的覆盖层上最不可靠：聚焦改成先接线程输入队列后，1500ms 从\"稳\"变成\"偶尔早到\"，区域拾取的两条断言因此挂了。\n",
+        "en": "What every module shares: Check, $Exe/$target, the host encoding self-check, clipboard saving, starting the smoke target, and Wait-ForWindow - wait until a window exists (optionally plus a moment to arm) instead of sleeping a fixed time. A fixed sleep is worst exactly where startup depends on how fast the foreground is won: once focus attached the thread input queue first, 1500ms went from reliable to occasionally early.\n"
       },
       "source": [
         {
           "path": "tests/smoke/common.ps1"
         }
       ],
-      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
-      "updated_at": "2026-10-03T12:19:12.567Z",
-      "fingerprint": "d093bcd7d530ca0528e77c12c5da64c1514b571fb6ae9e5ef8c708c270844491",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:07:10.617Z",
+      "fingerprint": "4775ec2400933c62bcb5c0177b9131fc34e3f9256f3aa5aa24b97c77dabf5035",
       "apis": [
         {
           "protocol": "rpc",
@@ -8661,9 +8706,9 @@
           "path": "tests/smoke/region.ps1"
         }
       ],
-      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
-      "updated_at": "2026-10-03T12:19:12.570Z",
-      "fingerprint": "7494debc40ac82a24f44821220b81b2b5d828bdbf656436bdc9344f369d195b6",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:07:10.616Z",
+      "fingerprint": "8e71b9dcc0014508c6ea0775f3c4fe83c86466d05548f0291f3d3257e2d2946f",
       "apis": [
         {
           "protocol": "rpc",
@@ -9013,9 +9058,9 @@
           "path": "tests/KeyMouse.Tests/FlowTests.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.972Z",
-      "fingerprint": "97f3082beeb9c5b123c89a26bd2debf62eab6e554fbbbc50f31b84551ed6130a",
+      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
+      "updated_at": "2026-10-03T14:00:46.182Z",
+      "fingerprint": "e2b7d660e8c1526b5765587dfad138dac818dab5c8fe0eb0ac2b8b6d543c7c44",
       "apis": [
         {
           "protocol": "rpc",
@@ -10967,6 +11012,7 @@
     "rpc:FlowPlan.StepCount": "keymouse.flow.plan",
     "rpc:FlowRunner.LooksLikeJson": "keymouse.flow.runner",
     "rpc:FlowRunner.Run": "keymouse.flow.runner",
+    "rpc:FlowStepSchema.For": "keymouse.flow.schema",
     "rpc:FocusTarget": "keymouse.cli.window.targeting",
     "rpc:GlobalOptions / CommandOptions / KeyNames 用例": "keymouse.tests.unit.parsing.options",
     "rpc:GlobalOptions.ToSelector": "keymouse.cli.options",
@@ -13631,17 +13677,14 @@
     "keymouse.flow": {
       "schema_version": 1,
       "id": "keymouse.flow",
-      "updated_at": "2026-10-03T12:49:08.093Z",
+      "updated_at": "2026-10-03T14:00:33.535Z",
       "mode": "layers",
-      "reading": {
-        "zh": "先看\"文档与编译器\"，再看\"执行计划与变量帧\"（内联与作用域都在这里），最后是\"执行器\"（按帧跑并上报）。",
-        "en": "Read the document and compiler first, then the execution plan (inlining and scope), then the runner."
-      },
       "order": [
         "keymouse.flow.model",
         "keymouse.flow.runner",
         "keymouse.flow.predicate",
-        "keymouse.flow.plan"
+        "keymouse.flow.plan",
+        "keymouse.flow.schema"
       ]
     },
     "keymouse.input": {
@@ -14326,6 +14369,15 @@
       "updated_at": "2026-10-03T11:27:21.366Z"
     },
     {
+      "id": "2026-10-03-inspector-fields",
+      "status": "verified",
+      "title": {
+        "zh": "检查器：字段由格式驱动，补上 when 与按类型的标签",
+        "en": "Inspector: field visibility driven by the format, plus when and per-type labels"
+      },
+      "updated_at": "2026-10-03T14:00:47.199Z"
+    },
+    {
       "id": "2026-10-03-interactive-region-picker",
       "status": "verified",
       "title": {
@@ -14396,6 +14448,15 @@
         "zh": "2.0.0 发布前收尾：证据归档不再入库"
       },
       "updated_at": "2026-10-03T09:42:11.343Z"
+    },
+    {
+      "id": "2026-10-03-smoke-waits",
+      "status": "verified",
+      "title": {
+        "zh": "冒烟：等窗口出现，而不是睡固定时长",
+        "en": "Smoke: wait for the window instead of sleeping a fixed time"
+      },
+      "updated_at": "2026-10-03T14:07:11.231Z"
     },
     {
       "id": "2026-10-03-subflows",

@@ -86,6 +86,22 @@ public sealed class EditorModel : INotifyPropertyChanged
     public void Save(string path)
     {
         BuildDocument().Save(path);
+
+        // Read it back through the loader before calling it saved. The editor can now build a step the
+        // format will refuse (a `when` with no text is the easy one, since filling in the box is what
+        // creates it), and finding that out here costs a second instead of costing a run.
+        try
+        {
+            FlowDocument.Load(path);
+        }
+        catch (CommandFailure ex)
+        {
+            _documentPath = path;      // 文件已经写出去了，但先别当它"干净"
+            _dirty = true;
+            Notify();
+            throw new CommandFailure(ex.Code, $"文件已写出，但格式检查没过：{ex.Message}");
+        }
+
         _documentPath = path;
         _dirty = false;
         _savedJson = Serialize();

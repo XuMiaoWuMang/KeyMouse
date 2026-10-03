@@ -11,9 +11,9 @@ description:
   en: >
       The editor window shell: toolbar (open, save, dry run, play, pause, stop), step list, inspector, JSON preview, run output panel and info bar. Shortcuts: Ctrl+O open, Ctrl+S save, F5 play; a flow file on the command line opens straight away (so does KeyMouse flow edit x.json).
       
-revision: 96c306061d63c034a01c2369e4abc295251e2f35
-updated_at: "2026-10-03T13:37:48.971Z"
-fingerprint: 5c543b6ca06910092c7fad7820afeaaeae488f20cf5e71482cbb671fcf593e33
+revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
+updated_at: "2026-10-03T14:00:46.182Z"
+fingerprint: 319beac10b0dc04a80ced5fed389341035601cc446b9b9672210a0d537b583b8
 source:
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml"
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"

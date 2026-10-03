@@ -153,7 +153,7 @@
     Remove-Item $dragFile -ErrorAction SilentlyContinue
     $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
         -RedirectStandardOutput $dragFile -RedirectStandardError "$dragFile.err" -NoNewWindow -PassThru
-    Start-Sleep -Milliseconds 1500
+    $null = Wait-ForWindow 'KeyMouse 选区'
     $null = & $Exe mouse drag ($clientOrigin.X + 60) ($clientOrigin.Y + 200) ($clientOrigin.X + 260) ($clientOrigin.Y + 230) --duration 200 --steps 8
     $null = $picker.WaitForExit(10000)
     $dragged = $null
@@ -167,7 +167,7 @@
     Remove-Item $clickFile -ErrorAction SilentlyContinue
     $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
         -RedirectStandardOutput $clickFile -RedirectStandardError "$clickFile.err" -NoNewWindow -PassThru
-    Start-Sleep -Milliseconds 1500
+    $null = Wait-ForWindow 'KeyMouse 选区'
     $null = & $Exe mouse click left -x ($clientOrigin.X + 300) -y ($clientOrigin.Y + 300)
     $null = $picker.WaitForExit(10000)
     $clicked = $null
@@ -181,7 +181,7 @@
     Remove-Item $escFile -ErrorAction SilentlyContinue
     $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
         -RedirectStandardOutput $escFile -RedirectStandardError "$escFile.err" -NoNewWindow -PassThru
-    Start-Sleep -Milliseconds 1500
+    $null = Wait-ForWindow 'KeyMouse 选区'
     $null = & $Exe key press esc
     $null = $picker.WaitForExit(10000)
     Check 'ESC cancels the picker with exit 3' `

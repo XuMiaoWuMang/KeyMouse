@@ -37,6 +37,20 @@ $savedClipboard = Get-Clipboard -Raw -ErrorAction SilentlyContinue
 $targetTitle = 'KeyMouse 冒烟靶子'
 $target = @('--title', $targetTitle)                 # when calling the tool directly
 $targetInScript = '--title "' + $targetTitle + '"'   # inside a script line the space needs quotes
+# ---- 助手：等某个窗口出现 --------------------------------------------------------
+# 固定睡眠在覆盖层这种"起来需要多久取决于抢前台快不快"的东西上最不可靠：聚焦现在会先接线程输入队列
+# （最多多花约 0.4 秒），1500ms 的睡眠就从"稳"变成了"偶尔早到"。等窗口出现才是稳的。
+function Wait-ForWindow([string]$Pattern, [int]$TimeoutMs = 8000, [int]$SettleMs = 250) {
+    $deadline = (Get-Date).AddMilliseconds($TimeoutMs)
+    do {
+        if ((& $Exe window list --all 2>&1 | Out-String) -match $Pattern) {
+            Start-Sleep -Milliseconds $SettleMs   # 窗口在了，再给它一点时间装好鼠标捕获
+            return $true
+        }
+        Start-Sleep -Milliseconds 150
+    } while ((Get-Date) -lt $deadline)
+    return $false
+}
 # ---- 基建：冒烟靶子 ---------------------------------------------------------------
 # 每个模块都可能要驱动它，所以放在公共部分；entry 模块只负责断言它能起来。
 Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force

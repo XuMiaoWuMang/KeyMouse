@@ -6,14 +6,14 @@ tags: [test, desktop]
 name: {zh: "冒烟公共部分", en: "Smoke common"}
 description:
   zh: >
-      模块共享的准备与工具：`Check`、`$Exe`/`$target`、宿主编码自检（中文输出解码不对就立刻停，否则后面每条断言都会以假失败收场）、剪贴板保存，以及**启动冒烟靶子**——它是基建而不是某个模块的职责，所以放在这里，任何模块单独跑都不会缺靶子。
+      模块共享的准备与工具：`Check`、`$Exe`/`$target`、宿主编码自检、剪贴板保存、**启动冒烟靶子**，以及 `Wait-ForWindow`——等某个窗口出现（可选再等一小会儿让它装好鼠标捕获）而不是睡固定时长。固定睡眠在"起来需要多久取决于抢前台快不快"的覆盖层上最不可靠：聚焦改成先接线程输入队列后，1500ms 从"稳"变成"偶尔早到"，区域拾取的两条断言因此挂了。
       
   en: >
-      What every module shares: Check, $Exe/$target, the host encoding self-check (a host that decodes Chinese wrongly fails everything downstream for the wrong reason), clipboard saving, and starting the smoke target - infrastructure rather than one module duty, so any module can run on its own.
+      What every module shares: Check, $Exe/$target, the host encoding self-check, clipboard saving, starting the smoke target, and Wait-ForWindow - wait until a window exists (optionally plus a moment to arm) instead of sleeping a fixed time. A fixed sleep is worst exactly where startup depends on how fast the foreground is won: once focus attached the thread input queue first, 1500ms went from reliable to occasionally early.
       
-revision: bc06440df10935e9e8479ecad7b52098b48df7fd
-updated_at: "2026-10-03T12:19:12.567Z"
-fingerprint: d093bcd7d530ca0528e77c12c5da64c1514b571fb6ae9e5ef8c708c270844491
+revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
+updated_at: "2026-10-03T14:07:10.617Z"
+fingerprint: 4775ec2400933c62bcb5c0177b9131fc34e3f9256f3aa5aa24b97c77dabf5035
 source:
   - path: "tests/smoke/common.ps1"
 apis:

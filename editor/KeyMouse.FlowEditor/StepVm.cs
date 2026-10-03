@@ -62,22 +62,30 @@ public sealed class StepVm : INotifyPropertyChanged
 
     // ---------------------------------------------------------------- which fields matter
 
-    private static readonly string[] WithTarget =
-        ["focus", "click", "drag", "move", "wheel", "type", "key", "wait-window", "wait-text"];
+    /// <summary>
+    /// Which fields this step gets, straight from the format's own table. The hide/show decisions used
+    /// to be hand-written here and had drifted: `click-text` (find the text and click it) showed only a
+    /// target and a note, so none of its real parameters could be edited, and `read-text` had the same
+    /// hole. Asking <see cref="FlowStepSchema"/> means a type can no longer have fields the inspector
+    /// does not know about.
+    /// </summary>
+    private StepFields Fields => FlowStepSchema.For(Step.Type);
 
-    public Visibility TargetVisibility => Ui.Show(WithTarget.Contains(Step.Type));
-    public Visibility PointVisibility => Ui.Show(Step.Type is "click" or "move" or "wheel");
-    public Visibility RegionVisibility => Ui.Show(Step.Type is "wait-text");
-    public Visibility ButtonVisibility => Ui.Show(Step.Type is "click" or "drag");
-    public Visibility DeltaVisibility => Ui.Show(Step.Type is "wheel");
-    public Visibility TextVisibility => Ui.Show(Step.Type is "type" or "wait-text");
-    public Visibility ComboVisibility => Ui.Show(Step.Type is "key");
-    public Visibility MsVisibility => Ui.Show(Step.Type is "sleep");
-    public Visibility DurationVisibility => Ui.Show(Step.Type is "drag");
-    public Visibility TimeoutVisibility => Ui.Show(Step.Type is "wait-window" or "wait-text");
-    public Visibility MatchVisibility => Ui.Show(Step.Type is "wait-text");
-    public Visibility DragEndsVisibility => Ui.Show(Step.Type is "drag");
-    public Visibility NoteVisibility => Ui.Show(Step.Type is not "sleep");
+    private Visibility Show(StepFields field) => Ui.Show((Fields & field) != 0);
+
+    public Visibility TargetVisibility => Show(StepFields.Target);
+    public Visibility PointVisibility => Show(StepFields.Point);
+    public Visibility RegionVisibility => Show(StepFields.Region);
+    public Visibility ButtonVisibility => Show(StepFields.Button);
+    public Visibility DeltaVisibility => Show(StepFields.Delta);
+    public Visibility TextVisibility => Show(StepFields.Text);
+    public Visibility ComboVisibility => Show(StepFields.Combo);
+    public Visibility MsVisibility => Show(StepFields.Ms);
+    public Visibility DurationVisibility => Show(StepFields.Duration);
+    public Visibility TimeoutVisibility => Show(StepFields.Timeout);
+    public Visibility MatchVisibility => Show(StepFields.Match);
+    public Visibility DragEndsVisibility => Show(StepFields.DragEnds);
+    public Visibility NoteVisibility => Show(StepFields.Note);
 
     // ---------------------------------------------------------------- target window
 
@@ -183,6 +191,20 @@ public sealed class StepVm : INotifyPropertyChanged
         set => Edit(Step.Delta ?? 0, value, v => Step.Delta = (int)v);
     }
 
+    /// <summary>
+    /// The same field means different things per type, and a mislabelled box is a trap: "要输入的文字"
+    /// over the box you fill in for "find the text and click it" reads like it should be typed.
+    /// </summary>
+    public string TextLabel => Step.Type switch
+    {
+        "type" => "要输入的文字",
+        "wait-text" => "要等的文字",
+        "click-text" => "要找的文字",
+        "read-text" => "只取匹配到的文字（可留空 = 整块）",
+        "key" => "要按的键（单个键名，配合组合键时留空）",
+        _ => "文字",
+    };
+
     public string Text
     {
         get => Step.Text ?? "";
@@ -284,6 +306,102 @@ public sealed class StepVm : INotifyPropertyChanged
     public string ChildrenLabel => Step.Steps is { Count: > 0 } children
         ? $"{children.Count} 个子步骤（在「这一步的 JSON」里编辑）"
         : "没有子步骤";
+
+    // ---------------------------------------------------------------- when（前提条件）
+
+    /// <summary>
+    /// A step's precondition, editable here for the same reason every other field is: a feature the UI
+    /// cannot express is a feature the UI does not have. Nothing is created until the first edit, so a
+    /// step without a `when` stays without one.
+    /// </summary>
+    public Visibility WhenVisibility => Show(StepFields.When);
+
+    private FlowCondition EnsureWhen()
+    {
+        Step.When ??= new FlowCondition
+        {
+            Region = new FlowRegion { Space = FlowSpace.Client, Width = 400, Height = 32 },
+            Match = TextPredicate.Contains,
+            MaxErrors = 1,
+            TimeoutMs = 2000,
+            IntervalMs = 250,
+            Confirm = 2,
+            Else = "skip",
+        };
+        return Step.When;
+    }
+
+    public string WhenText
+    {
+        get => Step.When?.Text ?? "";
+        set => Edit(Step.When?.Text ?? "", value, v => EnsureWhen().Text = Blank(v));
+    }
+
+    public int WhenMatchIndex
+    {
+        get => Array.IndexOf(TextPredicate.Modes, Step.When?.Match ?? TextPredicate.Contains) is var i && i >= 0 ? i : 0;
+        set => Edit(MatchIndex, value, v => EnsureWhen().Match = TextPredicate.Modes[Math.Clamp(v, 0, TextPredicate.Modes.Length - 1)]);
+    }
+
+    public double WhenMaxErrors
+    {
+        get => Step.When?.MaxErrors ?? 1;
+        set => Edit(Step.When?.MaxErrors ?? 1, value, v => EnsureWhen().MaxErrors = (int)v);
+    }
+
+    public double WhenTimeoutMs
+    {
+        get => Step.When?.TimeoutMs ?? 2000;
+        set => Edit(Step.When?.TimeoutMs ?? 2000, value, v => EnsureWhen().TimeoutMs = (int)v);
+    }
+
+    public bool WhenElseIsFail
+    {
+        get => Step.When?.Else == "fail";
+        set => Edit(Step.When?.Else == "fail", value, v => EnsureWhen().Else = v ? "fail" : "skip");
+    }
+
+    public string WhenProcess
+    {
+        get => Step.When?.Target?.Process ?? "";
+        set => Edit(Step.When?.Target?.Process ?? "", value, v =>
+        {
+            if (string.IsNullOrEmpty(v) && Step.When?.Target is { } existing && string.IsNullOrEmpty(existing.Class))
+            {
+                EnsureWhen().Target = null;   // 留空就是"用本步骤的目标"，不要留下空壳
+                return;
+            }
+            EnsureWhen().Target = new FlowTarget { Process = Blank(v), Class = Step.When?.Target?.Class };
+        });
+    }
+
+    public double WhenRegionX
+    {
+        get => Step.When?.Region?.X ?? 0;
+        set => Edit(Step.When?.Region?.X ?? 0, value, v => EnsureWhen().Region!.X = (int)v);
+    }
+
+    public double WhenRegionY
+    {
+        get => Step.When?.Region?.Y ?? 0;
+        set => Edit(Step.When?.Region?.Y ?? 0, value, v => EnsureWhen().Region!.Y = (int)v);
+    }
+
+    public double WhenRegionWidth
+    {
+        get => Step.When?.Region?.Width ?? 400;
+        set => Edit(Step.When?.Region?.Width ?? 400, value, v => EnsureWhen().Region!.Width = (int)v);
+    }
+
+    public double WhenRegionHeight
+    {
+        get => Step.When?.Region?.Height ?? 32;
+        set => Edit(Step.When?.Region?.Height ?? 32, value, v => EnsureWhen().Region!.Height = (int)v);
+    }
+
+    public string WhenLabel => Step.When is null
+        ? "还没有前提：这一步每次都会执行。填上文字就会添加一个前提。"
+        : $"前提：读到「{Step.When.Text}」才执行，否则 {(Step.When.Else == "fail" ? "失败（退出码 3）" : "跳过")}";
 
     public string Note
     {
