@@ -17,3 +17,6 @@ desktop.ini
 
 # local test artifacts
 __*.png
+
+# 证据归档：生成物、体积大，只留在本地（见 tests/evidence.ps1）
+tests/evidence/

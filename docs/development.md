@@ -86,18 +86,21 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 
 单元测试故意不用 xunit/NUnit：一个普通控制台程序，零依赖、离线可跑、`dotnet run` 就是全部用法。
 
-## 实测留档（tests/evidence）
+## 实测留档（tests/evidence，只在本地）
 
 跑一次测量、把**所有**证据落盘，供人回看：
 
 ```powershell
-pwsh tests/evidence.ps1                      # 10 个样本 × 5 组取样配置，跑到读对为止（最多 3 次）
+pwsh tests/evidence.ps1                      # 20 个样本 × 5 组配置，跑到读对为止（最多 3 次）
 pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 ```
 
 产物在 `tests/evidence/<时间戳>/`：`commands.txt`（每条命令 + 退出码 + stdout/stderr）、
 `json/`（每次调用的 JSON 与失败时的 `.err.txt`）、`images/`（每张截图，`-raw` 是抓到的原始像素）、
 `summary.md`（数字表 + 文件索引）。它只驱动自己的冒烟靶子，不碰用户的窗口。
+
+**归档不入库**（`.gitignore` 忽略 `tests/evidence/`）：一次 20 样本的扫描就是 10 MB 级，
+仓库留给代码与文档；留档的意义是"我当时看到的就是这些"，跑完在本地看即可。
 
 写这类测量时有两条**踩过的坑**（不遵守就会量出假结论）：
 

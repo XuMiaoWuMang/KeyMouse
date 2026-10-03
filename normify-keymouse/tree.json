@@ -9,7 +9,7 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T09:21:01.890Z",
+    "compiled_at": "2026-10-03T09:42:11.472Z",
     "stats": {
       "tree_count": 1,
       "module_count": 135,
@@ -22,7 +22,7 @@
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 6,
+      "change_count": 7,
       "open_change_count": 0
     }
   },
@@ -2261,9 +2261,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.900Z",
-      "fingerprint": "26255b70f78a378e239284962b029b1d5b704b8230de848b21a4bb7c3e052dd7",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.583Z",
+      "fingerprint": "4c1efa4a5565f0df31f5a577be596ca25cc023d7b9e659e2c88e90fb2a737497",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2296,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.900Z",
-      "fingerprint": "94af8a5c72cb4802f8689d475cf28862b4c1e0b2048c68924793a59fd6c840b3",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.583Z",
+      "fingerprint": "cc3f203322fa8cfd466e21a05260fd22efa329c500382cfb0e01ea0cb298c1c6",
       "apis": [
         {
           "protocol": "file",
@@ -2340,9 +2340,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.900Z",
-      "fingerprint": "f1730bb64460c5dc77991f296c40b6f04279739b28aec3611edab5b56462c759",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.583Z",
+      "fingerprint": "5c2f8af859e801d3d14928f4fac13b0e8bbaf124c55f53ce0963c3ac7999ff3b",
       "apis": [
         {
           "protocol": "file",
@@ -2384,9 +2384,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "b3cd2155a6af67fad97967d1a820875c076ceccf",
-      "updated_at": "2026-10-03T08:58:46.285Z",
-      "fingerprint": "8a9dae074fde08698aa80ca6c68c20d28e8cf236fbd5b56c92d5a3d69ccd7a9d",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.583Z",
+      "fingerprint": "77990d0946a07341b8cb3359a93234e8efe015163cfdcf905ede7a2295731ed3",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2428,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.900Z",
-      "fingerprint": "6b2b021e8dfd8d6d2b254e90fef1a0fc52bf2ac83abc0c08bbb6604ec43efa55",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.583Z",
+      "fingerprint": "f7610d25af8393ba2cf506c3a92ad4562256aee7de4ff735ca850f1b0556d797",
       "apis": [
         {
           "protocol": "file",
@@ -6268,9 +6268,9 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.899Z",
-      "fingerprint": "93ea566e8beb0f488f1e7b1e9eca656626cd5beac61e2e91c3f1b8206f481427",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.582Z",
+      "fingerprint": "44ae2c9fb858a03cd549cbc70722ce56f87c924c3b2ef2f4e968d201380e9cb3",
       "aggregate": {
         "descendant_count": 24,
         "own_api_count": 0,
@@ -6375,9 +6375,9 @@
           "end_line": 44
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.878Z",
-      "fingerprint": "8d9330ee2f80dd385ef7021009a9891fe84f726f81a10d3c2c540c8283dc4c6d",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.394Z",
+      "fingerprint": "13de5f8a8df3b052a6a48603207bbfc9e67a99a8eec3c17fea76765e87bb05cb",
       "apis": [
         {
           "protocol": "rpc",
@@ -6413,17 +6413,17 @@
         "en": "Evidence archive"
       },
       "description": {
-        "zh": "把一次测量变成可回看的证据：每条命令与退出码、每次调用的 JSON 与失败时的 stderr、每张截图（-raw 是抓到的原始像素）、一张数字表，落在 tests/evidence/<时间戳>/。它只驱动自己的冒烟靶子。两条写测量时必须遵守的规则也记在这里：读取区域里不能留文字光标（会闪、会让整行读崩），区域高度要盖住整行。\n",
-        "en": "Turns one measurement run into evidence a human can re-read: every command with its exit code, the JSON of every call plus stderr on failure, every screenshot (-raw is the pixels as captured) and a table of numbers, under tests/evidence/<timestamp>/. It only drives its own smoke target. The two rules it enforces: keep the text caret out of the read region (it blinks, and a frame with it can misread the whole line), and make the region cover the whole line box.\n"
+        "zh": "把一次测量变成可回看的证据：每条命令与退出码、每次调用的 JSON 与失败时的 stderr、每张截图（-raw 是抓到的原始像素）、一张数字表，落在 tests/evidence/<时间戳>/。**归档不入库**（.gitignore 忽略：一次 20 样本的扫描就是 10 MB 级）。它只驱动自己的冒烟靶子。两条写测量时必须遵守的规则也记在这里：读取区域里不能留文字光标（会闪、会让整行读崩），区域高度要盖住整行。\n",
+        "en": "Turns one measurement run into evidence a human can re-read: every command with its exit code, the JSON of every call plus stderr on failure, every screenshot (-raw is the pixels as captured) and a table of numbers, under tests/evidence/<timestamp>/. Not tracked (gitignore: one 20-sample run is ~10 MB). It drives only its own smoke target, and records the two rules that keep a measurement honest: no text caret inside the read region, and the region must cover the whole line box.\n"
       },
       "source": [
         {
           "path": "tests/evidence.ps1"
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.898Z",
-      "fingerprint": "82c7ca94e4d2cc1bdcc71302b688f99198f8e3ca3e76fe6efed0cfba816488b0",
+      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
+      "updated_at": "2026-10-03T09:42:10.581Z",
+      "fingerprint": "9acd2ba58f98ff67ec2cf02c40f46d225cd2d26e8ba0996f9b86e8cdb6636e39",
       "apis": [
         {
           "protocol": "rpc",
@@ -11604,6 +11604,15 @@
         "en": "Raw pixels to the engine, literal comparison, 20-sample corpus"
       },
       "updated_at": "2026-10-03T09:21:01.748Z"
+    },
+    {
+      "id": "2026-10-03-release-2-0-0",
+      "status": "verified",
+      "title": {
+        "en": "Pre-release 2.0.0: evidence archives no longer tracked",
+        "zh": "2.0.0 发布前收尾：证据归档不再入库"
+      },
+      "updated_at": "2026-10-03T09:42:11.343Z"
     }
   ]
 }

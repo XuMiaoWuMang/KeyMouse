@@ -69,6 +69,7 @@ dotnet build KeyMouse.sln -c Release                                          # 
 dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj    # 单元测试，不需要桌面
 pwsh tests\check-docs.ps1                                                     # 文档链接检查
 pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                   # 桌面冒烟，需要交互式桌面
+pwsh tests\evidence.ps1                                                       # 把一次测量完整留档（本地，不入库）
 ```
 
 CI 每次 push 跑前三项；**发布由 `v*` tag 触发，且必须先经过人工验证**——

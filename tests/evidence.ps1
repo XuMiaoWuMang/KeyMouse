@@ -15,9 +15,11 @@
     outcome. Nothing is thrown away: the JSON and the screenshot of every attempt are kept.
 
     It drives the test's own smoke target, so it touches nothing the user owns.
+    The archives are deliberately NOT tracked by git (.gitignore): one 20-sample run is
+    ~10 MB of screenshots, and the repository is for code and docs.
 
         pwsh tests/evidence.ps1
-        pwsh tests/evidence.ps1 -Samples 10 -Attempts 3
+        pwsh tests/evidence.ps1 -Samples 20 -Attempts 3
 #>
 [CmdletBinding()]
 param(
