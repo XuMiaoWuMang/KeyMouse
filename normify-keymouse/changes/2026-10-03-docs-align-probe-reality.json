@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-docs-align-probe-reality",
+  "title": {
+    "en": "Align docs with the probe implementation",
+    "zh": "文档对齐 probe 实现与实测"
+  },
+  "status": "verified",
+  "intent": {
+    "en": "After probe landed, the four docs still carried pre-implementation wording: design.md used the Windows OCR sketch (with unimplemented fingerprint/hash), still recommended PrintWindow, still claimed confidence works as a threshold, recorded the wrong OS language set and --psm 7; reference.md still said four command groups and omitted probe's measured behaviour and the real --engine invocation; README lacked the perception row and had stale module counts; development.md had stale module/API/dep counts. Docs only, no behaviour change.",
+    "zh": "probe 落地后四份文档仍有实现前的旧说法：design.md 的 probe 输出样例还是 Windows OCR 草图（含未实现的 fingerprint/hash），取像仍推荐 PrintWindow，置信度仍说可直接当阈值，本机 OCR 语言集记错，--psm 写成 7；reference.md 仍写四组命令且未写 probe 的实测行为与 --engine 的真实调用方式；README 缺感知能力且模块计数过期；development.md 的模块/API/箭头计数过期。本次只改文档，不改行为。"
+  },
+  "modules": {
+    "modify": [
+      "keymouse.docs",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "docs/design.md 的 probe 样例、退出码表、--psm、取像方式、置信度边界、OCR 语言集与实现一致",
+    "docs/reference.md 写明五组命令、probe 的实测行为（遮挡/最小化/壳窗口/量级）与 --engine 的真实调用方式",
+    "README.md 有感知能力行，模块计数与 receipt.json 一致",
+    "docs/development.md 的模块/API/箭头计数与 receipt.json 一致",
+    "tests/check-docs.ps1 通过，normify_validate 带 repoRoot 为 0 error"
+  ],
+  "note": "四份文档与 probe 实现/实测对齐：design.md 换上真实 JSON 形状与退出码、修正被推翻的说法（PrintWindow 取像、conf 阈值、OCR 语言集、--psm、模型哈希/区域指纹未实现）、reference.md 补五组命令与实测行为、README 补感知行、development.md 更新计数。仅改文档，代码与行为未动。",
+  "revision": {
+    "before": null,
+    "after": "670968a8d427b2250d4d23a17c217e2184907ffa"
+  },
+  "created_at": "2026-10-03T07:49:05.741Z",
+  "updated_at": "2026-10-03T07:49:13.257Z",
+  "closed_at": "2026-10-03T07:49:13.257Z"
+}

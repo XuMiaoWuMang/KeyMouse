@@ -9,6 +9,9 @@ Windows 命令行输入模拟工具：**一条命令 = 一次真实的鼠标/键
 它和常见自动化脚本的区别在于**能指定目标窗口，并且动手之前先验证**：
 窗口不可用、或者抢不到前台，就**一个字节都不发**。
 
+反过来，它也能**只读不写**：`probe` 把窗口的一块区域读成文字（OCR），
+同样先验证目标，读不清就以退出码 `6` 失败——**只报告看到什么，判断权在调用方**。
+
 ```powershell
 KeyMouse key type "hello 世界" --process notepad     # 打字前先确认记事本可用且已聚焦
 KeyMouse mouse click left -wx 200 -wy 300 --title "记事本"
@@ -25,11 +28,12 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 | **焦点** | 温和尝试最多 3 次并回读验证；失败即中止，不猜 |
 | **坐标** | 绝对像素，或**窗口客户区相对**坐标（窗口移动也不失效） |
 | **脚本** | 顺序执行、注释、`sleep`、`waitfor`/`waitgone`、`${变量}`、**目标继承**（`window focus` 写一次，之后 `mouse`/`key` 不再重复选择器）、**循环**（`repeat n [as 名字] … end`）、`--dry-run`、安全重试、JSON 报告 |
+| **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：121 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：129 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 

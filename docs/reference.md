@@ -8,7 +8,8 @@
 KeyMouse <group> <command> [参数] [选项]
 ```
 
-四组命令：`mouse`、`key`（别名 `keyboard`）、`window`、`run`。无参数运行会打印内置帮助。
+五组命令：`mouse`、`key`（别名 `keyboard`）、`window`、`run`、`probe`（只读）。
+无参数运行会打印内置帮助；`KeyMouse help probe` 打印某一组的完整选项。
 
 ---
 
@@ -319,7 +320,7 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 | `--space client\|window` | `client` | `window` 用于标题栏（它在客户区之外） |
 | `--reads N` | 2 | 重复读取次数，**N 次逐字一致**才算看清 |
 | `--lang` | `eng+chi_sim` | 交给引擎的语言 |
-| `--engine` | `tesseract` | 可执行文件或命令；会先找常见安装位置 |
+| `--engine` | `tesseract` | 可执行文件；会先找常见安装位置。**目前按 Tesseract 的命令行调用**（`<引擎> <图> <输出基> -l <语言> --psm 6 [--tessdata-dir <目录>] tsv`），别家引擎要兼容这套参数才能直接用 |
 | `--tessdata-dir` | `%LOCALAPPDATA%\KeyMouse\tessdata` | 模型目录，**两套模型就是两个目录** |
 | `--min-conf N` | 30 | 置信度地板，只用来抓"彻底没读出来" |
 | `--scale` / `--pad` | 3 / 16 | 放大与白边，实测必需（屏幕文字约 96 DPI，引擎舒适区约 300 DPI） |
@@ -328,6 +329,18 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 | `--keep-image <路径>` | 关 | 留下送进引擎的 BMP，便于自查 |
 
 **读不到就是 `6`，读到空是成功**：区域内确实没有文字时退出码为 `0`、`lines` 为空——空是一个事实，不是失败。
+
+**几处实测行为（照实写，省得踩）**：
+
+- `--capture screen`（默认）抓的是**屏幕像素**：目标被别的窗口盖住时，读到的是盖住它的内容；
+  `print` 走 `PrintWindow`，不画光标、也不受遮挡影响，但本机几何对不齐（会裁掉文字上半截，见 design.md）。
+- **最小化窗口读不了**：它在取像之前就被闸门拒掉（退出码 `4`），换 `--capture print` 也一样
+  ——要么先 `--allow-restore`，要么由调用方自己还原它。
+- **壳窗口可能没有客户区**：WebView / Electron 的 `*-siw` / `*-sic` 类窗口实测 `0×0` 客户区，
+  这时任何区域都判越界（退出码 `2`）。
+- 量级参考：记事本一条 600×80 的区域，`--reads 2`、退出码 `0`、置信度 76.9、耗时 689 ms。
+- `--engine` 目前只有 Tesseract 真正跑过；JSON 里 `kind` 对任何外部命令都写 `external`，
+  引擎身份由 `command` / `version` / `models` 自证。
 
 **它不做的事**：不判断"这算不算匹配"、不做容错匹配、不看颜色、不等状态变化。置信度只回答"到底读出来了没有"：
 实测读对时 55~96、读错时 14~52，两者**重叠**——所以精确与否必须由调用方用容错匹配声明，而不是靠提高阈值。
