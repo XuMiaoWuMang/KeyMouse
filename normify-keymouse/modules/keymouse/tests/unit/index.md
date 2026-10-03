@@ -6,18 +6,16 @@ tags: [test]
 name: {zh: "单元测试", en: "Unit tests"}
 description:
   zh: >
-      零依赖控制台程序：不引测试框架、离线可跑、dotnet run 就是全部用法，非零退出码即失败。它已经抳下过真问题（vk:0x5B 从 v1.0 就写在文档里却从未工作）。
+      单元测试入口与模块表：`--only 模块[,…]` 只跑改到的那些、`--list` 列出来、不给参数跑全部（功能定稿后的总测试）。八个模块（parsing / windows / probe / locator / region / flow / loops / runner）各自一个文件，互不牵连——改哪个模块就跑哪个。
       
   en: >
-      A dependency-free console program: no test framework, runs offline, `dotnet run` is the whole interface, a non-zero exit code is a failure. It has already caught a real one - vk:0x5B, documented since v1.0 yet never working.
+      The unit-test entry and its module table: `--only module[,...]` runs just those, `--list` lists them, and no arguments runs everything (the full test once a feature is settled). Eight modules (parsing, windows, probe, locator, region, flow, loops, runner) each live in one file and do not drag the others along.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:09.824Z"
-fingerprint: 2c39ef1c2bbc959cd356bf293e99434f4b62a3bb658fdba07307a26e44b56314
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.570Z"
+fingerprint: fde95f99e09979a2a6bf827888637ecb816df92ceb1abe20b59dc36db3b2051a
 source:
   - path: "tests/KeyMouse.Tests/TestEntry.cs"
-    line: 1
-    end_line: 25
 deps:
   - kind: call
     to: keymouse.tests.unit.harness

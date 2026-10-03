@@ -11,13 +11,11 @@ description:
   en: >
       Cover for the odds and ends: the raw vk: key (documented since v1.0 yet broken until a test caught it), script from a pipe, --keep-going with a report, inspect's verdict text and exit codes, and whether a client-relative move really puts the cursor there.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:01.207Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.569Z"
+fingerprint: 244956e89b8bba088b0210b060cc186388dd492c70bf859c42027fd604059321
 source:
-  - path: "tests/smoke.ps1"
-    line: 216
-    end_line: 289
+  - path: "tests/smoke/features.ps1"
 apis:
   - protocol: rpc
     path: "零散入口断言组"

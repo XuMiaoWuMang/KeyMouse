@@ -6,18 +6,16 @@ tags: [test, desktop]
 name: {zh: "打字往返、拖拽与变量", en: "Typing, drag & variables"}
 description:
   zh: >
-      最核心的一组：把文本打进靶子再回读剪贴板逐字比对、窗口相对拖拽是否真的选中了文本、${} 变量是否真的把光标移到了替代后的坐标。
+      冒烟模块 typing：打字往返（真发键、回读剪贴板）、窗口相对拖拽、脚本变量替换后光标真的到位。
       
   en: >
-      The core group: type into the target and read the clipboard back to compare, check that a window-relative drag really selected text, and that a substituted variable really moved the cursor to those coordinates.
+      Smoke module typing: a real typing round trip (keys sent, clipboard read back), a window-relative drag, and script variables that really move the cursor.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:01.207Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.569Z"
+fingerprint: 4ea9f21d04f113d9bb6824ea8ba3b2a5e39576be39e78ef2850d86830eda45b8
 source:
-  - path: "tests/smoke.ps1"
-    line: 77
-    end_line: 166
+  - path: "tests/smoke/typing.ps1"
 apis:
   - protocol: rpc
     path: "打字与拖拽断言组"

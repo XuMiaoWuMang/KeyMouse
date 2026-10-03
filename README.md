@@ -59,7 +59,7 @@ KeyMouse run flow.json                               # 原样回放，或改完�
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：162 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：165 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 
@@ -95,6 +95,8 @@ dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj    # 
 pwsh tests\check-docs.ps1                                                     # 文档链接检查
 pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                   # 桌面冒烟，需要交互式桌面
 pwsh tests\evidence.ps1                                                       # 把一次测量完整留档（本地，不入库）
+dotnet run -c Release --project tests\KeyMouse.Tests -- --list                # 单元测试的模块表
+pwsh tests\smoke.ps1 -List                                                  # 冒烟测试的模块表（-Only 只跑相关模块）
 dotnet build editor\KeyMouse.FlowEditor -c Release                            # 图形编辑器（WinUI 3，单独构建）
 ```
 

@@ -164,12 +164,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T11:41:11.100Z",
+    "compiled_at": "2026-10-03T12:19:14.395Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 162,
-      "leaf_count": 132,
-      "api_count": 245,
+      "module_count": 165,
+      "leaf_count": 135,
+      "api_count": 248,
       "dep_count": 186,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
@@ -177,7 +177,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 13,
+      "change_count": 14,
       "open_change_count": 1
     }
   },
@@ -227,9 +227,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         }
       ],
       "aggregate": {
-        "descendant_count": 161,
+        "descendant_count": 164,
         "own_api_count": 0,
-        "inherited_api_count": 245,
+        "inherited_api_count": 248,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -2674,8 +2674,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         }
       ],
       "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.202Z",
-      "fingerprint": "ed47b111f0026b7fdbe68f6e053a5cf76cce383ee4705b84bd8d82a322a34aca",
+      "updated_at": "2026-10-03T11:42:27.897Z",
+      "fingerprint": "9eb3a52e5403ad81bb3decd952105813fa8242dbfdee1bd72f50555be6db3003",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2752,9 +2752,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
           "path": "docs/development.md"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.825Z",
-      "fingerprint": "2248fefaf885a97fadfcda0ef4572623d523cf8d1b49a474c76618f322cc7570",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.571Z",
+      "fingerprint": "cf4bfebc6e46307abaf07671c2ff747ce2ad331711fb4059073bc2ea77f2f052",
       "apis": [
         {
           "protocol": "file",
@@ -2797,8 +2797,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         }
       ],
       "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.825Z",
-      "fingerprint": "11370c463bc8d8981993ce5e54518bb4b6fe4887f4d6e9c12966d8364c17aa31",
+      "updated_at": "2026-10-03T11:42:27.898Z",
+      "fingerprint": "2ac7baff7439aea100298244027d83f607a7025b044134fa20e02a6b35e6f999",
       "apis": [
         {
           "protocol": "file",
@@ -7879,13 +7879,13 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.206Z",
-      "fingerprint": "149f745de51a657e53e98da2cb89bda8b0642a4be666dd6e3f99bb6cb5ff8c3a",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.263Z",
+      "fingerprint": "8ea2fbc6a84dca556129ab96aca8ffafcfed9de582f389be31c21fdb81fc0a60",
       "aggregate": {
-        "descendant_count": 30,
+        "descendant_count": 33,
         "own_api_count": 0,
-        "inherited_api_count": 29,
+        "inherited_api_count": 32,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -8099,23 +8099,21 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "en": "Desktop smoke"
       },
       "description": {
-        "zh": "唯一能证明“手没抖”的那关：启动自己的靶子窗口，跑 50+ 项断言（退出码矩阵、打字往返比对、拖拽选中、变量、重试与报告、等待、禁用窗口、--dry-run 零输入、vk: 逃生口、stdin、目标继承、循环、运行期间恒为 1 个进程）。\n",
-        "en": "The only gate that proves nothing was fumbled: it starts its own target window and runs 50+ checks - exit codes, typed-text round trip, drag selection, variables, retry and report, waits, a disabled window, dry-run, the vk: hatch, stdin, inheritance, loops, and exactly one process throughout.\n"
+        "zh": "冒烟运行器：`-Only 模块[,…]` 只跑指定模块（平时用这个）、`-List` 列出来、不给参数就是全部（= 总测试的一部分）。它负责载入 common、按顺序 dot-source 选中的模块、最后收尾（停靶子、还原剪贴板）并给出通过/失败计数。\n",
+        "en": "The smoke runner: `-Only module[,...]` runs just those (the everyday case), `-List` lists them, and no arguments runs everything (part of the full test). It loads common, dot-sources the selected modules in order, then tears down (stops the target, restores the clipboard) and reports the pass/fail counts.\n"
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 1,
-          "end_line": 343
+          "path": "tests/smoke.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.824Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.568Z",
+      "fingerprint": "3be539f94a4324cf0f5c307a379f6b4b184106233d4593ec695bb91915b275cc",
       "aggregate": {
-        "descendant_count": 8,
+        "descendant_count": 11,
         "own_api_count": 0,
-        "inherited_api_count": 8,
+        "inherited_api_count": 11,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -8188,14 +8186,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 630,
-          "end_line": 684
+          "path": "tests/smoke/act.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.206Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.570Z",
+      "fingerprint": "345ebe387c68d4c07cde9018ab3c533e2862f9a64e32c9f3654db8b450909d71",
       "apis": [
         {
           "protocol": "rpc",
@@ -8237,6 +8233,51 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "dep_in": 0
       }
     },
+    "keymouse.tests.smoke.common": {
+      "uid": "7a1f1101",
+      "id": "keymouse.tests.smoke.common",
+      "parent": "keymouse.tests.smoke",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "desktop"
+      ],
+      "name": {
+        "zh": "冒烟公共部分",
+        "en": "Smoke common"
+      },
+      "description": {
+        "zh": "模块共享的准备与工具：`Check`、`$Exe`/`$target`、宿主编码自检（中文输出解码不对就立刻停，否则后面每条断言都会以假失败收场）、剪贴板保存，以及**启动冒烟靶子**——它是基建而不是某个模块的职责，所以放在这里，任何模块单独跑都不会缺靶子。\n",
+        "en": "What every module shares: Check, $Exe/$target, the host encoding self-check (a host that decodes Chinese wrongly fails everything downstream for the wrong reason), clipboard saving, and starting the smoke target - infrastructure rather than one module duty, so any module can run on its own.\n"
+      },
+      "source": [
+        {
+          "path": "tests/smoke/common.ps1"
+        }
+      ],
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.567Z",
+      "fingerprint": "d093bcd7d530ca0528e77c12c5da64c1514b571fb6ae9e5ef8c708c270844491",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Check",
+          "description": {
+            "zh": "记一条断言结果（ok/FAIL），并累计计数。\n",
+            "en": "Records one assertion (ok/FAIL) and keeps the counts.\n"
+          },
+          "key": "rpc:Check"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.smoke.entry": {
       "uid": "182a3c4e",
       "id": "keymouse.tests.smoke.entry",
@@ -8252,19 +8293,17 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "en": "Entry, encoding guard & target"
       },
       "description": {
-        "zh": "脚本开头：校验 exe 与靶子存在、做一次中文往返检查（宿主解码不一致就只报一条清晰错误，而不是让十几条中文断言莫名其妙地失败）、记下剪贴板并启动靶子窗口。\n",
-        "en": "The opening moves: check that the exe and the target exist, run one Chinese round-trip probe (a mismatched host decoder gets one clear error instead of a dozen puzzling failures), save the clipboard and start the target window.\n"
+        "zh": "冒烟模块 entry：退出码矩阵（未知选择器 3、坏参数 2、未知按键 2、不可解析目标 3）、宿主编码自检，以及断言冒烟靶子确实起来了。靶子本身由 common.ps1 启动——任何模块都可能要驱动它。\n",
+        "en": "Smoke module entry: the exit-code matrix (unknown selector 3, bad argument 2, unknown key 2, unresolvable target 3), the host encoding self-check, and the assertion that the smoke target is up. The target itself is started by common.ps1, because any module may want to drive it.\n"
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 1,
-          "end_line": 76
+          "path": "tests/smoke/entry.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.206Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.569Z",
+      "fingerprint": "6487b857a6c6d2f2dccce5295a7ab3101a195fee67d00faabd9bce5c9a9c8baf",
       "apis": [
         {
           "protocol": "rpc",
@@ -8317,14 +8356,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 216,
-          "end_line": 289
+          "path": "tests/smoke/features.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.207Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.569Z",
+      "fingerprint": "244956e89b8bba088b0210b060cc186388dd492c70bf859c42027fd604059321",
       "apis": [
         {
           "protocol": "rpc",
@@ -8357,9 +8394,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "dep_in": 0
       }
     },
-    "keymouse.tests.smoke.loops": {
+    "keymouse.tests.smoke.flowloops": {
       "uid": "7a1f1002",
-      "id": "keymouse.tests.smoke.loops",
+      "id": "keymouse.tests.smoke.flowloops",
       "parent": "keymouse.tests.smoke",
       "tree": "keymouse",
       "depth": 4,
@@ -8377,14 +8414,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 689,
-          "end_line": 732
+          "path": "tests/smoke/flowloops.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.822Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.570Z",
+      "fingerprint": "3ad17b444a177fb19b0a6b0b7476b9da75959dc413a16c656c4ca07c01ca990a",
       "apis": [
         {
           "protocol": "rpc",
@@ -8416,6 +8451,51 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "dep_in": 0
       }
     },
+    "keymouse.tests.smoke.loops": {
+      "uid": "7a1f1102",
+      "id": "keymouse.tests.smoke.loops",
+      "parent": "keymouse.tests.smoke",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "desktop"
+      ],
+      "name": {
+        "zh": "脚本循环冒烟",
+        "en": "Script loop smoke"
+      },
+      "description": {
+        "zh": "文本脚本那边的循环与\"一个进程跑到底\"：`repeat 3` 的第一次与最后一次真的打进去了、次数到了就停、缺 `end` 或多余的 `end` 在跑之前就被拒绝。与流程格式的循环（flowloops 模块）刻意分开，两者是两套东西。\n",
+        "en": "Loops in the text-script syntax, plus one process from start to finish: the first and last of a repeat 3 really land, the loop stops at the requested count, and a missing or stray end is refused before anything runs. Deliberately separate from loops in the flow format (the flowloops module): they are two different things.\n"
+      },
+      "source": [
+        {
+          "path": "tests/smoke/loops.ps1"
+        }
+      ],
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.568Z",
+      "fingerprint": "b859d35dc933df385974368f86902452f294676ace6536a920eeb8423b2b04a2",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "脚本循环断言组",
+          "description": {
+            "zh": "重复执行、边界与提前拒绝。\n",
+            "en": "Repetition, boundaries and early refusal.\n"
+          },
+          "key": "rpc:脚本循环断言组"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.smoke.record": {
       "uid": "7a1f0c57",
       "id": "keymouse.tests.smoke.record",
@@ -8437,14 +8517,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 523,
-          "end_line": 568
+          "path": "tests/smoke/record.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.207Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.570Z",
+      "fingerprint": "5bccad3881bb783ca45c001d57f03e8b0de7c1fb73ff2b7caaf0292fc6e45e18",
       "apis": [
         {
           "protocol": "rpc",
@@ -8507,14 +8585,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 406,
-          "end_line": 515
+          "path": "tests/smoke/region.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.207Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.570Z",
+      "fingerprint": "7494debc40ac82a24f44821220b81b2b5d828bdbf656436bdc9344f369d195b6",
       "apis": [
         {
           "protocol": "rpc",
@@ -8586,14 +8662,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 167,
-          "end_line": 215
+          "path": "tests/smoke/safety.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.207Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.569Z",
+      "fingerprint": "1e6a327b0c69a3dd280081cfccb2030f89774f25bd012df333c7b30e98babe2f",
       "apis": [
         {
           "protocol": "rpc",
@@ -8626,6 +8700,52 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "dep_in": 0
       }
     },
+    "keymouse.tests.smoke.serve": {
+      "uid": "7a1f1103",
+      "id": "keymouse.tests.smoke.serve",
+      "parent": "keymouse.tests.smoke",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "desktop",
+        "runner"
+      ],
+      "name": {
+        "zh": "常驻 Runner 冒烟",
+        "en": "Resident Runner smoke"
+      },
+      "description": {
+        "zh": "把架构本身当作被测对象：起 `serve`、用 CLI 当客户端问状态（版本与管道名）、让常驻 Runner 执行一个流程并逐步看到事件、作业表里出现它的退出码、最后 `runner stop` 让它退出。\n",
+        "en": "The architecture itself under test: start serve, ask it for status from the CLI (version and pipe name), have the resident Runner execute a flow and watch each step reported, see the finished job and its exit code in the job table, then stop it.\n"
+      },
+      "source": [
+        {
+          "path": "tests/smoke/serve.ps1"
+        }
+      ],
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.568Z",
+      "fingerprint": "ed41d53007d720d04e378da261d777526dbeb45c6684385d6beeb88738b99d95",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "常驻 Runner 断言组",
+          "description": {
+            "zh": "serve/status/run/stop 全链路。\n",
+            "en": "The serve/status/run/stop chain.\n"
+          },
+          "key": "rpc:常驻 Runner 断言组"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.smoke.typing": {
       "uid": "293b4d5f",
       "id": "keymouse.tests.smoke.typing",
@@ -8641,19 +8761,17 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "en": "Typing, drag & variables"
       },
       "description": {
-        "zh": "最核心的一组：把文本打进靶子再回读剪贴板逐字比对、窗口相对拖拽是否真的选中了文本、${} 变量是否真的把光标移到了替代后的坐标。\n",
-        "en": "The core group: type into the target and read the clipboard back to compare, check that a window-relative drag really selected text, and that a substituted variable really moved the cursor to those coordinates.\n"
+        "zh": "冒烟模块 typing：打字往返（真发键、回读剪贴板）、窗口相对拖拽、脚本变量替换后光标真的到位。\n",
+        "en": "Smoke module typing: a real typing round trip (keys sent, clipboard read back), a window-relative drag, and script variables that really move the cursor.\n"
       },
       "source": [
         {
-          "path": "tests/smoke.ps1",
-          "line": 77,
-          "end_line": 166
+          "path": "tests/smoke/typing.ps1"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:01.207Z",
-      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.569Z",
+      "fingerprint": "4ea9f21d04f113d9bb6824ea8ba3b2a5e39576be39e78ef2850d86830eda45b8",
       "apis": [
         {
           "protocol": "rpc",
@@ -8700,19 +8818,17 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
         "en": "Unit tests"
       },
       "description": {
-        "zh": "零依赖控制台程序：不引测试框架、离线可跑、dotnet run 就是全部用法，非零退出码即失败。它已经抳下过真问题（vk:0x5B 从 v1.0 就写在文档里却从未工作）。\n",
-        "en": "A dependency-free console program: no test framework, runs offline, `dotnet run` is the whole interface, a non-zero exit code is a failure. It has already caught a real one - vk:0x5B, documented since v1.0 yet never working.\n"
+        "zh": "单元测试入口与模块表：`--only 模块[,…]` 只跑改到的那些、`--list` 列出来、不给参数跑全部（功能定稿后的总测试）。八个模块（parsing / windows / probe / locator / region / flow / loops / runner）各自一个文件，互不牵连——改哪个模块就跑哪个。\n",
+        "en": "The unit-test entry and its module table: `--only module[,...]` runs just those, `--list` lists them, and no arguments runs everything (the full test once a feature is settled). Eight modules (parsing, windows, probe, locator, region, flow, loops, runner) each live in one file and do not drag the others along.\n"
       },
       "source": [
         {
-          "path": "tests/KeyMouse.Tests/TestEntry.cs",
-          "line": 1,
-          "end_line": 25
+          "path": "tests/KeyMouse.Tests/TestEntry.cs"
         }
       ],
-      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
-      "updated_at": "2026-10-03T11:41:09.824Z",
-      "fingerprint": "2c39ef1c2bbc959cd356bf293e99434f4b62a3bb658fdba07307a26e44b56314",
+      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
+      "updated_at": "2026-10-03T12:19:12.570Z",
+      "fingerprint": "fde95f99e09979a2a6bf827888637ecb816df92ceb1abe20b59dc36db3b2051a",
       "deps": [
         {
           "kind": "call",
@@ -10666,7 +10782,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
     "rpc:.\\verify.ps1 -SkipSmoke": "keymouse.build.verify",
     "rpc:安全语义断言组": "keymouse.tests.smoke.safety",
     "rpc:测量证据归档": "keymouse.tests.evidence",
+    "rpc:常驻 Runner 断言组": "keymouse.tests.smoke.serve",
     "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
+    "rpc:脚本循环断言组": "keymouse.tests.smoke.loops",
     "rpc:进度与详情输出": "keymouse.script.run.progress",
     "rpc:零散入口断言组": "keymouse.tests.smoke.features",
     "rpc:流程、谓词与录制规则断言组": "keymouse.tests.unit.flow",
@@ -10676,8 +10794,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
     "rpc:选区浮层与坐标系回归断言组": "keymouse.tests.smoke.region",
     "rpc:选区坐标换算断言组": "keymouse.tests.unit.region",
     "rpc:循环与变量断言组": "keymouse.tests.unit.loops",
-    "rpc:循环与变量冒烟断言组": "keymouse.tests.smoke.loops",
+    "rpc:循环与变量冒烟断言组": "keymouse.tests.smoke.flowloops",
     "rpc:找字与前置条件断言组": "keymouse.tests.smoke.act",
+    "rpc:Check": "keymouse.tests.smoke.common",
     "rpc:ci.yml (push)": "keymouse.build.ci",
     "rpc:CommandFailure": "keymouse.cli.failure",
     "rpc:CommandRecord": "keymouse.script.model",
@@ -12401,7 +12520,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
       }
     },
     {
-      "from": "keymouse.tests.smoke.loops",
+      "from": "keymouse.tests.smoke.flowloops",
       "to": "keymouse.flow.runner",
       "to_api": "rpc:FlowRunner.Run",
       "kind": "call",
@@ -13697,18 +13816,83 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
     "keymouse.tests.smoke": {
       "schema_version": 1,
       "id": "keymouse.tests.smoke",
-      "updated_at": "2026-10-03T11:41:00.547Z",
-      "mode": "layers",
+      "updated_at": "2026-10-03T12:19:11.813Z",
+      "mode": "groups",
       "max_columns": 3,
+      "reading": {
+        "zh": "先 common（工具与靶子），再按\"套件顺序\"读：entry → typing → safety → features → loops（文本脚本）→ region → record → serve → act → flowloops（流程格式）。每个文件就是一个模块，`-Only` 可以只跑其中一个。",
+        "en": "Start with common (tools and the target), then read in suite order: entry, typing, safety, features, loops (text script), region, record, serve, act, flowloops (flow format). One file is one module, and `-Only` runs just one of them."
+      },
       "order": [
+        "keymouse.tests.smoke.common",
         "keymouse.tests.smoke.entry",
         "keymouse.tests.smoke.typing",
         "keymouse.tests.smoke.safety",
         "keymouse.tests.smoke.features",
+        "keymouse.tests.smoke.loops",
         "keymouse.tests.smoke.region",
         "keymouse.tests.smoke.record",
+        "keymouse.tests.smoke.serve",
         "keymouse.tests.smoke.act",
-        "keymouse.tests.smoke.loops"
+        "keymouse.tests.smoke.flowloops"
+      ],
+      "groups": [
+        {
+          "id": "setup",
+          "title": {
+            "zh": "准备",
+            "en": "Set up"
+          },
+          "children": [
+            "keymouse.tests.smoke.common",
+            "keymouse.tests.smoke.entry"
+          ]
+        },
+        {
+          "id": "core",
+          "title": {
+            "zh": "核心能力",
+            "en": "Core ability"
+          },
+          "children": [
+            "keymouse.tests.smoke.typing"
+          ]
+        },
+        {
+          "id": "safety",
+          "title": {
+            "zh": "安全语义与零散入口",
+            "en": "Safety & odds and ends"
+          },
+          "children": [
+            "keymouse.tests.smoke.safety",
+            "keymouse.tests.smoke.features",
+            "keymouse.tests.smoke.loops"
+          ]
+        },
+        {
+          "id": "perception",
+          "title": {
+            "zh": "感知与录制",
+            "en": "Perception & recording"
+          },
+          "children": [
+            "keymouse.tests.smoke.region",
+            "keymouse.tests.smoke.record",
+            "keymouse.tests.smoke.act"
+          ]
+        },
+        {
+          "id": "engine",
+          "title": {
+            "zh": "常驻引擎与流程",
+            "en": "Engine & flow"
+          },
+          "children": [
+            "keymouse.tests.smoke.serve",
+            "keymouse.tests.smoke.flowloops"
+          ]
+        }
       ]
     },
     "keymouse.tests.unit": {
@@ -13975,12 +14159,21 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px
     },
     {
       "id": "2026-10-03-loops-and-variables",
-      "status": "in_progress",
+      "status": "verified",
       "title": {
         "zh": "循环与变量：repeat / foreach / read-text / 占位符",
         "en": "Loops and variables: repeat / foreach / read-text / placeholders"
       },
-      "updated_at": "2026-10-03T11:41:00.874Z"
+      "updated_at": "2026-10-03T11:41:11.119Z"
+    },
+    {
+      "id": "2026-10-03-modular-tests",
+      "status": "in_progress",
+      "title": {
+        "zh": "测试分模块：单元与冒烟都能只跑相关的部分",
+        "en": "Modular tests: unit and smoke runs can select just the relevant modules"
+      },
+      "updated_at": "2026-10-03T12:19:11.915Z"
     },
     {
       "id": "2026-10-03-nearest-upscale",

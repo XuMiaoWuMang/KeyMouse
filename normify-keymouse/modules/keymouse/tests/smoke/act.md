@@ -11,13 +11,11 @@ description:
   en: >
       The desktop half: type into the target, have `probe --find` report the box and the client click point, get exit code 3 for text that is not there, watch `click-text` actually click what it saw (then ctrl+a/ctrl+c and read the text back off the clipboard), and see a `when` precondition run its step, skip it, or fail with exit 3 depending on `else`.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:01.206Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.570Z"
+fingerprint: 345ebe387c68d4c07cde9018ab3c533e2862f9a64e32c9f3654db8b450909d71
 source:
-  - path: "tests/smoke.ps1"
-    line: 630
-    end_line: 684
+  - path: "tests/smoke/act.ps1"
 apis:
   - protocol: rpc
     path: "找字与前置条件断言组"

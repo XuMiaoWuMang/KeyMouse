@@ -98,6 +98,55 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 | `tests\smoke.ps1` | 桌面冒烟：真输入真窗口，含"常驻 Runner 被 CLI 驱动"那一段 |
 | `normify-keymouse\` | 结构数据（模块树 + 渲染图），`normify.html` 可下钻 |
 
+## 平时怎么测：分模块，别每次都拉上全部
+
+测试和代码一样按模块分。**改哪个模块就跑哪个模块；功能确定没问题了，再一次总测试。**
+
+```powershell
+# 单元测试（不需要桌面）：8 个模块，各一个文件
+dotnet run -c Release --project tests\KeyMouse.Tests -- --list            # 看有哪些
+dotnet run -c Release --project tests\KeyMouse.Tests -- --only loops     # 只跑该模块
+dotnet run -c Release --project tests\KeyMouse.Tests                     # 全部
+
+# 桌面冒烟：10 个模块，各一个文件（tests\smoke\）
+pwsh tests\smoke.ps1 -List                                               # 看有哪些
+pwsh tests\smoke.ps1 -Only typing,flowloops                              # 只跑相关的
+pwsh tests\smoke.ps1                                                     # 全部
+
+# 总测试（发布前、或一个功能定稿后）
+pwsh .\verify.ps1
+```
+
+| 单元模块 | 覆盖 | 文件 |
+| --- | --- | --- |
+| `parsing` | 命令行解析、脚本语法与循环 | `tests\KeyMouse.Tests\ParsingTests.cs` |
+| `windows` | 窗口选择、候选偏好、资格判定 | `WindowTests.cs` |
+| `probe` | 读屏共识、引擎调用、预处理 | `ProbeTests.cs` |
+| `locator` | 文字定位：框、并集、容错 | `LocatorTests.cs` |
+| `region` | 选区坐标换算与描述 | `RegionTests.cs` |
+| `flow` | 流程编译、条件与前置条件 | `FlowTests.cs` |
+| `loops` | 循环、变量与展平 | `LoopTests.cs` |
+| `runner` | 常驻 Runner 协议与作业控制 | `RunnerTests.cs` |
+
+| 冒烟模块 | 覆盖 | 文件 |
+| --- | --- | --- |
+| `entry` | 退出码矩阵、编码自检、靶子在位 | `tests\smoke\entry.ps1` |
+| `typing` | 打字往返、拖拽、变量替换 | `typing.ps1` |
+| `safety` | 重试/等待/禁用窗口/dry-run/stdin | `safety.ps1` |
+| `features` | window inspect、相对移动、目标继承 | `features.ps1` |
+| `loops` | 文本脚本的循环与"一个进程跑到底" | `loops.ps1` |
+| `region` | 选区浮层与坐标系回归 | `region.ps1` |
+| `record` | 录制与回放（含 wait-text） | `record.ps1` |
+| `serve` | 常驻 Runner 被 CLI 驱动 | `serve.ps1` |
+| `act` | `--find` / `click-text` / `when` | `act.ps1` |
+| `flowloops` | 流程格式的循环与变量 | `flowloops.ps1` |
+
+两条规矩：
+
+- **模块之间不互相牵连**：冒烟的公共部分（`tests\smoke\common.ps1`：`Check`、`$Exe`/`$target`、编码自检、
+  剪贴板保存、**启动靶子**）在运行器里先载入，所以任何模块都能单独跑；基建不下放给某个模块。
+- **总测试只有两个**：`pwsh verify.ps1`（构建 + 单元 + 文档链接 + 冒烟 + 发布检查）。
+  平时别跑它——跑它意味着"这个功能我认为没问题了"。
 ## 实测留档（tests/evidence，只在本地）
 
 跑一次测量、把**所有**证据落盘，供人回看：
@@ -132,9 +181,9 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 245 个 API 的索引 |
+| `api-index.json` | 248 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 162 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 165 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、

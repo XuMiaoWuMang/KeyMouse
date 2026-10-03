@@ -11,13 +11,11 @@ description:
   en: >
       End-to-end assertions for the safety semantics: retry repeats only what sent nothing, the report shows attempts and zero injected events, waits behave, and a disabled window is refused with exit code 4.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:01.207Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.569Z"
+fingerprint: 1e6a327b0c69a3dd280081cfccb2030f89774f25bd012df333c7b30e98babe2f
 source:
-  - path: "tests/smoke.ps1"
-    line: 167
-    end_line: 215
+  - path: "tests/smoke/safety.ps1"
 apis:
   - protocol: rpc
     path: "安全语义断言组"

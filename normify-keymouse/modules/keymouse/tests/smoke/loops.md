@@ -1,36 +1,29 @@
 ---
-uid: 7a1f1002
+uid: 7a1f1102
 id: keymouse.tests.smoke.loops
 parent: keymouse.tests.smoke
 tags: [test, desktop]
-name: {zh: "循环与变量冒烟", en: "Loop and variable smoke"}
+name: {zh: "脚本循环冒烟", en: "Script loop smoke"}
 description:
   zh: >
-      真桌面上：一个列表变量驱动 foreach，把每一项真的打进靶子（回读剪贴板确认三项都在）；read-text 把屏幕上的内容读进变量，后面的步骤用 {{seen}} 把它打出来。实测到的坑也留在这里：读之前留着全选会把置信度从 92.0 打到 65.0，所以先点一下区域外。
+      文本脚本那边的循环与"一个进程跑到底"：`repeat 3` 的第一次与最后一次真的打进去了、次数到了就停、缺 `end` 或多余的 `end` 在跑之前就被拒绝。与流程格式的循环（flowloops 模块）刻意分开，两者是两套东西。
       
   en: >
-      On a real desktop: a list variable drives a foreach that types every item (the clipboard is read back to prove all three landed), and a read-text captures what is on screen into a variable a later step interpolates. The measured trap lives here too: reading with a selection in place drops confidence from 92.0 to 65.0, so the flow clicks outside the region first.
+      Loops in the text-script syntax, plus one process from start to finish: the first and last of a repeat 3 really land, the loop stops at the requested count, and a missing or stray end is refused before anything runs. Deliberately separate from loops in the flow format (the flowloops module): they are two different things.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:09.822Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.568Z"
+fingerprint: b859d35dc933df385974368f86902452f294676ace6536a920eeb8423b2b04a2
 source:
-  - path: "tests/smoke.ps1"
-    line: 689
-    end_line: 732
+  - path: "tests/smoke/loops.ps1"
 apis:
   - protocol: rpc
-    path: "循环与变量冒烟断言组"
+    path: "脚本循环断言组"
     description:
       zh: >
-          foreach 真的执行；read-text 捕获并被后续步骤使用。
+          重复执行、边界与提前拒绝。
           
       en: >
-          The foreach really runs; read-text captures and a later step uses it.
+          Repetition, boundaries and early refusal.
           
-deps:
-  - kind: call
-    to: keymouse.flow.runner
-    to_api: "rpc:FlowRunner.Run"
-    label: {zh: "执行流程", en: "Run the flow"}
 ---

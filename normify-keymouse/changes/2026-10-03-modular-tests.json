@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-modular-tests",
+  "title": {
+    "zh": "测试分模块：单元与冒烟都能只跑相关的部分",
+    "en": "Modular tests: unit and smoke runs can select just the relevant modules"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "按\"测试文件也分模块\"重排：单元测试入口带模块表（`--only a,b` / `--list`，不给参数才跑全部 = 总测试）；冒烟拆成 tests\\smoke\\ 下一模块一文件（common + entry/typing/safety/features/loops/region/record/serve/act/flowloops），运行器 `-Only` / `-List`，靶子启动这类基建下沉到 common，任何模块都能单独跑。平时只跑改到的模块，功能定稿后再跑 verify.ps1（= 总测试）。",
+    "en": "Rearranged so tests are modular too: the unit-test entry gained a module table (--only a,b / --list, and no arguments runs everything = the full test); the smoke suite was split into one file per module under tests\\smoke\\ (common plus entry/typing/safety/features/loops/region/record/serve/act/flowloops) behind a runner with -Only / -List, and infrastructure like starting the target moved into common so any module runs on its own. Day to day you run only the modules you touched; verify.ps1 (the full test) comes out when a feature is settled."
+  },
+  "modules": {
+    "create": [
+      "keymouse.tests.smoke.common",
+      "keymouse.tests.smoke.loops",
+      "keymouse.tests.smoke.serve"
+    ],
+    "modify": [
+      "keymouse.tests.smoke",
+      "keymouse.tests.smoke.entry",
+      "keymouse.tests.smoke.typing",
+      "keymouse.tests.smoke.safety",
+      "keymouse.tests.smoke.features",
+      "keymouse.tests.smoke.region",
+      "keymouse.tests.smoke.record",
+      "keymouse.tests.smoke.act",
+      "keymouse.tests.smoke.flowloops",
+      "keymouse.tests.unit",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "单元测试：--list 列出 8 个模块；--only loops 只跑该模块；不给参数跑全部",
+    "冒烟：-List 列出 10 个模块；-Only <模块> 只跑它且不依赖其它模块（靶子由 common 启动）",
+    "拆分不改变覆盖面：全部模块跑下来仍是 118 项通过（与拆分前一致）",
+    "未知模块名退出码 2 并提示 -List",
+    "每个模块 = tests/smoke 下一个文件，结构数据里的模块与文件一一对应"
+  ],
+  "note": "测试分模块：单元入口带模块选择，冒烟一模块一文件 + 运行器 -Only/-List，基建（靶子、编码自检、剪贴板）下沉 common；全量仍 118 项通过。",
+  "revision": {
+    "before": null,
+    "after": "bc06440df10935e9e8479ecad7b52098b48df7fd"
+  },
+  "created_at": "2026-10-03T12:19:11.915Z",
+  "updated_at": "2026-10-03T12:19:14.413Z",
+  "closed_at": "2026-10-03T12:19:14.413Z"
+}

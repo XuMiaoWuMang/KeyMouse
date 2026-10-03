@@ -1,17 +1,82 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.smoke",
-  "updated_at": "2026-10-03T11:41:00.547Z",
-  "mode": "layers",
+  "updated_at": "2026-10-03T12:19:11.813Z",
+  "mode": "groups",
   "max_columns": 3,
+  "reading": {
+    "zh": "先 common（工具与靶子），再按\"套件顺序\"读：entry → typing → safety → features → loops（文本脚本）→ region → record → serve → act → flowloops（流程格式）。每个文件就是一个模块，`-Only` 可以只跑其中一个。",
+    "en": "Start with common (tools and the target), then read in suite order: entry, typing, safety, features, loops (text script), region, record, serve, act, flowloops (flow format). One file is one module, and `-Only` runs just one of them."
+  },
   "order": [
+    "keymouse.tests.smoke.common",
     "keymouse.tests.smoke.entry",
     "keymouse.tests.smoke.typing",
     "keymouse.tests.smoke.safety",
     "keymouse.tests.smoke.features",
+    "keymouse.tests.smoke.loops",
     "keymouse.tests.smoke.region",
     "keymouse.tests.smoke.record",
+    "keymouse.tests.smoke.serve",
     "keymouse.tests.smoke.act",
-    "keymouse.tests.smoke.loops"
+    "keymouse.tests.smoke.flowloops"
+  ],
+  "groups": [
+    {
+      "id": "setup",
+      "title": {
+        "zh": "准备",
+        "en": "Set up"
+      },
+      "children": [
+        "keymouse.tests.smoke.common",
+        "keymouse.tests.smoke.entry"
+      ]
+    },
+    {
+      "id": "core",
+      "title": {
+        "zh": "核心能力",
+        "en": "Core ability"
+      },
+      "children": [
+        "keymouse.tests.smoke.typing"
+      ]
+    },
+    {
+      "id": "safety",
+      "title": {
+        "zh": "安全语义与零散入口",
+        "en": "Safety & odds and ends"
+      },
+      "children": [
+        "keymouse.tests.smoke.safety",
+        "keymouse.tests.smoke.features",
+        "keymouse.tests.smoke.loops"
+      ]
+    },
+    {
+      "id": "perception",
+      "title": {
+        "zh": "感知与录制",
+        "en": "Perception & recording"
+      },
+      "children": [
+        "keymouse.tests.smoke.region",
+        "keymouse.tests.smoke.record",
+        "keymouse.tests.smoke.act"
+      ]
+    },
+    {
+      "id": "engine",
+      "title": {
+        "zh": "常驻引擎与流程",
+        "en": "Engine & flow"
+      },
+      "children": [
+        "keymouse.tests.smoke.serve",
+        "keymouse.tests.smoke.flowloops"
+      ]
+    }
   ]
 }

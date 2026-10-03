@@ -6,18 +6,16 @@ tags: [test, desktop]
 name: {zh: "入口、编码守卫与靶子启动", en: "Entry, encoding guard & target"}
 description:
   zh: >
-      脚本开头：校验 exe 与靶子存在、做一次中文往返检查（宿主解码不一致就只报一条清晰错误，而不是让十几条中文断言莫名其妙地失败）、记下剪贴板并启动靶子窗口。
+      冒烟模块 entry：退出码矩阵（未知选择器 3、坏参数 2、未知按键 2、不可解析目标 3）、宿主编码自检，以及断言冒烟靶子确实起来了。靶子本身由 common.ps1 启动——任何模块都可能要驱动它。
       
   en: >
-      The opening moves: check that the exe and the target exist, run one Chinese round-trip probe (a mismatched host decoder gets one clear error instead of a dozen puzzling failures), save the clipboard and start the target window.
+      Smoke module entry: the exit-code matrix (unknown selector 3, bad argument 2, unknown key 2, unresolvable target 3), the host encoding self-check, and the assertion that the smoke target is up. The target itself is started by common.ps1, because any module may want to drive it.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:01.206Z"
-fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
+revision: bc06440df10935e9e8479ecad7b52098b48df7fd
+updated_at: "2026-10-03T12:19:12.569Z"
+fingerprint: 6487b857a6c6d2f2dccce5295a7ab3101a195fee67d00faabd9bce5c9a9c8baf
 source:
-  - path: "tests/smoke.ps1"
-    line: 1
-    end_line: 76
+  - path: "tests/smoke/entry.ps1"
 apis:
   - protocol: rpc
     path: "pwsh tests/smoke.ps1"
