@@ -86,6 +86,25 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 
 单元测试故意不用 xunit/NUnit：一个普通控制台程序，零依赖、离线可跑、`dotnet run` 就是全部用法。
 
+## 实测留档（tests/evidence）
+
+跑一次测量、把**所有**证据落盘，供人回看：
+
+```powershell
+pwsh tests/evidence.ps1                      # 10 个样本 × 5 组取样配置，跑到读对为止（最多 3 次）
+pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
+```
+
+产物在 `tests/evidence/<时间戳>/`：`commands.txt`（每条命令 + 退出码 + stdout/stderr）、
+`json/`（每次调用的 JSON 与失败时的 `.err.txt`）、`images/`（每张截图，`-raw` 是抓到的原始像素）、
+`summary.md`（数字表 + 文件索引）。它只驱动自己的冒烟靶子，不碰用户的窗口。
+
+写这类测量时有两条**踩过的坑**（不遵守就会量出假结论）：
+
+1. **别让文字光标留在读取区域里**：光标会闪，两次采集因此不一致（退出码 6）；更糟的是光标进画面能让整行读崩
+   （`你好，世界` 84.7 → 加光标 `Re,Hh` 49.8）。做法是打完字后 `key press enter -n 3` 把它挪到区域外。
+2. **区域高度要盖住整行**：`0,0,400,20` 会切掉字底、同一行读成乱码，`0,0,400,32` 正常。
+
 ## 架构结构数据（normify）
 
 `normify-keymouse/` 是这份代码库的模块树，**与代码一起版本化**：
@@ -95,13 +114,13 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 193 个 API 的索引 |
+| `api-index.json` | 194 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 134 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 135 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
-`smoke.loops` 都各占一格。149 条箭头锚定到了具体 API 行，所以图上读到的是
+`smoke.loops` 都各占一格。152 条箭头锚定到了具体 API 行，所以图上读到的是
 `mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
 
 改动代码后同步（伴随开发流程）：

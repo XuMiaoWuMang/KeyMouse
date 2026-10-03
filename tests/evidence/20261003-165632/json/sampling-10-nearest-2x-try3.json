@@ -1,0 +1,109 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "reads": 2,
+  "consistent": true,
+  "confidence": 82.4,
+  "minConfidence": 30,
+  "elapsedMs": 592,
+  "note": null,
+  "lines": [
+    {
+      "text": "圆 角 阴影 BY",
+      "rect": [
+        40,
+        30,
+        100,
+        48
+      ],
+      "words": [
+        {
+          "text": "圆",
+          "conf": 88,
+          "rect": [
+            40,
+            30,
+            100,
+            48
+          ]
+        },
+        {
+          "text": "角",
+          "conf": 88,
+          "rect": [
+            114,
+            26,
+            36,
+            70
+          ]
+        },
+        {
+          "text": "阴影",
+          "conf": 91.6,
+          "rect": [
+            184,
+            30,
+            96,
+            48
+          ]
+        },
+        {
+          "text": "BY",
+          "conf": 62.1,
+          "rect": [
+            327,
+            26,
+            89,
+            70
+          ]
+        }
+      ]
+    }
+  ]
+}
+

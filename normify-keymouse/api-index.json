@@ -11,6 +11,7 @@
   "rpc:.\\verify.ps1": "keymouse.build.verify",
   "rpc:.\\verify.ps1 -SkipSmoke": "keymouse.build.verify",
   "rpc:安全语义断言组": "keymouse.tests.smoke.safety",
+  "rpc:测量证据归档": "keymouse.tests.evidence",
   "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
   "rpc:进度与详情输出": "keymouse.script.run.progress",
   "rpc:零散入口断言组": "keymouse.tests.smoke.features",

@@ -4,7 +4,7 @@
 
 ## keymouse（https://github.com/XuMiaoWuMang/KeyMouse）
 
-- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 134 · API 193]
+- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 135 · API 194]
   - keymouse.build — 构建与发布 / Build & release — 单文件发布脚本、发布前四道关卡的一键验证入口，以及 CI / Release 两条工作流。发布由 v* tag 触发，且必须先经人工跑通 verify.ps1。 — [模块 5 · API 6]
     - keymouse.build.ci — CI 工作流 / CI workflow — 每次 push/PR：构建整个解决方案、跑单元测试、查文档链接、再做一次发布构建（保证发布命令本身没坏）。CI 不跑桌面冒烟——runner 没有交互式桌面。 — [模块 1 · API 1]
     - keymouse.build.publish — 单文件发布 / Single-file publish — 把程序打成 dist\KeyMouse.exe 单文件：默认框架依赖（需 .NET 运行时，约 240 KB），-SelfContained 打成自包含（约 3… — [模块 1 · API 2]
@@ -101,9 +101,10 @@
     - keymouse.script.wait — 等待伪命令 / Wait pseudo-commands — waitfor / waitgone：等到有（或没有）一个通过闸门的窗口匹配，默认 5000ms 超时 / 200ms 间隔；超时退出码 3。它们是这个工具的条… — [模块 3 · API 4]
       - keymouse.script.wait.parse — wait 参数解析 / Wait argument parsing — 复用命令行的全局选项解析拿到选择器，再读 --timeout / --interval；缺选择器时给出明确错误而不是默默等下去。 — [模块 1 · API 3]
       - keymouse.script.wait.until — 等待循环 / Wait loop — 以固定间隔重复调用一个断言函数，直到为真或超时，并返回耗时；断言本身走完整的窗口解析与闸门判定。 — [模块 1 · API 1]
-  - keymouse.tests — 测试体系 / Test suite — 两层护栏：零依赖的单元测试（逻辑，不需要桌面）与真实桌面冒烟（用自己启动的靶子窗口跑完整链路）。另含文档链接检查与解析/执行基准。 — [模块 24 · API 22]
+  - keymouse.tests — 测试体系 / Test suite — 两层护栏：零依赖的单元测试（逻辑，不需要桌面）与真实桌面冒烟（用自己启动的靶子窗口跑完整链路）。另含文档链接检查与解析/执行基准。 — [模块 25 · API 23]
     - keymouse.tests.bench — 解析与执行基准 / Parse & execution bench — 用测量代替直觉：同样 2000 条命令，文本分词 2ms、JSON 解析 3.5ms，而带选择器执行 2000 条要 6s——顺带给出一条选择器命令的成本拆解（… — [模块 1 · API 1]
     - keymouse.tests.docs-link — 文档链接检查 / Docs link check — 扫描全部 markdown 的相对链接是否真实存在：文档拆成四份后，改个文件名就没人重读过那些链接。不挑平台、不需要桌面，所以进了 CI。 — [模块 1 · API 1]
+    - keymouse.tests.evidence — 测量留档 / Evidence archive — 把一次测量变成可回看的证据：每条命令与退出码、每次调用的 JSON 与失败时的 stderr、每张截图（-raw 是抓到的原始像素）、一张数字表，落在 test… — [模块 1 · API 1]
     - keymouse.tests.smoke — 桌面冒烟 / Desktop smoke — 唯一能证明“手没抖”的那关：启动自己的靶子窗口，跑 50+ 项断言（退出码矩阵、打字往返比对、拖拽选中、变量、重试与报告、等待、禁用窗口、--dry-run 零… — [模块 7 · API 6]
       - keymouse.tests.smoke.entry — 入口、编码守卫与靶子启动 / Entry, encoding guard & target — 脚本开头：校验 exe 与靶子存在、做一次中文往返检查（宿主解码不一致就只报一条清晰错误，而不是让十几条中文断言莫名其妙地失败）、记下剪贴板并启动靶子窗口。 — [模块 1 · API 1]
       - keymouse.tests.smoke.features — 逃生口、stdin、keep-going、inspect / Hatch, stdin, keep-going, inspect — 零散入口的覆盖：vk: 裸虚拟键（曾从 v1.0 起就写在文档里却从未工作）、从管道读脚本、--keep-going 与报告、window inspect 的判… — [模块 1 · API 1]

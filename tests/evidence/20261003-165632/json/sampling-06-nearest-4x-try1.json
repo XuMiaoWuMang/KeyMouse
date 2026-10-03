@@ -1,0 +1,159 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "reads": 2,
+  "consistent": true,
+  "confidence": 91.5,
+  "minConfidence": 30,
+  "elapsedMs": 636,
+  "note": null,
+  "lines": [
+    {
+      "text": "区 域 太 小 会 出 现 重 影",
+      "rect": [
+        68,
+        44,
+        92,
+        88
+      ],
+      "words": [
+        {
+          "text": "区",
+          "conf": 92.8,
+          "rect": [
+            68,
+            44,
+            92,
+            88
+          ]
+        },
+        {
+          "text": "域",
+          "conf": 91.5,
+          "rect": [
+            221,
+            44,
+            106,
+            92
+          ]
+        },
+        {
+          "text": "太",
+          "conf": 93.2,
+          "rect": [
+            388,
+            44,
+            44,
+            88
+          ]
+        },
+        {
+          "text": "小",
+          "conf": 96.9,
+          "rect": [
+            448,
+            44,
+            96,
+            92
+          ]
+        },
+        {
+          "text": "会",
+          "conf": 85.9,
+          "rect": [
+            608,
+            44,
+            49,
+            88
+          ]
+        },
+        {
+          "text": "出",
+          "conf": 93.1,
+          "rect": [
+            656,
+            40,
+            98,
+            120
+          ]
+        },
+        {
+          "text": "现",
+          "conf": 90.9,
+          "rect": [
+            754,
+            40,
+            105,
+            120
+          ]
+        },
+        {
+          "text": "重",
+          "conf": 88.3,
+          "rect": [
+            859,
+            44,
+            98,
+            96
+          ]
+        },
+        {
+          "text": "影",
+          "conf": 90.6,
+          "rect": [
+            956,
+            40,
+            76,
+            120
+          ]
+        }
+      ]
+    }
+  ]
+}
+

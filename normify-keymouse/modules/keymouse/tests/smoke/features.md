@@ -11,9 +11,9 @@ description:
   en: >
       Cover for the odds and ends: the raw vk: key (documented since v1.0 yet broken until a test caught it), script from a pipe, --keep-going with a report, inspect's verdict text and exit codes, and whether a client-relative move really puts the cursor there.
       
-revision: 7a1a124eb7b20fcbebed310d012cbf3926b69a0b
-updated_at: "2026-10-03T08:34:07.495Z"
-fingerprint: ab0b75ca45752a0a184daf193e8dfd4433f2d690df694dd17c7f347a5e4d374a
+revision: b3cd2155a6af67fad97967d1a820875c076ceccf
+updated_at: "2026-10-03T08:58:33.644Z"
+fingerprint: 6e7614e6f9dc55507e5cdb787ab969b458bb77390bbbd3369eb469d7594e62d9
 source:
   - path: "tests/smoke.ps1"
     line: 216

@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "screen": {
+    "rect": [
+      677,
+      466,
+      200,
+      30
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660,
+    "class": "WindowsForms10.Window.8.app.0.2360855_r3_ad1"
+  },
+  "space": "client",
+  "region": [
+    60,
+    200,
+    200,
+    30
+  ],
+  "probe": "KeyMouse probe --hwnd 0x66070A --region 60,200,200,30"
+}

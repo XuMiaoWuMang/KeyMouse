@@ -45,7 +45,7 @@ internal static class Probe
     internal static int Run(string[] args, Program.GlobalOptions g)
     {
         var (positional, options) = Program.Parse(
-            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "space", "capture", "resample");
+            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "keep-prepared", "space", "capture", "resample");
 
         if (positional.Count > 0)
             throw new ArgumentException($"probe 不接受位置参数 '{positional[0]}'");
@@ -68,6 +68,7 @@ internal static class Probe
             options.TryGetValue("engine", out string? engine) && engine.Length > 0 ? engine : "tesseract");
         string? tessdata = options.TryGetValue("tessdata-dir", out string? dir) && dir.Length > 0 ? dir : DefaultTessdata();
         string? keepImage = options.TryGetValue("keep-image", out string? keep) && keep.Length > 0 ? keep : null;
+        string? keepPrepared = options.TryGetValue("keep-prepared", out string? keep2) && keep2.Length > 0 ? keep2 : null;
         bool windowSpace = options.TryGetValue("space", out string? space) &&
                            string.Equals(space, "window", StringComparison.OrdinalIgnoreCase);
         string capture = options.TryGetValue("capture", out string? how) && how.Length > 0 ? how.ToLowerInvariant() : "screen";
@@ -211,6 +212,11 @@ internal static class Probe
                             $"屏幕区域 {screenOriginX + region.X},{screenOriginY + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
                 }
 
+                // --keep-image keeps the pixels as captured: no upscale, no padding, no contrast
+                // normalisation. Written on every read, so a failed (inconsistent) read still leaves
+                // behind what was actually on screen - which is the point of a diagnostic image.
+                if (keepImage is not null) WriteBmp(Path.GetFullPath(keepImage), frame);
+
                 prepared = Preprocess(Normalize(frame), scale, pad, nearest);
                 WriteBmp(imagePath, prepared);
 
@@ -218,11 +224,12 @@ internal static class Probe
                 attempts.Add(read);
             }
 
-            if (keepImage is not null && prepared is not null) WriteBmp(Path.GetFullPath(keepImage), prepared);
+            // The engine input, for when the question is "why did OCR read it that way".
+            if (keepPrepared is not null && prepared is not null) WriteBmp(Path.GetFullPath(keepPrepared), prepared);
         }
         finally
         {
-            if (keepImage is null && File.Exists(imagePath))
+            if (File.Exists(imagePath))
             {
                 try { File.Delete(imagePath); } catch (IOException) { /* a leftover temp file is not a failure */ }
             }

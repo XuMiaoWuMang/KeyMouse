@@ -11,9 +11,9 @@ description:
   en: >
       N re-captures must agree character for character before a read counts as seen, and confidence must clear a floor of 30. Both numbers are measured: everything under 60 was garbage on synthetic images, but a correct real read scored 55.8, so the floor moved down to catch only outright failures; a blinking caret is stripped from the comparison, never from the output.
       
-revision: 7a1a124eb7b20fcbebed310d012cbf3926b69a0b
-updated_at: "2026-10-03T08:34:07.493Z"
-fingerprint: b104dda83feba9f56879cb7257c7cd4faa7d2db99e1d0d589c89be55c65a61ae
+revision: b3cd2155a6af67fad97967d1a820875c076ceccf
+updated_at: "2026-10-03T08:58:33.642Z"
+fingerprint: b1bf95901eb70b6ac9e53ddce6322ef098ce934d9177d7bbbfa68d37069170a1
 source:
   - path: "Probe.cs"
     line: 265

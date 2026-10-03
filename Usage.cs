@@ -64,7 +64,9 @@ internal static class Usage
                                    但它不能用于 --space window（标题栏），且本机几何对不齐
                                    （见 docs/design.md）
           --json                   输出 JSON（引擎身份、几何、逐词置信度）
-          --keep-image <路径>      把送进引擎的那张图（BMP）留下来，便于自查
+          --keep-image <路径>      原样保存抓到的像素（不放大、不加白边、不做对比度
+                                   归一化）——截图就是屏幕上那一块
+          --keep-prepared <路径>   保存送进引擎的那张图（放大+白边+归一化之后）
 
         选区（给人挑坐标，不读文字）
           region pick [--rect x,y,w,h] [--json]        框一块区域，报告它落在哪个窗口的哪个

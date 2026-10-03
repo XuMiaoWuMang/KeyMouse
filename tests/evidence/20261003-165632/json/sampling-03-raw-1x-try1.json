@@ -1,0 +1,159 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "reads": 2,
+  "consistent": true,
+  "confidence": 90.5,
+  "minConfidence": 30,
+  "elapsedMs": 621,
+  "note": null,
+  "lines": [
+    {
+      "text": "请 输入 文件 名 后 点 击 保存 按钮",
+      "rect": [
+        10,
+        7,
+        26,
+        22
+      ],
+      "words": [
+        {
+          "text": "请",
+          "conf": 95.8,
+          "rect": [
+            10,
+            7,
+            26,
+            22
+          ]
+        },
+        {
+          "text": "输入",
+          "conf": 96.5,
+          "rect": [
+            49,
+            7,
+            41,
+            23
+          ]
+        },
+        {
+          "text": "文件",
+          "conf": 94.1,
+          "rect": [
+            103,
+            7,
+            56,
+            22
+          ]
+        },
+        {
+          "text": "名",
+          "conf": 96.7,
+          "rect": [
+            158,
+            3,
+            24,
+            29
+          ]
+        },
+        {
+          "text": "后",
+          "conf": 96.3,
+          "rect": [
+            181,
+            7,
+            16,
+            23
+          ]
+        },
+        {
+          "text": "点",
+          "conf": 93.3,
+          "rect": [
+            210,
+            7,
+            14,
+            22
+          ]
+        },
+        {
+          "text": "击",
+          "conf": 81.2,
+          "rect": [
+            236,
+            7,
+            16,
+            22
+          ]
+        },
+        {
+          "text": "保存",
+          "conf": 95.6,
+          "rect": [
+            265,
+            7,
+            41,
+            22
+          ]
+        },
+        {
+          "text": "按钮",
+          "conf": 65.4,
+          "rect": [
+            317,
+            7,
+            43,
+            23
+          ]
+        }
+      ]
+    }
+  ]
+}
+

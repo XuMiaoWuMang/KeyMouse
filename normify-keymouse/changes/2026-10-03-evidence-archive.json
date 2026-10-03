@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-evidence-archive",
+  "title": {
+    "zh": "测量留档脚本与取样结论修正",
+    "en": "Evidence archive and a corrected sampler conclusion"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "用户看不到我的测量过程，要求把截图 / 命令 / 中间 JSON 全部留档到 tests 下并按时间分目录；同时 --keep-image 必须存原始像素。顺带修正两处：① 早先\"最近邻比双线性准\"的测量把光标噪声算了进去——把光标挪出区域后重测两遍（结果逐字相同），取样方式在真实语料上没量出差别（双线性 10/10、最近邻 9/10）；② 新发现：光标进画面会让整行读崩（84.7 → 49.8），区域高度不足也会（400x20 → 乱码）。",
+    "en": "The user could not see my measurements and asked for every screenshot, command and intermediate JSON to be archived under tests/ in timestamped folders; --keep-image must save the raw pixels. Two corrections came with it: the earlier nearest-beats-bilinear measurement had caret noise in it - with the caret moved out and the battery run twice (identical results) the samplers show no measurable difference (bilinear 10/10, nearest 9/10); and a new finding: a caret inside the region makes the engine misread the whole line (84.7 -> 49.8), as does a region too short for the line box (400x20 -> garbage)."
+  },
+  "modules": {
+    "create": [
+      "keymouse.tests.evidence"
+    ],
+    "modify": [
+      "keymouse.probe.preprocess",
+      "keymouse.probe",
+      "keymouse.tests",
+      "keymouse.docs",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "tests/evidence.ps1 落盘：commands.txt（含 stderr）、json/、images/、summary.md，按时间戳分目录",
+    "--keep-image 存原始像素（尺寸 = 区域尺寸），--keep-prepared 存送进引擎的图",
+    "summary.md 复现两遍结果一致，且含光标对照（84.7 vs 49.8）与区域高度对照",
+    "verify.ps1 全绿，normify_validate 0 error"
+  ],
+  "note": "新增 tests/evidence.ps1（按时间戳把命令 / JSON / 截图 / 汇总留档）与 keymouse.tests.evidence 模块；--keep-image 改成存原始像素并新增 --keep-prepared；取样结论按重测结果修正（取样方式无差别），并把\"光标进区域会让整行读崩\"\"区域高度不足会切字\"两条实测教训写进文档与模块说明。",
+  "revision": {
+    "before": null,
+    "after": "b3cd2155a6af67fad97967d1a820875c076ceccf"
+  },
+  "created_at": "2026-10-03T08:58:26.187Z",
+  "updated_at": "2026-10-03T08:58:38.406Z",
+  "closed_at": "2026-10-03T08:58:38.406Z"
+}

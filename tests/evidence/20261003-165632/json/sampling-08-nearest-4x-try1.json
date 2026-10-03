@@ -1,0 +1,119 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "reads": 2,
+  "consistent": true,
+  "confidence": 92.9,
+  "minConfidence": 30,
+  "elapsedMs": 598,
+  "note": null,
+  "lines": [
+    {
+      "text": "新 建 文本 文档 .txt",
+      "rect": [
+        56,
+        44,
+        220,
+        92
+      ],
+      "words": [
+        {
+          "text": "新",
+          "conf": 93.2,
+          "rect": [
+            56,
+            44,
+            220,
+            92
+          ]
+        },
+        {
+          "text": "建",
+          "conf": 87.9,
+          "rect": [
+            224,
+            39,
+            80,
+            115
+          ]
+        },
+        {
+          "text": "文本",
+          "conf": 95.9,
+          "rect": [
+            389,
+            44,
+            155,
+            92
+          ]
+        },
+        {
+          "text": "文档",
+          "conf": 95.4,
+          "rect": [
+            591,
+            39,
+            187,
+            115
+          ]
+        },
+        {
+          "text": ".txt",
+          "conf": 92.2,
+          "rect": [
+            776,
+            60,
+            196,
+            68
+          ]
+        }
+      ]
+    }
+  ]
+}
+

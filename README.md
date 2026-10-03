@@ -34,7 +34,7 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：134 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：135 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 

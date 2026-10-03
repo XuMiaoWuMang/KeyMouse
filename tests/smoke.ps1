@@ -355,6 +355,10 @@ try {
         $null = & $Exe key combo ctrl+a @target
         $null = & $Exe key press delete @target
         $null = & $Exe key type $known @target
+        # Park the caret well below the region: it blinks, so two captures can disagree (exit 6), and a
+        # frame with the caret inside the region can make the engine misread the whole line. Measured:
+        # '你好，世界|' reads as 'Re, Hh' where the same pixels without the caret read correctly.
+        $null = & $Exe key press enter -n 3 @target
         Start-Sleep -Milliseconds 400
 
         $read = & $Exe probe @target --region 0,0,600,40 --keep-image "$env:TEMP\km-smoke-probe.bmp" 2>&1

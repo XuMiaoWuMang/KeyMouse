@@ -1,0 +1,119 @@
+{
+  "ok": true,
+  "engine": {
+    "kind": "external",
+    "command": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "version": "tesseract v5.5.3.20260724",
+    "languages": "eng+chi_sim",
+    "tessdata": "C:\\Users\\xumiao\\AppData\\Local\\KeyMouse\\tessdata",
+    "models": [
+      {
+        "name": "chi_sim",
+        "bytes": 2469156
+      },
+      {
+        "name": "eng",
+        "bytes": 4113088
+      }
+    ]
+  },
+  "window": {
+    "handle": "0x66070A",
+    "title": "KeyMouse 冒烟靶子",
+    "pid": 10660
+  },
+  "geometry": {
+    "extendedFrame": [
+      605,
+      219,
+      1350,
+      930
+    ],
+    "visibleFrame": [
+      616,
+      219,
+      1328,
+      919
+    ],
+    "inset": 11
+  },
+  "region": {
+    "space": "client",
+    "rect": [
+      0,
+      0,
+      400,
+      32
+    ]
+  },
+  "reads": 2,
+  "consistent": true,
+  "confidence": 92.7,
+  "minConfidence": 30,
+  "elapsedMs": 618,
+  "note": null,
+  "lines": [
+    {
+      "text": "新 建 文本 文档 .txt",
+      "rect": [
+        46,
+        37,
+        165,
+        69
+      ],
+      "words": [
+        {
+          "text": "新",
+          "conf": 93.3,
+          "rect": [
+            46,
+            37,
+            165,
+            69
+          ]
+        },
+        {
+          "text": "建",
+          "conf": 91.2,
+          "rect": [
+            172,
+            33,
+            60,
+            95
+          ]
+        },
+        {
+          "text": "文本",
+          "conf": 96.7,
+          "rect": [
+            291,
+            37,
+            121,
+            69
+          ]
+        },
+        {
+          "text": "文档",
+          "conf": 95.2,
+          "rect": [
+            445,
+            33,
+            144,
+            95
+          ]
+        },
+        {
+          "text": ".txt",
+          "conf": 87.1,
+          "rect": [
+            586,
+            49,
+            147,
+            51
+          ]
+        }
+      ]
+    }
+  ]
+}
+
