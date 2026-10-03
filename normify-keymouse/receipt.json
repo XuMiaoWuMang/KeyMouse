@@ -2,7 +2,7 @@
   "schema_version": 1,
   "ok": true,
   "project": "normify-keymouse",
-  "compiled_at": "2026-10-03T05:56:47.528Z",
+  "compiled_at": "2026-10-03T06:01:00.328Z",
   "stats": {
     "tree_count": 1,
     "module_count": 123,
@@ -24,7 +24,7 @@
   },
   "artifacts": {
     "tree.json": {
-      "sha256": "0256d0cb833592d093908fb57278fde95029ae275232061e784d03806d7c56c7",
+      "sha256": "cefe06ff9a17ca0bb5d2e85f724453275f66136446f8dc82b385c4401c065b6c",
       "bytes": 335278
     },
     "outline.md": {
@@ -36,7 +36,7 @@
       "bytes": 10313
     },
     "receipt.json": {
-      "sha256": "2fb48584b5bc080660129b3641c7fc1d2da98e37f6faad4a22aa61db9cf22c5d",
+      "sha256": "4c205d12db993b2c4de9e21ebdda9c86aba1b322afebc52782474cae4c8d3aff",
       "bytes": 963
     }
   }
