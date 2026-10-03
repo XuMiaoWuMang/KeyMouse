@@ -337,6 +337,9 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 
 **几处实测行为（照实写，省得踩）**：
 
+- **读之前别留选区**：选中反色时同一行的置信度从 **92.0 掉到 65.0**，还会多读字符（`SelectionTest` →
+  `ISelectionTest`）甚至读空；要读就先点一下区域外：既取消选区，也把光标挪出区域。
+
 - `--capture screen`（默认）抓的是**屏幕像素**：目标被别的窗口盖住时，读到的是盖住它的内容；
   `print` 走 `PrintWindow`，不画光标、也不受遮挡影响，但本机几何对不齐（会裁掉文字上半截，见 design.md）。
 - **最小化窗口读不了**：它在取像之前就被闸门拒掉（退出码 `4`），换 `--capture print` 也一样
@@ -438,6 +441,7 @@ KeyMouse run flow.json                          # 回放
 | `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
 | `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` || `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
+| `read-text` | `target`、`region`、`into`、`text`（可选） | 读一次区域，把内容存进变量（给了 `text` 就存匹配到的那段）；没匹配到 → 退出码 `3`，变量不动 |
 
 ### wait-text：等一块区域上出现某段文字
 
@@ -537,6 +541,29 @@ KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一�
 - `else`：`skip`（默认，跳过这一步、退出码仍是 0）或 `fail`（退出码 `3`，同样保证"什么都没发"）。
 - 前提不成立时的跳过会在报告里标成 `skipped`，控制台那一行显示 `skip`。
 - 一串步骤各自带 `when`，就是最常用的分支写法；真正的 if/else 块与循环留给后续版本。
+
+
+### 变量与循环
+
+```json
+{ "format": "keymouse-flow", "version": 1,
+  "variables": { "app": "notepad", "rows": ["第一行", "第二行", "第三行"] },
+  "steps": [
+    { "type": "focus", "target": { "process": "{{app}}" } },
+    { "type": "foreach", "in": "rows", "steps": [
+        { "type": "type", "text": "{{item}}", "target": { "process": "{{app}}" } },
+        { "type": "key", "text": "enter", "target": { "process": "{{app}}" } } ] },
+    { "type": "repeat", "times": 3, "steps": [ { "type": "sleep", "ms": 200 } ] } ] }
+```
+
+- **`variables`**：值是字符串（`{{名字}}` 用）或字符串数组（`foreach` 遍历）。
+  `KeyMouse run flow.json --set app=mspaint` **覆盖**文档里的同名值（数组会被压成单元素，这是明说的取舍）。
+- **`{{名字}}`** 只能出现在**字符串**字段（文字、组合键、进程名/类名/标题、备注）——JSON 的数字放不下占位符。
+  替换发生在**派发前一刻**，所以 `read-text` 刚捕获的值，后面的步骤立刻就能用。
+- **循环变量**：`repeat`/`foreach` 里可用 `{{index}}`（0 起），`foreach` 里还有 `{{item}}`。
+- **`times` 上限 10000**：循环不能无限跑，这条上限写在文档里，而不是跑到凌晨三点才发现。
+- **分组自己不能带 `when`**（展平后它没有落脚点）：把前提写到里面的步骤上；循环体里再嵌套循环按次数相乘。
+- 变量名写错、`foreach` 遍历了不存在的列表，都在**加载时**以退出码 `2` 报出来，并指出是第几步。
 
 ## region（选区：给人挑坐标，不读文字）
 

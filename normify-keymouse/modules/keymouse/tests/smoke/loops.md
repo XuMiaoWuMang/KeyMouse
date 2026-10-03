@@ -1,37 +1,36 @@
 ---
-uid: 5c6e7082
+uid: 7a1f1002
 id: keymouse.tests.smoke.loops
 parent: keymouse.tests.smoke
-tags: [test, desktop, invariant]
-name: {zh: "循环与单进程保证", en: "Loops & the one-process proof"}
+tags: [test, desktop]
+name: {zh: "循环与变量冒烟", en: "Loop and variable smoke"}
 description:
   zh: >
-      v2 的两条硬保证在这里被真桌面验证：循环真的按次数写对了行（回读剪贴板逐行比对），以及脚本运行期间**采样到的进程数恒为 1**（如果改成每行一个进程，这里立刻变红）。
+      真桌面上：一个列表变量驱动 foreach，把每一项真的打进靶子（回读剪贴板确认三项都在）；read-text 把屏幕上的内容读进变量，后面的步骤用 {{seen}} 把它打出来。实测到的坑也留在这里：读之前留着全选会把置信度从 92.0 打到 65.0，所以先点一下区域外。
       
   en: >
-      The two v2 guarantees are verified on a real desktop here: the loop really wrote the right number of lines (read back from the clipboard), and the sampled process count stays exactly 1 for the whole run.
+      On a real desktop: a list variable drives a foreach that types every item (the clipboard is read back to prove all three landed), and a read-text captures what is on screen into a variable a later step interpolates. The measured trap lives here too: reading with a selection in place drops confidence from 92.0 to 65.0, so the flow clicks outside the region first.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:16.010Z"
-fingerprint: 2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:09.822Z"
+fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
 source:
   - path: "tests/smoke.ps1"
-    line: 290
-    end_line: 343
+    line: 689
+    end_line: 732
 apis:
   - protocol: rpc
-    path: "循环与单进程断言组"
+    path: "循环与变量冒烟断言组"
     description:
       zh: >
-          循环结果与进程数采样。
+          foreach 真的执行；read-text 捕获并被后续步骤使用。
           
       en: >
-          Loop output and process sampling.
+          The foreach really runs; read-text captures and a later step uses it.
           
 deps:
   - kind: call
-    to: keymouse.cli.main
-    from_api: "rpc:循环与单进程断言组"
-    to_api: "rpc:keymouse <命令组>"
-    label: {zh: "驱动被测命令", en: "Drive the command"}
+    to: keymouse.flow.runner
+    to_api: "rpc:FlowRunner.Run"
+    label: {zh: "执行流程", en: "Run the flow"}
 ---

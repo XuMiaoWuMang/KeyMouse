@@ -59,14 +59,20 @@ internal static class FlowRunner
         FlowDocument document;
         try
         {
-            document = FlowDocument.Load(options.Path);
+            // --set wins over the document variables, so one file can be reused with other data.
+            document = FlowDocument.Load(options.Path, options.Variables);
         }
         catch (CommandFailure ex)
         {
             return Commands.Fail(ex.Code, ex.Message);
         }
 
-        if (document.Steps.Count == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
+        // Loops are flattened before anything runs: a `repeat`/`foreach` becomes the steps it would
+        // run, with the loop variables already substituted. One execution loop keeps one place where
+        // pause, cancel and step reporting live - no second interpreter for groups.
+        List<FlowStep> plan = FlowDocument.ExpandLoops(document.Steps, document);
+        if (plan.Count == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
+        var scope = new Dictionary<string, string>(document.Texts, StringComparer.Ordinal);
 
         string source = Path.GetFullPath(options.Path);
         var report = new ScriptReport
@@ -74,25 +80,27 @@ internal static class FlowRunner
             Script = source,
             StartedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
             DryRun = options.DryRun,
-            Total = document.Steps.Count,
+            Total = plan.Count,
         };
 
         Console.WriteLine($"流程 {source}");
-        Console.WriteLine($"  {document.Steps.Count} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
+        Console.WriteLine($"  {plan.Count} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
         if (document.RecordedAt is not null) Console.WriteLine($"  录制于 {document.RecordedAt}");
 
         int exitCode = 0;
         _running = true;
         try
         {
-            for (int i = 0; i < document.Steps.Count; i++)
+            for (int i = 0; i < plan.Count; i++)
             {
                 // The Runner's seam: with no control installed (the CLI path) these are no-ops; with a
                 // client attached they block while paused, throw when cancelled, and report the step
                 // boundary so a UI can highlight the row that is executing right now.
                 Execution.BetweenSteps(i + 1);
 
-                FlowStep step = document.Steps[i];
+                // Resolved per step, not per run: a `read-text` can put something in scope that later
+                // steps interpolate, which is what makes variables worth having.
+                FlowStep step = FlowDocument.Resolve(plan[i], scope);
                 var record = new CommandRecord { Index = i + 1, Line = i + 1 };
                 var clock = Stopwatch.StartNew();
                 int attempt = 0;
@@ -147,7 +155,7 @@ internal static class FlowRunner
                 while (!skipped && true)
                 {
                     attempt++;
-                    (code, output) = RunStep(step, options, execute, i + 1);
+                    (code, output) = RunStep(step, options, execute, i + 1, scope);
                     if (code == 0 || attempt > options.Retry || !ScriptRunner.IsRetryable(code)) break;
                     Console.WriteLine($"  [{i + 1,3}] 第 {attempt} 次重试（退出码 {code} 可重试，等 {options.RetryDelayMs} ms）");
                     Thread.Sleep(options.RetryDelayMs);
@@ -164,7 +172,7 @@ internal static class FlowRunner
                 report.Commands.Add(record);
 
                 string tag = skipped ? "skip" : code == 0 ? "ok" : $"exit {code}";
-                Console.WriteLine($"  [{i + 1,3}/{document.Steps.Count}] {tag,-8} {record.Command}" +
+                Console.WriteLine($"  [{i + 1,3}/{plan.Count}] {tag,-8} {record.Command}" +
                                   (output.Length > 0 && (options.Echo || code != 0 || skipped) ? $"  <- {Shorten(output)}" : ""));
 
                 if (code == 0)
@@ -184,7 +192,7 @@ internal static class FlowRunner
                     exitCode = exitCode == 0 ? code : exitCode;
                 }
 
-                if (options.DelayMs > 0 && i < document.Steps.Count - 1) Thread.Sleep(options.DelayMs);
+                if (options.DelayMs > 0 && i < plan.Count - 1) Thread.Sleep(options.DelayMs);
             }
         }
         finally
@@ -203,7 +211,7 @@ internal static class FlowRunner
         return exitCode;
     }
 
-    private static (int ExitCode, string Output) RunStep(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex)
+    private static (int ExitCode, string Output) RunStep(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex, Dictionary<string, string> scope)
     {
         switch (step.Type)
         {
@@ -221,6 +229,9 @@ internal static class FlowRunner
             case "click-text":
                 return ClickText(step, options, execute, stepIndex);
 
+            case "read-text":
+                return ReadText(step, options, stepIndex, scope);
+
             default:
                 string[] argv = FlowDocument.ToArguments(step);
                 if (options.DryRun) argv = [.. argv, "--dry-run"];
@@ -229,6 +240,57 @@ internal static class FlowRunner
         }
     }
 
+    /// <summary>
+    /// Reads a region once and stores what was read in a variable, so a flow can carry data from one
+    /// step to the next ("read the total, then type it somewhere else"). With `text` given it stores
+    /// the matched piece instead of the whole line - the same locator `--find` uses.
+    /// </summary>
+    private static (int ExitCode, string Output) ReadText(
+        FlowStep step, ScriptOptions options, int stepIndex, Dictionary<string, string> scope)
+    {
+        WindowSelector selector = SelectorOf(step.Target);
+        if (!HasSelector(selector))
+            return (2, "read-text 需要 target（至少给 process 或 class，否则不知道该读哪个窗口）");
+
+        if (options.DryRun)
+        {
+            var dry = WindowResolver.Resolve(selector, allowRestore: false);
+            if (dry.Usable.Count == 0) return (4, $"（dry-run）目标窗口现在不可用：{selector.Describe()}");
+            try
+            {
+                Probe.ValidateRegion(dry.Usable[0], windowSpace: false, step.Region!.Rect());
+            }
+            catch (ArgumentException ex)
+            {
+                return (2, ex.Message);
+            }
+            return (0, $"（dry-run）会把 {step.Into} 设成读到的内容（区域已校验）");
+        }
+
+        var resolution = WindowResolver.Resolve(selector, allowRestore: false);
+        if (resolution.Usable.Count == 0) return (4, $"目标窗口现在不可用：{selector.Describe()}");
+
+        try
+        {
+            var (text, confidence, lines) = Probe.ReadOnce(resolution.Usable[0], windowSpace: false, step.Region!.Rect());
+            string value = text;
+            if (!string.IsNullOrEmpty(step.Text))
+            {
+                TextMatch? match = TextLocator.Find(lines, step.Text!, step.Match ?? TextPredicate.Contains,
+                    Math.Clamp(step.MaxErrors ?? 1, 0, 20));
+                if (match is null)
+                    return (3, $"没找到「{step.Text}」（读到「{text}」）——{step.Into} 没被改动");
+                value = match.Matched;
+            }
+
+            scope[step.Into!] = value;
+            return (0, $"{step.Into} = 「{value}」" + (confidence is double c ? $"（置信度 {c:0.0}）" : ""));
+        }
+        catch (CommandFailure ex)
+        {
+            return (ex.Code, ex.Message);
+        }
+    }
     /// <summary>Waits until a usable window matches the step's selector, then reports how long it took.</summary>
     private static (int ExitCode, string Output) WaitWindow(FlowStep step, ScriptOptions options)
     {
@@ -444,7 +506,7 @@ internal static class FlowRunner
         "wait-text" => $"等文字「{step.Text}」（{step.Match ?? TextPredicate.Contains}，" +
                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",
         "click-text" => $"找「{step.Text}」并点它的中心（{step.Match ?? TextPredicate.Contains}，" +
-                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",
+                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",        "read-text" => $"读一块区域存进 {step.Into}",
         _ => "KeyMouse " + string.Join(' ', FlowDocument.ToArguments(step)),
     };
 

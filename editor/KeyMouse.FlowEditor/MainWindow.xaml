@@ -286,6 +286,28 @@
                             </StackPanel>
                         </Border>
 
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.GroupVisibility, Mode=OneWay}">
+                            <StackPanel>
+                                <TextBlock Text="循环" Style="{StaticResource SectionLabel}" />
+                                <NumberBox Header="重复次数" Value="{x:Bind SelectedStep.Times, Mode=TwoWay}"
+                                           SpinButtonPlacementMode="Compact" Margin="0,0,0,10"
+                                           Visibility="{x:Bind SelectedStep.TimesVisibility, Mode=OneWay}" />
+                                <TextBox Header="遍历哪个列表变量（文档 variables 里的数组）"
+                                         Text="{x:Bind SelectedStep.In, Mode=TwoWay}"
+                                         Style="{StaticResource FieldBox}"
+                                         Visibility="{x:Bind SelectedStep.InVisibility, Mode=OneWay}" />
+                                <TextBlock Text="{x:Bind SelectedStep.ChildrenLabel, Mode=OneWay}" TextWrapping="Wrap"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.IntoVisibility, Mode=OneWay}">
+                            <TextBox Header="把读到的内容存进哪个变量" Text="{x:Bind SelectedStep.Into, Mode=TwoWay}" />
+                        </Border>
+
                         <Border Style="{StaticResource CardBorder}">
                             <StackPanel>
                                 <TextBlock Text="这一步的参数" Style="{StaticResource SectionLabel}" />

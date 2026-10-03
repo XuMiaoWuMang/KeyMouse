@@ -107,7 +107,10 @@ internal sealed class RunnerHost
                 emit(RunnerEvent.Error(request.Id, 2, $"没有这个流程文件：{p.Flow}"));
                 return;
             }
-            job.Total = FlowDocument.Load(p.Flow).Steps.Count;
+            // The plan, not the file: a `repeat`/`foreach` runs its body more than once, and progress
+            // in the UI should count what will actually run.
+            FlowDocument document = FlowDocument.Load(p.Flow, null);
+            job.Total = FlowDocument.ExpandLoops(document.Steps, document).Count;
         }
 
         var arguments = new List<string> { request.Method };

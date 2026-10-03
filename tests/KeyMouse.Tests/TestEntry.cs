@@ -23,6 +23,7 @@ internal static class TestEntry
         Harness.Section("locator", LocatorTests.Run);
         Harness.Section("region", RegionTests.Run);
         Harness.Section("flow", FlowTests.Run);
+        Harness.Section("loops", LoopTests.Run);
         Harness.Section("runner", RunnerTests.Run);
 
         return Harness.Summary();

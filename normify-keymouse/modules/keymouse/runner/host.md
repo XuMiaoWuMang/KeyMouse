@@ -11,9 +11,9 @@ description:
   en: >
       Request dispatch (run/record/validate/pick-region/ocr/control/status), the job registry, and the implementation of `Execution.Control`: the job *is* the seam, so pausing, cancelling and per-step events happen on the capability layer execution path. The log stream works by wiring Console.Out to the event sink - honest note: that only holds because jobs are serialised, and decoupling Core from Console is the next step.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.044Z"
-fingerprint: 5fb74e27148f34b6f0dcf0635f721bd449d448bc267708e4166cd49ccfa6f588
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:09.823Z"
+fingerprint: 151727978f00d9e7058b1450e24509fe925e382a4288fc7cf3274bf16b66636d
 source:
   - path: "src/KeyMouse.Runner/RunnerHost.cs"
   - path: "src/KeyMouse.Runner/RunnerJob.cs"

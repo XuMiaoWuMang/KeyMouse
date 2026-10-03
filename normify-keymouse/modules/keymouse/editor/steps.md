@@ -3,20 +3,21 @@ uid: 7a1f0d12
 id: keymouse.editor.steps
 parent: keymouse.editor
 tags: [editor, ui]
-name: {zh: "步骤视图模型", en: "Step view model"}
+name: {zh: "步骤视图模型与目录", en: "Step view model and catalogue"}
 description:
   zh: >
-      列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动同时刷新摘要、JSON 预览与该显示的字段。**每个 setter 先比一次值**——折叠的卡片照样是绑定的，实测打开文件就会把默认值写回模型（click 步骤凭空多出 ms: 0），所以未保存标记按序列化内容比对，而不是"动过手"。
+      列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段；每个 setter 先比一次值（折叠卡片也会回写默认值，实测过）。分组（`repeat`/`foreach`）与 `read-text` 在这里有摘要与字段；**子步骤原样保留**（视图模型包的是整对象，保存不会丢循环体）。
       
   en: >
-      The editable model behind the list and the inspector: every field reads and writes the shared schema step directly, and one edit refreshes the summary, the JSON preview and the visible sections together. Every setter compares first - a collapsed card is still bound, and opening a file measurably wrote defaults back (a click step gained ms: 0) - so the unsaved marker compares serialised content.
+      The editable model behind the list and the inspector: every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first (collapsed cards do write defaults back - measured). Groups and read-text get their own summaries and fields, and child steps are preserved verbatim: the view model wraps whole objects, so saving never loses a loop body.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.239Z"
-fingerprint: da816a90787059deb4b7e6e2d465f9da0e512bf3514e4187f1923973ec95d12c
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:09.823Z"
+fingerprint: 72dd5bc2ccab053f7ab9073484d8675d9c162c2ec8000098e273873235f7ea76
 source:
   - path: "editor/KeyMouse.FlowEditor/StepVm.cs"
   - path: "editor/KeyMouse.FlowEditor/EditorModel.cs"
+  - path: "editor/KeyMouse.FlowEditor/Compat.cs"
 apis:
   - protocol: rpc
     path: "EditorModel.Load"
@@ -31,10 +32,10 @@ apis:
     path: "EditorModel.Save"
     description:
       zh: >
-          按共享 schema 写回文件。
+          按共享 schema 写回文件（保留分组子步骤）。
           
       en: >
-          Writes the file back through the shared schema.
+          Writes the file back through the shared schema (group children included).
           
   - protocol: rpc
     path: "EditorModel.MarkDirty"

@@ -2,20 +2,20 @@
   "schema_version": 1,
   "ok": true,
   "project": "normify-keymouse",
-  "compiled_at": "2026-10-03T11:27:29.391Z",
+  "compiled_at": "2026-10-03T11:42:28.425Z",
   "stats": {
     "tree_count": 1,
-    "module_count": 161,
-    "leaf_count": 131,
-    "api_count": 242,
-    "dep_count": 184,
+    "module_count": 162,
+    "leaf_count": 132,
+    "api_count": 245,
+    "dep_count": 186,
     "cross_tree_dep_count": 0,
     "max_depth": 6,
     "layout_count": 30,
     "planned_count": 0,
     "deprecated_count": 0,
     "policy_rule_count": 2,
-    "change_count": 12,
+    "change_count": 13,
     "open_change_count": 0
   },
   "warnings": {
@@ -26,19 +26,19 @@
   },
   "artifacts": {
     "tree.json": {
-      "sha256": "f0689593f604d7bdf2f497934470853c7dc92457c2b808810038634b37e2f251",
-      "bytes": 466122
+      "sha256": "a72e41bcac9c12f8d84bbdffa5480acd27b0672c8c7b64451d4a61589409238e",
+      "bytes": 470686
     },
     "outline.md": {
-      "sha256": "02a822706cf296d10abad46bf6ddddd0440916d210be6c84eda32e499769dc1c",
-      "bytes": 45851
+      "sha256": "a4ca2dcb92fc51f664eae9462ca1fcfec67d41aeac048f8dea94e5c5150c2281",
+      "bytes": 46158
     },
     "api-index.json": {
-      "sha256": "08f7afad10b32fa90840963fb8d1b9ff9822eaf4460777dd423bccbfb33e2348",
-      "bytes": 14183
+      "sha256": "f0bb9f30db93410b92a3ae60734e896914eb0645fa16fad1a72bb153ae3924e1",
+      "bytes": 14359
     },
     "receipt.json": {
-      "sha256": "6c274e03204c67c59428df835df4d41f4ab892e5a3216464ed8c2dcf23b2883d",
+      "sha256": "e2e77947ae5209b8d0d3ae4ee8c9cec0849e4b751f8818809e3c5b72ff5baa02",
       "bytes": 1025
     }
   }

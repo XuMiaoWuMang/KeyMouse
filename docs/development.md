@@ -120,6 +120,8 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
    两次不一致就是退出码 6），而光标会闪；更糟的是光标进画面能让整行读崩
    （`你好，世界` 84.7 → 加光标 `Re,Hh` 49.8）。做法是打完字后 `key press enter -n 3` 把它挪到区域外。
 2. **区域高度要盖住整行**：`0,0,400,20` 会切掉字底、同一行读成乱码，`0,0,400,32` 正常。
+3. **别在选区上读**：选中反色会把同一行的置信度从 92.0 打到 65.0、多读字符甚至读空（实测）。
+   做法是先点一下区域外：既取消选区，也把光标挪走。
 
 ## 架构结构数据（normify）
 
@@ -130,13 +132,13 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 242 个 API 的索引 |
+| `api-index.json` | 245 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 161 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 162 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
-`smoke.loops` 都各占一格。184 条箭头锚定到了具体 API 行，所以图上读到的是
+`smoke.loops` 都各占一格。186 条箭头锚定到了具体 API 行，所以图上读到的是
 `mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
 
 改动代码后同步（伴随开发流程）：

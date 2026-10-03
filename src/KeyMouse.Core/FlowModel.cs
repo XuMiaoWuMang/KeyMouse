@@ -99,6 +99,19 @@ internal sealed class FlowStep
     public int? DurationMs { get; set; }
     public string? Shot { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>Nested steps of a `repeat` / `foreach` group. Groups are the only steps that carry
+    /// steps of their own, so the format stays two levels deep and linear everywhere else.</summary>
+    public List<FlowStep>? Steps { get; set; }
+
+    /// <summary>`foreach`: the variable that holds the list to walk.</summary>
+    public string? In { get; set; }
+
+    /// <summary>`repeat`: how many times.</summary>
+    public int? Times { get; set; }
+
+    /// <summary>`read-text`: the variable to store what was read into.</summary>
+    public string? Into { get; set; }
 }
 
 internal sealed class FlowOptions
@@ -126,6 +139,14 @@ internal sealed class FlowDocument
     public FlowOptions? Options { get; set; }
     public List<FlowStep> Steps { get; set; } = new();
 
+    /// <summary>Document-level variables. A value is a string, or an array of strings when a
+    /// `foreach` needs a list. `--set name=value` overrides a string one (and reduces a list to a
+    /// single element, documented rather than surprising).</summary>
+    public Dictionary<string, JsonElement>? Variables { get; set; }
+
+    [JsonIgnore] internal Dictionary<string, string> Texts { get; } = new(StringComparer.Ordinal);
+    [JsonIgnore] internal Dictionary<string, string[]> Lists { get; } = new(StringComparer.Ordinal);
+
     internal static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -134,7 +155,7 @@ internal sealed class FlowDocument
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    internal static FlowDocument Load(string path)
+    internal static FlowDocument Load(string path, IReadOnlyDictionary<string, string>? provided = null)
     {
         string text;
         try
@@ -161,6 +182,33 @@ internal sealed class FlowDocument
             throw new CommandFailure(2, $"'{path}' 的 format 是 '{document.Format}'，期望 '{FormatName}'");
         if (document.Version is < 1 or > CurrentVersion)
             throw new CommandFailure(2, $"'{path}' 的 version 是 {document.Version}，这个版本只认 1");
+
+        foreach (var (name, value) in document.Variables ?? [])
+        {
+            switch (value.ValueKind)
+            {
+                case JsonValueKind.String:
+                    document.Texts[name] = value.GetString() ?? "";
+                    break;
+                case JsonValueKind.Array:
+                    document.Lists[name] = value.EnumerateArray()
+                        .Where(e => e.ValueKind == JsonValueKind.String)
+                        .Select(e => e.GetString() ?? "")
+                        .ToArray();
+                    break;
+                default:
+                    throw new CommandFailure(2, $"变量 '{name}' 只能是字符串或字符串数组");
+            }
+        }
+
+        // --set wins over the document, which is what makes one file reusable with other data.
+        foreach (var (name, value) in provided ?? new Dictionary<string, string>())
+        {
+            document.Texts[name] = value;
+            if (document.Lists.ContainsKey(name)) document.Lists[name] = [value];
+        }
+
+        var scope = new HashSet<string>(document.Texts.Keys, StringComparer.Ordinal);
 
         for (int i = 0; i < document.Steps.Count; i++)
         {
@@ -192,22 +240,234 @@ internal sealed class FlowDocument
                     throw new CommandFailure(2, $"第 {i + 1} 步 when 的 else '{otherwise}' 不认识（可用：skip | fail）");
             }
 
-            if (step.Type is "wait-text" or "click-text")
+            if (step.Type is "wait-text" or "click-text" or "read-text")
             {
                 if (step.Region is null)
                     throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 region（读哪一块）");
-                if (string.IsNullOrEmpty(step.Text))
-                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 text（等什么字）");
                 if (step.Match is { } mode && !TextPredicate.IsKnownMode(mode))
                     throw new CommandFailure(2,
                         $"第 {i + 1} 步 {step.Type} 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
                 if (step.Region.Space != FlowSpace.Client)
                     throw new CommandFailure(2,
                         $"第 {i + 1} 步 {step.Type} 的 region 只支持客户区坐标（space=client）：屏幕坐标会因为窗口移动而失效");
+                if (step.Type is "wait-text" or "click-text" && string.IsNullOrEmpty(step.Text))
+                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 text（等什么字）");
+                if (step.Type == "read-text" && string.IsNullOrEmpty(step.Into))
+                    throw new CommandFailure(2, $"第 {i + 1} 步 read-text 需要 into（读到的东西存进哪个变量）");
+            }
+
+            // Groups: a `repeat` needs a count, a `foreach` needs a list, and both need steps to run.
+            if (step.Type == "repeat" && (step.Times is not int times || times < 0 || times > MaxLoopIterations))
+                throw new CommandFailure(2, $"第 {i + 1} 步的 repeat 需要 times（0 到 {MaxLoopIterations} 之间）");
+            if (step.Type is "repeat" or "foreach" && step.When is not null)
+            {
+                // Loops are flattened before execution, so a condition on the group itself would have
+                // nowhere to live. Say so instead of quietly ignoring it.
+                throw new CommandFailure(2,
+                    $"第 {i + 1} 步的 {step.Type} 不能带 when：把前提写到里面的步骤上（循环体会各自判断）");
+            }
+            if (step.Type == "foreach")
+            {
+                if (string.IsNullOrEmpty(step.In))
+                    throw new CommandFailure(2, $"第 {i + 1} 步的 foreach 需要 in（遍历哪个列表变量）");
+                if (!document.Lists.ContainsKey(step.In!))
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步的 foreach 遍历 '{step.In}'，但文档 variables 里没有这个列表");
+            }
+
+            CheckPlaceholders(step, scope, $"第 {i + 1} 步");
+
+            // A read-text defines a variable for the steps after it, so the check above can stay a
+            // straightforward forward pass instead of a guess about what a capture might produce.
+            if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
+
+            if (step.Steps is { Count: > 0 })
+            {
+                var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
+                if (step.Type == "foreach") inner.Add("item");
+                ValidateSteps(step.Steps, inner, $"第 {i + 1} 步里");
+            }
+            else if (step.Type is "repeat" or "foreach")
+            {
+                throw new CommandFailure(2, $"第 {i + 1} 步的 {step.Type} 里没有步骤");
             }
         }
 
         return document;
+    }
+
+    /// <summary>
+    /// The same checks for a group's children: a file is walked the way it will be executed, carrying
+    /// the names in scope, so a `{{typo}}` is refused when the file is loaded - with the path to the
+    /// step that used it - instead of half-way through a run.
+    /// </summary>
+    private static void ValidateSteps(List<FlowStep> steps, HashSet<string> scope, string path)
+    {
+        for (int i = 0; i < steps.Count; i++)
+        {
+            FlowStep step = steps[i] ?? throw new CommandFailure(2, $"{path}第 {i + 1} 步是 null");
+            string where = $"{path}第 {i + 1} 步";
+
+            if (!KnownTypes.Contains(step.Type))
+                throw new CommandFailure(2, $"{where}的类型 '{step.Type}' 不认识（可用：{string.Join(" | ", KnownTypes)}）");
+            if (step.When is { } when && (when.Region is null || string.IsNullOrEmpty(when.Text)))
+                throw new CommandFailure(2, $"{where}的 when 需要 region 与 text（前提是什么）");
+            if (step.When?.Match is { } conditionMode && !TextPredicate.IsKnownMode(conditionMode))
+                throw new CommandFailure(2, $"{where}的 when 的 match '{conditionMode}' 不认识");
+            if (step.When is { } condition && condition.Target is null && step.Target is null)
+                throw new CommandFailure(2, $"{where}的 when 需要 target（自己给，或者步骤本身有）");
+            if (step.Type is "wait-text" or "click-text" or "read-text" && step.Region is null)
+                throw new CommandFailure(2, $"{where}的 {step.Type} 需要 region（读哪一块）");
+            if (step.Type == "repeat" && (step.Times is not int t || t < 0 || t > MaxLoopIterations))
+                throw new CommandFailure(2, $"{where}的 repeat 需要 times（0 到 {MaxLoopIterations} 之间）");
+            if (step.Type == "foreach" && string.IsNullOrEmpty(step.In))
+                throw new CommandFailure(2, $"{where}的 foreach 需要 in（遍历哪个列表变量）");
+
+            CheckPlaceholders(step, scope, where);
+            if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
+
+            if (step.Steps is { Count: > 0 } children)
+            {
+                var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
+                if (step.Type == "foreach") inner.Add("item");
+                ValidateSteps(children, inner, $"{where}里");
+            }
+            else if (step.Type is "repeat" or "foreach")
+            {
+                throw new CommandFailure(2, $"{where}的 {step.Type} 里没有步骤");
+            }
+        }
+    }
+
+    /// <summary>Every `{{name}}` a step mentions, taken from the step's own JSON so a new field cannot
+    /// be forgotten here, and checked against what is actually in scope.</summary>
+    private static void CheckPlaceholders(FlowStep step, HashSet<string> scope, string where)
+    {
+        foreach (string name in Placeholders(step))
+        {
+            bool loopVariable = name is "index" or "item";
+            if (!scope.Contains(name) && !loopVariable)
+            {
+                throw new CommandFailure(2,
+                    $"{where}用了未定义的变量 {{{{{name}}}}}（文档 variables、循环变量 index/item，或者 --set）");
+            }
+        }
+    }
+
+    internal static IEnumerable<string> Placeholders(FlowStep step) =>
+        PlaceholderPattern.Matches(JsonSerializer.Serialize(step, Json))
+            .Select(m => m.Groups[1].Value)
+            .Distinct(StringComparer.Ordinal);
+
+    internal static readonly System.Text.RegularExpressions.Regex PlaceholderPattern =
+        new(@"\{\{([A-Za-z0-9_.]+)\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
+    /// Replaces `{{name}}` with what the scope holds. Called at the last moment before dispatch, on the
+    /// compiled arguments, so every step type gets variables without a line of per-type code.
+    /// </summary>
+    internal static string Expand(string text, IReadOnlyDictionary<string, string> scope)
+    {
+        if (!text.Contains("{{", StringComparison.Ordinal)) return text;
+        return PlaceholderPattern.Replace(text, match =>
+        {
+            string name = match.Groups[1].Value;
+            if (scope.TryGetValue(name, out string? value)) return value;
+            throw new CommandFailure(2, $"用了未定义的变量 {{{{{name}}}}}（文档 variables、循环变量，或者 --set）");
+        });
+    }
+
+    /// <summary>
+    /// Turns loops into the steps they would run, with the loop variables substituted: a `repeat` of
+    /// three becomes three copies, a `foreach` one copy per item. Loops are the only structural
+    /// construct, so flattening here keeps exactly one execution loop - and one place where pause,
+    /// cancel and step reporting live - instead of a second interpreter for groups.
+    /// </summary>
+    internal static List<FlowStep> ExpandLoops(List<FlowStep> steps, FlowDocument document)
+    {
+        var plan = new List<FlowStep>();
+        foreach (FlowStep step in steps)
+        {
+            if (step.Type is not ("repeat" or "foreach"))
+            {
+                plan.Add(step);
+                continue;
+            }
+
+            string[] items = step.Type == "foreach" && step.In is { } name && document.Lists.TryGetValue(name, out string[]? list)
+                ? list
+                : [];
+            int iterations = step.Type == "repeat" ? Math.Clamp(step.Times ?? 0, 0, MaxLoopIterations) : items.Length;
+
+            for (int round = 0; round < iterations; round++)
+            {
+                var loopScope = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["index"] = round.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                };
+                if (step.Type == "foreach") loopScope["item"] = items[round];
+
+                foreach (FlowStep child in ExpandLoops(step.Steps ?? [], document))
+                {
+                    plan.Add(Substitute(child, loopScope));
+                }
+            }
+        }
+        return plan;
+    }
+
+    /// <summary>
+    /// A copy of the step with the loop variables filled in. Only the string fields that a loop can
+    /// meaningfully vary: numbers cannot hold a placeholder in JSON, which is a limitation worth
+    /// stating rather than working around.
+    /// </summary>
+    /// <summary>
+    /// The step as it will run: a copy with every `{{name}}` resolved against the current scope.
+    /// Unknown names are refused here, at the last moment before dispatch, because the loader can only
+    /// check what is statically in scope (document variables and loop variables) - not what a
+    /// `read-text` captured two steps ago.
+    /// </summary>
+    internal static FlowStep Resolve(FlowStep step, IReadOnlyDictionary<string, string> scope)
+    {
+        FlowStep copy = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
+        if (copy.Target is { } target)
+        {
+            target.Process = Fill(target.Process);
+            target.Class = Fill(target.Class);
+            target.Title = Fill(target.Title);
+        }
+        copy.Text = Fill(copy.Text);
+        copy.Combo = Fill(copy.Combo);
+        copy.Into = Fill(copy.Into);
+        copy.Note = Fill(copy.Note);
+        return copy;
+
+        string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, scope);
+    }
+
+    private static FlowStep Substitute(FlowStep step, IReadOnlyDictionary<string, string> scope)
+    {
+        // A deep copy through the serializer: the plan must not share fields with the document, or the
+        // second loop round would substitute into an already-substituted step.
+        FlowStep copy = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
+        if (copy.Target is { } target)
+        {
+            target.Process = Fill(target.Process);
+            target.Class = Fill(target.Class);
+            target.Title = Fill(target.Title);
+        }
+        copy.Text = Fill(copy.Text);
+        copy.Combo = Fill(copy.Combo);
+        copy.Into = Fill(copy.Into);
+        copy.In = Fill(copy.In);
+        copy.Note = Fill(copy.Note);
+        return copy;
+
+        string? Fill(string? value) =>
+            string.IsNullOrEmpty(value) || !value.Contains("{{", StringComparison.Ordinal)
+                ? value
+                : PlaceholderPattern.Replace(value, m =>
+                    scope.TryGetValue(m.Groups[1].Value, out string? replaced) ? replaced : m.Value);
     }
 
     internal void Save(string path)
@@ -220,8 +480,17 @@ internal sealed class FlowDocument
     internal static readonly string[] KnownTypes =
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
-        "click-text",
+        "click-text", "read-text", "repeat", "foreach",
     ];
+
+    /// <summary>Steps that read a region: they share the region/target/match rules and the runner.</summary>
+    internal static readonly string[] ReadingTypes = ["wait-text", "click-text", "read-text"];
+
+    /// <summary>Steps that only exist for the runner: they carry steps of their own or store a value.</summary>
+    internal static readonly string[] RunnerTypes = ["sleep", "wait-window", "wait-text", "click-text", "read-text", "repeat", "foreach"];
+
+    /// <summary>One loop cannot run forever: the cap is stated, not discovered at 3 a.m.</summary>
+    internal const int MaxLoopIterations = 10_000;
 
     /// <summary>
     /// Turns a step into the command line that does it. This is the whole point of the flow format:

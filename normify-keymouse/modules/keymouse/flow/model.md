@@ -6,14 +6,14 @@ tags: [flow, json]
 name: {zh: "流程文档与编译器", en: "Document and compiler"}
 description:
   zh: >
-      流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；条件与前置条件也在加载时校验（`wait-text`/`click-text` 必须有 region 与 text、match 必须是已知模式、region 只能客户区坐标；`when` 还要能定位到窗口、`else` 只能是 skip/fail），让拼写错误只花一秒钟而不是等满超时。
+      流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环与变量同样在加载时校验（region/text/match 规则、`repeat` 的 times 上限、`foreach` 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里且 `read-text` 的 into 对后续步骤可见）。另有展平（循环 → 步骤）与替换（`Resolve` 每步一次）。
       
   en: >
-      Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and conditions and preconditions are validated there too (wait-text/click-text need a region and text, the match must be a known mode, the region must be client-relative; a when must resolve to a window and its else must be skip or fail), so a typo costs a second instead of a full timeout.
+      Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, preconditions, loops and variables (the region/text/match rules, the times cap, a foreach list that must exist, groups that cannot carry a when, placeholders that must be in scope, and a read-text into that is visible to later steps). It also flattens loops into steps and resolves placeholders per step.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:19.954Z"
-fingerprint: 2838732592244726e1a4d2c3931cfd691fb7099e74da3a730762eb47b3598eca
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:09.822Z"
+fingerprint: 8b6008aead66352daab982f3f00c2249404df7c57de7d6f400753c550d97bb8e
 source:
   - path: "src/KeyMouse.Core/FlowModel.cs"
   - path: "src/KeyMouse.Core/TextPredicate.cs"
@@ -22,10 +22,10 @@ apis:
     path: "FlowDocument.Load"
     description:
       zh: >
-          读并校验流程文件（格式、版本、步骤类型、条件与前置条件）。
+          读并校验（含条件、循环与变量作用域）。
           
       en: >
-          Loads and validates a flow file (format, version, step types, conditions and preconditions).
+          Loads and validates (conditions, loops and variable scope included).
           
   - protocol: rpc
     path: "FlowDocument.Save"
@@ -35,6 +35,24 @@ apis:
           
       en: >
           Writes the flow as canonical JSON (recorder and editor both use it).
+          
+  - protocol: rpc
+    path: "FlowDocument.ExpandLoops"
+    description:
+      zh: >
+          把 repeat/foreach 展平成它们会执行的步骤。
+          
+      en: >
+          Flattens repeat/foreach into the steps they would run.
+          
+  - protocol: rpc
+    path: "FlowDocument.Resolve"
+    description:
+      zh: >
+          派发前解析一步里的 {{占位符}}。
+          
+      en: >
+          Resolves the placeholders of one step before dispatch.
           
   - protocol: rpc
     path: "FlowDocument.ToArguments"

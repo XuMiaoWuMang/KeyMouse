@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T11:27:29.391Z",
+    "compiled_at": "2026-10-03T11:42:28.425Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 161,
-      "leaf_count": 131,
-      "api_count": 242,
-      "dep_count": 184,
+      "module_count": 162,
+      "leaf_count": 132,
+      "api_count": 245,
+      "dep_count": 186,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
       "layout_count": 30,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 12,
+      "change_count": 13,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 160,
+        "descendant_count": 161,
         "own_api_count": 0,
-        "inherited_api_count": 242,
+        "inherited_api_count": 245,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -1283,7 +1283,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 5,
-        "dep_in": 6
+        "dep_in": 5
       }
     },
     "keymouse.cli.mouse": {
@@ -2518,9 +2518,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:28.923Z",
-      "fingerprint": "d271492b69bf9d4ff6b704b1e54088d77f40ceaedcc6263c67e0e6bc080afa7d",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:42:27.897Z",
+      "fingerprint": "9eb3a52e5403ad81bb3decd952105813fa8242dbfdee1bd72f50555be6db3003",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2553,9 +2553,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.955Z",
-      "fingerprint": "4f70c478ee4b325879bebca147603d898247de73541e494edd4c1394290c9d28",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.825Z",
+      "fingerprint": "cc26e050f38a010464d3aa35922363955c5a98c24f73f4e83c2cad68fbe0dfb5",
       "apis": [
         {
           "protocol": "file",
@@ -2597,9 +2597,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:28.922Z",
-      "fingerprint": "e2285beeb7226d08be21e60a94c59d0c697c93022bed8d89878963fbf6d998bc",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:42:27.897Z",
+      "fingerprint": "cf4bfebc6e46307abaf07671c2ff747ce2ad331711fb4059073bc2ea77f2f052",
       "apis": [
         {
           "protocol": "file",
@@ -2641,9 +2641,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:28.923Z",
-      "fingerprint": "160c2c8e521addc054bcaf05b7b5404fd7abb27b754f06051d349d29442a6e1d",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:42:27.898Z",
+      "fingerprint": "2ac7baff7439aea100298244027d83f607a7025b044134fa20e02a6b35e6f999",
       "apis": [
         {
           "protocol": "file",
@@ -2685,9 +2685,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.955Z",
-      "fingerprint": "5138d951a2f77e94ed99d5c30e7fa15e554304ed2575effb08aa9c0be5a11760",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.825Z",
+      "fingerprint": "bcee7c284ed5225dee8e8147ef5ac86d327bd3eec2dfa2ed47e7044ee75d84dd",
       "apis": [
         {
           "protocol": "file",
@@ -2900,9 +2900,9 @@
           "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.047Z",
-      "fingerprint": "f750c9c3f045078536995af88a134abe107c9729da4b0166b8a3e83e8619a390",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.824Z",
+      "fingerprint": "ee7ca3e44b026bf31763ee8ace9995548fd652494c11b6d67d66da17b27f8e27",
       "apis": [
         {
           "protocol": "rpc",
@@ -2964,12 +2964,12 @@
         "ui"
       ],
       "name": {
-        "zh": "步骤视图模型",
-        "en": "Step view model"
+        "zh": "步骤视图模型与目录",
+        "en": "Step view model and catalogue"
       },
       "description": {
-        "zh": "列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动同时刷新摘要、JSON 预览与该显示的字段。**每个 setter 先比一次值**——折叠的卡片照样是绑定的，实测打开文件就会把默认值写回模型（click 步骤凭空多出 ms: 0），所以未保存标记按序列化内容比对，而不是\"动过手\"。\n",
-        "en": "The editable model behind the list and the inspector: every field reads and writes the shared schema step directly, and one edit refreshes the summary, the JSON preview and the visible sections together. Every setter compares first - a collapsed card is still bound, and opening a file measurably wrote defaults back (a click step gained ms: 0) - so the unsaved marker compares serialised content.\n"
+        "zh": "列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段；每个 setter 先比一次值（折叠卡片也会回写默认值，实测过）。分组（`repeat`/`foreach`）与 `read-text` 在这里有摘要与字段；**子步骤原样保留**（视图模型包的是整对象，保存不会丢循环体）。\n",
+        "en": "The editable model behind the list and the inspector: every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first (collapsed cards do write defaults back - measured). Groups and read-text get their own summaries and fields, and child steps are preserved verbatim: the view model wraps whole objects, so saving never loses a loop body.\n"
       },
       "source": [
         {
@@ -2977,11 +2977,14 @@
         },
         {
           "path": "editor/KeyMouse.FlowEditor/EditorModel.cs"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/Compat.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.239Z",
-      "fingerprint": "da816a90787059deb4b7e6e2d465f9da0e512bf3514e4187f1923973ec95d12c",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.823Z",
+      "fingerprint": "72dd5bc2ccab053f7ab9073484d8675d9c162c2ec8000098e273873235f7ea76",
       "apis": [
         {
           "protocol": "rpc",
@@ -2996,8 +2999,8 @@
           "protocol": "rpc",
           "path": "EditorModel.Save",
           "description": {
-            "zh": "按共享 schema 写回文件。\n",
-            "en": "Writes the file back through the shared schema.\n"
+            "zh": "按共享 schema 写回文件（保留分组子步骤）。\n",
+            "en": "Writes the file back through the shared schema (group children included).\n"
           },
           "key": "rpc:EditorModel.Save"
         },
@@ -3131,13 +3134,13 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.954Z",
-      "fingerprint": "7e092c69827c2251e47a3d06c193d0e4e5483051a8c653922f3b78a19c18ceed",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.204Z",
+      "fingerprint": "89aca4c57048ffb3c1b4df69b8245e2bbbc095bfccc3986afef099bea0ce1f69",
       "aggregate": {
         "descendant_count": 3,
         "own_api_count": 0,
-        "inherited_api_count": 9,
+        "inherited_api_count": 11,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -3157,8 +3160,8 @@
         "en": "Document and compiler"
       },
       "description": {
-        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；条件与前置条件也在加载时校验（`wait-text`/`click-text` 必须有 region 与 text、match 必须是已知模式、region 只能客户区坐标；`when` 还要能定位到窗口、`else` 只能是 skip/fail），让拼写错误只花一秒钟而不是等满超时。\n",
-        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and conditions and preconditions are validated there too (wait-text/click-text need a region and text, the match must be a known mode, the region must be client-relative; a when must resolve to a window and its else must be skip or fail), so a typo costs a second instead of a full timeout.\n"
+        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环与变量同样在加载时校验（region/text/match 规则、`repeat` 的 times 上限、`foreach` 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里且 `read-text` 的 into 对后续步骤可见）。另有展平（循环 → 步骤）与替换（`Resolve` 每步一次）。\n",
+        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, preconditions, loops and variables (the region/text/match rules, the times cap, a foreach list that must exist, groups that cannot carry a when, placeholders that must be in scope, and a read-text into that is visible to later steps). It also flattens loops into steps and resolves placeholders per step.\n"
       },
       "source": [
         {
@@ -3168,16 +3171,16 @@
           "path": "src/KeyMouse.Core/TextPredicate.cs"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.954Z",
-      "fingerprint": "2838732592244726e1a4d2c3931cfd691fb7099e74da3a730762eb47b3598eca",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.822Z",
+      "fingerprint": "8b6008aead66352daab982f3f00c2249404df7c57de7d6f400753c550d97bb8e",
       "apis": [
         {
           "protocol": "rpc",
           "path": "FlowDocument.Load",
           "description": {
-            "zh": "读并校验流程文件（格式、版本、步骤类型、条件与前置条件）。\n",
-            "en": "Loads and validates a flow file (format, version, step types, conditions and preconditions).\n"
+            "zh": "读并校验（含条件、循环与变量作用域）。\n",
+            "en": "Loads and validates (conditions, loops and variable scope included).\n"
           },
           "key": "rpc:FlowDocument.Load"
         },
@@ -3189,6 +3192,24 @@
             "en": "Writes the flow as canonical JSON (recorder and editor both use it).\n"
           },
           "key": "rpc:FlowDocument.Save"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowDocument.ExpandLoops",
+          "description": {
+            "zh": "把 repeat/foreach 展平成它们会执行的步骤。\n",
+            "en": "Flattens repeat/foreach into the steps they would run.\n"
+          },
+          "key": "rpc:FlowDocument.ExpandLoops"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowDocument.Resolve",
+          "description": {
+            "zh": "派发前解析一步里的 {{占位符}}。\n",
+            "en": "Resolves the placeholders of one step before dispatch.\n"
+          },
+          "key": "rpc:FlowDocument.Resolve"
         },
         {
           "protocol": "rpc",
@@ -3214,10 +3235,10 @@
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 3,
+        "own_api_count": 5,
         "inherited_api_count": 0,
         "dep_out": 1,
-        "dep_in": 5
+        "dep_in": 7
       }
     },
     "keymouse.flow.predicate": {
@@ -3307,17 +3328,17 @@
         "en": "Flow runner"
       },
       "description": {
-        "zh": "执行一个流程：逐步编译成命令交给同一份派发，失败即停或 `--keep-going`，可重试退出码按 `--retry`，报告与文本脚本同形。每步之间经过执行接缝（暂停阻塞、取消抛退出码 7、边界作为事件上报）。文本条件共用同一个轮询：`wait-text` 等它、`click-text` 等到后点匹配框中心、`when` 不成立则跳过（报告标 skipped）或按 `else: fail` 退出码 3。\n",
-        "en": "Runs a flow: steps are compiled into commands for the same dispatch, stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry. Between steps it passes the execution seam (a pause blocks, a cancel throws exit code 7, boundaries arrive as events). All text conditions share one polling loop: wait-text waits, click-text clicks the middle of the matched box, and an unmet when skips the step or fails with exit 3 - none of the three can send anything extra.\n"
+        "zh": "执行一个流程：先展平循环，再逐步解析变量、编译成命令交给同一份派发；失败即停或 `--keep-going`，可重试退出码按 `--retry`。每步之间经过执行接缝（暂停阻塞、取消抛退出码 7、边界作为事件上报）。文本条件共用同一个轮询：`wait-text` 等它、`click-text` 点到匹配框中心、`when` 不成立则跳过或退出码 3；`read-text` 把读到的内容存进变量。\n",
+        "en": "Runs a flow: loops are flattened first, then each step has its variables resolved and is compiled into a command for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam (a pause blocks, a cancel throws exit code 7, boundaries come as events). Text conditions share one polling loop: wait-text waits, click-text clicks the matched box, an unmet when skips or exits 3, and read-text stores a value.\n"
       },
       "source": [
         {
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.954Z",
-      "fingerprint": "bd2b72f94f0675e0c622926b05b796ab39043aa3fb52c11067521d302fd74254",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.823Z",
+      "fingerprint": "19384591c36518462d5983b183e3fb009cb9f24772db85f4d3c63cdd169cc213",
       "apis": [
         {
           "protocol": "rpc",
@@ -3342,10 +3363,20 @@
         {
           "kind": "call",
           "to": "keymouse.flow.model",
-          "to_api": "rpc:FlowDocument.ToArguments",
+          "to_api": "rpc:FlowDocument.ExpandLoops",
           "label": {
-            "zh": "步骤编译成命令",
-            "en": "Compile a step"
+            "zh": "先展平循环",
+            "en": "Flatten the loops"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.Resolve",
+          "label": {
+            "zh": "再解析变量",
+            "en": "Then resolve variables"
           },
           "cross_tree": false
         },
@@ -3374,8 +3405,8 @@
           "to": "keymouse.probe.engine",
           "to_api": "rpc:Probe.ReadOnce",
           "label": {
-            "zh": "每轮读一次区域",
-            "en": "One read per poll"
+            "zh": "读一次区域（变量来源）",
+            "en": "One read (value source)"
           },
           "cross_tree": false
         },
@@ -3394,8 +3425,8 @@
         "descendant_count": 0,
         "own_api_count": 2,
         "inherited_api_count": 0,
-        "dep_out": 5,
-        "dep_in": 3
+        "dep_out": 6,
+        "dep_in": 4
       }
     },
     "keymouse.input": {
@@ -5464,9 +5495,9 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.004Z",
-      "fingerprint": "1af9a7d03b6f579038d28ade985b8b59b5f013b9ba04ce988ac66b294129d101",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.204Z",
+      "fingerprint": "7d1e5ad916f84dbe8ca3295012acb3b0bfdde1bb73dec0c85a6ae18e62ad1a3c",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -5614,9 +5645,9 @@
           "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.044Z",
-      "fingerprint": "a4f17d036f39db3e044b08b9f430c9ae0b92bafbc2d2c8e36aa331ab935ded81",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.205Z",
+      "fingerprint": "f2e265039909845b2231557a945b2a566424deb346c0bc056d831e9302b921ba",
       "aggregate": {
         "descendant_count": 3,
         "own_api_count": 0,
@@ -5650,9 +5681,9 @@
           "path": "src/KeyMouse.Runner/RunnerJob.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.044Z",
-      "fingerprint": "5fb74e27148f34b6f0dcf0635f721bd449d448bc267708e4166cd49ccfa6f588",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.823Z",
+      "fingerprint": "151727978f00d9e7058b1450e24509fe925e382a4288fc7cf3274bf16b66636d",
       "apis": [
         {
           "protocol": "rpc",
@@ -7693,13 +7724,13 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.010Z",
-      "fingerprint": "703dde847a30afb9ab2ea330671ea2f7d237469ccaabc83002de27eb2ebe41f2",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.206Z",
+      "fingerprint": "149f745de51a657e53e98da2cb89bda8b0642a4be666dd6e3f99bb6cb5ff8c3a",
       "aggregate": {
-        "descendant_count": 29,
+        "descendant_count": 30,
         "own_api_count": 0,
-        "inherited_api_count": 28,
+        "inherited_api_count": 29,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -7923,9 +7954,9 @@
           "end_line": 343
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.955Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.824Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "aggregate": {
         "descendant_count": 8,
         "own_api_count": 0,
@@ -8007,9 +8038,9 @@
           "end_line": 684
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.953Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.206Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8076,9 +8107,9 @@
           "end_line": 76
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.010Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.206Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8136,9 +8167,9 @@
           "end_line": 289
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.010Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.207Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8172,54 +8203,52 @@
       }
     },
     "keymouse.tests.smoke.loops": {
-      "uid": "5c6e7082",
+      "uid": "7a1f1002",
       "id": "keymouse.tests.smoke.loops",
       "parent": "keymouse.tests.smoke",
       "tree": "keymouse",
       "depth": 4,
       "tags": [
         "test",
-        "desktop",
-        "invariant"
+        "desktop"
       ],
       "name": {
-        "zh": "循环与单进程保证",
-        "en": "Loops & the one-process proof"
+        "zh": "循环与变量冒烟",
+        "en": "Loop and variable smoke"
       },
       "description": {
-        "zh": "v2 的两条硬保证在这里被真桌面验证：循环真的按次数写对了行（回读剪贴板逐行比对），以及脚本运行期间**采样到的进程数恒为 1**（如果改成每行一个进程，这里立刻变红）。\n",
-        "en": "The two v2 guarantees are verified on a real desktop here: the loop really wrote the right number of lines (read back from the clipboard), and the sampled process count stays exactly 1 for the whole run.\n"
+        "zh": "真桌面上：一个列表变量驱动 foreach，把每一项真的打进靶子（回读剪贴板确认三项都在）；read-text 把屏幕上的内容读进变量，后面的步骤用 {{seen}} 把它打出来。实测到的坑也留在这里：读之前留着全选会把置信度从 92.0 打到 65.0，所以先点一下区域外。\n",
+        "en": "On a real desktop: a list variable drives a foreach that types every item (the clipboard is read back to prove all three landed), and a read-text captures what is on screen into a variable a later step interpolates. The measured trap lives here too: reading with a selection in place drops confidence from 92.0 to 65.0, so the flow clicks outside the region first.\n"
       },
       "source": [
         {
           "path": "tests/smoke.ps1",
-          "line": 290,
-          "end_line": 343
+          "line": 689,
+          "end_line": 732
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.010Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.822Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
-          "path": "循环与单进程断言组",
+          "path": "循环与变量冒烟断言组",
           "description": {
-            "zh": "循环结果与进程数采样。\n",
-            "en": "Loop output and process sampling.\n"
+            "zh": "foreach 真的执行；read-text 捕获并被后续步骤使用。\n",
+            "en": "The foreach really runs; read-text captures and a later step uses it.\n"
           },
-          "key": "rpc:循环与单进程断言组"
+          "key": "rpc:循环与变量冒烟断言组"
         }
       ],
       "deps": [
         {
           "kind": "call",
-          "to": "keymouse.cli.main",
-          "from_api": "rpc:循环与单进程断言组",
-          "to_api": "rpc:keymouse <命令组>",
+          "to": "keymouse.flow.runner",
+          "to_api": "rpc:FlowRunner.Run",
           "label": {
-            "zh": "驱动被测命令",
-            "en": "Drive the command"
+            "zh": "执行流程",
+            "en": "Run the flow"
           },
           "cross_tree": false
         }
@@ -8258,9 +8287,9 @@
           "end_line": 568
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.011Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.207Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8328,9 +8357,9 @@
           "end_line": 515
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.011Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.207Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8407,9 +8436,9 @@
           "end_line": 215
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.011Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.207Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8467,9 +8496,9 @@
           "end_line": 166
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:16.011Z",
-      "fingerprint": "2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:01.207Z",
+      "fingerprint": "7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5",
       "apis": [
         {
           "protocol": "rpc",
@@ -8526,9 +8555,9 @@
           "end_line": 25
         }
       ],
-      "revision": "1b316650150f1540368ee548f7d9992ccaa3239e",
-      "updated_at": "2026-10-03T11:27:19.955Z",
-      "fingerprint": "e3c69dad862c12cc0e333b7f9718bdd3dd86180dda8714eea1e548db6f02bc21",
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.824Z",
+      "fingerprint": "2c39ef1c2bbc959cd356bf293e99434f4b62a3bb658fdba07307a26e44b56314",
       "deps": [
         {
           "kind": "call",
@@ -8543,9 +8572,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 15,
+        "descendant_count": 16,
         "own_api_count": 0,
-        "inherited_api_count": 16,
+        "inherited_api_count": 17,
         "dep_out": 1,
         "dep_in": 0
       }
@@ -8745,6 +8774,63 @@
           "label": {
             "zh": "被测的定位器",
             "en": "Locator under test"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 1,
+        "dep_in": 0
+      }
+    },
+    "keymouse.tests.unit.loops": {
+      "uid": "7a1f1001",
+      "id": "keymouse.tests.unit.loops",
+      "parent": "keymouse.tests.unit",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "unit"
+      ],
+      "name": {
+        "zh": "循环与变量单测",
+        "en": "Loop and variable tests"
+      },
+      "description": {
+        "zh": "不需要桌面：重复与遍历的展平（含嵌套相乘、次数 0、未知列表），展平不会改动文档，占位符替换与未定义变量的拒绝，分组不能带 when、缺 times/in/into 的拒绝，以及\"read-text 的 into 对它后面的步骤可见\"这条顺序规则。\n",
+        "en": "No desktop needed: flattening repeats and foreach loops (nested multiplication, zero times, an unknown list), flattening leaving the document untouched, placeholder substitution and the refusal of undefined variables, groups that cannot carry a when, missing times/in/into, and the ordering rule that a read-text into is visible to the steps after it.\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/LoopTests.cs"
+        }
+      ],
+      "revision": "69321dbdf0d2f94c72a77144dd1c35e063d13815",
+      "updated_at": "2026-10-03T11:41:09.822Z",
+      "fingerprint": "ce993c5b52da2a77cf0d139162628103d2a9dc9d34817c90231cba230e4f5b52",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "循环与变量断言组",
+          "description": {
+            "zh": "展平、替换、加载校验。\n",
+            "en": "Flattening, substitution, load validation.\n"
+          },
+          "key": "rpc:循环与变量断言组"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.Load",
+          "label": {
+            "zh": "被测的加载器",
+            "en": "Loader under test"
           },
           "cross_tree": false
         }
@@ -10434,7 +10520,8 @@
     "rpc:文字定位断言组": "keymouse.tests.unit.locator",
     "rpc:选区浮层与坐标系回归断言组": "keymouse.tests.smoke.region",
     "rpc:选区坐标换算断言组": "keymouse.tests.unit.region",
-    "rpc:循环与单进程断言组": "keymouse.tests.smoke.loops",
+    "rpc:循环与变量断言组": "keymouse.tests.unit.loops",
+    "rpc:循环与变量冒烟断言组": "keymouse.tests.smoke.loops",
     "rpc:找字与前置条件断言组": "keymouse.tests.smoke.act",
     "rpc:ci.yml (push)": "keymouse.build.ci",
     "rpc:CommandFailure": "keymouse.cli.failure",
@@ -10453,7 +10540,9 @@
     "rpc:ExecutionMode.NoteInjected": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteSuppressed": "keymouse.script.execution-mode",
     "rpc:ExtractGlobalOptions": "keymouse.cli.options",
+    "rpc:FlowDocument.ExpandLoops": "keymouse.flow.model",
     "rpc:FlowDocument.Load": "keymouse.flow.model",
+    "rpc:FlowDocument.Resolve": "keymouse.flow.model",
     "rpc:FlowDocument.Save": "keymouse.flow.model",
     "rpc:FlowDocument.ToArguments": "keymouse.flow.model",
     "rpc:FlowEditorCommand.Run": "keymouse.cli.flow",
@@ -11306,12 +11395,23 @@
     {
       "from": "keymouse.flow.runner",
       "to": "keymouse.flow.model",
-      "to_api": "rpc:FlowDocument.ToArguments",
+      "to_api": "rpc:FlowDocument.ExpandLoops",
       "kind": "call",
       "cross_tree": false,
       "label": {
-        "zh": "步骤编译成命令",
-        "en": "Compile a step"
+        "zh": "先展平循环",
+        "en": "Flatten the loops"
+      }
+    },
+    {
+      "from": "keymouse.flow.runner",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.Resolve",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "再解析变量",
+        "en": "Then resolve variables"
       }
     },
     {
@@ -11332,8 +11432,8 @@
       "kind": "call",
       "cross_tree": false,
       "label": {
-        "zh": "每轮读一次区域",
-        "en": "One read per poll"
+        "zh": "读一次区域（变量来源）",
+        "en": "One read (value source)"
       }
     },
     {
@@ -12147,14 +12247,13 @@
     },
     {
       "from": "keymouse.tests.smoke.loops",
-      "from_api": "rpc:循环与单进程断言组",
-      "to": "keymouse.cli.main",
-      "to_api": "rpc:keymouse <命令组>",
+      "to": "keymouse.flow.runner",
+      "to_api": "rpc:FlowRunner.Run",
       "kind": "call",
       "cross_tree": false,
       "label": {
-        "zh": "驱动被测命令",
-        "en": "Drive the command"
+        "zh": "执行流程",
+        "en": "Run the flow"
       }
     },
     {
@@ -12290,6 +12389,17 @@
       "label": {
         "zh": "被测的定位器",
         "en": "Locator under test"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.loops",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.Load",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的加载器",
+        "en": "Loader under test"
       }
     },
     {
@@ -13432,7 +13542,7 @@
     "keymouse.tests.smoke": {
       "schema_version": 1,
       "id": "keymouse.tests.smoke",
-      "updated_at": "2026-10-03T11:27:15.616Z",
+      "updated_at": "2026-10-03T11:41:00.547Z",
       "mode": "layers",
       "max_columns": 3,
       "order": [
@@ -13442,14 +13552,14 @@
         "keymouse.tests.smoke.features",
         "keymouse.tests.smoke.region",
         "keymouse.tests.smoke.record",
-        "keymouse.tests.smoke.loops",
-        "keymouse.tests.smoke.act"
+        "keymouse.tests.smoke.act",
+        "keymouse.tests.smoke.loops"
       ]
     },
     "keymouse.tests.unit": {
       "schema_version": 1,
       "id": "keymouse.tests.unit",
-      "updated_at": "2026-10-03T11:27:15.542Z",
+      "updated_at": "2026-10-03T11:41:00.470Z",
       "mode": "layers",
       "order": [
         "keymouse.tests.unit.harness",
@@ -13458,7 +13568,8 @@
         "keymouse.tests.unit.flow",
         "keymouse.tests.unit.window",
         "keymouse.tests.unit.runner",
-        "keymouse.tests.unit.locator"
+        "keymouse.tests.unit.locator",
+        "keymouse.tests.unit.loops"
       ]
     },
     "keymouse.tests.unit.parsing": {
@@ -13706,6 +13817,15 @@
         "zh": "交互式选区：region pick 与 probe --pick-region"
       },
       "updated_at": "2026-10-03T08:15:52.673Z"
+    },
+    {
+      "id": "2026-10-03-loops-and-variables",
+      "status": "verified",
+      "title": {
+        "zh": "循环与变量：repeat / foreach / read-text / 占位符",
+        "en": "Loops and variables: repeat / foreach / read-text / placeholders"
+      },
+      "updated_at": "2026-10-03T11:41:11.119Z"
     },
     {
       "id": "2026-10-03-nearest-upscale",

@@ -11,9 +11,9 @@ description:
   en: >
       Drives the recorder with KeyMouse input (the hooks do not filter injected events, so a synthetic session is a real one): record a click and some typing, check the JSON holds those steps with client-relative coordinates and window context, dry-run the recording clean, replay a hand-written flow for real and read the clipboard back, then walk both wait-text paths - text on screen is found with its confirmation count, text that is not times out with exit 3.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:16.011Z"
-fingerprint: 2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:01.207Z"
+fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
 source:
   - path: "tests/smoke.ps1"
     line: 523

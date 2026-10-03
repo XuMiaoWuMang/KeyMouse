@@ -11,9 +11,9 @@ description:
   en: >
       The service half of "one product, two entry points": it takes requests, executes them through exactly the same dispatch the CLI uses, and streams what happens back. What it buys is in-process state - job queueing, pause/resume/cancel, per-step events, a log stream - which a one-shot child process cannot offer. One job at a time: input is a global resource and the log stream is the process-wide console.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.044Z"
-fingerprint: a4f17d036f39db3e044b08b9f430c9ae0b92bafbc2d2c8e36aa331ab935ded81
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:01.205Z"
+fingerprint: f2e265039909845b2231557a945b2a566424deb346c0bc056d831e9302b921ba
 source:
   - path: "src/KeyMouse.Runner/RunnerHost.cs"
   - path: "src/KeyMouse.Runner/RunnerJob.cs"

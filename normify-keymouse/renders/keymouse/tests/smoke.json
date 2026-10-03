@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.smoke",
-  "updated_at": "2026-10-03T11:27:15.616Z",
+  "updated_at": "2026-10-03T11:41:00.547Z",
   "mode": "layers",
   "max_columns": 3,
   "order": [
@@ -11,7 +11,7 @@
     "keymouse.tests.smoke.features",
     "keymouse.tests.smoke.region",
     "keymouse.tests.smoke.record",
-    "keymouse.tests.smoke.loops",
-    "keymouse.tests.smoke.act"
+    "keymouse.tests.smoke.act",
+    "keymouse.tests.smoke.loops"
   ]
 }

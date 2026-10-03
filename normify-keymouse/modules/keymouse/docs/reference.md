@@ -11,9 +11,9 @@ description:
   en: >
       The complete per-command reference: selectors, window policy, exit codes, and scripting (inheritance, loops, variables, reports). It complements the built-in help: help gives the shape, this gives the details.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:19.955Z"
-fingerprint: 5138d951a2f77e94ed99d5c30e7fa15e554304ed2575effb08aa9c0be5a11760
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:09.825Z"
+fingerprint: bcee7c284ed5225dee8e8147ef5ac86d327bd3eec2dfa2ed47e7044ee75d84dd
 source:
   - path: "docs/reference.md"
 apis:

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-loops-and-variables",
+  "title": {
+    "zh": "循环与变量：repeat / foreach / read-text / 占位符",
+    "en": "Loops and variables: repeat / foreach / read-text / placeholders"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "流程格式加上结构：`variables`（字符串或列表）、`{{名字}}` 占位符（派发前一刻解析，配 `--set` 覆盖）、`repeat` / `foreach` 分组（展平成它们会执行的步骤，于是仍然只有一套执行循环：暂停/取消/逐步事件/重试全都复用）、`read-text`（把读到的内容存进变量）。加载校验走一遍与执行同构的树：未定义变量、未知列表、分组带 when、times 越界都在打开文件时以退出码 2 指出第几步。编辑器认识这几种步骤并原样保留子步骤。顺带实测到第三个测量坑：读之前留着全选会把置信度从 92.0 打到 65.0 甚至读空。",
+    "en": "Adds structure to the flow format: document variables (strings or lists), {{name}} placeholders resolved at the last moment before dispatch (with --set overriding), repeat/foreach groups (flattened into the steps they would run, so there is still exactly one execution loop - pause, cancel, per-step events and retries are all reused) and read-text (stores what was read in a variable). Validation walks the same tree execution will: undefined variables, unknown lists, a group carrying a when and out-of-range times all fail at load time with exit 2 and the step that caused it. The editor knows the new steps and preserves child steps verbatim. Also measures a third trap: reading with a selection in place drops confidence from 92.0 to 65.0 and can read nothing at all."
+  },
+  "modules": {
+    "create": [
+      "keymouse.tests.unit.loops",
+      "keymouse.tests.smoke.loops"
+    ],
+    "modify": [
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.runner.host",
+      "keymouse.editor.steps",
+      "keymouse.editor.shell",
+      "keymouse.tests.unit",
+      "keymouse.tests.smoke",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "foreach 对列表每一项执行一次，repeat 按次数执行；嵌套按次数相乘；计划步数在执行前可知",
+    "{{名字}} 在派发前解析，read-text 捕获的值后续步骤立即可用；未定义变量退出码 2",
+    "times 上限 10000；分组不能带 when（加载时拒绝并说明）；foreach 的列表必须存在",
+    "编辑器能创建这几种步骤，且保存时不丢分组子步骤",
+    "单测与冒烟全绿；validate 0 error"
+  ],
+  "note": "循环与变量落地：展平而不是第二个解释器；read-text 捕获；加载期作用域校验；编辑器保留子步骤；顺带记录\"选区反色会读坏\"的实测。",
+  "revision": {
+    "before": null,
+    "after": "69321dbdf0d2f94c72a77144dd1c35e063d13815"
+  },
+  "created_at": "2026-10-03T11:41:00.874Z",
+  "updated_at": "2026-10-03T11:41:11.119Z",
+  "closed_at": "2026-10-03T11:41:11.119Z"
+}

@@ -244,6 +244,37 @@ public sealed class StepVm : INotifyPropertyChanged
         set => Edit(Step.Confirm ?? 2, value, v => Step.Confirm = (int)v);
     }
 
+    /// <summary>`repeat`: how many times. `foreach`: the list variable. `read-text`: where the value
+    /// goes. The children of a group are edited in the JSON preview for now - they are preserved on
+    /// save either way, because the view model wraps whole step objects.</summary>
+    public Visibility GroupVisibility => Ui.Show(Step.Type is "repeat" or "foreach");
+    public Visibility IntoVisibility => Ui.Show(Step.Type is "read-text");
+    public Visibility TimesVisibility => Ui.Show(Step.Type is "repeat");
+    public Visibility InVisibility => Ui.Show(Step.Type is "foreach");
+
+    public double Times
+    {
+        get => Step.Times ?? 0;
+        set => Edit(Step.Times ?? 0, value, v => Step.Times = (int)v);
+    }
+
+    public string In
+    {
+        get => Step.In ?? "";
+        set => Edit(Step.In ?? "", value, v => Step.In = Blank(v));
+    }
+
+    public string Into
+    {
+        get => Step.Into ?? "";
+        set => Edit(Step.Into ?? "", value, v => Step.Into = Blank(v));
+    }
+
+    /// <summary>How many child steps a group carries, for the inspector's one-line summary.</summary>
+    public string ChildrenLabel => Step.Steps is { Count: > 0 } children
+        ? $"{children.Count} 个子步骤（在「这一步的 JSON」里编辑）"
+        : "没有子步骤";
+
     public string Note
     {
         get => Step.Note ?? "";

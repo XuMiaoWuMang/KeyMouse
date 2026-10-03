@@ -11,9 +11,9 @@ description:
   en: >
       The desktop half: type into the target, have `probe --find` report the box and the client click point, get exit code 3 for text that is not there, watch `click-text` actually click what it saw (then ctrl+a/ctrl+c and read the text back off the clipboard), and see a `when` precondition run its step, skip it, or fail with exit 3 depending on `else`.
       
-revision: 1b316650150f1540368ee548f7d9992ccaa3239e
-updated_at: "2026-10-03T11:27:19.953Z"
-fingerprint: 2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879
+revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
+updated_at: "2026-10-03T11:41:01.206Z"
+fingerprint: 7454cb1057eedf4bd977a43b6ccc304041162648ad521c8fe86959b909f4e1c5
 source:
   - path: "tests/smoke.ps1"
     line: 630

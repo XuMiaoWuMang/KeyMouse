@@ -25,6 +25,10 @@ internal static class StepCatalog
         new("sleep", "等待时间", "\uE916", "什么都不做，等这么多毫秒"),
         new("wait-window", "等窗口出现", "\uE7C4", "轮询直到目标窗口可用，超时退出码 3"),
         new("wait-text", "等文字出现", "\uE8D4", "读一块区域，等某段文字出现（可给容错预算）"),
+        new("click-text", "找字并点它", "\uE8B8", "等文字出现，然后点匹配框的中心"),
+        new("read-text", "读进变量", "\uE8D5", "读一块区域，把读到的东西存进一个变量"),
+        new("repeat", "重复 N 次", "\uE8EE", "把里面的步骤重复若干次（子步骤在 JSON 里编辑）"),
+        new("foreach", "遍历列表", "\uE8FD", "对列表变量里的每一项执行一次里面的步骤"),
     ];
 
     internal static Kind? Find(string type) => All.FirstOrDefault(k => k.Type == type);
@@ -88,6 +92,28 @@ internal static class StepCatalog
             IntervalMs = 250,
             Confirm = 2,
         },
+        "click-text" => new FlowStep
+        {
+            Type = type,
+            Target = new FlowTarget(),
+            Region = new FlowRegion { Space = FlowSpace.Client, Width = 400, Height = 32 },
+            Text = "",
+            Match = TextPredicate.Contains,
+            MaxErrors = 1,
+            TimeoutMs = 8000,
+            IntervalMs = 250,
+            Confirm = 2,
+            Button = "left",
+        },
+        "read-text" => new FlowStep
+        {
+            Type = type,
+            Target = new FlowTarget(),
+            Region = new FlowRegion { Space = FlowSpace.Client, Width = 400, Height = 32 },
+            Into = "seen",
+        },
+        "repeat" => new FlowStep { Type = type, Times = 3, Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
+        "foreach" => new FlowStep { Type = type, In = "rows", Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
         _ => new FlowStep { Type = type },
     };
 
@@ -112,6 +138,10 @@ internal static class StepCatalog
             "wait-text" => $"等「{Clip(step.Text)}」（{step.Match ?? TextPredicate.Contains}，" +
                            $"容错 {step.MaxErrors ?? 1}，区域 {step.Region?.Width}x{step.Region?.Height}，" +
                            $"上限 {step.TimeoutMs ?? 5000} ms）",
+            "click-text" => $"找「{Clip(step.Text)}」并点它（{step.Match ?? TextPredicate.Contains}，容错 {step.MaxErrors ?? 1}）",
+            "read-text" => $"读一块区域 → 变量 {step.Into}",
+            "repeat" => $"重复 {(step.Times ?? 0)} 次（{step.Steps?.Count ?? 0} 步）",
+            "foreach" => $"遍历 {step.In}（{step.Steps?.Count ?? 0} 步）",
             _ => step.Type,
         };
     }
