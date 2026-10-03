@@ -11,11 +11,11 @@ description:
   en: >
       WH_KEYBOARD_LL / WH_MOUSE_LL: install, pass every event through untouched (never swallow input), and keep the hook thread alive with a PeekMessage poll - low-level hooks need a pumping thread, and a recorder also has to notice its stop conditions while no input arrives. Events carry the hook timestamps, so the recorded pauses are the ones the user really left.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.454Z"
-fingerprint: 85b2ee3aa9408b096642b96ef1661761d5b6428d5e05d4e9f3727686c9819ab3
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.203Z"
+fingerprint: e19d0385e3e8bbd557aec002434fb3d2b8a47a69b6c532ec90ced03a5c6fd95c
 source:
-  - path: "NativeHooks.cs"
+  - path: "src/KeyMouse.Core/NativeHooks.cs"
 apis:
   - protocol: rpc
     path: "NativeHooks.Record"

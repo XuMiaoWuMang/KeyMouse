@@ -11,11 +11,11 @@ description:
   en: >
       The version-packed help text: command tables, selector and policy notes, exit-code meanings. Written as an interpolated raw string with the version constant injected.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.241Z"
-fingerprint: 750bc0aef435b8ef667c67f51b6b59c023e119da30118f9148eceefd5a260b19
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.195Z"
+fingerprint: 7d2aaaca86d67355fa8f5733fa6016e537b1b30a8a48cf1602066cb3149364db
 source:
-  - path: "Usage.cs"
+  - path: "src/KeyMouse.Core/Usage.cs"
     line: 1
     end_line: 128
 apis:

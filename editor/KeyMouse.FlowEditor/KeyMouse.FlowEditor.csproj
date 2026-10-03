@@ -12,27 +12,26 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
+    <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
 
-    <!-- Unpackaged, and self-contained: measured on this machine the only Windows App Runtime
-         present is the CBS (inbox) one, which the bootstrapper refuses (exit 0x80670016), while
+    <!-- Unpackaged, and self-contained: measured on this machine the only Windows App Runtime present
+         is the CBS (inbox) one, which the bootstrapper refuses (exit 0x80670016), while
          WindowsAppSDKSelfContained starts fine. It also means the editor needs nothing installed. -->
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-
-    <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
-    <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
   </ItemGroup>
 
-  <!-- One schema, two consumers: the flow format is not re-implemented here, it is linked verbatim
-       from the console tool, so the editor cannot drift from what `run` accepts. Only the two
-       types the schema needs are linked (CommandFailure lives in Compat.cs). -->
+  <!-- Three layers, one product: the editor is the UI entry point and talks to the capability layer
+       and the Runner through their assemblies. No schema is copied and no child process is spawned
+       per action any more - the Runner is a service the editor connects to. -->
   <ItemGroup>
-    <Compile Include="..\..\FlowModel.cs" Link="Shared\FlowModel.cs" />
-    <Compile Include="..\..\TextPredicate.cs" Link="Shared\TextPredicate.cs" />
+    <ProjectReference Include="..\..\src\KeyMouse.Core\KeyMouse.Core.csproj" />
+    <ProjectReference Include="..\..\src\KeyMouse.Runner\KeyMouse.Runner.csproj" />
   </ItemGroup>
 
 </Project>

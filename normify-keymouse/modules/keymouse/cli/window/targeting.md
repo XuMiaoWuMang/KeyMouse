@@ -11,11 +11,11 @@ description:
   en: >
       The shared prologue of every targeted command: resolve candidates, turn user input into an objective verdict, take the foreground per the gentle/none policy, then re-read the window to confirm it is still usable. Any failure throws before injection.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:15.215Z"
-fingerprint: bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.198Z"
+fingerprint: 7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9
 source:
-  - path: "Program.cs"
+  - path: "src/KeyMouse.Core/Commands.cs"
     line: 61
     end_line: 160
 apis:

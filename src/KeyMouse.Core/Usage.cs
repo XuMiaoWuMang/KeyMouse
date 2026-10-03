@@ -1,13 +1,13 @@
 namespace KeyMouse;
 
-/// <summary>The built-in help text, kept out of Program.cs so the command surface and the
+/// <summary>The built-in help text, kept out of Commands.cs so the command surface and the
 /// dispatcher do not have to share a file. $$""" because the text contains ${name}.</summary>
 internal static class Usage
 {
     public static void Print() => Console.WriteLine(Text);
 
     private const string Text = $$"""
-        KeyMouse {{Program.Version}} —— 在 Windows 上模拟真实的鼠标与键盘事件（执行一次即退出，无常驻进程）
+        KeyMouse {{Commands.Version}} —— 在 Windows 上模拟真实的鼠标与键盘事件（执行一次即退出，无常驻进程）
 
         用法
           KeyMouse <命令组> <子命令> [参数] [选项]
@@ -84,6 +84,15 @@ internal static class Usage
                                     <流程>.shots/ 里各存一张 320x200 的截图。
                                     回放就是：KeyMouse run 流程.json
 
+        常驻服务（给图形界面用）
+          serve                                       启动本地 Runner：一个进程里常驻着同一套
+                                                      能力层，客户端通过命名管道连它（默认
+                                                      \\.\pipe\keymouse-runner-<用户名>）拿流式事件：
+                                                      run / record / validate / pick-region / ocr /
+                                                      cancel / pause / resume / status / list /
+                                                      shutdown，一行一个 JSON 对象。
+                                                      编辑器连的就是它；CLI 的其余命令照旧是一次性
+                                                      执行，两者跑的是同一份派发。
         流程（录制出来的 JSON，以及图形编辑器）
           flow edit <流程.json>                       用 WinUI 图形编辑器打开一个流程：
                                                       左边是步骤列表（可拖拽排序），右边改参数，

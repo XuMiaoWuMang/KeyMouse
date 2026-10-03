@@ -11,11 +11,11 @@ description:
   en: >
       The comparison rule behind `wait-text`: contains / exact / fuzzy (edit distance within the budget the caller declares). Whitespace is ignored on both sides - the engine splits CJK into one word per character, so a literal comparison would never match the text a user can see; that is a comparison rule, not post-processing of the read, and `probe` still prints the engine output verbatim. Pure and unit-tested.
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:36.519Z"
-fingerprint: 391f210fd22534cbfc35f6a5f6425ac83b1c8591ace98048b8c5bd91301acc6e
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.201Z"
+fingerprint: e96e540fbb668ddd4c0fab445eae2f32bfd12ccc80d0ae9fc107796e6ce59cbe
 source:
-  - path: "TextPredicate.cs"
+  - path: "src/KeyMouse.Core/TextPredicate.cs"
 apis:
   - protocol: rpc
     path: "TextPredicate.Matches"

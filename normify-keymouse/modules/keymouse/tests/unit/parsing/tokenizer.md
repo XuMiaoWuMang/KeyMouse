@@ -11,9 +11,9 @@ description:
   en: >
       Quotes, escapes, trailing comments, tolerating a copied KeyMouse prefix, keeping line numbers: the behaviour of the script-syntax layer.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.892Z"
-fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.216Z"
+fingerprint: 36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
     line: 286

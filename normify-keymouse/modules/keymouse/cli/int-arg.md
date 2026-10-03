@@ -11,11 +11,11 @@ description:
   en: >
       One place for integer parsing and defaults; an invalid integer reports what the argument was for instead of a bare conversion failure.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:15.209Z"
-fingerprint: bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.195Z"
+fingerprint: 7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9
 source:
-  - path: "Program.cs"
+  - path: "src/KeyMouse.Core/Commands.cs"
     line: 640
     end_line: 650
 apis:

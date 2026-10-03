@@ -11,11 +11,11 @@ description:
   en: >
       Maps key names to virtual-key codes and the extended-key flag: letters, F1-F24, arrows, modifiers, numpad, symbol names, plus the raw vk:0x5B escape hatch.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:54.003Z"
-fingerprint: 25a839f445b22a732ec61ead6f2a2bcc99cff347f76627cd9fa8fc1b4e5b22cc
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.202Z"
+fingerprint: f0d96906f5a687eb74e73fb37fe601a97badbf1076d28b67349691369f92feac
 source:
-  - path: "KeyMap.cs"
+  - path: "src/KeyMouse.Core/KeyMap.cs"
     line: 1
     end_line: 73
 apis:

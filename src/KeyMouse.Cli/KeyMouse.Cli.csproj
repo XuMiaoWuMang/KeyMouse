@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>KeyMouse</AssemblyName>
+    <RootNamespace>KeyMouse.Cli</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>2.1.0</Version>
+    <InformationalVersion>2.1.0</InformationalVersion>
+    <!-- Per-monitor V2 is set in the manifest because it has to apply before anything (WinForms
+         included) starts; WFO0003 asks for the property instead, but the property alone does not
+         cover the paths that never touch WinForms. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KeyMouse.Core\KeyMouse.Core.csproj" />
+    <ProjectReference Include="..\KeyMouse.Runner\KeyMouse.Runner.csproj" />
+  </ItemGroup>
+
+</Project>

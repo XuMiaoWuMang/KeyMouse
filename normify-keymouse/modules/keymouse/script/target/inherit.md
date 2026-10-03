@@ -11,11 +11,11 @@ description:
   en: >
       Only mouse and key inherit. waitfor, waitgone and window list deliberately do not: which window you wait for, or list, is worth stating explicitly.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:54.009Z"
-fingerprint: f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.212Z"
+fingerprint: ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af
 source:
-  - path: "ScriptRunner.cs"
+  - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 746
     end_line: 752
 apis:

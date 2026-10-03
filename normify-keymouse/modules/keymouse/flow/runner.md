@@ -11,11 +11,11 @@ description:
   en: >
       `run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry, and writing the same report shape as the text runner. sleep does not wait under --dry-run; wait-window polls for a usable window; wait-text reads once per poll and counts a match only after `confirm` consecutive identical reads, exiting 3 on timeout with what it read.
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:36.520Z"
-fingerprint: 43b42b8b5255e7029c9b4c0d9f929e71f833ad1cfeda1e9dd76eec1d9f31b10c
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.048Z"
+fingerprint: f0afb9c88f544f9dd71bd8ceedb29f555d58848202faa27f7b3ed7f2c43d43d3
 source:
-  - path: "FlowRunner.cs"
+  - path: "src/KeyMouse.Core/FlowRunner.cs"
 apis:
   - protocol: rpc
     path: "FlowRunner.LooksLikeJson"

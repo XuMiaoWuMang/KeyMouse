@@ -45,16 +45,16 @@ internal static class FlowRunner
         return false;
     }
 
-    internal static int Run(string[] args, Program.GlobalOptions global, Func<string[], int> execute)
+    internal static int Run(string[] args, Commands.GlobalOptions global, Func<string[], int> execute)
     {
-        if (_running) return Program.Fail(2, "run：流程里不能再跑流程（拒绝嵌套）");
+        if (_running) return Commands.Fail(2, "run：流程里不能再跑流程（拒绝嵌套）");
         if (global.HasSelector || global.Wx.HasValue || global.Wy.HasValue || global.Pick is not null)
-            return Program.Fail(2, "run：窗口选择器要写在步骤里，不能挂在 run 自己身上");
+            return Commands.Fail(2, "run：窗口选择器要写在步骤里，不能挂在 run 自己身上");
 
         var options = new ScriptOptions();
-        if (ScriptRunner.ParseOptions(args, options) is { } optionError) return Program.Fail(2, optionError);
+        if (ScriptRunner.ParseOptions(args, options) is { } optionError) return Commands.Fail(2, optionError);
         if (options.Path is null)
-            return Program.Fail(2, "用法：KeyMouse run <流程.json> [--delay 毫秒] [--keep-going] [--dry-run] [--retry 次数] [--report 文件.json]");
+            return Commands.Fail(2, "用法：KeyMouse run <流程.json> [--delay 毫秒] [--keep-going] [--dry-run] [--retry 次数] [--report 文件.json]");
 
         FlowDocument document;
         try
@@ -63,10 +63,10 @@ internal static class FlowRunner
         }
         catch (CommandFailure ex)
         {
-            return Program.Fail(ex.Code, ex.Message);
+            return Commands.Fail(ex.Code, ex.Message);
         }
 
-        if (document.Steps.Count == 0) return Program.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
+        if (document.Steps.Count == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
 
         string source = Path.GetFullPath(options.Path);
         var report = new ScriptReport
@@ -87,12 +87,18 @@ internal static class FlowRunner
         {
             for (int i = 0; i < document.Steps.Count; i++)
             {
+                // The Runner's seam: with no control installed (the CLI path) these are no-ops; with a
+                // client attached they block while paused, throw when cancelled, and report the step
+                // boundary so a UI can highlight the row that is executing right now.
+                Execution.BetweenSteps(i + 1);
+
                 FlowStep step = document.Steps[i];
                 var record = new CommandRecord { Index = i + 1, Line = i + 1 };
                 var clock = Stopwatch.StartNew();
                 int attempt = 0;
                 int code;
                 string output;
+                Execution.StepStarted(i + 1, step.Type);
 
                 while (true)
                 {
@@ -104,6 +110,7 @@ internal static class FlowRunner
                 }
 
                 clock.Stop();
+                Execution.StepFinished(i + 1, code, clock.ElapsedMilliseconds);
                 record.Attempts = attempt;
                 record.ExitCode = code;
                 record.DurationMs = clock.ElapsedMilliseconds;

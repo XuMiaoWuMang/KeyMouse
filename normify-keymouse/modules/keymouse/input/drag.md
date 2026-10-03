@@ -11,11 +11,11 @@ description:
   en: >
       Press, move in steps, release, with step count and duration: a single jump is ignored by many applications, so stepping is what makes the target see a real drag.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.857Z"
-fingerprint: 3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.201Z"
+fingerprint: 313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29
 source:
-  - path: "NativeInput.cs"
+  - path: "src/KeyMouse.Core/NativeInput.cs"
     line: 193
     end_line: 215
 apis:

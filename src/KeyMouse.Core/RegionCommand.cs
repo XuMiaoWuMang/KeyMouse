@@ -38,9 +38,9 @@ internal sealed record RegionPlacement(WindowInfo? Window, string? Space, Screen
 /// </summary>
 internal static class RegionCommand
 {
-    internal static int Run(string[] args, Program.GlobalOptions g)
+    internal static int Run(string[] args, Commands.GlobalOptions g)
     {
-        var (positional, options) = Program.Parse(args, "rect");
+        var (positional, options) = Commands.Parse(args, "rect");
 
         if (positional.Count == 0)
             throw new ArgumentException("region：需要一个子命令（目前只有 pick）");
@@ -131,7 +131,7 @@ internal static class RegionCommand
 
         var values = new int[4];
         for (int i = 0; i < 4; i++)
-            values[i] = Program.IntArg(parts[i], "--rect");
+            values[i] = Commands.IntArg(parts[i], "--rect");
         if (values[2] <= 0 || values[3] <= 0)
             throw new ArgumentException($"--rect 的宽和高必须为正，收到 '{raw}'");
 

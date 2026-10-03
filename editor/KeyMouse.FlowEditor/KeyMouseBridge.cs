@@ -1,17 +1,18 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
+using KeyMouse.Runner;
 
 namespace KeyMouse.FlowEditor;
 
-/// <summary>What `region pick --json` reports, reduced to what the editor needs.</summary>
+/// <summary>What the Runner's `pick-region` reports, reduced to what the editor needs.</summary>
 internal sealed record PickedRegion(
     string Space, int X, int Y, int Width, int Height, string? Process, string? Class, string? Title, string? Note);
 
 /// <summary>
-/// The editor does not re-implement picking, reading or replaying: it asks the console tool, which
-/// already owns those behaviours (and their measurements). That also means the editor's "取区域"
-/// is the same overlay, and "播放" is the same dispatcher with the same gates and exit codes.
+/// The editor's link to the product's other half: not a pile of one-shot child processes, but one
+/// connection to the resident Runner. Everything real - the overlay, the execution, the exit codes -
+/// happens inside that process, which runs the same dispatch the CLI runs; the editor only edits and
+/// watches. If no Runner is listening, one is started (`serve`) and the client waits for it.
 /// </summary>
 internal static class KeyMouseBridge
 {
@@ -22,8 +23,8 @@ internal static class KeyMouseBridge
     };
 
     /// <summary>
-    /// Finds KeyMouse.exe: next to the editor first (that is how a release would ship them), then up
-    /// the tree for a development checkout, then PATH.
+    /// Finds KeyMouse.exe: next to the editor first (that is how a release ships them), then up the
+    /// tree for a development checkout, then PATH. It is what `serve` is started from.
     /// </summary>
     internal static string? ResolveTool()
     {
@@ -60,38 +61,33 @@ internal static class KeyMouseBridge
         return null;
     }
 
-    /// <summary>Runs `region pick --json`, i.e. the real overlay, and returns what the human drew.</summary>
-    internal static async Task<PickedRegion?> PickRegionAsync(string tool)
+    /// <summary>Connects to the Runner, starting one if necessary.</summary>
+    internal static async Task<RunnerClient?> ConnectAsync(string? tool)
     {
-        var startInfo = new ProcessStartInfo(tool)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-        };
-        startInfo.ArgumentList.Add("region");
-        startInfo.ArgumentList.Add("pick");
-        startInfo.ArgumentList.Add("--json");
+        if (await RunnerClient.ConnectAsync(400) is { } already) return already;
+        if (tool is null) return null;
+        return await RunnerClient.ConnectOrStartAsync(tool);
+    }
 
-        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("启动不了 KeyMouse.exe");
-        string stdout = await process.StandardOutput.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        if (process.ExitCode != 0 || stdout.Length == 0) return null;
+    /// <summary>
+    /// Asks the Runner to run the region picker (the same overlay the CLI uses, on an STA thread
+    /// inside the service) and returns what the human drew.
+    /// </summary>
+    internal static async Task<PickedRegion?> PickRegionAsync(RunnerClient client)
+    {
+        RunnerEvent result = await client.SendAsync("pick-region");
+        if (result.Kind != "result" || result.Value is not { } value) return null;
 
-        using var document = JsonDocument.Parse(stdout);
-        var root = document.RootElement;
-        if (!root.TryGetProperty("region", out var region) || region.ValueKind != JsonValueKind.Array) return null;
+        if (!value.TryGetProperty("region", out var region) || region.ValueKind != JsonValueKind.Array) return null;
         int[] rect = region.EnumerateArray().Select(e => e.GetInt32()).ToArray();
         if (rect.Length != 4) return null;
 
-        string space = root.TryGetProperty("space", out var spaceElement) && spaceElement.ValueKind == JsonValueKind.String
+        string space = value.TryGetProperty("space", out var spaceElement) && spaceElement.ValueKind == JsonValueKind.String
             ? spaceElement.GetString() ?? "client"
             : "client";
+
         string? processName = null, className = null, title = null;
-        if (root.TryGetProperty("window", out var window) && window.ValueKind == JsonValueKind.Object)
+        if (value.TryGetProperty("window", out var window) && window.ValueKind == JsonValueKind.Object)
         {
             className = window.TryGetProperty("class", out var c) ? c.GetString() : null;
             title = window.TryGetProperty("title", out var t) ? t.GetString() : null;
@@ -102,49 +98,41 @@ internal static class KeyMouseBridge
             }
         }
 
-        string? note = root.TryGetProperty("note", out var noteElement) && noteElement.ValueKind == JsonValueKind.String
+        string? note = value.TryGetProperty("note", out var noteElement) && noteElement.ValueKind == JsonValueKind.String
             ? noteElement.GetString()
             : null;
         return new PickedRegion(space, rect[0], rect[1], rect[2], rect[3], processName, className, title, note);
     }
 
     /// <summary>
-    /// Replays a flow through the console tool and streams its output line by line. No shell, no
-    /// quoting: every argument is passed as an argument, so a process name with spaces is safe.
+    /// Hands a flow to the Runner and streams everything it reports: log lines, per-step start and
+    /// finish, and the terminal event. Returns the exit code (7 = cancelled by the client).
     /// </summary>
     internal static async Task<int> RunFlowAsync(
-        string tool, string flowPath, bool dryRun, IEnumerable<string> extraArguments,
-        Action<string> onLine, CancellationToken cancellation)
+        RunnerClient client, string flowPath, bool dryRun,
+        Action<RunnerEvent> onEvent, CancellationToken cancellation)
     {
-        var startInfo = new ProcessStartInfo(tool)
+        RunnerEvent finished = await client.SendAsync("run", new RunnerParameters
         {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            Flow = flowPath,
+            DryRun = dryRun,
+            Echo = true,
+        }, onEvent, cancellation);
+
+        return finished.Kind switch
+        {
+            "finished" => finished.ExitCode ?? 0,
+            "error" => finished.Code ?? 1,
+            _ => 1,
         };
-        startInfo.ArgumentList.Add("run");
-        startInfo.ArgumentList.Add(flowPath);
-        if (dryRun) startInfo.ArgumentList.Add("--dry-run");
-        foreach (string argument in extraArguments) startInfo.ArgumentList.Add(argument);
-
-        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("启动不了 KeyMouse.exe");
-        using var registration = cancellation.Register(() =>
-        {
-            try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
-            catch (InvalidOperationException) { /* already gone */ }
-        });
-
-        var reading = Task.Run(async () =>
-        {
-            string? line;
-            while ((line = await process.StandardOutput.ReadLineAsync()) is not null) onLine(line);
-            while ((line = await process.StandardError.ReadLineAsync()) is not null) onLine(line);
-        });
-        await process.WaitForExitAsync(cancellation);
-        await reading;
-        return process.ExitCode;
     }
+
+    internal static Task<RunnerEvent> CancelAsync(RunnerClient client, int job) =>
+        client.SendAsync("cancel", new RunnerParameters { Target = job });
+
+    internal static Task<RunnerEvent> PauseAsync(RunnerClient client, int job) =>
+        client.SendAsync("pause", new RunnerParameters { Target = job });
+
+    internal static Task<RunnerEvent> ResumeAsync(RunnerClient client, int job) =>
+        client.SendAsync("resume", new RunnerParameters { Target = job });
 }

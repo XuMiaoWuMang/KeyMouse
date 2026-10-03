@@ -31,7 +31,7 @@ internal static class WindowResolver
         var resolution = new WindowResolution();
         resolution.All.AddRange(WindowLocator.EnumerateTopLevel());
         resolution.Matched.AddRange(resolution.All.Where(selector.Matches));
-        resolution.Considered.AddRange(Program.PreferCandidates(resolution.Matched));
+        resolution.Considered.AddRange(Commands.PreferCandidates(resolution.Matched));
 
         foreach (var candidate in resolution.Considered)
         {

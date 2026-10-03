@@ -12,17 +12,17 @@ internal static class FlowEditorCommand
     internal static int Run(string[] args)
     {
         if (args.Length == 0 || args[0] != "edit")
-            return Program.Fail(2, "用法：KeyMouse flow edit <流程.json>（用图形编辑器打开一个流程）");
+            return Commands.Fail(2, "用法：KeyMouse flow edit <流程.json>（用图形编辑器打开一个流程）");
         if (args.Length < 2)
-            return Program.Fail(2, "用法：KeyMouse flow edit <流程.json>");
+            return Commands.Fail(2, "用法：KeyMouse flow edit <流程.json>");
 
         string path = Path.GetFullPath(args[1]);
-        if (!File.Exists(path)) return Program.Fail(2, $"没有这个文件：{path}");
+        if (!File.Exists(path)) return Commands.Fail(2, $"没有这个文件：{path}");
 
         string? editor = ResolveEditor();
         if (editor is null)
         {
-            return Program.Fail(4,
+            return Commands.Fail(4,
                 "找不到编辑器 KeyMouse.FlowEditor.exe。先构建它：" +
                 "dotnet build editor\\KeyMouse.FlowEditor -c Release" +
                 "（或者把发布出来的 KeyMouse.FlowEditor.exe 放在 KeyMouse.exe 旁边）");

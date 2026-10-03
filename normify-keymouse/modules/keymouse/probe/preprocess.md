@@ -11,11 +11,11 @@ description:
   en: >
       Three transforms, all opt-in: by default the captured pixels go straight to the engine (scale 1, no padding, no normalisation). Upscaling (96 -> the ~300 DPI the engine likes), padding and contrast normalisation (including inverting dark backgrounds) are switched on when wanted. The sampler can be bilinear or nearest; measured, the two show no accuracy difference on the real corpus. Light-on-dark reads without normalisation too (72~74 versus 75~79 with it).
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:29.619Z"
-fingerprint: 4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.206Z"
+fingerprint: 36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f
 source:
-  - path: "Probe.cs"
+  - path: "src/KeyMouse.Core/Probe.cs"
     line: 361
     end_line: 513
 apis:

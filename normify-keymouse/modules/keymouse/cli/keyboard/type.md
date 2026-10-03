@@ -11,11 +11,11 @@ description:
   en: >
       key type <text> [--interval ms] types character by character through Unicode injection, so it is layout- and IME-independent; the default 15 ms per character plus a drain grace keeps the last character from being lost.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:15.211Z"
-fingerprint: bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.196Z"
+fingerprint: 7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9
 source:
-  - path: "Program.cs"
+  - path: "src/KeyMouse.Core/Commands.cs"
     line: 414
     end_line: 430
 apis:

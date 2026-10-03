@@ -1,40 +1,17 @@
 {
   "schema_version": 1,
   "id": "keymouse.build",
-  "updated_at": "2026-10-02T17:36:03.464Z",
-  "mode": "groups",
+  "updated_at": "2026-10-03T11:13:04.054Z",
+  "mode": "layers",
   "reading": {
-    "zh": "左边是你手上会跑的两条命令（打包、发布前验证），右边是服务器上的两条流水线：CI 每次 push 跑，Release 只认 v* tag。",
-    "en": "On the left are the two commands you run by hand; on the right the two pipelines: CI on every push, release only on a v* tag."
+    "zh": "三个项目对应三层（另有编辑器项目），构建脚本产出 dist 里的单文件，CI 与发布工作流把它们串起来。",
+    "en": "Three projects for three layers (plus the editor project), the build script produces the single file in dist, and the CI and release workflows chain them together."
   },
   "order": [
     "keymouse.build.publish",
     "keymouse.build.verify",
     "keymouse.build.ci",
-    "keymouse.build.release"
-  ],
-  "groups": [
-    {
-      "id": "local",
-      "title": {
-        "zh": "本地手动跑",
-        "en": "Run locally"
-      },
-      "children": [
-        "keymouse.build.publish",
-        "keymouse.build.verify"
-      ]
-    },
-    {
-      "id": "pipelines",
-      "title": {
-        "zh": "CI 与发布流水线",
-        "en": "CI & release pipelines"
-      },
-      "children": [
-        "keymouse.build.ci",
-        "keymouse.build.release"
-      ]
-    }
+    "keymouse.build.release",
+    "keymouse.build.projects"
   ]
 }

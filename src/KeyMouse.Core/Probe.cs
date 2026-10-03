@@ -42,9 +42,9 @@ internal static class Probe
 
     private const int EngineTimeoutMs = 30_000;
 
-    internal static int Run(string[] args, Program.GlobalOptions g)
+    internal static int Run(string[] args, Commands.GlobalOptions g)
     {
-        var (positional, options) = Program.Parse(
+        var (positional, options) = Commands.Parse(
             args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "keep-prepared", "space", "capture", "resample");
 
         if (positional.Count > 0)
@@ -53,10 +53,10 @@ internal static class Probe
             throw new ArgumentException("probe 需要一个窗口选择器（例如 --title 记事本）——工具不做全屏瞎猜");
 
         bool asJson = options.ContainsKey("json");
-        int reads = Math.Clamp(Program.IntOr(options, "reads", 2), 1, 9);
-        int minConfidence = Math.Clamp(Program.IntOr(options, "min-conf", DefaultMinConfidence), 0, 100);
-        int scale = Math.Clamp(Program.IntOr(options, "scale", 1), 1, 8);
-        int pad = Math.Clamp(Program.IntOr(options, "pad", 0), 0, 200);
+        int reads = Math.Clamp(Commands.IntOr(options, "reads", 2), 1, 9);
+        int minConfidence = Math.Clamp(Commands.IntOr(options, "min-conf", DefaultMinConfidence), 0, 100);
+        int scale = Math.Clamp(Commands.IntOr(options, "scale", 1), 1, 8);
+        int pad = Math.Clamp(Commands.IntOr(options, "pad", 0), 0, 200);
         string resample = options.TryGetValue("resample", out string? sampling) && sampling.Length > 0
             ? sampling.ToLowerInvariant()
             : "bilinear";
@@ -112,7 +112,7 @@ internal static class Probe
         }
         else
         {
-            window = Program.ResolveUsable(g);
+            window = Commands.ResolveUsable(g);
         }
 
         if (!NativeWindow.GetWindowRect(window.Handle, out NativeWindow.RECT windowRect))

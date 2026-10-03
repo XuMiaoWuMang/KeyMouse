@@ -11,11 +11,11 @@ description:
   en: >
       Turns the hook stream into steps: keys become the characters the active layout produces (Unicode injection included), combinations keep their key names, down/up pairs become a click or a drag, the trajectory is thinned, only pauses past the threshold become sleeps, and every action resolves its window and coordinates. A screenshot is the whole client area scaled down with a mark on the action point (a 320x200 crop measured as blank white on an empty form).
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.241Z"
-fingerprint: 856732460646dab4b6162596fe0da6235d920b921f5cca8e3c854b153156fabe
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.048Z"
+fingerprint: afc78f6e819a61bb8032cd2f997364b9557777971e1057fe8e197c1704a3c083
 source:
-  - path: "Recorder.cs"
+  - path: "src/KeyMouse.Core/Recorder.cs"
 apis:
   - protocol: rpc
     path: "Recorder.Run"

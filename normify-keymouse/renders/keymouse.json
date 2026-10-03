@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "id": "keymouse",
-  "updated_at": "2026-10-03T10:33:08.027Z",
+  "updated_at": "2026-10-03T11:13:03.905Z",
   "mode": "groups",
   "reading": {
-    "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制从另一端进入这条链（钩子 → JSON 流程），编辑器是另一条前端（图形编辑，取区域与回放都回到命令行）。",
-    "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow), and the editor is another front end whose picking and replay come back to the command line."
+    "zh": "一次调用的路径：入口解析目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作。录制从另一端进入这条链（钩子 → JSON 流程）；编辑器是图形前端，取区域与回放都通过常驻 Runner；CLI 既能一次性执行，也能驱动同一个 Runner（runner 子命令）。",
+    "en": "One invocation flows left to right: the entry resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow); the editor is a graphical front end whose picking and replay go through the resident Runner, and the CLI can either run once or drive that same Runner."
   },
   "order": [
     "keymouse.cli",
@@ -19,6 +19,8 @@
     "keymouse.native",
     "keymouse.keys",
     "keymouse.console",
+    "keymouse.execution",
+    "keymouse.runner",
     "keymouse.editor",
     "keymouse.tests",
     "keymouse.build",
@@ -42,7 +44,18 @@
         "keymouse.input",
         "keymouse.native",
         "keymouse.keys",
-        "keymouse.console"
+        "keymouse.console",
+        "keymouse.execution"
+      ]
+    },
+    {
+      "id": "service",
+      "title": {
+        "zh": "常驻服务",
+        "en": "Resident service"
+      },
+      "children": [
+        "keymouse.runner"
       ]
     },
     {

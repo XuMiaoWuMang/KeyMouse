@@ -11,10 +11,10 @@ description:
   en: >
       Lets a human point at the region instead of reporting four numbers from memory (that landed on blank space three times). The overlay turns a screen rectangle into a space probe accepts: client coordinates when it fits the client area, window coordinates for a title bar, and screen coordinates plus a reason when it fits neither. It reports coordinates and reads nothing.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:51.236Z"
-fingerprint: 853d857ebeb734d91a8dac20797372f29757d753fb24b2e24a19741e8f07dede
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.204Z"
+fingerprint: fbbe01c854130cbabcde458cb5ce11bce55a3ab38b5e0c98c3b84082fc7bb9c9
 source:
-  - path: "RegionCommand.cs"
-  - path: "RegionPicker.cs"
+  - path: "src/KeyMouse.Core/RegionCommand.cs"
+  - path: "src/KeyMouse.Core/RegionPicker.cs"
 ---

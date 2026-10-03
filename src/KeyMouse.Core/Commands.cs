@@ -2,16 +2,16 @@ using System.Globalization;
 
 namespace KeyMouse;
 
-internal static class Program
+internal static class Commands
 {
-    internal const string Version = "2.0.0";
+    internal const string Version = "2.1.0";
 
     /// <summary>
     /// STA because the region picker is a WinForms window: an interactive desktop selection needs
     /// a single-threaded apartment, and everything else here is unaffected by the choice.
     /// </summary>
     [STAThread]
-    internal static int Main(string[] args)
+    internal static int Execute(string[] args)
     {
         // Speak the console's code page, so that whoever reads us decodes what we wrote.
         ConsoleText.ConfigureOutputEncoding();
@@ -37,14 +37,13 @@ internal static class Program
                     return WindowGroup(rest[1..], global);
                 case "run":
                     // One `run`, two file formats: the text syntax, or a recorded JSON flow. The flow
-                    // is detected by content and both go through the same dispatcher below.
+                    // is detected by content and both go through the same dispatcher below - which is
+                    // also what the resident Runner drives, so a job and a typed command cannot drift.
                     if (FlowRunner.LooksLikeJson(rest[1..]))
-                        return FlowRunner.Run(rest[1..], global, Main);
-                    return ScriptRunner.Run(rest[1..], global, Main);
+                        return FlowRunner.Run(rest[1..], global, Execute);
+                    return ScriptRunner.Run(rest[1..], global, Execute);
                 case "record":
                     return Recorder.Run(rest[1..], global);
-                case "flow":
-                    return FlowEditorCommand.Run(rest[1..]);
                 case "probe":
                     return Probe.Run(rest[1..], global);
                 case "region":

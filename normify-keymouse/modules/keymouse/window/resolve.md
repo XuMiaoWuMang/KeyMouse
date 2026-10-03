@@ -11,11 +11,11 @@ description:
   en: >
       The full result of one resolution: every window, the matches, the candidates that took part, the survivors, and why the rest were rejected. One enumeration feeds every later check and message.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.893Z"
-fingerprint: cb836896284ad7465ff444e852b54fea542faf0070408a40a1f7df4966fb2bee
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.217Z"
+fingerprint: 5b990c1e36b51739fa79756638831562662c734f18e2d6c19ed916698bd70d2e
 source:
-  - path: "WindowResolver.cs"
+  - path: "src/KeyMouse.Core/WindowResolver.cs"
     line: 1
     end_line: 45
 apis:

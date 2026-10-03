@@ -11,9 +11,9 @@ description:
   en: >
       The single-file publish script, a one-command pre-release verification entry, and the CI/release workflows. Publishing is tag-driven and gated on a human running verify.ps1 first.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.843Z"
-fingerprint: 0a226e48dea6486acdb67bbed29779e47215fee34f8f9342a22b9017e999b346
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.047Z"
+fingerprint: 0ff7d0958875da898313069f9a1a9cf996d3935c59f42b48056209ec4f7216f6
 source:
   - path: "build.ps1"
   - path: "verify.ps1"

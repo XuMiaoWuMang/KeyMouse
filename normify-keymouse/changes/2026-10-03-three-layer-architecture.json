@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-three-layer-architecture",
+  "title": {
+    "zh": "重构为三层结构：Core / Runner / CLI + 双入口",
+    "en": "Restructure into three layers: Core / Runner / CLI with two entry points"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "按\"一个产品、两个入口、三层\"重构：能力层抽成 src\\KeyMouse.Core（Program 变成 Commands，供两个入口共用）、新增 src\\KeyMouse.Runner（命名管道协议 + 作业注册表 + 事件流 + 执行接缝的实现）、命令行变成 src\\KeyMouse.Cli（serve 起常驻服务、runner 当客户端、其余照旧一次性执行），编辑器改为连接常驻 Runner 并实时高亮步骤。新增退出码 7（被取消）。模块 source 路径全量重映射；keymouse.editor.schema 已退休（编辑器不再复制 schema）。",
+    "en": "Restructures into \"one product, two entry points, three layers\": the capability layer moves to src\\KeyMouse.Core (Program becomes Commands, shared by both entry points), a new src\\KeyMouse.Runner holds the named-pipe protocol, the job registry, the event stream and the implementation of the execution seam, and the CLI becomes src\\KeyMouse.Cli (serve starts the service, runner acts as its client, everything else stays a one-shot execution). The editor now connects to the resident Runner and highlights steps as they run. New exit code 7 (cancelled). All module source paths were remapped; keymouse.editor.schema was retired (the editor no longer copies the schema)."
+  },
+  "modules": {
+    "create": [
+      "keymouse.runner",
+      "keymouse.runner.protocol",
+      "keymouse.runner.host",
+      "keymouse.runner.pipe",
+      "keymouse.execution",
+      "keymouse.cli.entry",
+      "keymouse.cli.runner",
+      "keymouse.build.projects",
+      "keymouse.tests.unit.runner"
+    ],
+    "modify": [
+      "keymouse",
+      "keymouse.cli",
+      "keymouse.cli.main",
+      "keymouse.cli.flow",
+      "keymouse.build",
+      "keymouse.tests.unit",
+      "keymouse.editor",
+      "keymouse.editor.bridge",
+      "keymouse.editor.shell",
+      "keymouse.flow.runner",
+      "keymouse.record.session",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "命令行契约不变：既有单测与冒烟全绿，dist\\KeyMouse.exe 仍是一次性工具",
+    "serve 常驻：CLI 能 status/run/cancel/pause/resume/stop，编辑器连同一条命名管道",
+    "两个入口跑同一份派发（Runner 与 CLI 都调 Commands.Execute）",
+    "取消沿能力层传回退出码 7（实测 OperationCanceledException 会变成 1，改成 CommandFailure(7)）",
+    "一次只跑一个作业（输入是全局资源；日志流用进程级 Console.Out，串行才成立）",
+    "编辑器实时高亮正在执行的步骤，并支持暂停/继续/停止",
+    "结构数据：模块 source 全量重映射、validate 0 error、render 出图"
+  ],
+  "note": "三层落地：Core（能力层，Commands 供两个入口共用）/ Runner（命名管道 + 作业 + 事件 + 接缝实现）/ CLI（serve + runner 客户端 + 一次性执行）；编辑器改走 IPC 并实时高亮；新增退出码 7；模块 source 全量重映射，keymouse.editor.schema 退休。",
+  "revision": {
+    "before": null,
+    "after": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef"
+  },
+  "created_at": "2026-10-03T11:13:09.663Z",
+  "updated_at": "2026-10-03T11:13:19.001Z",
+  "closed_at": "2026-10-03T11:13:19.001Z"
+}

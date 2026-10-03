@@ -11,11 +11,11 @@ description:
   en: >
       A frozen screen grab as backdrop (the target cannot move, the overlay is not in the picture); drag a rectangle, click for a whole client area, ESC or right click to cancel. Four details came from measurement: TopMost alone left it under the target window; ESC must be a global hotkey, as a background process is refused the foreground; the UI thread is asserted per-monitor-V2, since the WinForms default scales coordinates silently; the window list is read once per pick.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:51.236Z"
-fingerprint: dd53e3edff9d65d324e178c1ddcfce51ce97249e4db03c3bdc439a88f455bff4
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.204Z"
+fingerprint: 0e3232eab2b5748be46a4ff6c1a41ff0ba41b3c7e9f392404b4243317f75bccb
 source:
-  - path: "RegionPicker.cs"
+  - path: "src/KeyMouse.Core/RegionPicker.cs"
     line: 1
     end_line: 303
 apis:

@@ -23,10 +23,10 @@ jobs:
         run: dotnet run -c Release --project tests/KeyMouse.Tests/KeyMouse.Tests.csproj
 
       - name: Publish (framework-dependent, needs the .NET runtime)
-        run: dotnet publish KeyMouse.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo
+        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo
 
       - name: Publish (self-contained, needs nothing)
-        run: dotnet publish KeyMouse.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o out/self --nologo
+        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o out/self --nologo
 
       - name: Stage artifacts
         shell: pwsh

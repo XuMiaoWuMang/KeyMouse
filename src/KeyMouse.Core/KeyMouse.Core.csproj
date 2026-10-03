@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>KeyMouse.Core</AssemblyName>
+    <RootNamespace>KeyMouse</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>2.1.0</Version>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The interactive region picker is the one capability that needs a UI toolkit; the manifest that
+         pins DPI awareness belongs to an entry point that starts a process, not to this library. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- One product, three layers: the CLI and the resident Runner are the two entry points into this
+         same capability layer, and the tests and the editor reach into it too. -->
+    <InternalsVisibleTo Include="KeyMouse" />
+    <InternalsVisibleTo Include="KeyMouse.Runner" />
+    <InternalsVisibleTo Include="KeyMouse.Tests" />
+    <InternalsVisibleTo Include="KeyMouse.FlowEditor" />
+  </ItemGroup>
+
+</Project>

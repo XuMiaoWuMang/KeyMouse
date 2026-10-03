@@ -40,12 +40,12 @@ internal static class ParseBench
             【2】执行开销（真实 dispatcher，输出已静音）
             """);
 
-        double posMs = MeasureQuiet(200, () => Program.Main(new[] { "mouse", "pos" }));
-        double selectorMs = MeasureQuiet(20, () => Program.Main(new[]
+        double posMs = MeasureQuiet(200, () => Commands.Execute(new[] { "mouse", "pos" }));
+        double selectorMs = MeasureQuiet(20, () => Commands.Execute(new[]
         {
             "key", "press", "f24", "--process", "definitely-not-running-xyz"
         }));
-        double typeMs = MeasureQuiet(5, () => Program.Main(new[]
+        double typeMs = MeasureQuiet(5, () => Commands.Execute(new[]
         {
             "key", "type", "0123456789ABCDEFGHIJ", "--process", "definitely-not-running-xyz"
         }));

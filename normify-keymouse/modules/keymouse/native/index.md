@@ -11,11 +11,11 @@ description:
   en: >
       Every P/Invoke declaration and its thin wrapper: user32 input/window APIs, DWM cloaking, the WM_NULL responsiveness probe, and process names via QueryFullProcessImageName with a pid cache.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.456Z"
-fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.203Z"
+fingerprint: d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540
 source:
-  - path: "NativeWindow.cs"
+  - path: "src/KeyMouse.Core/NativeWindow.cs"
     line: 1
     end_line: 193
 ---

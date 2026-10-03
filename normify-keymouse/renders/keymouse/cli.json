@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "id": "keymouse.cli",
-  "updated_at": "2026-10-02T17:35:14.097Z",
-  "mode": "groups",
+  "updated_at": "2026-10-03T11:13:03.979Z",
+  "mode": "layers",
   "reading": {
-    "zh": "入口先把全局选项（含目标选择器）从任意位置抽出来，再交给三个命令组之一；error 路线是每一次拒绝的出口。",
-    "en": "The entry pulls global options - the target selector among them - out of any position and hands over to one of three command groups; the failure path is where every refusal exits."
+    "zh": "先是入口的三条路由（serve / runner / flow edit / 其余交给能力层），然后是全局选项与帮助，最后是各组命令自己的一层。",
+    "en": "First the entry with its three routes (serve / runner / flow edit / everything else to the capability layer), then the global options and help, then one layer per command group."
   },
   "order": [
     "keymouse.cli.main",
@@ -15,34 +15,8 @@
     "keymouse.cli.help",
     "keymouse.cli.mouse",
     "keymouse.cli.keyboard",
-    "keymouse.cli.window"
-  ],
-  "groups": [
-    {
-      "id": "entry",
-      "title": {
-        "zh": "入口与选项",
-        "en": "Entry & options"
-      },
-      "children": [
-        "keymouse.cli.main",
-        "keymouse.cli.options",
-        "keymouse.cli.int-arg",
-        "keymouse.cli.failure",
-        "keymouse.cli.help"
-      ]
-    },
-    {
-      "id": "groups",
-      "title": {
-        "zh": "三个命令组",
-        "en": "Three command groups"
-      },
-      "children": [
-        "keymouse.cli.mouse",
-        "keymouse.cli.keyboard",
-        "keymouse.cli.window"
-      ]
-    }
+    "keymouse.cli.window",
+    "keymouse.cli.entry",
+    "keymouse.cli.runner"
   ]
 }

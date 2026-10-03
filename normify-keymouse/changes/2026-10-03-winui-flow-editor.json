@@ -16,7 +16,6 @@
       "keymouse.editor.shell",
       "keymouse.editor.steps",
       "keymouse.editor.bridge",
-      "keymouse.editor.schema",
       "keymouse.cli.flow"
     ],
     "modify": [

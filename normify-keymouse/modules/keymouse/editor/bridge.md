@@ -11,9 +11,9 @@ description:
   en: >
       Finds KeyMouse.exe (next to the editor, then up the tree for a dist folder, then PATH), calls `region pick --json` and parses it into coordinates plus the window, and calls `run` while streaming its output. Arguments are passed one by one (never through a shell), so process names with spaces are safe, and cancelling kills the child tree.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.240Z"
-fingerprint: 015005b8d11bc3d5c78598d0ad2ab1d86515dd31d07d3b3e308edf14297b84c4
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.047Z"
+fingerprint: dcd1c57df3f0ab957e6aacf3455041ace8ab7950e776109fed68dfc2d533437d
 source:
   - path: "editor/KeyMouse.FlowEditor/KeyMouseBridge.cs"
 apis:

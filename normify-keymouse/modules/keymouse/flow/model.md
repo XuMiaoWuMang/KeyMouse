@@ -11,12 +11,12 @@ description:
   en: >
       Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and conditions are validated there too (a wait-text must carry a region and text, its match must be a known mode, its region must be client-relative), so a typo costs a second instead of a full timeout. The compiler turns a step into argv and refuses client coordinates without a selector, because there is nothing to convert against.
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:36.520Z"
-fingerprint: 287793196d347ecb59faae080d78a191ff61e10e1383430f7c651bfca3f73a37
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.201Z"
+fingerprint: 1c503f9dd19da310c11b40df4bbcc27dda6fea6832eabe86059e3d444d4ccf9e
 source:
-  - path: "FlowModel.cs"
-  - path: "TextPredicate.cs"
+  - path: "src/KeyMouse.Core/FlowModel.cs"
+  - path: "src/KeyMouse.Core/TextPredicate.cs"
 apis:
   - protocol: rpc
     path: "FlowDocument.Load"

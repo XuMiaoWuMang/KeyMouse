@@ -11,11 +11,11 @@ description:
   en: >
       Picks the target options out of a line in both --flag value and --flag=value forms; client-area flags like -wx/-wy are deliberately not target options.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:54.008Z"
-fingerprint: f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.211Z"
+fingerprint: ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af
 source:
-  - path: "ScriptRunner.cs"
+  - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 717
     end_line: 745
 apis:

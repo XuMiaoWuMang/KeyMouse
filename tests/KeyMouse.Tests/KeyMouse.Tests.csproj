@@ -15,7 +15,8 @@
        dependency-free. Run it from the repository root with:
          dotnet run -c Release -p tests/KeyMouse.Tests/KeyMouse.Tests.csproj -->
   <ItemGroup>
-    <ProjectReference Include="..\..\KeyMouse.csproj" />
+    <ProjectReference Include="..\..\src\KeyMouse.Core\KeyMouse.Core.csproj" />
+    <ProjectReference Include="..\..\src\KeyMouse.Runner\KeyMouse.Runner.csproj" />
   </ItemGroup>
 
 </Project>

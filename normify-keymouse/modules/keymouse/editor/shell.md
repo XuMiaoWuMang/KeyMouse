@@ -11,9 +11,9 @@ description:
   en: >
       Mica backdrop, custom title bar and toolbar (open/save/save-as/add/move/duplicate/delete/pick-region/dry-run/play/stop) plus a status InfoBar and a run log. Exit codes are explained with the same meanings the CLI documents, closing with unsaved changes asks first, and dry-run/play write a scratch file rather than silently overwriting the file being edited.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.239Z"
-fingerprint: 65d715ffe1844d7c294a307c26ffdf64ba4834f93ff8b388fb60835db4ec489b
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.047Z"
+fingerprint: f750c9c3f045078536995af88a134abe107c9729da4b0166b8a3e83e8619a390
 source:
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml"
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"

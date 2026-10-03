@@ -11,11 +11,11 @@ description:
   en: >
       A program counter plus a loop stack expands repeat/end; each line rebuilds its scope (set variables plus loop variables), substitutes, resolves target inheritance and is handed over to execute. No script copying, no re-parsing, one dispatch per command.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:54.008Z"
-fingerprint: f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.210Z"
+fingerprint: ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af
 source:
-  - path: "ScriptRunner.cs"
+  - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 142
     end_line: 305
 apis:

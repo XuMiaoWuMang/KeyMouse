@@ -111,7 +111,7 @@ internal static class ParsingTests
         {
             exitCode = ScriptRunner.Run(
                 new[] { path, "--set", "word=hi" },
-                new Program.GlobalOptions(),
+                new Commands.GlobalOptions(),
                 tokens => { seen.Add(string.Join(' ', tokens)); return 0; });
         }
         finally
@@ -321,29 +321,29 @@ internal static class ParsingTests
     {
         Harness.Group("global option extraction");
 
-        var rest = Program.ExtractGlobalOptions(new[] { "mouse", "click", "left", "--title", "记事本", "-n", "2" }, out var g);
+        var rest = Commands.ExtractGlobalOptions(new[] { "mouse", "click", "left", "--title", "记事本", "-n", "2" }, out var g);
         Harness.Equal("--title takes the next argument", "记事本", g.Title);
         Harness.Check("selector is detected", g.HasSelector);
         Harness.Sequence("command arguments stay in place", new[] { "mouse", "click", "left", "-n", "2" }, rest);
 
-        Program.ExtractGlobalOptions(new[] { "mouse", "click", "--title=X", "--pid=1234" }, out g);
+        Commands.ExtractGlobalOptions(new[] { "mouse", "click", "--title=X", "--pid=1234" }, out g);
         Harness.Equal("--flag=value form", "X", g.Title);
         Harness.Equal("numeric inline value", (uint?)1234, g.Pid);
 
-        rest = Program.ExtractGlobalOptions(new[] { "mouse", "move", "-100", "-200" }, out g);
+        rest = Commands.ExtractGlobalOptions(new[] { "mouse", "move", "-100", "-200" }, out g);
         Harness.Sequence("negative numbers stay positional", new[] { "mouse", "move", "-100", "-200" }, rest);
         Harness.Check("negative numbers do not create a selector", !g.HasSelector);
 
-        rest = Program.ExtractGlobalOptions(new[] { "key", "type", "--", "--title", "-wx" }, out g);
+        rest = Commands.ExtractGlobalOptions(new[] { "key", "type", "--", "--title", "-wx" }, out g);
         Harness.Sequence("-- ends option parsing", new[] { "key", "type", "--title", "-wx" }, rest);
         Harness.Check("nothing after -- is treated as an option", !g.HasSelector);
 
-        rest = Program.ExtractGlobalOptions(new[] { "mouse", "click", "-wx", "10", "-wy", "20" }, out g);
+        rest = Commands.ExtractGlobalOptions(new[] { "mouse", "click", "-wx", "10", "-wy", "20" }, out g);
         Harness.Equal("-wx", 10, g.Wx);
         Harness.Equal("-wy", 20, g.Wy);
         Harness.Sequence("relative flags are consumed", new[] { "mouse", "click" }, rest);
 
-        rest = Program.ExtractGlobalOptions(
+        rest = Commands.ExtractGlobalOptions(
             new[] { "mouse", "drag", "-wx", "1", "-wy", "2", "--wx2", "3", "--wy2", "4" }, out g);
         Harness.Equal("drag start x", 1, g.Wx);
         Harness.Equal("drag start y", 2, g.Wy);
@@ -351,38 +351,38 @@ internal static class ParsingTests
         Harness.Equal("drag end y", 4, g.Wy2);
         Harness.Sequence("all four client flags are consumed", new[] { "mouse", "drag" }, rest);
 
-        Program.ExtractGlobalOptions(new[] { "key", "press", "f24", "--focus-policy", "none", "--allow-restore", "--strict-point" }, out g);
+        Commands.ExtractGlobalOptions(new[] { "key", "press", "f24", "--focus-policy", "none", "--allow-restore", "--strict-point" }, out g);
         Harness.Equal("focus policy", "none", g.FocusPolicy);
         Harness.Check("--allow-restore", g.AllowRestore);
         Harness.Check("--strict-point", g.StrictPoint);
 
-        Program.ExtractGlobalOptions(new[] { "key", "press", "f24" }, out g);
+        Commands.ExtractGlobalOptions(new[] { "key", "press", "f24" }, out g);
         Harness.Equal("focus policy defaults to gentle", "gentle", g.FocusPolicy);
         Harness.Equal("focus attempts default to 3", 3, g.FocusAttempts);
 
         Harness.Throws<ArgumentException>("a flag without its value is an error",
-            () => Program.ExtractGlobalOptions(new[] { "key", "type", "--title" }, out _));
+            () => Commands.ExtractGlobalOptions(new[] { "key", "type", "--title" }, out _));
         Harness.Throws<ArgumentException>("a non-numeric value is an error",
-            () => Program.ExtractGlobalOptions(new[] { "key", "type", "--pid", "abc" }, out _));
+            () => Commands.ExtractGlobalOptions(new[] { "key", "type", "--pid", "abc" }, out _));
     }
 
     private static void CommandOptions()
     {
         Harness.Group("command option parsing");
 
-        var (positional, options) = Program.Parse(new[] { "left", "-n", "2", "-i", "50" }, "n", "i");
+        var (positional, options) = Commands.Parse(new[] { "left", "-n", "2", "-i", "50" }, "n", "i");
         Harness.Sequence("positional values", new[] { "left" }, positional);
         Harness.Equal("-n", "2", options["n"]);
         Harness.Equal("-i", "50", options["i"]);
 
-        (positional, options) = Program.Parse(new[] { "wheel", "-120" }, "delta");
+        (positional, options) = Commands.Parse(new[] { "wheel", "-120" }, "delta");
         Harness.Sequence("negative positional survives", new[] { "wheel", "-120" }, positional);
         Harness.Check("negative number is not mistaken for a flag", !options.ContainsKey("120"));
 
-        (positional, options) = Program.Parse(new[] { "--button=right" }, "button");
+        (positional, options) = Commands.Parse(new[] { "--button=right" }, "button");
         Harness.Equal("--flag=value form", "right", options["button"]);
 
-        (positional, options) = Program.Parse(new[] { "--all" });
+        (positional, options) = Commands.Parse(new[] { "--all" });
         Harness.Equal("bare flag becomes true", "true", options["all"]);
         Harness.Equal("bare flag is not positional", 0, positional.Count);
     }

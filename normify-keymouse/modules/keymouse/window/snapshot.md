@@ -11,11 +11,11 @@ description:
   en: >
       One lazy snapshot per window: title, class and pid are read up front; visibility, minimized, cloaked, owner, rect and process name are resolved from the handle on first read and cached. Enumerating ~400 windows per targeted command drops from a dozen API calls each to four.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.894Z"
-fingerprint: 6a2bd609bf0fc3bf8db47fe338a49825858a3cfa866d96d2932f9ca2d98066b1
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.218Z"
+fingerprint: 30e50255e2bd01aa5d964e946c1ae8509144bfce5a21e9144c6c7dcb17f108c4
 source:
-  - path: "WindowInfo.cs"
+  - path: "src/KeyMouse.Core/WindowInfo.cs"
     line: 10
     end_line: 131
 apis:

@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 using Windows.Storage.Pickers;
 using KeyMouse;
+using KeyMouse.Runner;
 
 namespace KeyMouse.FlowEditor;
 
@@ -16,6 +17,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 {
     private static readonly PropertyChangedEventArgs Everything = new(string.Empty);
     private readonly string? _tool = KeyMouseBridge.ResolveTool();
+    private RunnerClient? _client;
+    private int? _job;
+    private bool _paused;
     private CancellationTokenSource? _run;
 
     public MainWindow()
@@ -47,9 +51,31 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         UpdateStates();
         Show("ready", _tool is null
-            ? "没找到 KeyMouse.exe：把它放在编辑器旁边，或者先构建 dist\\KeyMouse.exe。「试运行/播放/取区域」需要它。"
-            : $"就绪。取区域、试运行、播放都会调用 {_tool}",
+            ? "没找到 KeyMouse.exe：把它放在编辑器旁边，或者先构建 dist\\KeyMouse.exe。「取区域/试运行/播放」需要它来启动常驻 Runner。"
+            : $"{_tool} — 取区域与回放都通过常驻 Runner（命名管道），不再是一个动作一个子进程",
             InfoBarSeverity.Informational);
+    }
+
+    /// <summary>
+    /// Connects to the resident Runner, starting one if it is not running yet. One connection serves
+    /// the whole session: picking, replaying, cancelling are all requests on it.
+    /// </summary>
+    private async Task<RunnerClient?> EnsureClientAsync()
+    {
+        if (_client is not null) return _client;
+        Show("连接 Runner", "正在连接常驻 Runner（没有就启动一个）…", InfoBarSeverity.Informational);
+        _client = await KeyMouseBridge.ConnectAsync(_tool);
+        if (_client is null)
+        {
+            Show("连不上 Runner", _tool is null
+                ? "找不到 KeyMouse.exe。先构建 dist\\KeyMouse.exe，或把编辑器与它放在一起。"
+                : "启动了 KeyMouse serve 但连不上命名管道；在命令行跑一次 KeyMouse serve 看看它报什么。",
+                InfoBarSeverity.Error);
+            return null;
+        }
+        Show("Runner 已连接", "取区域、试运行、播放都通过这条连接。", InfoBarSeverity.Success);
+        UpdateStates();
+        return _client;
     }
 
     public EditorModel Model { get; } = new();
@@ -101,9 +127,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         DownButton.IsEnabled = selected;
         DuplicateButton.IsEnabled = selected;
         DeleteButton.IsEnabled = selected;
-        PickButton.IsEnabled = _tool is not null && selected;
-        DryRunButton.IsEnabled = _tool is not null && any && _run is null;
-        PlayButton.IsEnabled = _tool is not null && any && _run is null;
+        PickButton.IsEnabled = SelectedStep is not null;
+        DryRunButton.IsEnabled = any && _run is null;
+        PlayButton.IsEnabled = any && _run is null;
         EmptyState.Visibility = Ui.Show(!any);
 
         PropertyChanged?.Invoke(this, Everything);
@@ -241,11 +267,14 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// </summary>
     private async void OnPickRegion(object sender, RoutedEventArgs e)
     {
-        if (_tool is null || SelectedStep is not { } step) return;
+        if (SelectedStep is not { } step) return;
         try
         {
+            RunnerClient? client = await EnsureClientAsync();
+            if (client is null) return;
+
             Show("取区域", "用鼠标框一块区域：拖拽框选，单击选整个客户区，ESC 取消。", InfoBarSeverity.Informational);
-            PickedRegion? picked = await KeyMouseBridge.PickRegionAsync(_tool);
+            PickedRegion? picked = await KeyMouseBridge.PickRegionAsync(client);
             if (picked is null)
             {
                 Show("取区域", "取消了，没有改动。", InfoBarSeverity.Warning);
@@ -294,11 +323,48 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void OnPlay(object sender, RoutedEventArgs e) => await RunAsync(dryRun: false);
 
-    private void OnStopRun(object sender, RoutedEventArgs e) => _run?.Cancel();
+    private async void OnStopRun(object sender, RoutedEventArgs e)
+    {
+        if (_client is not null && _job is int job) await KeyMouseBridge.CancelAsync(_client, job);
+    }
+
+    /// <summary>Pause/resume a running flow: the Runner holds the execution between steps.</summary>
+    private async void OnPauseRun(object sender, RoutedEventArgs e)
+    {
+        if (_client is null || _job is not int job) return;
+        if (_paused)
+        {
+            await KeyMouseBridge.ResumeAsync(_client, job);
+            _paused = false;
+            PauseButton.Content = PauseLabel("暂停");
+            Show("继续", "流程继续跑。", InfoBarSeverity.Informational);
+        }
+        else
+        {
+            await KeyMouseBridge.PauseAsync(_client, job);
+            _paused = true;
+            PauseButton.Content = PauseLabel("继续");
+            Show("已暂停", "跑完当前这一步就会停住，等你说继续。", InfoBarSeverity.Warning);
+        }
+    }
+
+    private static StackPanel PauseLabel(string text) => new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 8,
+        Children =
+        {
+            new FontIcon { Glyph = "\uE769", FontSize = 14 },
+            new TextBlock { Text = text },
+        },
+    };
 
     private async Task RunAsync(bool dryRun)
     {
-        if (_tool is null || _run is not null) return;
+        if (_run is not null) return;
+
+        RunnerClient? client = await EnsureClientAsync();
+        if (client is null) return;
 
         string path;
         try
@@ -313,22 +379,21 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         LogBox.Text = "";
         LogExpander.IsExpanded = true;
-        Log($"$ KeyMouse run \"{path}\"{(dryRun ? " --dry-run" : "")} --echo");
+        Log($"# KeyMouse serve 连接已建立；请求 run {path}{(dryRun ? "（--dry-run）" : "")}");
         Show(dryRun ? "试运行" : "播放", "正在跑…", InfoBarSeverity.Informational);
 
         _run = new CancellationTokenSource();
+        _job = null;
+        _paused = false;
         StopButton.Visibility = Visibility.Visible;
+        PauseButton.Visibility = Visibility.Visible;
+        PauseButton.Content = PauseLabel("暂停");
         UpdateStates();
+
         int exitCode;
         try
         {
-            exitCode = await KeyMouseBridge.RunFlowAsync(_tool, path, dryRun, ["--echo"], Log, _run.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            Log("（被你停了）");
-            Show("已停止", "流程被你停掉了；已经发出去的动作不会收回。", InfoBarSeverity.Warning);
-            return;
+            exitCode = await KeyMouseBridge.RunFlowAsync(client, path, dryRun, OnRunnerEvent, _run.Token);
         }
         catch (Exception ex)
         {
@@ -339,13 +404,44 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         {
             _run.Dispose();
             _run = null;
+            _job = null;
+            _paused = false;
             StopButton.Visibility = Visibility.Collapsed;
+            PauseButton.Visibility = Visibility.Collapsed;
             UpdateStates();
             BringToFront();
         }
 
         Show(exitCode == 0 ? "成功" : $"失败（退出码 {exitCode}）", Explain(exitCode),
             exitCode == 0 ? InfoBarSeverity.Success : InfoBarSeverity.Error);
+    }
+
+    /// <summary>
+    /// Everything the Runner reports about the running job: its log lines, each step as it starts and
+    /// finishes (which is what highlights the row), and the state the job is in.
+    /// </summary>
+    private void OnRunnerEvent(RunnerEvent e)
+    {
+        if (e.Job is int job) _job ??= job;
+        switch (e.Kind)
+        {
+            case "log":
+                Log(e.Line ?? "");
+                break;
+
+            case "step" when e.Index is int index:
+                if (e.State == "started")
+                {
+                    if (index - 1 >= 0 && index - 1 < Model.Steps.Count) StepList.SelectedIndex = index - 1;
+                    Show("正在执行", $"[{index}/{e.Total ?? Model.Steps.Count}] " +
+                                     $"{StepCatalog.NameOf(e.Type ?? "")}（这一行已被选中）", InfoBarSeverity.Informational);
+                }
+                else
+                {
+                    Log($"  [{index}] 完成，退出码 {e.ExitCode}，{e.DurationMs} ms");
+                }
+                break;
+        }
     }
 
     /// <summary>The exit codes mean the same thing here as on the command line - say so in the UI.</summary>
@@ -358,6 +454,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         4 => "退出码 4：目标窗口现在不可用（最小化、被遮盖或拒绝绘制）——没有发输入。",
         5 => "退出码 5：焦点没验证通过，不敢往下按——没有发输入。",
         6 => "退出码 6：没读到内容（区域不对、引擎看不懂）——没有发输入。",
+        7 => "退出码 7：被你（或客户端）取消了——取消点之后没有发出任何输入。",
         _ => $"退出码 {code}。",
     };
 

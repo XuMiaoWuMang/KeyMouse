@@ -31,9 +31,9 @@ internal static class Recorder
     private const int VkRWin = 0x5C;
     private const int VkEscape = 0x1B;
 
-    internal static int Run(string[] args, Program.GlobalOptions g)
+    internal static int Run(string[] args, Commands.GlobalOptions g)
     {
-        var (positional, options) = Program.Parse(
+        var (positional, options) = Commands.Parse(
             args, "out", "min-gap", "move-threshold", "duration", "shot-size");
         if (positional.Count > 0)
             throw new ArgumentException($"record 不接受位置参数 '{positional[0]}'");
@@ -41,9 +41,9 @@ internal static class Recorder
             throw new ArgumentException("record 不接受窗口选择器：它记录的是你实际操作过的窗口");
 
         string output = options.TryGetValue("out", out string? rawOut) && rawOut.Length > 0 ? rawOut : "flow.json";
-        int minGap = Math.Clamp(Program.IntOr(options, "min-gap", 300), 0, 60_000);
-        int moveThreshold = Math.Clamp(Program.IntOr(options, "move-threshold", 8), 1, 500);
-        int durationMs = Math.Clamp(Program.IntOr(options, "duration", 0), 0, 3_600_000);
+        int minGap = Math.Clamp(Commands.IntOr(options, "min-gap", 300), 0, 60_000);
+        int moveThreshold = Math.Clamp(Commands.IntOr(options, "move-threshold", 8), 1, 500);
+        int durationMs = Math.Clamp(Commands.IntOr(options, "duration", 0), 0, 3_600_000);
         bool shots = !options.ContainsKey("no-shots");
 
         var session = new Session(output, minGap, moveThreshold, shots, durationMs);
@@ -103,6 +103,12 @@ internal static class Recorder
         internal bool ShouldStop()
         {
             if (_stopped) return true;
+            // A client attached to the Runner can stop a recording the same way it stops a flow.
+            if (Execution.Cancelled)
+            {
+                _stopped = true;
+                return true;
+            }
             if (_durationMs > 0 && Now() - _startedAt >= _durationMs)
             {
                 _stopped = true;

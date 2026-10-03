@@ -11,9 +11,9 @@ description:
   en: >
       A dependency-free console program: no test framework, runs offline, `dotnet run` is the whole interface, a non-zero exit code is a failure. It has already caught a real one - vk:0x5B, documented since v1.0 yet never working.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.456Z"
-fingerprint: 2a78fb0e938bdf1ed60e25eaba54f9f94c5398d37f1e0d4af1195a77de2d2b54
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.047Z"
+fingerprint: 92f269a71fb05825ffd60a645cea94d1d0344b6ff2618dc1fd93a588ce9a7566
 source:
   - path: "tests/KeyMouse.Tests/TestEntry.cs"
     line: 1

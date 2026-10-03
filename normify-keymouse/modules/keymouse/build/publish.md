@@ -11,9 +11,9 @@ description:
   en: >
       Publishes dist\KeyMouse.exe: framework-dependent by default (needs the runtime, ~240 KB), or self-contained with -SelfContained (~36 MB). A failed publish throws instead of leaving a half-built artefact.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.843Z"
-fingerprint: 3db0082371e9299af0cd056cd8c9c0753cc6e9ddd75d8f916f54000c32169f40
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.194Z"
+fingerprint: 4a38374a19bd5137fb4ad6265062b76436c28dd0e3dcee6a2732b177c996a9f7
 source:
   - path: "build.ps1"
     line: 1

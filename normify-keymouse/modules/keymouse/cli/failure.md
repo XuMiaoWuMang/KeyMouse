@@ -11,14 +11,14 @@ description:
   en: >
       The error contract used everywhere: CommandFailure carries an exit code (2 usage, 3 no match, 4 unusable target, 5 focus failed) and Fail writes it to stderr with a fixed prefix. The code is a promise: 3/4/5 mean nothing was sent.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:15.208Z"
-fingerprint: 1dc6315e5e6839b4070e982c6c81cf6216479ddf978a1b6c929e16feaa1f7c8a
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.194Z"
+fingerprint: d18c4d85defa1fa5de06d5c1406a2cea2d98c26c59968fc7e3054ff89b23dd2b
 source:
-  - path: "WindowFocus.cs"
+  - path: "src/KeyMouse.Core/WindowFocus.cs"
     line: 53
     end_line: 58
-  - path: "Program.cs"
+  - path: "src/KeyMouse.Core/Commands.cs"
     line: 651
     end_line: 656
 apis:

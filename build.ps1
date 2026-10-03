@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $root 'dist'
 
-dotnet publish (Join-Path $root 'KeyMouse.csproj') `
+dotnet publish (Join-Path $root 'src\KeyMouse.Cli\KeyMouse.Cli.csproj') `
     -c $Configuration `
     -r $RuntimeIdentifier `
     --self-contained:$($SelfContained.IsPresent.ToString().ToLowerInvariant()) `

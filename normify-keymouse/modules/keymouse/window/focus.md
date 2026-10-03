@@ -11,11 +11,11 @@ description:
   en: >
       Takes the foreground and verifies it by asking the system who is actually foreground now, retrying a few times. Success is judged by the real foreground window, not by the API's return value.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.892Z"
-fingerprint: e80d813e3fde8d15422e352901107627efc0dcfcf007d3a2054e4497d244417a
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.216Z"
+fingerprint: 3c23d3ba0bfa991fcdd14654409713ca0a20afb302f4aafacd056057428e7af4
 source:
-  - path: "WindowFocus.cs"
+  - path: "src/KeyMouse.Core/WindowFocus.cs"
     line: 20
     end_line: 52
 apis:

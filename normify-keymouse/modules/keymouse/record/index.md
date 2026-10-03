@@ -11,12 +11,12 @@ description:
   en: >
       Turns one real session into replayable, editable data instead of inventing another automation language: global hooks observe without swallowing, each action records which window it happened in (process + class, the title only for humans) and client-relative coordinates, the trajectory is thinned by distance, and key steps keep a small screenshot. Replay compiles the flow into the same command lines a human would type.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:15.221Z"
-fingerprint: 22ce0469120a9174d89f08079d99530dc8ad1eaa2f30560eb005e1aced6f146d
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.207Z"
+fingerprint: ab4feaa9db56d9301ca067060bd48245e4ee0ec006bd121da08f6dff7abbd88b
 source:
-  - path: "Recorder.cs"
-  - path: "NativeHooks.cs"
-  - path: "FlowModel.cs"
-  - path: "FlowRunner.cs"
+  - path: "src/KeyMouse.Core/Recorder.cs"
+  - path: "src/KeyMouse.Core/NativeHooks.cs"
+  - path: "src/KeyMouse.Core/FlowModel.cs"
+  - path: "src/KeyMouse.Core/FlowRunner.cs"
 ---

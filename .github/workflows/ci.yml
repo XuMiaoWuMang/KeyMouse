@@ -29,4 +29,4 @@ jobs:
       # tests/smoke.ps1 needs an interactive desktop (it drives Notepad), so it is
       # deliberately not part of CI - run it locally before a release.
       - name: Publish check (framework-dependent)
-        run: dotnet publish KeyMouse.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo
+        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo

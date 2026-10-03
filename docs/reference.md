@@ -299,6 +299,7 @@ KeyMouse window focus --process explorer --pick 3
 | 3 | 选择器无匹配 / 多候选未 `--pick` / `waitfor` 超时 / **选区被取消**（`region pick`、`probe --pick-region`） |
 | 4 | 目标不可用（隐藏 / 最小化 / 被 DWM cloak / 无响应 / **被禁用**） |
 | 5 | **焦点验证失败 —— 未发送任何输入** |
+| 7 | **被客户端取消**（`runner cancel` / 编辑器"停止"）——取消点之后未发送任何输入 |
 | 6 | **没看清**（`probe`：N 次读取不一致 / 置信度低于地板 / 没有可用引擎）—— 同样未发送任何输入 |
 
 脚本返回**第一条失败命令**的退出码。
@@ -462,6 +463,31 @@ KeyMouse run flow.json                          # 回放
 `target` 里的 `process` + `class` 是回放真正用的选择器；`title` 只给人看。
 
 ---
+
+## serve（常驻 Runner）与 runner（让 CLI 去驱动它）
+
+```
+KeyMouse serve                      # 前台启动常驻 Runner（编辑器连的就是它）
+KeyMouse runner status              # 问它现在什么状态、有哪些作业
+KeyMouse runner run flow.json       # 让常驻 Runner 执行一个流程（CLI 只是客户端）
+KeyMouse runner cancel 3            # 暂停 / 继续 / 取消某个作业
+KeyMouse runner pause 3
+KeyMouse runner resume 3
+KeyMouse runner stop                # 请它退出
+```
+
+**一个产品、两个入口、三层**：编辑器（WinUI）与命令行都连同一个常驻 Runner，Runner 驱动的是与
+一次性命令**完全相同**的那份派发——所以退出码、闸门、焦点验证不会因为入口不同而变。
+
+- 管道：`\\.\pipe\keymouse-runner-<用户名>`（按用户隔离，没有端口）。
+- 协议：一行一个 JSON 对象，双向。请求 `{"id":1,"method":"run","params":{"flow":"...","dryRun":false}}`；
+  事件 `{"kind":"..."}`，`kind` ∈ `hello | log | step | finished | result | error`。
+  `step` 带 `index/total/state(started|finished)/type/exitCode/durationMs`——编辑器就是靠它在列表里
+  实时高亮正在执行的那一步。
+- 方法：`hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown`。
+- **一次只跑一个作业**：输入是全局资源，作业排队而不是并行（理由见 design.md）。
+
+退出码 `7 = 被客户端取消`：取消点之后没有再发出任何输入（和 3/4/5/6 一样，可以放心重跑）。
 
 ## flow（图形编辑器）
 

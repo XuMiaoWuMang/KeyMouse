@@ -20,6 +20,24 @@ KeyMouse record --out flow.json                      # 录一段操作（Ctrl+Al
 KeyMouse run flow.json                               # 原样回放，或改完再放
 ```
 
+## 架构：一个产品，两个入口，三层
+
+```
+  图形编辑器（editor\KeyMouse.FlowEditor，WinUI 3）      命令行（src\KeyMouse.Cli → KeyMouse.exe）
+                 │ 命名管道 + JSON 行：run/record/pick-region/ocr/validate/cancel/pause/resume/status
+                 ▼
+  常驻 Runner（src\KeyMouse.Runner，KeyMouse serve）
+    ├─ 作业注册表：排队、暂停/继续/取消、逐步事件、日志流
+    └─ 驱动同一份派发（Commands.Execute）
+                 ▼
+  能力层（src\KeyMouse.Core）：流程解释器、SendInput、全局钩子/录制、OCR/读屏、取区域、窗口闸门、流程 JSON
+                 ▼
+  Windows API / 离线 Tesseract 模型 / 流程文件
+```
+
+- **两个入口**：编辑器连常驻 Runner；CLI 既能一次性执行（`KeyMouse run flow.json`），也能驱动同一个 Runner（`KeyMouse runner run flow.json`）。**两个入口跑同一份执行体**，退出码、闸门与焦点验证的语义不会分叉。
+- **三层**：能力层不认识 IPC，Runner 不认识 UI，UI 不认识流程格式细节（它引用 Core，不复制 schema）。Runner 通过 Core 的 `Execution.Control` 接缝实现暂停/取消/逐步上报；CLI 不装这个接缝，同一段代码就是一次普通阻塞调用。
+- **常驻的理由**：作业状态、逐步事件、暂停/取消、日志流都是进程内状态——一次性子进程给不了。
 ## 能力一览
 
 | | |
@@ -39,7 +57,7 @@ KeyMouse run flow.json                               # 原样回放，或改完�
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：150 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：158 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 

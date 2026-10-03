@@ -11,11 +11,11 @@ description:
   en: >
       `KeyMouse flow edit <flow.json>`: looks for the editor (next to KeyMouse.exe, then the build output of a development checkout), starts it with the flow path, and when it is nowhere says exactly what to build (exit code 4). The console renders no UI itself.
       
-revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
-updated_at: "2026-10-03T10:33:31.240Z"
-fingerprint: 7b89223175c6951d371aee58cef8887e1b800bc48bd29e342b47ce54ffc6b589
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:13:17.046Z"
+fingerprint: df5e3927e12b6e5f13dc51371d927d1a737a674d2da50153b18902f760f91254
 source:
-  - path: "FlowEditorCommand.cs"
+  - path: "src/KeyMouse.Cli/FlowEditorCommand.cs"
 apis:
   - protocol: rpc
     path: "FlowEditorCommand.Run"

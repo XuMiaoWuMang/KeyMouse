@@ -86,6 +86,18 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 
 单元测试故意不用 xunit/NUnit：一个普通控制台程序，零依赖、离线可跑、`dotnet run` 就是全部用法。
 
+## 目录（一个产品，两个入口，三层）
+
+| 路径 | 是什么 |
+| --- | --- |
+| `src\KeyMouse.Core` | **能力层**：流程解释器、SendInput、全局钩子/录制、OCR/读屏、取区域、窗口闸门、流程 JSON。不认识 IPC，也不认识 UI |
+| `src\KeyMouse.Runner` | **常驻引擎**：命名管道协议、作业注册表（排队/暂停/取消）、事件流、`Execution.Control` 接缝的实现 |
+| `src\KeyMouse.Cli` | **命令行入口**（产物仍是 `dist\KeyMouse.exe`）：`serve` 起常驻服务，`runner ...` 当客户端，其余命令走能力层 |
+| `editor\KeyMouse.FlowEditor` | **图形入口**（WinUI 3）：引用 Core 与 Runner，不复制 schema；取区域与回放都通过常驻 Runner |
+| `tests\KeyMouse.Tests` | 单测（不需要桌面）：解析、窗口、probe、选区、流程、Runner 协议 |
+| `tests\smoke.ps1` | 桌面冒烟：真输入真窗口，含"常驻 Runner 被 CLI 驱动"那一段 |
+| `normify-keymouse\` | 结构数据（模块树 + 渲染图），`normify.html` 可下钻 |
+
 ## 实测留档（tests/evidence，只在本地）
 
 跑一次测量、把**所有**证据落盘，供人回看：
@@ -118,13 +130,13 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 223 个 API 的索引 |
+| `api-index.json` | 238 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 150 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 158 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
-`smoke.loops` 都各占一格。172 条箭头锚定到了具体 API 行，所以图上读到的是
+`smoke.loops` 都各占一格。177 条箭头锚定到了具体 API 行，所以图上读到的是
 `mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
 
 改动代码后同步（伴随开发流程）：

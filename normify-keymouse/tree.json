@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T10:33:40.001Z",
+    "compiled_at": "2026-10-03T11:13:28.102Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 150,
-      "leaf_count": 121,
-      "api_count": 223,
-      "dep_count": 172,
+      "module_count": 158,
+      "leaf_count": 128,
+      "api_count": 238,
+      "dep_count": 177,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
-      "layout_count": 29,
+      "layout_count": 30,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 10,
+      "change_count": 11,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 149,
+        "descendant_count": 157,
         "own_api_count": 0,
-        "inherited_api_count": 223,
+        "inherited_api_count": 238,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -111,13 +111,13 @@
           "path": ".github/workflows/release.yml"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.843Z",
-      "fingerprint": "0a226e48dea6486acdb67bbed29779e47215fee34f8f9342a22b9017e999b346",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.047Z",
+      "fingerprint": "0ff7d0958875da898313069f9a1a9cf996d3935c59f42b48056209ec4f7216f6",
       "aggregate": {
-        "descendant_count": 4,
+        "descendant_count": 5,
         "own_api_count": 0,
-        "inherited_api_count": 6,
+        "inherited_api_count": 9,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -146,9 +146,9 @@
           "end_line": 32
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.841Z",
-      "fingerprint": "23148afbab4c70db6fa2b78b991f70c63a69a7138e5e0516f8b622309abfaa46",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.193Z",
+      "fingerprint": "cd3a724cf806ba4d601c783ff83ee96a0ff016d0f943524475810e3f10d0f8dd",
       "apis": [
         {
           "protocol": "rpc",
@@ -192,6 +192,78 @@
         "dep_in": 0
       }
     },
+    "keymouse.build.projects": {
+      "uid": "7a1f0e08",
+      "id": "keymouse.build.projects",
+      "parent": "keymouse.build",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "build",
+        "architecture"
+      ],
+      "name": {
+        "zh": "项目布局",
+        "en": "Project layout"
+      },
+      "description": {
+        "zh": "三个项目 = 三层：Core（能力层，库）、Runner（常驻引擎，库）、Cli（入口，产物仍是 dist\\KeyMouse.exe），编辑器单独一个 WinUI 项目引用前两个。Core 用 InternalsVisibleTo 把内部类型开放给同产品的另两个程序集与测试；`dotnet sln add` 的校验器不认识这个 item，加项目时要临时去掉那一段。\n",
+        "en": "Three projects = three layers: Core (capability layer, library), Runner (resident engine, library) and Cli (entry point, still producing dist\\KeyMouse.exe), with the editor as a separate WinUI project referencing the first two. Core opens its internals to the product other assemblies and the tests via InternalsVisibleTo; that item makes `dotnet sln add` refuse the project, so it is stripped for the moment the project is added.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Core/KeyMouse.Core.csproj"
+        },
+        {
+          "path": "src/KeyMouse.Runner/KeyMouse.Runner.csproj"
+        },
+        {
+          "path": "src/KeyMouse.Cli/KeyMouse.Cli.csproj"
+        },
+        {
+          "path": "KeyMouse.sln"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.046Z",
+      "fingerprint": "57c917f3f41ff03bd3ef99bfd18a67b3e71d3a6475a54a96e1e11a923e5df4d4",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "src/KeyMouse.Core/KeyMouse.Core.csproj",
+          "description": {
+            "zh": "能力层：库，开放内部类型给同产品的另两个程序集与测试。\n",
+            "en": "The capability layer: a library that opens its internals to the product other assemblies and the tests.\n"
+          },
+          "key": "file:src/KeyMouse.Core/KeyMouse.Core.csproj"
+        },
+        {
+          "protocol": "file",
+          "path": "src/KeyMouse.Runner/KeyMouse.Runner.csproj",
+          "description": {
+            "zh": "常驻引擎：库，引用能力层。\n",
+            "en": "The resident engine: a library referencing the capability layer.\n"
+          },
+          "key": "file:src/KeyMouse.Runner/KeyMouse.Runner.csproj"
+        },
+        {
+          "protocol": "file",
+          "path": "src/KeyMouse.Cli/KeyMouse.Cli.csproj",
+          "description": {
+            "zh": "命令行入口：控制台子系统，产物 dist\\KeyMouse.exe。\n",
+            "en": "The command-line entry: a console subsystem producing dist\\KeyMouse.exe.\n"
+          },
+          "key": "file:src/KeyMouse.Cli/KeyMouse.Cli.csproj"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.build.publish": {
       "uid": "b16cc1d2",
       "id": "keymouse.build.publish",
@@ -216,9 +288,9 @@
           "end_line": 30
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.843Z",
-      "fingerprint": "3db0082371e9299af0cd056cd8c9c0753cc6e9ddd75d8f916f54000c32169f40",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.194Z",
+      "fingerprint": "4a38374a19bd5137fb4ad6265062b76436c28dd0e3dcee6a2732b177c996a9f7",
       "apis": [
         {
           "protocol": "rpc",
@@ -272,9 +344,9 @@
           "end_line": 45
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.844Z",
-      "fingerprint": "5ffdae790b856196f341ea38d42e20c030c62ea7bc55d88ceba98ddbc2ffee49",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.194Z",
+      "fingerprint": "03f06a8e112d0adb1c438083c0ad102041187ea96493be7b1e2344dbe479e79a",
       "apis": [
         {
           "protocol": "rpc",
@@ -439,14 +511,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 1,
           "end_line": 658
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.209Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.046Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "deps": [
         {
           "kind": "call",
@@ -495,11 +567,85 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 24,
+        "descendant_count": 26,
         "own_api_count": 0,
-        "inherited_api_count": 37,
+        "inherited_api_count": 41,
         "dep_out": 5,
         "dep_in": 1
+      }
+    },
+    "keymouse.cli.entry": {
+      "uid": "7a1f0e06",
+      "id": "keymouse.cli.entry",
+      "parent": "keymouse.cli",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "cli"
+      ],
+      "name": {
+        "zh": "入口与三条路由",
+        "en": "Entry and its three routes"
+      },
+      "description": {
+        "zh": "`serve` 起常驻引擎、`runner ...` 当它的客户端、`flow edit` 拉起图形编辑器，其余全部丢给能力层的派发。入口项目必须是控制台子系统（OutputType=Exe）——实测写成 WinExe 后没有控制台，PowerShell 也不会等它，输出直接消失。\n",
+        "en": "`serve` starts the resident engine, `runner ...` acts as its client, `flow edit` launches the graphical editor, and everything else goes to the capability layer dispatch. The entry project must be a console subsystem (OutputType=Exe): measurably, as WinExe it has no console, PowerShell does not wait for it and its output simply disappears.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Cli/Program.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.045Z",
+      "fingerprint": "932bf5874d8c419c2d1c24f089630dc182c309481b348acad76e201dd477cd8d",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "keymouse serve",
+          "description": {
+            "zh": "启动常驻 Runner。\n",
+            "en": "Starts the resident Runner.\n"
+          },
+          "key": "rpc:keymouse serve"
+        },
+        {
+          "protocol": "rpc",
+          "path": "keymouse <命令>",
+          "description": {
+            "zh": "其余命令走能力层（一次性执行）。\n",
+            "en": "Everything else runs once through the capability layer.\n"
+          },
+          "key": "rpc:keymouse <命令>"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.runner.host",
+          "to_api": "rpc:RunnerHost.Run",
+          "label": {
+            "zh": "serve 就是它",
+            "en": "serve is this"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.cli.runner",
+          "label": {
+            "zh": "runner 子命令",
+            "en": "The runner subcommands"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
       }
     },
     "keymouse.cli.failure": {
@@ -522,19 +668,19 @@
       },
       "source": [
         {
-          "path": "WindowFocus.cs",
+          "path": "src/KeyMouse.Core/WindowFocus.cs",
           "line": 53,
           "end_line": 58
         },
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 651,
           "end_line": 656
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.208Z",
-      "fingerprint": "1dc6315e5e6839b4070e982c6c81cf6216479ddf978a1b6c929e16feaa1f7c8a",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.194Z",
+      "fingerprint": "d18c4d85defa1fa5de06d5c1406a2cea2d98c26c59968fc7e3054ff89b23dd2b",
       "apis": [
         {
           "protocol": "rpc",
@@ -583,12 +729,12 @@
       },
       "source": [
         {
-          "path": "FlowEditorCommand.cs"
+          "path": "src/KeyMouse.Cli/FlowEditorCommand.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.240Z",
-      "fingerprint": "7b89223175c6951d371aee58cef8887e1b800bc48bd29e342b47ce54ffc6b589",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.046Z",
+      "fingerprint": "df5e3927e12b6e5f13dc51371d927d1a737a674d2da50153b18902f760f91254",
       "apis": [
         {
           "protocol": "rpc",
@@ -628,14 +774,14 @@
       },
       "source": [
         {
-          "path": "Usage.cs",
+          "path": "src/KeyMouse.Core/Usage.cs",
           "line": 1,
           "end_line": 128
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.241Z",
-      "fingerprint": "750bc0aef435b8ef667c67f51b6b59c023e119da30118f9148eceefd5a260b19",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.195Z",
+      "fingerprint": "7d2aaaca86d67355fa8f5733fa6016e537b1b30a8a48cf1602066cb3149364db",
       "apis": [
         {
           "protocol": "rpc",
@@ -675,14 +821,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 640,
           "end_line": 650
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.209Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.195Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -730,14 +876,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 350,
           "end_line": 430
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.210Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.195Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "deps": [
         {
           "kind": "call",
@@ -794,14 +940,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 400,
           "end_line": 413
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.209Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.195Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -853,14 +999,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 380,
           "end_line": 399
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.210Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.195Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -921,14 +1067,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 363,
           "end_line": 379
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.210Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.196Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -981,14 +1127,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 414,
           "end_line": 430
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.211Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.196Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1040,14 +1186,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 9,
           "end_line": 63
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.241Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.046Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1137,7 +1283,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 5,
-        "dep_in": 6
+        "dep_in": 7
       }
     },
     "keymouse.cli.mouse": {
@@ -1159,14 +1305,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 169,
           "end_line": 341
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.212Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "deps": [
         {
           "kind": "call",
@@ -1214,14 +1360,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 220,
           "end_line": 260
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.211Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.196Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1300,14 +1446,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 291,
           "end_line": 341
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.211Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.196Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1378,19 +1524,19 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 161,
           "end_line": 168
         },
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 342,
           "end_line": 349
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.212Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.196Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1458,14 +1604,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 189,
           "end_line": 209
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.212Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1535,14 +1681,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 210,
           "end_line": 219
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.213Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1594,14 +1740,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 182,
           "end_line": 188
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.213Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1653,14 +1799,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 261,
           "end_line": 290
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.213Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1722,14 +1868,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 546,
           "end_line": 604
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.213Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1758,6 +1904,72 @@
         "dep_in": 3
       }
     },
+    "keymouse.cli.runner": {
+      "uid": "7a1f0e07",
+      "id": "keymouse.cli.runner",
+      "parent": "keymouse.cli",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "cli",
+        "runner"
+      ],
+      "name": {
+        "zh": "CLI 侧的 Runner 客户端",
+        "en": "Runner client on the CLI side"
+      },
+      "description": {
+        "zh": "`runner status | list | run | cancel | pause | resume | stop`：命令行既能一次性执行，也能驱动同一个常驻引擎——这就是\"两个入口跑同一份执行体\"的另一半。没有引擎在听时给退出码 4 并告诉你先跑 `serve`。\n",
+        "en": "`runner status | list | run | cancel | pause | resume | stop`: the command line can either execute once or drive the same resident engine - the other half of \"two entry points, one execution body\". With nothing listening it exits 4 and tells you to start `serve` first.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Cli/RunnerCommand.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.045Z",
+      "fingerprint": "50042784145b55d2cbdbe49b1d28cb4bc0356a4366171deb7a5dbdd2e571b1da",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "keymouse runner run",
+          "description": {
+            "zh": "让常驻引擎执行一个流程，并把过程打印出来。\n",
+            "en": "Has the resident engine execute a flow and prints what happens.\n"
+          },
+          "key": "rpc:keymouse runner run"
+        },
+        {
+          "protocol": "rpc",
+          "path": "keymouse runner status",
+          "description": {
+            "zh": "问引擎状态与作业表。\n",
+            "en": "Asks the engine for its state and job table.\n"
+          },
+          "key": "rpc:keymouse runner status"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.runner.pipe",
+          "to_api": "rpc:RunnerClient.SendAsync",
+          "label": {
+            "zh": "一条连接发请求",
+            "en": "One connection, many requests"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 1,
+        "dep_in": 1
+      }
+    },
     "keymouse.cli.window": {
       "uid": "8d9e0f1a",
       "id": "keymouse.cli.window",
@@ -1777,14 +1989,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 431,
           "end_line": 545
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.214Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "deps": [
         {
           "kind": "call",
@@ -1824,14 +2036,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 497,
           "end_line": 545
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.214Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.197Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1895,14 +2107,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 465,
           "end_line": 496
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.214Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -1962,14 +2174,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 441,
           "end_line": 464
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.215Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -2030,14 +2242,14 @@
       },
       "source": [
         {
-          "path": "Program.cs",
+          "path": "src/KeyMouse.Core/Commands.cs",
           "line": 61,
           "end_line": 160
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.215Z",
-      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
       "apis": [
         {
           "protocol": "rpc",
@@ -2119,19 +2331,19 @@
       },
       "source": [
         {
-          "path": "ConsoleText.cs",
+          "path": "src/KeyMouse.Core/ConsoleText.cs",
           "line": 1,
           "end_line": 86
         },
         {
-          "path": "Usage.cs",
+          "path": "src/KeyMouse.Core/Usage.cs",
           "line": 1,
           "end_line": 128
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.216Z",
-      "fingerprint": "ac9b28b8ae71c52456a2c5db947518c0d26bd0315b2820602a649dcfc673768c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "86ceb3eb6160cec7f728764fa3401a8b943c8a1eb147ee921f9070b7b33e4cdd",
       "deps": [
         {
           "kind": "call",
@@ -2171,14 +2383,14 @@
       },
       "source": [
         {
-          "path": "ConsoleText.cs",
+          "path": "src/KeyMouse.Core/ConsoleText.cs",
           "line": 13,
           "end_line": 44
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.854Z",
-      "fingerprint": "27b97c5497a18a075d4b147d795c51c354f85c1b750f67f2fd59ae6ddc0124f1",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7b34359e8593529cec65ec16fb52cabdc1ce2520355312e65521683c77dfcee0",
       "apis": [
         {
           "protocol": "rpc",
@@ -2227,14 +2439,14 @@
       },
       "source": [
         {
-          "path": "ConsoleText.cs",
+          "path": "src/KeyMouse.Core/ConsoleText.cs",
           "line": 46,
           "end_line": 86
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.854Z",
-      "fingerprint": "27b97c5497a18a075d4b147d795c51c354f85c1b750f67f2fd59ae6ddc0124f1",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.198Z",
+      "fingerprint": "7b34359e8593529cec65ec16fb52cabdc1ce2520355312e65521683c77dfcee0",
       "apis": [
         {
           "protocol": "rpc",
@@ -2306,9 +2518,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:39.277Z",
-      "fingerprint": "2a262015b7323189571df6dc44cec8840df834437c88673e54303d0a5abc4c4c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:27.604Z",
+      "fingerprint": "24ff2bfc8988201696b5fb913fb7c9310dd78daa25b65c1276414344410462a7",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2341,9 +2553,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.242Z",
-      "fingerprint": "ca9e3b636284787eb0992e0fafc6930f30714562327a127633aa34395c82745a",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.048Z",
+      "fingerprint": "dadd0d3049976b358079fe9941d37bdd4a0b165c378c7e4f7d711c1360d8a4e1",
       "apis": [
         {
           "protocol": "file",
@@ -2385,9 +2597,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:39.276Z",
-      "fingerprint": "b3e3d09ff1fb91d123c5af0c40b47a546e35eb59ee85aded9e96b8562ebbc839",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:27.604Z",
+      "fingerprint": "4274ddd5ace7d971f928a8dfec325a01dd732a0b6d4e8e07229d31b858d1fe88",
       "apis": [
         {
           "protocol": "file",
@@ -2429,9 +2641,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:39.277Z",
-      "fingerprint": "b532a7adb200d6ebefe7d0a75a8c5d6fd82d48be7dcd5e03407af7532aa9f0f0",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:27.604Z",
+      "fingerprint": "97e4d858454ffb3853bf8c02c6d5b8ab83714d94944d2eb8a5675afa0a3531a1",
       "apis": [
         {
           "protocol": "file",
@@ -2473,9 +2685,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.242Z",
-      "fingerprint": "445e09384aadd395ec29b54a1545f16e797d0f2b9d00da1051e28c26f52028e6",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.048Z",
+      "fingerprint": "0e2ea909977670c1cf3b46b3454e7bf76975c223cf188299f07a7ce1dc8c285b",
       "apis": [
         {
           "protocol": "file",
@@ -2563,13 +2775,13 @@
           "path": "editor/KeyMouse.FlowEditor/KeyMouse.FlowEditor.csproj"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.238Z",
-      "fingerprint": "b547ed01c9bbf6a73c3c3697f4479fe5950c2e08f5958f73a0e25034f24b8d9e",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.047Z",
+      "fingerprint": "55033d25fce13c9d5c3b44610d32254427cbc7105f8b075656fa39d74ca6dbdc",
       "aggregate": {
-        "descendant_count": 4,
+        "descendant_count": 3,
         "own_api_count": 0,
-        "inherited_api_count": 12,
+        "inherited_api_count": 9,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -2597,9 +2809,9 @@
           "path": "editor/KeyMouse.FlowEditor/KeyMouseBridge.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.240Z",
-      "fingerprint": "015005b8d11bc3d5c78598d0ad2ab1d86515dd31d07d3b3e308edf14297b84c4",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.047Z",
+      "fingerprint": "dcd1c57df3f0ab957e6aacf3455041ace8ab7950e776109fed68dfc2d533437d",
       "apis": [
         {
           "protocol": "file",
@@ -2658,92 +2870,6 @@
         "dep_in": 1
       }
     },
-    "keymouse.editor.schema": {
-      "uid": "7a1f0d14",
-      "id": "keymouse.editor.schema",
-      "parent": "keymouse.editor",
-      "tree": "keymouse",
-      "depth": 3,
-      "tags": [
-        "editor",
-        "schema"
-      ],
-      "name": {
-        "zh": "共享 schema 链接",
-        "en": "Linked shared schema"
-      },
-      "description": {
-        "zh": "编辑器不重写流程格式：FlowModel.cs 与 TextPredicate.cs 通过 `<Compile Include=\"..\\..\\\" />` 原样编进编辑器程序集，只补一个 10 行的 CommandFailure 兼容声明（与原版同形：一个退出码 + 一句话）。代价是根项目必须 `<Compile Remove=\"editor/**\" />`，否则会把编辑器整个编进控制台程序（实测：重复 AssemblyInfo 特性）。\n",
-        "en": "The editor does not re-implement the flow format: FlowModel.cs and TextPredicate.cs are compiled in verbatim via `<Compile Include=\"..\\..\\\" />`, with only a ten-line CommandFailure declaration to match (a code and a message). The price: the root project must `<Compile Remove=\"editor/**\" />`, or it compiles the editor into the console app (measured: duplicate AssemblyInfo attributes).\n"
-      },
-      "source": [
-        {
-          "path": "editor/KeyMouse.FlowEditor/CommandFailure.cs"
-        },
-        {
-          "path": "editor/KeyMouse.FlowEditor/Compat.cs"
-        }
-      ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.240Z",
-      "fingerprint": "e6fa3130a76c69103863f80e7d713dcb26987b89b3bfa5eb406132dd6c7a001d",
-      "apis": [
-        {
-          "protocol": "file",
-          "path": "FlowModel.cs",
-          "description": {
-            "zh": "原样链接进来的流程文档模型与编译器（编辑器的读写都走它）。\n",
-            "en": "The flow document model and compiler, linked verbatim (all editor reads and writes go through it).\n"
-          },
-          "key": "file:FlowModel.cs"
-        },
-        {
-          "protocol": "file",
-          "path": "TextPredicate.cs",
-          "description": {
-            "zh": "原样链接进来的匹配模式定义（检查器里那个下拉框就是它）。\n",
-            "en": "The match-mode definitions, linked verbatim (the inspector dropdown is this).\n"
-          },
-          "key": "file:TextPredicate.cs"
-        },
-        {
-          "protocol": "file",
-          "path": "CommandFailure.cs",
-          "description": {
-            "zh": "10 行兼容声明：与原版同形（一个退出码 + 一句话）。\n",
-            "en": "The ten-line compatible declaration: same shape as the original (a code and a message).\n"
-          },
-          "key": "file:CommandFailure.cs"
-        }
-      ],
-      "deps": [
-        {
-          "kind": "reference",
-          "to": "keymouse.flow.model",
-          "label": {
-            "zh": "同一份文档模型",
-            "en": "The same document model"
-          },
-          "cross_tree": false
-        },
-        {
-          "kind": "reference",
-          "to": "keymouse.flow.predicate",
-          "label": {
-            "zh": "同一套匹配方式",
-            "en": "The same match modes"
-          },
-          "cross_tree": false
-        }
-      ],
-      "aggregate": {
-        "descendant_count": 0,
-        "own_api_count": 3,
-        "inherited_api_count": 0,
-        "dep_out": 2,
-        "dep_in": 0
-      }
-    },
     "keymouse.editor.shell": {
       "uid": "7a1f0d11",
       "id": "keymouse.editor.shell",
@@ -2774,9 +2900,9 @@
           "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.239Z",
-      "fingerprint": "65d715ffe1844d7c294a307c26ffdf64ba4834f93ff8b388fb60835db4ec489b",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.047Z",
+      "fingerprint": "f750c9c3f045078536995af88a134abe107c9729da4b0166b8a3e83e8619a390",
       "apis": [
         {
           "protocol": "rpc",
@@ -2924,6 +3050,60 @@
         "dep_in": 1
       }
     },
+    "keymouse.execution": {
+      "uid": "7a1f0e05",
+      "id": "keymouse.execution",
+      "parent": "keymouse",
+      "tree": "keymouse",
+      "depth": 2,
+      "tags": [
+        "core",
+        "runner"
+      ],
+      "name": {
+        "zh": "执行接缝",
+        "en": "Execution seam"
+      },
+      "description": {
+        "zh": "能力层唯一知道\"有人可能在看着这次执行\"的地方：一个接口（暂停闸门、取消、逐步上报）+ 一个静态挂点。CLI 不挂它，于是同一段流程代码就是一次普通阻塞调用；Runner 挂上作业对象，于是同一条路径就有了暂停/取消/逐步事件。取消抛的是 Core 自己的 CommandFailure(7)——实测抛 OperationCanceledException 会被顶层兜底变成退出码 1。\n",
+        "en": "The only place in the capability layer that knows someone might be watching: one interface (pause gate, cancel, per-step reporting) plus a static hook. The CLI installs nothing, so the same flow code is a plain blocking call; the Runner installs a job, so the same path gains pause, cancel and per-step events. Cancelling throws Core own CommandFailure(7): measurably, an OperationCanceledException surfaced as exit code 1 instead.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Core/ExecutionControl.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.045Z",
+      "fingerprint": "885f00e153df78d28fc59f2e6f08c35af1ccec56cdb6f1d0442d2fe32971eb2d",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Execution.Control",
+          "description": {
+            "zh": "当前执行的控制点（null = 没人看着）。\n",
+            "en": "The control point of the current execution (null = nobody watching).\n"
+          },
+          "key": "rpc:Execution.Control"
+        },
+        {
+          "protocol": "rpc",
+          "path": "IExecutionControl.BetweenSteps",
+          "description": {
+            "zh": "步与步之间：暂停时阻塞，取消时抛退出码 7。\n",
+            "en": "Between steps: blocks while paused, throws exit code 7 when cancelled.\n"
+          },
+          "key": "rpc:IExecutionControl.BetweenSteps"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 1
+      }
+    },
     "keymouse.flow": {
       "uid": "7a1f0c53",
       "id": "keymouse.flow",
@@ -2945,15 +3125,15 @@
       },
       "source": [
         {
-          "path": "FlowModel.cs"
+          "path": "src/KeyMouse.Core/FlowModel.cs"
         },
         {
-          "path": "FlowRunner.cs"
+          "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.618Z",
-      "fingerprint": "f27d4f0b2636751b2128b373a2bb41959b6f8c644eea836083948017ca54b332",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.201Z",
+      "fingerprint": "b1af31cf1ebdaa3e3a1f6d37d69c49acdc99ad1bb4e1c1171ff735605563ec7b",
       "aggregate": {
         "descendant_count": 3,
         "own_api_count": 0,
@@ -2982,15 +3162,15 @@
       },
       "source": [
         {
-          "path": "FlowModel.cs"
+          "path": "src/KeyMouse.Core/FlowModel.cs"
         },
         {
-          "path": "TextPredicate.cs"
+          "path": "src/KeyMouse.Core/TextPredicate.cs"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.520Z",
-      "fingerprint": "287793196d347ecb59faae080d78a191ff61e10e1383430f7c651bfca3f73a37",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.201Z",
+      "fingerprint": "1c503f9dd19da310c11b40df4bbcc27dda6fea6832eabe86059e3d444d4ccf9e",
       "apis": [
         {
           "protocol": "rpc",
@@ -3037,7 +3217,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 1,
-        "dep_in": 6
+        "dep_in": 5
       }
     },
     "keymouse.flow.predicate": {
@@ -3060,12 +3240,12 @@
       },
       "source": [
         {
-          "path": "TextPredicate.cs"
+          "path": "src/KeyMouse.Core/TextPredicate.cs"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.519Z",
-      "fingerprint": "391f210fd22534cbfc35f6a5f6425ac83b1c8591ace98048b8c5bd91301acc6e",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.201Z",
+      "fingerprint": "e96e540fbb668ddd4c0fab445eae2f32bfd12ccc80d0ae9fc107796e6ce59cbe",
       "apis": [
         {
           "protocol": "rpc",
@@ -3109,7 +3289,7 @@
         "own_api_count": 4,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 3
+        "dep_in": 2
       }
     },
     "keymouse.flow.runner": {
@@ -3132,12 +3312,12 @@
       },
       "source": [
         {
-          "path": "FlowRunner.cs"
+          "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.520Z",
-      "fingerprint": "43b42b8b5255e7029c9b4c0d9f929e71f833ad1cfeda1e9dd76eec1d9f31b10c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.048Z",
+      "fingerprint": "f0afb9c88f544f9dd71bd8ceedb29f555d58848202faa27f7b3ed7f2c43d43d3",
       "apis": [
         {
           "protocol": "rpc",
@@ -3206,14 +3386,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 1,
           "end_line": 274
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.857Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.201Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "deps": [
         {
           "kind": "call",
@@ -3253,14 +3433,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 193,
           "end_line": 215
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.857Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.201Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3313,14 +3493,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 216,
           "end_line": 248
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.857Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3402,14 +3582,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 167,
           "end_line": 189
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.858Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3491,14 +3671,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 133,
           "end_line": 165
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.858Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3570,14 +3750,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 95,
           "end_line": 132
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.858Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3650,14 +3830,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 249,
           "end_line": 274
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.858Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3710,14 +3890,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 190,
           "end_line": 192
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.859Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -3769,14 +3949,14 @@
       },
       "source": [
         {
-          "path": "KeyMap.cs",
+          "path": "src/KeyMouse.Core/KeyMap.cs",
           "line": 1,
           "end_line": 73
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.003Z",
-      "fingerprint": "25a839f445b22a732ec61ead6f2a2bcc99cff347f76627cd9fa8fc1b4e5b22cc",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "f0d96906f5a687eb74e73fb37fe601a97badbf1076d28b67349691369f92feac",
       "apis": [
         {
           "protocol": "rpc",
@@ -3825,14 +4005,14 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 1,
           "end_line": 193
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "aggregate": {
         "descendant_count": 11,
         "own_api_count": 0,
@@ -3862,14 +4042,14 @@
       },
       "source": [
         {
-          "path": "NativeCapture.cs",
+          "path": "src/KeyMouse.Core/NativeCapture.cs",
           "line": 1,
           "end_line": 177
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.859Z",
-      "fingerprint": "059722e432c45e0fa57ce96dd33212062198928eadf36b7fed06d5a4b2415ff1",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.202Z",
+      "fingerprint": "5f3e97c7913717272dc7d9f1533fdb66ab53713597497b92798e5d02e590e95c",
       "apis": [
         {
           "protocol": "rpc",
@@ -3918,19 +4098,19 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 88,
           "end_line": 89
         },
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 173,
           "end_line": 185
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.859Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -3980,12 +4160,12 @@
       },
       "source": [
         {
-          "path": "NativeHooks.cs"
+          "path": "src/KeyMouse.Core/NativeHooks.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.454Z",
-      "fingerprint": "85b2ee3aa9408b096642b96ef1661761d5b6428d5e05d4e9f3727686c9819ab3",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "e19d0385e3e8bbd557aec002434fb3d2b8a47a69b6c532ec90ced03a5c6fd95c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4034,14 +4214,14 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 125,
           "end_line": 171
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.860Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4098,19 +4278,19 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 33,
           "end_line": 44
         },
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 101,
           "end_line": 114
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.860Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4177,14 +4357,14 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 69,
           "end_line": 83
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.861Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4260,14 +4440,14 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 57,
           "end_line": 68
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.861Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4334,14 +4514,14 @@
       },
       "source": [
         {
-          "path": "NativeInput.cs",
+          "path": "src/KeyMouse.Core/NativeInput.cs",
           "line": 78,
           "end_line": 94
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.861Z",
-      "fingerprint": "3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.203Z",
+      "fingerprint": "313ba7f64e5fc1c76991cd00fadad0b4c74007b47eb4e68d1954227536a95c29",
       "apis": [
         {
           "protocol": "rpc",
@@ -4416,19 +4596,19 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 90,
           "end_line": 99
         },
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 115,
           "end_line": 123
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.861Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4503,14 +4683,14 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 45,
           "end_line": 56
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.862Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4577,19 +4757,19 @@
       },
       "source": [
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 84,
           "end_line": 86
         },
         {
-          "path": "NativeWindow.cs",
+          "path": "src/KeyMouse.Core/NativeWindow.cs",
           "line": 186,
           "end_line": 193
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.862Z",
-      "fingerprint": "0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "d39f953f3e29de7157808217fe297fca70c2373b4379b06e762d25bbb047f540",
       "apis": [
         {
           "protocol": "rpc",
@@ -4639,15 +4819,15 @@
       },
       "source": [
         {
-          "path": "RegionCommand.cs"
+          "path": "src/KeyMouse.Core/RegionCommand.cs"
         },
         {
-          "path": "RegionPicker.cs"
+          "path": "src/KeyMouse.Core/RegionPicker.cs"
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.236Z",
-      "fingerprint": "853d857ebeb734d91a8dac20797372f29757d753fb24b2e24a19741e8f07dede",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "fbbe01c854130cbabcde458cb5ce11bce55a3ab38b5e0c98c3b84082fc7bb9c9",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -4678,14 +4858,14 @@
       },
       "source": [
         {
-          "path": "RegionPicker.cs",
+          "path": "src/KeyMouse.Core/RegionPicker.cs",
           "line": 1,
           "end_line": 303
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.236Z",
-      "fingerprint": "dd53e3edff9d65d324e178c1ddcfce51ce97249e4db03c3bdc439a88f455bff4",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "0e3232eab2b5748be46a4ff6c1a41ff0ba41b3c7e9f392404b4243317f75bccb",
       "apis": [
         {
           "protocol": "rpc",
@@ -4761,14 +4941,14 @@
       },
       "source": [
         {
-          "path": "RegionCommand.cs",
+          "path": "src/KeyMouse.Core/RegionCommand.cs",
           "line": 1,
           "end_line": 167
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:51.236Z",
-      "fingerprint": "91a40c4a47543ebd1a1c94898f55da242b0c5eac7597a30d477c8eb304a771a8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.204Z",
+      "fingerprint": "3697b3cf8b785a81653e645d6c40f4815d6e15d392eeb21ace192d90f55eaec1",
       "apis": [
         {
           "protocol": "rpc",
@@ -4868,14 +5048,14 @@
       },
       "source": [
         {
-          "path": "Probe.cs",
+          "path": "src/KeyMouse.Core/Probe.cs",
           "line": 45,
           "end_line": 240
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.619Z",
-      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.205Z",
+      "fingerprint": "36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f",
       "deps": [
         {
           "kind": "call",
@@ -4925,14 +5105,14 @@
       },
       "source": [
         {
-          "path": "Probe.cs",
+          "path": "src/KeyMouse.Core/Probe.cs",
           "line": 294,
           "end_line": 322
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.618Z",
-      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.205Z",
+      "fingerprint": "36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f",
       "apis": [
         {
           "protocol": "rpc",
@@ -4985,14 +5165,14 @@
       },
       "source": [
         {
-          "path": "Probe.cs",
+          "path": "src/KeyMouse.Core/Probe.cs",
           "line": 265,
           "end_line": 292
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.618Z",
-      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.205Z",
+      "fingerprint": "36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f",
       "apis": [
         {
           "protocol": "rpc",
@@ -5033,14 +5213,14 @@
       },
       "source": [
         {
-          "path": "Probe.cs",
+          "path": "src/KeyMouse.Core/Probe.cs",
           "line": 491,
           "end_line": 628
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.520Z",
-      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.205Z",
+      "fingerprint": "36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f",
       "apis": [
         {
           "protocol": "rpc",
@@ -5098,14 +5278,14 @@
       },
       "source": [
         {
-          "path": "Probe.cs",
+          "path": "src/KeyMouse.Core/Probe.cs",
           "line": 361,
           "end_line": 513
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.619Z",
-      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.206Z",
+      "fingerprint": "36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f",
       "apis": [
         {
           "protocol": "rpc",
@@ -5175,21 +5355,21 @@
       },
       "source": [
         {
-          "path": "Recorder.cs"
+          "path": "src/KeyMouse.Core/Recorder.cs"
         },
         {
-          "path": "NativeHooks.cs"
+          "path": "src/KeyMouse.Core/NativeHooks.cs"
         },
         {
-          "path": "FlowModel.cs"
+          "path": "src/KeyMouse.Core/FlowModel.cs"
         },
         {
-          "path": "FlowRunner.cs"
+          "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:15.221Z",
-      "fingerprint": "22ce0469120a9174d89f08079d99530dc8ad1eaa2f30560eb005e1aced6f146d",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.207Z",
+      "fingerprint": "ab4feaa9db56d9301ca067060bd48245e4ee0ec006bd121da08f6dff7abbd88b",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -5217,12 +5397,12 @@
       },
       "source": [
         {
-          "path": "Recorder.cs"
+          "path": "src/KeyMouse.Core/Recorder.cs"
         }
       ],
-      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
-      "updated_at": "2026-10-03T10:33:31.241Z",
-      "fingerprint": "856732460646dab4b6162596fe0da6235d920b921f5cca8e3c854b153156fabe",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.048Z",
+      "fingerprint": "afc78f6e819a61bb8032cd2f997364b9557777971e1057fe8e197c1704a3c083",
       "apis": [
         {
           "protocol": "rpc",
@@ -5302,6 +5482,259 @@
         "dep_in": 2
       }
     },
+    "keymouse.runner": {
+      "uid": "7a1f0e01",
+      "id": "keymouse.runner",
+      "parent": "keymouse",
+      "tree": "keymouse",
+      "depth": 2,
+      "tags": [
+        "runner",
+        "service"
+      ],
+      "name": {
+        "zh": "常驻引擎",
+        "en": "Resident engine"
+      },
+      "description": {
+        "zh": "一个产品、两个入口里的服务端：接受请求、用与 CLI 完全相同的派发去执行、把过程流回客户端。它带来的是进程内状态——作业排队、暂停/继续/取消、逐步事件、日志流，这些一次性子进程给不了。一次只跑一个作业：输入是全局资源，而把能力层输出变成日志流用的是进程级 Console.SetOut。\n",
+        "en": "The service half of \"one product, two entry points\": it takes requests, executes them through exactly the same dispatch the CLI uses, and streams what happens back. What it buys is in-process state - job queueing, pause/resume/cancel, per-step events, a log stream - which a one-shot child process cannot offer. One job at a time: input is a global resource and the log stream is the process-wide console.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerHost.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerJob.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/PipeServer.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerClient.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.044Z",
+      "fingerprint": "a4f17d036f39db3e044b08b9f430c9ae0b92bafbc2d2c8e36aa331ab935ded81",
+      "aggregate": {
+        "descendant_count": 3,
+        "own_api_count": 0,
+        "inherited_api_count": 8,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.runner.host": {
+      "uid": "7a1f0e03",
+      "id": "keymouse.runner.host",
+      "parent": "keymouse.runner",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "runner"
+      ],
+      "name": {
+        "zh": "作业与派发",
+        "en": "Jobs and dispatch"
+      },
+      "description": {
+        "zh": "请求分发（run/record/validate/pick-region/ocr/控制/状态）、作业注册表与 `Execution.Control` 的实现：作业自己就是那个接缝，于是暂停、取消、逐步事件都发生在能力层的执行路径上。日志流用的是把 Console.Out 接到事件汇上——诚实标注：这只有在作业串行时才成立，把 Core 与 Console 解耦是下一步。\n",
+        "en": "Request dispatch (run/record/validate/pick-region/ocr/control/status), the job registry, and the implementation of `Execution.Control`: the job *is* the seam, so pausing, cancelling and per-step events happen on the capability layer execution path. The log stream works by wiring Console.Out to the event sink - honest note: that only holds because jobs are serialised, and decoupling Core from Console is the next step.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerHost.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerJob.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.044Z",
+      "fingerprint": "5fb74e27148f34b6f0dcf0635f721bd449d448bc267708e4166cd49ccfa6f588",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "RunnerHost.HandleAsync",
+          "description": {
+            "zh": "处理一个请求并把事件写回客户端。\n",
+            "en": "Handles one request and writes its events back.\n"
+          },
+          "key": "rpc:RunnerHost.HandleAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerHost.Run",
+          "description": {
+            "zh": "`serve` 的入口：监听直到被要求退出。\n",
+            "en": "The `serve` entry point: listen until asked to stop.\n"
+          },
+          "key": "rpc:RunnerHost.Run"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerJob.BetweenSteps",
+          "description": {
+            "zh": "暂停闸门与取消点（抛 CommandFailure(7)）。\n",
+            "en": "The pause gate and the cancel point (throws CommandFailure(7)).\n"
+          },
+          "key": "rpc:RunnerJob.BetweenSteps"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.cli.main",
+          "to_api": "rpc:keymouse <命令组>",
+          "label": {
+            "zh": "驱动同一份派发",
+            "en": "Drives the same dispatch"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.execution",
+          "to_api": "rpc:Execution.Control",
+          "label": {
+            "zh": "装上执行接缝",
+            "en": "Installs the execution seam"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 2
+      }
+    },
+    "keymouse.runner.pipe": {
+      "uid": "7a1f0e04",
+      "id": "keymouse.runner.pipe",
+      "parent": "keymouse.runner",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "runner",
+        "ipc"
+      ],
+      "name": {
+        "zh": "管道服务与客户端",
+        "en": "Pipe server and client"
+      },
+      "description": {
+        "zh": "服务端把每个请求丢进自己的任务（否则长流程期间收不到 cancel），写入加锁串行化；客户端一条连接、一个后台泵，按请求 id 路由事件，`ConnectOrStartAsync` 在没有服务时把 `serve` 拉起来。编辑器用的就是它。\n",
+        "en": "The server hands every request to its own task (or a long flow would block its own cancel) and serialises writes behind a lock; the client keeps one connection with a background pump that routes events by request id, and ConnectOrStartAsync starts `serve` when nothing is listening. The editor uses exactly this.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/PipeServer.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerClient.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.045Z",
+      "fingerprint": "38308e3ab07cd66aa8bdf0f2244133cceaef77b7dee0967f76ce73eb21011696",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "PipeServer.RunAsync",
+          "description": {
+            "zh": "接受连接并为每条连接读请求、写事件。\n",
+            "en": "Accepts connections and reads requests / writes events per connection.\n"
+          },
+          "key": "rpc:PipeServer.RunAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerClient.SendAsync",
+          "description": {
+            "zh": "发一个请求并等它的终态事件，过程中回调每个事件。\n",
+            "en": "Sends one request, awaits its terminal event, and sees every event on the way.\n"
+          },
+          "key": "rpc:RunnerClient.SendAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerClient.ConnectOrStartAsync",
+          "description": {
+            "zh": "没人在听就启动一个 Runner。\n",
+            "en": "Starts a Runner when nobody is listening.\n"
+          },
+          "key": "rpc:RunnerClient.ConnectOrStartAsync"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 2
+      }
+    },
+    "keymouse.runner.protocol": {
+      "uid": "7a1f0e02",
+      "id": "keymouse.runner.protocol",
+      "parent": "keymouse.runner",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "runner",
+        "protocol"
+      ],
+      "name": {
+        "zh": "管道协议",
+        "en": "Pipe protocol"
+      },
+      "description": {
+        "zh": "一行一个 JSON 对象：请求是 `method` + `params`，事件是 `kind`（hello | log | step | finished | result | error）。选命名管道而不是端口：按用户隔离（`keymouse-runner-<用户名>`）、无依赖、任何语言十行能接、人能直接读。请求并发处理，作业串行执行——否则客户端在长流程期间连 cancel 都发不进来。\n",
+        "en": "One JSON object per line: a request is `method` plus `params`, an event is a `kind` (hello | log | step | finished | result | error). A named pipe rather than a port: per-user isolation (keymouse-runner-<user>), no dependency, ten lines in any language, and a human can read the traffic. Requests are handled concurrently while jobs run one at a time - otherwise a client could not even send cancel during a long flow.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.044Z",
+      "fingerprint": "cd5effed268b21e575132d97dcdd66949c10d77cd02a31e5275dfa2b9a3fb7f7",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "keymouse-runner 请求",
+          "description": {
+            "zh": "{id, method, params}：hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown。\n",
+            "en": "Request {id, method, params}: hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown.\n"
+          },
+          "key": "rpc:keymouse-runner 请求"
+        },
+        {
+          "protocol": "rpc",
+          "path": "keymouse-runner 事件",
+          "description": {
+            "zh": "{kind, id, ...}：hello | log | step | finished | result | error。\n",
+            "en": "Event {kind, id, ...}: hello | log | step | finished | result | error.\n"
+          },
+          "key": "rpc:keymouse-runner 事件"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.script": {
       "uid": "6f708192",
       "id": "keymouse.script",
@@ -5321,14 +5754,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 1,
           "end_line": 892
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.207Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "deps": [
         {
           "kind": "call",
@@ -5422,14 +5855,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 361,
           "end_line": 383
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.004Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.207Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5482,14 +5915,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 884,
           "end_line": 892
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.005Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.207Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5537,14 +5970,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 7,
           "end_line": 22
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.005Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.207Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5602,14 +6035,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 478,
           "end_line": 591
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.006Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "deps": [
         {
           "kind": "call",
@@ -5649,14 +6082,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 478,
           "end_line": 561
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.006Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5718,14 +6151,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 562,
           "end_line": 591
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.006Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5774,14 +6207,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 24,
           "end_line": 80
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.006Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5839,14 +6272,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 384,
           "end_line": 451
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.006Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5895,19 +6328,19 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 452,
           "end_line": 477
         },
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 592,
           "end_line": 634
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "deps": [
         {
           "kind": "call",
@@ -5947,14 +6380,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 452,
           "end_line": 477
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.208Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -5994,14 +6427,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 592,
           "end_line": 634
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.209Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6040,14 +6473,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 753,
           "end_line": 777
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.209Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6100,14 +6533,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 836,
           "end_line": 862
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.209Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "file",
@@ -6156,14 +6589,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 863,
           "end_line": 883
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.007Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.210Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "file",
@@ -6225,14 +6658,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 834,
           "end_line": 835
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.210Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6271,14 +6704,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 81,
           "end_line": 360
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "aggregate": {
         "descendant_count": 4,
         "own_api_count": 0,
@@ -6306,14 +6739,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 142,
           "end_line": 305
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.210Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6420,14 +6853,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 81,
           "end_line": 141
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6543,14 +6976,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 306,
           "end_line": 333
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6613,14 +7046,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 334,
           "end_line": 360
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6673,14 +7106,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 717,
           "end_line": 752
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -6709,14 +7142,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 717,
           "end_line": 745
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.008Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.211Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6756,14 +7189,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 746,
           "end_line": 752
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6803,14 +7236,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 635,
           "end_line": 716
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -6839,14 +7272,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 674,
           "end_line": 716
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6886,14 +7319,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 635,
           "end_line": 673
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -6946,14 +7379,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 778,
           "end_line": 833
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "deps": [
         {
           "kind": "call",
@@ -7002,14 +7435,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 778,
           "end_line": 817
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.009Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.212Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -7080,14 +7513,14 @@
       },
       "source": [
         {
-          "path": "ScriptRunner.cs",
+          "path": "src/KeyMouse.Core/ScriptRunner.cs",
           "line": 818,
           "end_line": 833
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.010Z",
-      "fingerprint": "f561ff1a777b64b465d886e85545f84beb07f3a3d116e9cb8bb0148ac7caf04c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.213Z",
+      "fingerprint": "ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af",
       "apis": [
         {
           "protocol": "rpc",
@@ -7163,13 +7596,13 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.620Z",
-      "fingerprint": "7aa3d19f1e01f93cdfbff6b7b0291d332ac5d96fbf6941708713d8615b1f1374",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "81dae4b00efe6063ea21b685f4a2172e2daa8a30a12bc2f0ee0e2ff6b48bf73f",
       "aggregate": {
-        "descendant_count": 26,
+        "descendant_count": 27,
         "own_api_count": 0,
-        "inherited_api_count": 25,
+        "inherited_api_count": 26,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -7199,9 +7632,9 @@
           "end_line": 143
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.877Z",
-      "fingerprint": "6161b6622d8d87948eec5d528c741e6978629bb0c5b40e791e17fa162d0304ab",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.213Z",
+      "fingerprint": "ed5e526893e794b5541f533dd48db06c72ffe222c39bb37c6116552055c1ab49",
       "apis": [
         {
           "protocol": "rpc",
@@ -7393,9 +7826,9 @@
           "end_line": 343
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.620Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "aggregate": {
         "descendant_count": 7,
         "own_api_count": 0,
@@ -7476,9 +7909,9 @@
           "end_line": 76
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.620Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7536,9 +7969,9 @@
           "end_line": 289
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.620Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7597,9 +8030,9 @@
           "end_line": 343
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.621Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7658,9 +8091,9 @@
           "end_line": 568
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.521Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7728,9 +8161,9 @@
           "end_line": 515
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.621Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.214Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7807,9 +8240,9 @@
           "end_line": 215
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.621Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7867,9 +8300,9 @@
           "end_line": 166
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.621Z",
-      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf",
       "apis": [
         {
           "protocol": "rpc",
@@ -7926,9 +8359,9 @@
           "end_line": 25
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "2a78fb0e938bdf1ed60e25eaba54f9f94c5398d37f1e0d4af1195a77de2d2b54",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.047Z",
+      "fingerprint": "92f269a71fb05825ffd60a645cea94d1d0344b6ff2618dc1fd93a588ce9a7566",
       "deps": [
         {
           "kind": "call",
@@ -7943,9 +8376,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 13,
+        "descendant_count": 14,
         "own_api_count": 0,
-        "inherited_api_count": 14,
+        "inherited_api_count": 15,
         "dep_out": 1,
         "dep_in": 0
       }
@@ -8124,9 +8557,9 @@
           "end_line": 403
         }
       ],
-      "revision": "7a1a124eb7b20fcbebed310d012cbf3926b69a0b",
-      "updated_at": "2026-10-03T08:34:11.272Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "aggregate": {
         "descendant_count": 8,
         "own_api_count": 0,
@@ -8159,9 +8592,9 @@
           "end_line": 21
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8210,9 +8643,9 @@
           "end_line": 169
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "aggregate": {
         "descendant_count": 2,
         "own_api_count": 0,
@@ -8246,9 +8679,9 @@
           "end_line": 169
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.215Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8317,9 +8750,9 @@
           "end_line": 92
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.891Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8387,9 +8820,9 @@
           "end_line": 403
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8457,9 +8890,9 @@
           "end_line": 253
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8528,9 +8961,9 @@
           "end_line": 138
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8587,9 +9020,9 @@
           "end_line": 319
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "36327f9a4054c210af82c13d5b23bc44d4e5d8defd5bf0f6e966adab5530ed35",
       "apis": [
         {
           "protocol": "rpc",
@@ -8679,6 +9112,74 @@
         "dep_in": 0
       }
     },
+    "keymouse.tests.unit.runner": {
+      "uid": "7a1f0e09",
+      "id": "keymouse.tests.unit.runner",
+      "parent": "keymouse.tests.unit",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "test",
+        "unit",
+        "runner"
+      ],
+      "name": {
+        "zh": "Runner 协议单测",
+        "en": "Runner protocol tests"
+      },
+      "description": {
+        "zh": "不需要桌面的那一半：请求/事件形状、未知方法给退出码 2、validate 报步数、dry-run 逐步上报且日志流回来、真实（非 dry）运行被取消后退出码必须是 7，以及**真命名管道**上的往返（用私有管道名，绝不碰用户正开着的引擎）。\n",
+        "en": "The half that needs no desktop: request/event shapes, an unknown method answering with exit code 2, validate reporting the step count, a dry run reporting every step with the log stream coming back, a real (not dry) run cancelled ending in exit code 7, and a round trip over a real named pipe (private pipe name, never the engine the user has open).\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/RunnerTests.cs"
+        }
+      ],
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:13:17.046Z",
+      "fingerprint": "3b6849977e17b378a42ed222fb2f82a9aba5b483929cb6cecc6ab9002a502a0b",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Runner 协议与作业控制断言组",
+          "description": {
+            "zh": "请求/事件、取消语义、管道往返。\n",
+            "en": "Requests/events, cancel semantics, pipe round trips.\n"
+          },
+          "key": "rpc:Runner 协议与作业控制断言组"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.host",
+          "to_api": "rpc:RunnerHost.HandleAsync",
+          "label": {
+            "zh": "被测的作业派发",
+            "en": "The dispatch under test"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.pipe",
+          "to_api": "rpc:RunnerClient.SendAsync",
+          "label": {
+            "zh": "被测的客户端",
+            "en": "The client under test"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.unit.window": {
       "uid": "6c1e7c8d",
       "id": "keymouse.tests.unit.window",
@@ -8703,9 +9204,9 @@
           "end_line": 122
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "5e9aafbe1597a6b6d8442db5bb7d64049bf6e2f2e780ccd8b7e8805d20c3a6e0",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "8d206bd16773f2fec32d19e470cc6cf19a112e3a246d6ae236f36221add0210f",
       "apis": [
         {
           "protocol": "rpc",
@@ -8758,34 +9259,34 @@
       },
       "source": [
         {
-          "path": "WindowInfo.cs",
+          "path": "src/KeyMouse.Core/WindowInfo.cs",
           "line": 1,
           "end_line": 132
         },
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 1,
           "end_line": 111
         },
         {
-          "path": "WindowEligibility.cs",
+          "path": "src/KeyMouse.Core/WindowEligibility.cs",
           "line": 1,
           "end_line": 73
         },
         {
-          "path": "WindowFocus.cs",
+          "path": "src/KeyMouse.Core/WindowFocus.cs",
           "line": 1,
           "end_line": 58
         },
         {
-          "path": "WindowResolver.cs",
+          "path": "src/KeyMouse.Core/WindowResolver.cs",
           "line": 1,
           "end_line": 45
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "99039c06d973423bde9df1d9872d3f46516251ed96000c0019981083286fa8a2",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.217Z",
+      "fingerprint": "6692d144ec17705369634114dc7eb57f4627ad94f1e4ded28cd7a3d826886f0c",
       "deps": [
         {
           "kind": "call",
@@ -8843,14 +9344,14 @@
       },
       "source": [
         {
-          "path": "WindowFocus.cs",
+          "path": "src/KeyMouse.Core/WindowFocus.cs",
           "line": 20,
           "end_line": 52
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "e80d813e3fde8d15422e352901107627efc0dcfcf007d3a2054e4497d244417a",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.216Z",
+      "fingerprint": "3c23d3ba0bfa991fcdd14654409713ca0a20afb302f4aafacd056057428e7af4",
       "apis": [
         {
           "protocol": "rpc",
@@ -8912,14 +9413,14 @@
       },
       "source": [
         {
-          "path": "WindowEligibility.cs",
+          "path": "src/KeyMouse.Core/WindowEligibility.cs",
           "line": 1,
           "end_line": 73
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.892Z",
-      "fingerprint": "f12cc44733c8cfcbd93bebdd0a2bce3405d6d3cd24d397e1160a51a364188154",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.217Z",
+      "fingerprint": "edcfc2328148a4ec9ced22e826e90e4f63f89e8187b28d98a80cadffe24215b0",
       "apis": [
         {
           "protocol": "rpc",
@@ -9004,14 +9505,14 @@
       },
       "source": [
         {
-          "path": "WindowResolver.cs",
+          "path": "src/KeyMouse.Core/WindowResolver.cs",
           "line": 1,
           "end_line": 45
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "cb836896284ad7465ff444e852b54fea542faf0070408a40a1f7df4966fb2bee",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.217Z",
+      "fingerprint": "5b990c1e36b51739fa79756638831562662c734f18e2d6c19ed916698bd70d2e",
       "apis": [
         {
           "protocol": "rpc",
@@ -9074,14 +9575,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 6,
           "end_line": 111
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "deps": [
         {
           "kind": "call",
@@ -9129,14 +9630,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 41,
           "end_line": 51
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.217Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9199,14 +9700,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 52,
           "end_line": 55
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.217Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9270,14 +9771,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 75,
           "end_line": 96
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9317,14 +9818,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 97,
           "end_line": 108
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9376,14 +9877,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 15,
           "end_line": 38
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9432,14 +9933,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 56,
           "end_line": 74
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9521,14 +10022,14 @@
       },
       "source": [
         {
-          "path": "WindowLocator.cs",
+          "path": "src/KeyMouse.Core/WindowLocator.cs",
           "line": 109,
           "end_line": 111
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.893Z",
-      "fingerprint": "e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20",
       "apis": [
         {
           "protocol": "rpc",
@@ -9581,14 +10082,14 @@
       },
       "source": [
         {
-          "path": "WindowInfo.cs",
+          "path": "src/KeyMouse.Core/WindowInfo.cs",
           "line": 10,
           "end_line": 131
         }
       ],
-      "revision": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab",
-      "updated_at": "2026-10-03T08:15:19.894Z",
-      "fingerprint": "6a2bd609bf0fc3bf8db47fe338a49825858a3cfa866d96d2932f9ca2d98066b1",
+      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
+      "updated_at": "2026-10-03T11:11:56.218Z",
+      "fingerprint": "30e50255e2bd01aa5d964e946c1ae8509144bfce5a21e9144c6c7dcb17f108c4",
       "apis": [
         {
           "protocol": "rpc",
@@ -9685,15 +10186,15 @@
   "api_index": {
     "file:<报告>.json": "keymouse.script.report",
     "file:<脚本>.txt": "keymouse.script.read",
-    "file:CommandFailure.cs": "keymouse.editor.schema",
     "file:docs/design.md": "keymouse.docs.design",
     "file:docs/development.md": "keymouse.docs.development",
     "file:docs/reference.md": "keymouse.docs.reference",
-    "file:FlowModel.cs": "keymouse.editor.schema",
     "file:KeyMouse.exe": "keymouse.editor.bridge",
     "file:README.md": "keymouse.docs.readme",
     "file:samples/notepad-demo.txt": "keymouse.docs.sample",
-    "file:TextPredicate.cs": "keymouse.editor.schema",
+    "file:src/KeyMouse.Cli/KeyMouse.Cli.csproj": "keymouse.build.projects",
+    "file:src/KeyMouse.Core/KeyMouse.Core.csproj": "keymouse.build.projects",
+    "file:src/KeyMouse.Runner/KeyMouse.Runner.csproj": "keymouse.build.projects",
     "rpc:.\\build.ps1": "keymouse.build.publish",
     "rpc:.\\build.ps1 -SelfContained": "keymouse.build.publish",
     "rpc:.\\verify.ps1": "keymouse.build.verify",
@@ -9721,6 +10222,7 @@
     "rpc:EditorModel.Load": "keymouse.editor.steps",
     "rpc:EditorModel.MarkDirty": "keymouse.editor.steps",
     "rpc:EditorModel.Save": "keymouse.editor.steps",
+    "rpc:Execution.Control": "keymouse.execution",
     "rpc:ExecutionMode.DryRun": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteInjected": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteSuppressed": "keymouse.script.execution-mode",
@@ -9738,6 +10240,7 @@
     "rpc:Harness.Equal": "keymouse.tests.unit.harness",
     "rpc:Harness.Sequence": "keymouse.tests.unit.harness",
     "rpc:Harness.Throws": "keymouse.tests.unit.harness",
+    "rpc:IExecutionControl.BetweenSteps": "keymouse.execution",
     "rpc:IntArg": "keymouse.cli.int-arg",
     "rpc:IntOr": "keymouse.cli.int-arg",
     "rpc:kernel32!GetConsoleOutputCP": "keymouse.console.encoding",
@@ -9752,10 +10255,16 @@
     "rpc:KeyMap.Resolve": "keymouse.keys",
     "rpc:keymouse --help": "keymouse.cli.main",
     "rpc:keymouse --version": "keymouse.cli.main",
+    "rpc:keymouse <命令>": "keymouse.cli.entry",
     "rpc:keymouse <命令组>": "keymouse.cli.main",
     "rpc:KeyMouse run -": "keymouse.script.run.prepare",
     "rpc:KeyMouse run [选项]": "keymouse.script.options",
     "rpc:KeyMouse run <脚本>": "keymouse.script.run.prepare",
+    "rpc:keymouse runner run": "keymouse.cli.runner",
+    "rpc:keymouse runner status": "keymouse.cli.runner",
+    "rpc:keymouse serve": "keymouse.cli.entry",
+    "rpc:keymouse-runner 请求": "keymouse.runner.protocol",
+    "rpc:keymouse-runner 事件": "keymouse.runner.protocol",
     "rpc:KeyMouse.Fail": "keymouse.cli.failure",
     "rpc:KeyMouse.SmokeTarget.exe": "keymouse.tests.smoke-target",
     "rpc:KeyMouseBridge.PickRegionAsync": "keymouse.editor.bridge",
@@ -9800,6 +10309,7 @@
     "rpc:NativeWindow.ResponseMs": "keymouse.native.window-probe",
     "rpc:NativeWindow.Root": "keymouse.native.user32-layer",
     "rpc:ParsingTests.Run": "keymouse.tests.unit.parsing.entry",
+    "rpc:PipeServer.RunAsync": "keymouse.runner.pipe",
     "rpc:PreferCandidates": "keymouse.cli.window.targeting",
     "rpc:PrepareTarget": "keymouse.cli.window.targeting",
     "rpc:Probe.CaptureRegion": "keymouse.probe.engine",
@@ -9826,6 +10336,12 @@
     "rpc:release.yml (v* tag)": "keymouse.build.release",
     "rpc:repeat <次数> as <名字>": "keymouse.script.loop.repeat",
     "rpc:RequirePointBelongsToTarget": "keymouse.cli.mouse.geometry",
+    "rpc:Runner 协议与作业控制断言组": "keymouse.tests.unit.runner",
+    "rpc:RunnerClient.ConnectOrStartAsync": "keymouse.runner.pipe",
+    "rpc:RunnerClient.SendAsync": "keymouse.runner.pipe",
+    "rpc:RunnerHost.HandleAsync": "keymouse.runner.host",
+    "rpc:RunnerHost.Run": "keymouse.runner.host",
+    "rpc:RunnerJob.BetweenSteps": "keymouse.runner.host",
     "rpc:RunOptions / RetryAndVariables 用例": "keymouse.tests.unit.parsing.script",
     "rpc:ScriptOptions": "keymouse.script.model",
     "rpc:ScriptReport": "keymouse.script.model",
@@ -10072,6 +10588,27 @@
       "label": {
         "zh": "解析并验证目标",
         "en": "Resolve & verify target"
+      }
+    },
+    {
+      "from": "keymouse.cli.entry",
+      "to": "keymouse.cli.runner",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "runner 子命令",
+        "en": "The runner subcommands"
+      }
+    },
+    {
+      "from": "keymouse.cli.entry",
+      "to": "keymouse.runner.host",
+      "to_api": "rpc:RunnerHost.Run",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "serve 就是它",
+        "en": "serve is this"
       }
     },
     {
@@ -10333,6 +10870,17 @@
       }
     },
     {
+      "from": "keymouse.cli.runner",
+      "to": "keymouse.runner.pipe",
+      "to_api": "rpc:RunnerClient.SendAsync",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "一条连接发请求",
+        "en": "One connection, many requests"
+      }
+    },
+    {
       "from": "keymouse.cli.window",
       "to": "keymouse.window",
       "kind": "call",
@@ -10459,26 +11007,6 @@
       "label": {
         "zh": "取区域就是那个浮层",
         "en": "Region picking is that overlay"
-      }
-    },
-    {
-      "from": "keymouse.editor.schema",
-      "to": "keymouse.flow.model",
-      "kind": "reference",
-      "cross_tree": false,
-      "label": {
-        "zh": "同一份文档模型",
-        "en": "The same document model"
-      }
-    },
-    {
-      "from": "keymouse.editor.schema",
-      "to": "keymouse.flow.predicate",
-      "kind": "reference",
-      "cross_tree": false,
-      "label": {
-        "zh": "同一套匹配方式",
-        "en": "The same match modes"
       }
     },
     {
@@ -10845,6 +11373,28 @@
       "label": {
         "zh": "解析动作所属窗口",
         "en": "Resolve the window"
+      }
+    },
+    {
+      "from": "keymouse.runner.host",
+      "to": "keymouse.cli.main",
+      "to_api": "rpc:keymouse <命令组>",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "驱动同一份派发",
+        "en": "Drives the same dispatch"
+      }
+    },
+    {
+      "from": "keymouse.runner.host",
+      "to": "keymouse.execution",
+      "to_api": "rpc:Execution.Control",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "装上执行接缝",
+        "en": "Installs the execution seam"
       }
     },
     {
@@ -11568,6 +12118,28 @@
       }
     },
     {
+      "from": "keymouse.tests.unit.runner",
+      "to": "keymouse.runner.host",
+      "to_api": "rpc:RunnerHost.HandleAsync",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的作业派发",
+        "en": "The dispatch under test"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.runner",
+      "to": "keymouse.runner.pipe",
+      "to_api": "rpc:RunnerClient.SendAsync",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的客户端",
+        "en": "The client under test"
+      }
+    },
+    {
       "from": "keymouse.tests.unit.window",
       "from_api": "rpc:WindowTests.Run",
       "to": "keymouse.window.snapshot",
@@ -11862,11 +12434,11 @@
     "keymouse": {
       "schema_version": 1,
       "id": "keymouse",
-      "updated_at": "2026-10-03T10:33:08.027Z",
+      "updated_at": "2026-10-03T11:13:03.905Z",
       "mode": "groups",
       "reading": {
-        "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制从另一端进入这条链（钩子 → JSON 流程），编辑器是另一条前端（图形编辑，取区域与回放都回到命令行）。",
-        "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow), and the editor is another front end whose picking and replay come back to the command line."
+        "zh": "一次调用的路径：入口解析目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作。录制从另一端进入这条链（钩子 → JSON 流程）；编辑器是图形前端，取区域与回放都通过常驻 Runner；CLI 既能一次性执行，也能驱动同一个 Runner（runner 子命令）。",
+        "en": "One invocation flows left to right: the entry resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow); the editor is a graphical front end whose picking and replay go through the resident Runner, and the CLI can either run once or drive that same Runner."
       },
       "order": [
         "keymouse.cli",
@@ -11880,6 +12452,8 @@
         "keymouse.native",
         "keymouse.keys",
         "keymouse.console",
+        "keymouse.execution",
+        "keymouse.runner",
         "keymouse.editor",
         "keymouse.tests",
         "keymouse.build",
@@ -11903,7 +12477,18 @@
             "keymouse.input",
             "keymouse.native",
             "keymouse.keys",
-            "keymouse.console"
+            "keymouse.console",
+            "keymouse.execution"
+          ]
+        },
+        {
+          "id": "service",
+          "title": {
+            "zh": "常驻服务",
+            "en": "Resident service"
+          },
+          "children": [
+            "keymouse.runner"
           ]
         },
         {
@@ -11933,51 +12518,28 @@
     "keymouse.build": {
       "schema_version": 1,
       "id": "keymouse.build",
-      "updated_at": "2026-10-02T17:36:03.464Z",
-      "mode": "groups",
+      "updated_at": "2026-10-03T11:13:04.054Z",
+      "mode": "layers",
       "reading": {
-        "zh": "左边是你手上会跑的两条命令（打包、发布前验证），右边是服务器上的两条流水线：CI 每次 push 跑，Release 只认 v* tag。",
-        "en": "On the left are the two commands you run by hand; on the right the two pipelines: CI on every push, release only on a v* tag."
+        "zh": "三个项目对应三层（另有编辑器项目），构建脚本产出 dist 里的单文件，CI 与发布工作流把它们串起来。",
+        "en": "Three projects for three layers (plus the editor project), the build script produces the single file in dist, and the CI and release workflows chain them together."
       },
       "order": [
         "keymouse.build.publish",
         "keymouse.build.verify",
         "keymouse.build.ci",
-        "keymouse.build.release"
-      ],
-      "groups": [
-        {
-          "id": "local",
-          "title": {
-            "zh": "本地手动跑",
-            "en": "Run locally"
-          },
-          "children": [
-            "keymouse.build.publish",
-            "keymouse.build.verify"
-          ]
-        },
-        {
-          "id": "pipelines",
-          "title": {
-            "zh": "CI 与发布流水线",
-            "en": "CI & release pipelines"
-          },
-          "children": [
-            "keymouse.build.ci",
-            "keymouse.build.release"
-          ]
-        }
+        "keymouse.build.release",
+        "keymouse.build.projects"
       ]
     },
     "keymouse.cli": {
       "schema_version": 1,
       "id": "keymouse.cli",
-      "updated_at": "2026-10-02T17:35:14.097Z",
-      "mode": "groups",
+      "updated_at": "2026-10-03T11:13:03.979Z",
+      "mode": "layers",
       "reading": {
-        "zh": "入口先把全局选项（含目标选择器）从任意位置抽出来，再交给三个命令组之一；error 路线是每一次拒绝的出口。",
-        "en": "The entry pulls global options - the target selector among them - out of any position and hands over to one of three command groups; the failure path is where every refusal exits."
+        "zh": "先是入口的三条路由（serve / runner / flow edit / 其余交给能力层），然后是全局选项与帮助，最后是各组命令自己的一层。",
+        "en": "First the entry with its three routes (serve / runner / flow edit / everything else to the capability layer), then the global options and help, then one layer per command group."
       },
       "order": [
         "keymouse.cli.main",
@@ -11987,35 +12549,9 @@
         "keymouse.cli.help",
         "keymouse.cli.mouse",
         "keymouse.cli.keyboard",
-        "keymouse.cli.window"
-      ],
-      "groups": [
-        {
-          "id": "entry",
-          "title": {
-            "zh": "入口与选项",
-            "en": "Entry & options"
-          },
-          "children": [
-            "keymouse.cli.main",
-            "keymouse.cli.options",
-            "keymouse.cli.int-arg",
-            "keymouse.cli.failure",
-            "keymouse.cli.help"
-          ]
-        },
-        {
-          "id": "groups",
-          "title": {
-            "zh": "三个命令组",
-            "en": "Three command groups"
-          },
-          "children": [
-            "keymouse.cli.mouse",
-            "keymouse.cli.keyboard",
-            "keymouse.cli.window"
-          ]
-        }
+        "keymouse.cli.window",
+        "keymouse.cli.entry",
+        "keymouse.cli.runner"
       ]
     },
     "keymouse.cli.keyboard": {
@@ -12155,17 +12691,16 @@
     "keymouse.editor": {
       "schema_version": 1,
       "id": "keymouse.editor",
-      "updated_at": "2026-10-03T10:33:07.909Z",
+      "updated_at": "2026-10-03T11:12:10.655Z",
       "mode": "layers",
       "reading": {
-        "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型（它读写共享 schema），取区域与播放都交给桥接去调命令行：编辑器自己不认识流程格式的细节，也不重做选区与回放。",
-        "en": "The shell lays out the step list and the inspector, edits go into the view model (which reads and writes the shared schema), and both region picking and replay are handed to the bridge to call the command line: the editor knows nothing about format details and re-does neither picking nor replay."
+        "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型；取区域与回放都通过桥接走常驻 Runner（命名管道），编辑器自己不认识流程格式细节、也不重做选区与回放，schema 直接引用能力层。",
+        "en": "The shell lays out the step list and the inspector, edits go into the view model, and both region picking and replay go through the bridge to the resident Runner over the named pipe: the editor re-does neither picking nor replay, and the schema comes straight from the capability layer."
       },
       "order": [
         "keymouse.editor.shell",
         "keymouse.editor.steps",
-        "keymouse.editor.bridge",
-        "keymouse.editor.schema"
+        "keymouse.editor.bridge"
       ]
     },
     "keymouse.flow": {
@@ -12386,6 +12921,21 @@
       },
       "order": [
         "keymouse.record.session"
+      ]
+    },
+    "keymouse.runner": {
+      "schema_version": 1,
+      "id": "keymouse.runner",
+      "updated_at": "2026-10-03T11:13:03.833Z",
+      "mode": "layers",
+      "reading": {
+        "zh": "协议定义形状，作业把形状变成\"能暂停、能取消、能报告\"的执行，管道把两者接上网线；四者合起来就是一个本地服务。",
+        "en": "The protocol defines the shape, a job turns that shape into an execution that can pause, cancel and report, and the pipe puts both on the wire; together they are one local service."
+      },
+      "order": [
+        "keymouse.runner.protocol",
+        "keymouse.runner.host",
+        "keymouse.runner.pipe"
       ]
     },
     "keymouse.script": {
@@ -12677,18 +13227,19 @@
     "keymouse.tests.unit": {
       "schema_version": 1,
       "id": "keymouse.tests.unit",
-      "updated_at": "2026-10-03T10:11:47.778Z",
+      "updated_at": "2026-10-03T11:13:04.128Z",
       "mode": "layers",
       "reading": {
-        "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区与流程那两组只测不需要桌面的规则。",
-        "en": "The entry runs each case set; they share one assertion harness. The region and flow sets cover only rules that need no desktop."
+        "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区、流程与 Runner 三组只测不需要桌面的规则（Runner 那组会用私有命名管道跑真的往返）。",
+        "en": "The entry runs each case set; they share one assertion harness. The region, flow and runner sets cover only rules that need no desktop (the runner set does real round trips over a private named pipe)."
       },
       "order": [
         "keymouse.tests.unit.harness",
         "keymouse.tests.unit.parsing",
         "keymouse.tests.unit.region",
         "keymouse.tests.unit.flow",
-        "keymouse.tests.unit.window"
+        "keymouse.tests.unit.window",
+        "keymouse.tests.unit.runner"
       ]
     },
     "keymouse.tests.unit.parsing": {
@@ -12972,6 +13523,15 @@
         "zh": "2.0.0 发布前收尾：证据归档不再入库"
       },
       "updated_at": "2026-10-03T09:42:11.343Z"
+    },
+    {
+      "id": "2026-10-03-three-layer-architecture",
+      "status": "verified",
+      "title": {
+        "zh": "重构为三层结构：Core / Runner / CLI + 双入口",
+        "en": "Restructure into three layers: Core / Runner / CLI with two entry points"
+      },
+      "updated_at": "2026-10-03T11:13:19.001Z"
     },
     {
       "id": "2026-10-03-wait-text-predicate",

@@ -11,11 +11,11 @@ description:
   en: >
       Lands a screen rectangle on the window under its centre and translates it by one rule: inside the client area -> client (the space that survives moving the window), inside the window rectangle -> window (a title bar lives outside the client area), neither -> screen coordinates plus a reason and no paste-ready command. The output carries a ready-to-paste probe invocation. --rect is the non-interactive entry point scripts and tests use, through the same conversion.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:51.236Z"
-fingerprint: 91a40c4a47543ebd1a1c94898f55da242b0c5eac7597a30d477c8eb304a771a8
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.204Z"
+fingerprint: 3697b3cf8b785a81653e645d6c40f4815d6e15d392eeb21ace192d90f55eaec1
 source:
-  - path: "RegionCommand.cs"
+  - path: "src/KeyMouse.Core/RegionCommand.cs"
     line: 1
     end_line: 167
 apis:

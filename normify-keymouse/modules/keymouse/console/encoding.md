@@ -11,11 +11,11 @@ description:
   en: >
       Switches stdout to the console's own code page: PowerShell decodes native output with [Console]::OutputEncoding while .NET defaults to UTF-8 when redirected, which turned Chinese into mojibake on a cp936 console. With no console attached the UTF-8 default is already right.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.854Z"
-fingerprint: 27b97c5497a18a075d4b147d795c51c354f85c1b750f67f2fd59ae6ddc0124f1
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.198Z"
+fingerprint: 7b34359e8593529cec65ec16fb52cabdc1ce2520355312e65521683c77dfcee0
 source:
-  - path: "ConsoleText.cs"
+  - path: "src/KeyMouse.Core/ConsoleText.cs"
     line: 13
     end_line: 44
 apis:

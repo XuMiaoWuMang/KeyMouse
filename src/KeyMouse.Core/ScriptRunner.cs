@@ -78,7 +78,7 @@ internal static class ScriptRunner
 {
     private static bool _running;
 
-    public static int Run(string[] args, Program.GlobalOptions global, Func<string[], int> execute)
+    public static int Run(string[] args, Commands.GlobalOptions global, Func<string[], int> execute)
     {
         if (_running)
             return Fail(2, "run：不允许脚本里再跑脚本（拒绝嵌套）");
@@ -782,10 +782,10 @@ internal static class ScriptRunner
     {
         string name = tokens[0];
         string[] rest;
-        Program.GlobalOptions global;
+        Commands.GlobalOptions global;
         try
         {
-            rest = Program.ExtractGlobalOptions(tokens.Skip(1).ToArray(), out global);
+            rest = Commands.ExtractGlobalOptions(tokens.Skip(1).ToArray(), out global);
         }
         catch (ArgumentException ex)
         {

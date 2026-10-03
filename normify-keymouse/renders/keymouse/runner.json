@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.runner",
+  "updated_at": "2026-10-03T11:13:03.833Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "协议定义形状，作业把形状变成\"能暂停、能取消、能报告\"的执行，管道把两者接上网线；四者合起来就是一个本地服务。",
+    "en": "The protocol defines the shape, a job turns that shape into an execution that can pause, cancel and report, and the pipe puts both on the wire; together they are one local service."
+  },
+  "order": [
+    "keymouse.runner.protocol",
+    "keymouse.runner.host",
+    "keymouse.runner.pipe"
+  ]
+}

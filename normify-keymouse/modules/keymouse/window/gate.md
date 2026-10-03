@@ -11,11 +11,11 @@ description:
   en: >
       Every objective check before injection: refuse hidden, minimized (unless --allow-restore), DWM-cloaked, disabled windows, and windows that fail the WM_NULL round trip. The verdict carries problem and note lists for `window inspect`.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.892Z"
-fingerprint: f12cc44733c8cfcbd93bebdd0a2bce3405d6d3cd24d397e1160a51a364188154
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.217Z"
+fingerprint: edcfc2328148a4ec9ced22e826e90e4f63f89e8187b28d98a80cadffe24215b0
 source:
-  - path: "WindowEligibility.cs"
+  - path: "src/KeyMouse.Core/WindowEligibility.cs"
     line: 1
     end_line: 73
 apis:

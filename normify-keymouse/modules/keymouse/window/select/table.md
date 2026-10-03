@@ -11,11 +11,11 @@ description:
   en: >
       Renders a set of windows as a headed multi-row table, shared by `window list` and the error hints.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.893Z"
-fingerprint: e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.218Z"
+fingerprint: dd1baf24ba788d3671c7613d3c370b5b1cf8f263253cd39ec29217d797b6df20
 source:
-  - path: "WindowLocator.cs"
+  - path: "src/KeyMouse.Core/WindowLocator.cs"
     line: 109
     end_line: 111
 apis:

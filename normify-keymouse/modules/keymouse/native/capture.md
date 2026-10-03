@@ -11,11 +11,11 @@ description:
   en: >
       PrintWindow plus a GDI DIB section: renders a window (including background windows) into pixels, drawing no text caret and needing no foreground. Its screen-grab sibling is the verified default, because PrintWindow's geometry does not line up on this system.
       
-revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
-updated_at: "2026-10-03T08:15:19.859Z"
-fingerprint: 059722e432c45e0fa57ce96dd33212062198928eadf36b7fed06d5a4b2415ff1
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.202Z"
+fingerprint: 5f3e97c7913717272dc7d9f1533fdb66ab53713597497b92798e5d02e590e95c
 source:
-  - path: "NativeCapture.cs"
+  - path: "src/KeyMouse.Core/NativeCapture.cs"
     line: 1
     end_line: 177
 apis:

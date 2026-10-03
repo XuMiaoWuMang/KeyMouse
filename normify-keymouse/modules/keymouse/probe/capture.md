@@ -11,11 +11,11 @@ description:
   en: >
       Maps client-relative coordinates onto the capture, checks them against the real client size and refuses out-of-bounds regions instead of truncating them. The bounds check is the tool's stance in miniature: no guessing, no silent clamping.
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:29.618Z"
-fingerprint: 4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8
+revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
+updated_at: "2026-10-03T11:11:56.205Z"
+fingerprint: 36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f
 source:
-  - path: "Probe.cs"
+  - path: "src/KeyMouse.Core/Probe.cs"
     line: 294
     end_line: 322
 apis:
