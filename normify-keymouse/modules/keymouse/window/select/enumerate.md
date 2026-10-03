@@ -11,8 +11,8 @@ description:
   en: >
       Walks every top-level window with EnumWindows, skipping invalid handles, optionally probing each one with WM_NULL (only `window list` and the final candidates need that).
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.450Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.468Z"
 fingerprint: e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c
 source:
   - path: "WindowLocator.cs"

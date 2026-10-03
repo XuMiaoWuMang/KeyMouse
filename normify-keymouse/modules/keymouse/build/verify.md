@@ -11,8 +11,8 @@ description:
   en: >
       One command runs every gate and prints a verdict; it detects a locked desktop, skips the smoke run and says why. It also lists the three manual checks no automated gate can see.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:38:44.180Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.445Z"
 fingerprint: 4b60b8b09cf6410207fa23ffbbd761329601de5377024ed617512fdebd688b2e
 source:
   - path: "verify.ps1"

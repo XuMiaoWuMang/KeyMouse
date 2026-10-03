@@ -7,11 +7,13 @@ name: {zh: "窗口状态查询", en: "Window state queries"}
 description:
   zh: >
       四个布尔状态：可见、最小化、被禁用（WS_DISABLED）、是否仍是有效窗口。闸门的一半判据来自这里。
+      
   en: >
       Four boolean facts: visible, minimized, disabled (WS_DISABLED) and still-valid; half of the gate's evidence comes from here.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:00:00Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.454Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 45
@@ -22,27 +24,35 @@ apis:
     description:
       zh: >
           是否可见。
+          
       en: >
           Whether the window is visible.
+          
   - protocol: rpc
     path: "user32!IsIconic"
     description:
       zh: >
           是否最小化。
+          
       en: >
           Whether the window is minimized.
+          
   - protocol: rpc
     path: "user32!IsWindowEnabled"
     description:
       zh: >
           是否启用（禁用会吞掉输入）。
+          
       en: >
           Whether it is enabled; disabled windows swallow input.
+          
   - protocol: rpc
     path: "user32!IsWindow"
     description:
       zh: >
           句柄是否仍是有效窗口。
+          
       en: >
           Whether the handle is still a valid window.
+          
 ---

@@ -41,6 +41,23 @@ internal static class Usage
           window inspect <选择器>                      说明某个窗口为什么可用 / 不可用
           window focus <选择器>                        只做聚焦与验证，不发送任何输入
 
+        识图（读，不是发）
+          probe <选择器> [--region x,y,w,h] [选项]     把窗口的一块区域读成文字。
+                                                      它只报告看到什么，不做任何判断。
+          --region x,y,w,h         客户区相对坐标（--space window 则相对整个窗口）；
+                                   省略即整个客户区。越界一律拒绝，不猜也不截断
+          --space client|window    区域坐标系，默认 client（标题栏在 client 之外）
+          --reads N                重复读取次数，默认 2；N 次必须逐字一致才算看清
+          --lang <语言>            默认 eng+chi_sim
+          --engine <命令>          OCR 引擎，默认 tesseract（会自动找常见安装位置）
+          --tessdata-dir <目录>    模型目录；默认 %LOCALAPPDATA%\KeyMouse\tessdata
+          --min-conf N             置信度地板，默认 30；低于它判为没看清
+          --scale N / --pad N      放大倍数（默认 3）与白边像素（默认 16）
+          --capture screen|print   取像方式：默认 screen；print 用 PrintWindow 不画光标，
+                                   但在本机几何对不齐（见 docs/design.md）
+          --json                   输出 JSON（引擎身份、几何、逐词置信度）
+          --keep-image <路径>      把送进引擎的那张图（BMP）留下来，便于自查
+
         脚本
           run <文件|-> [选项]                          按行顺序执行文件（或 stdin）里的命令；
                                                       一行一条命令，# 开头是注释，另有三个伪命令：
@@ -117,6 +134,7 @@ internal static class Usage
           2 = 参数错误          3 = 没有匹配的窗口 / 多候选未 --pick / waitfor 超时
           4 = 目标不可用（隐藏 / 最小化 / 被 DWM 遮盖 / 无响应 / 被禁用）
           5 = 焦点验证失败——未发送任何输入
+          6 = 没看清（probe：N 次读取不一致 / 置信度低于地板 / 没有可用引擎）——同样未发送任何输入
           （脚本返回第一条失败命令的退出码）
 
         说明

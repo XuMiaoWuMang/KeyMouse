@@ -11,8 +11,8 @@ description:
   en: >
       Renders a set of windows as a headed multi-row table, shared by `window list` and the error hints.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.450Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.469Z"
 fingerprint: e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c
 source:
   - path: "WindowLocator.cs"

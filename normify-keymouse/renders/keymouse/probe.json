@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.probe",
+  "updated_at": "2026-10-03T07:30:52.519Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "一条感知路径，从左到右：先把客户区坐标映射成像素，再把像素整形到引擎舒服的样子，然后交给 Tesseract，最后比对多次读取得出共识与置信度。这一层只报告，不判断。",
+    "en": "One perception path, left to right: map client coordinates to pixels, shape the pixels for the engine, hand them to Tesseract, then compare repeated reads into a consensus and a confidence. This layer reports; it never judges."
+  },
+  "order": [
+    "keymouse.probe.capture",
+    "keymouse.probe.preprocess",
+    "keymouse.probe.engine",
+    "keymouse.probe.consensus"
+  ],
+  "groups": [
+    {
+      "id": "pixels",
+      "title": {
+        "zh": "拿到像素",
+        "en": "Get pixels"
+      },
+      "children": [
+        "keymouse.probe.capture",
+        "keymouse.probe.preprocess"
+      ]
+    },
+    {
+      "id": "text",
+      "title": {
+        "zh": "读成文本并定可信度",
+        "en": "Read into text and grade it"
+      },
+      "children": [
+        "keymouse.probe.engine",
+        "keymouse.probe.consensus"
+      ]
+    }
+  ]
+}

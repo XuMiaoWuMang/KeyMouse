@@ -11,8 +11,8 @@ description:
   en: >
       Serialises the report to JSON: per command the line, effective argv, attempts, duration, injected events, exit code, output and loop variables, plus the summary. Chinese is not escaped into \uXXXX so the file stays readable.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.450Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.458Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"

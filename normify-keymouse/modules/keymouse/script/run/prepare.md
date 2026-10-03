@@ -7,10 +7,12 @@ name: {zh: "读入、分析、校验", en: "Read, analyse, validate"}
 description:
   zh: >
       run 的前半段：解析选项 → 读脚本 → 循环结构分析 → 伪命令校验 → 变量预校验 → 初始化报告与打印头部。任何一步不过就在这里返回，命令一条都还没跑。
+      
   en: >
       The first half of run: parse options, read the script, analyse loops, validate pseudo-commands and variables, then initialise the report and print the header. Any failure returns here, before a single command runs.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.459Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"
@@ -22,15 +24,19 @@ apis:
     description:
       zh: >
           执行一个脚本文件（含全量静态检查）。
+          
       en: >
           Runs a script file after the full static check.
+          
   - protocol: rpc
     path: "KeyMouse run -"
     description:
       zh: >
           从 stdin 读脚本。
+          
       en: >
           Reads the script from stdin.
+          
 deps:
   - kind: call
     to: keymouse.script.options

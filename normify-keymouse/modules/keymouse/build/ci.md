@@ -11,8 +11,8 @@ description:
   en: >
       On every push and PR: build the solution, run the unit suite, check doc links, and do a publish build so the release command itself cannot rot. CI does not run the smoke suite - its runners have no interactive desktop.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:38:44.180Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.444Z"
 fingerprint: 23148afbab4c70db6fa2b78b991f70c63a69a7138e5e0516f8b622309abfaa46
 source:
   - path: ".github/workflows/ci.yml"

@@ -7,10 +7,12 @@ name: {zh: "循环结构用例", en: "Loop structure cases"}
 description:
   zh: >
       循环结构分析的断言集：配对、命名、嵌套相乘、repeat 0 跳过、展开计数、超限拒绝、影子变量报错。它护着“结构不合法就在动手前停下”这条不变量。
+      
   en: >
       Assertions for loop analysis: pairing, naming, nested multiplication, repeat 0 skipping the body, expansion counts, refusing an oversized expansion and refusing a shadowed variable.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:20:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.466Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           循环结构与展开计数的断言集。
+          
       en: >
           Assertions for loop structure and expansion counts.
+          
 deps:
   - kind: reference
     to: keymouse.script.loop.analyze

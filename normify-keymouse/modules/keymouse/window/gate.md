@@ -11,8 +11,8 @@ description:
   en: >
       Every objective check before injection: refuse hidden, minimized (unless --allow-restore), DWM-cloaked, disabled windows, and windows that fail the WM_NULL round trip. The verdict carries problem and note lists for `window inspect`.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.450Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.467Z"
 fingerprint: f12cc44733c8cfcbd93bebdd0a2bce3405d6d3cd24d397e1160a51a364188154
 source:
   - path: "WindowEligibility.cs"

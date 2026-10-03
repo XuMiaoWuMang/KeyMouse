@@ -7,11 +7,13 @@ name: {zh: "控制台文本与帮助", en: "Console text & help"}
 description:
   zh: >
       控制台的两件小事：按控制台码页输出（否则中文在 cp936 终端会变成乱码），以及按显示宽度而非字符数补白/截断（CJK 字占两格，PadRight 会让表格逐列漂移）。另有内置帮助文本。
+      
   en: >
       Two console concerns: speak the console code page (UTF-8 bytes into a cp936 terminal is mojibake), and pad/truncate by display width because a CJK glyph is two cells wide. Also holds the built-in help text.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:50:00Z"
-fingerprint: 8d769e8dbaf6992146ca92d566e27a4a75f0937129794b0d5e33106acbae79ee
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.450Z"
+fingerprint: 0846410a91ecb46a573d6b5b0591e9e968966be4b93fce36f25709443de42775
 source:
   - path: "ConsoleText.cs"
     line: 1

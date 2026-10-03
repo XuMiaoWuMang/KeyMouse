@@ -7,11 +7,13 @@ name: {zh: "DWM 遮盖查询", en: "DWM cloaking"}
 description:
   zh: >
       DwmGetWindowAttribute(DWMWA_CLOAKED)：识别挂起的 UWP 应用与属于其他虚拟桌面的窗口——这类窗口“可见”但永远收不到输入。
+      
   en: >
       DwmGetWindowAttribute(DWMWA_CLOAKED) spots suspended UWP apps and windows on another virtual desktop: they look visible yet can never receive input.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:00:00Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.453Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 88
@@ -25,13 +27,17 @@ apis:
     description:
       zh: >
           查询 DWM 窗口属性。
+          
       en: >
           Queries a DWM window attribute.
+          
   - protocol: rpc
     path: "NativeWindow.IsCloaked"
     description:
       zh: >
           该窗口是否被 DWM 遮盖。
+          
       en: >
           Whether DWM considers it cloaked.
+          
 ---

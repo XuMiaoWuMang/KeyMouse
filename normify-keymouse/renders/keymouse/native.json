@@ -1,16 +1,17 @@
 {
   "schema_version": 1,
   "id": "keymouse.native",
-  "updated_at": "2026-10-02T17:35:36.826Z",
+  "updated_at": "2026-10-03T07:30:56.882Z",
   "mode": "groups",
   "reading": {
-    "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断。左上枚举与读取窗口信息，左下查状态与矩形；中间是聚焦与层级；右上三个查询类（DWM 遮盖、进程名、响应探测）；右下是输入 API 与结构体布局。",
-    "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, control the foreground, then three specialised queries (DWM, process name, responsiveness) and the input APIs on the right."
+    "zh": "全都是 P/Invoke 声明与薄封装，不含业务判断。左上枚举与读取窗口信息，左下查状态与矩形；紧接着是取像（窗口渲染与屏幕拷贝）；中间是聚焦与层级；中右三个查询类（DWM 遮盖、进程名、响应探测）；右下是输入 API 与结构体布局。",
+    "en": "Pure P/Invoke declarations and thin wrappers, no business judgement: enumerate and read windows, query state and geometry, then capture pixels (window render and screen copy), then the foreground and layer calls, three specialised queries (DWM, process name, responsiveness) and the input APIs on the right."
   },
   "order": [
     "keymouse.native.user32-enumerate",
     "keymouse.native.user32-state",
     "keymouse.native.user32-geometry",
+    "keymouse.native.capture",
     "keymouse.native.user32-focus",
     "keymouse.native.user32-layer",
     "keymouse.native.dwm",
@@ -29,6 +30,16 @@
         "keymouse.native.user32-enumerate",
         "keymouse.native.user32-state",
         "keymouse.native.user32-geometry"
+      ]
+    },
+    {
+      "id": "capture",
+      "title": {
+        "zh": "取像",
+        "en": "Capture pixels"
+      },
+      "children": [
+        "keymouse.native.capture"
       ]
     },
     {

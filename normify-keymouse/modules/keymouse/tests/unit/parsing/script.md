@@ -7,10 +7,12 @@ name: {zh: "脚本选项、变量与重试用例", en: "Run options, variables &
 description:
   zh: >
       run 的选项解析、${} 替换与预校验（未定义、未闭合、同一 token 多次引用），以及“只有 3/4/5 可重试”这条安全规则。
+      
   en: >
       run's option parsing, ${} substitution and its upfront check (undefined, unterminated, repeated in one token), and the rule that only 3/4/5 may be retried.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.467Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           脚本选项、变量与重试策略的断言集。
+          
       en: >
           Assertions for script options, variables and retry policy.
+          
 deps:
   - kind: reference
     to: keymouse.script.vars.substitute

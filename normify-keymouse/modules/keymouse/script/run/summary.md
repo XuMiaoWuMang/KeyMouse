@@ -7,10 +7,12 @@ name: {zh: "汇总、退出码与报告", en: "Summary, exit code & report"}
 description:
   zh: >
       收尾：演练模式提示抑制了多少事件、算出退出码（第一条失败命令的码）、写 JSON 报告、失败时逐条列出行号与命令。
+      
   en: >
       The tail end: dry-run reports how many events were suppressed, the exit code is taken from the first failure, the JSON report is written, and failures are listed with their line numbers.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.460Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           返回首错码并列出失败行。
+          
       en: >
           Returns the first failure code and lists the failing lines.
+          
 deps:
   - kind: call
     to: keymouse.script.report

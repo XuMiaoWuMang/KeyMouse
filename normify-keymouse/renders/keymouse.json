@@ -1,16 +1,17 @@
 {
   "schema_version": 1,
   "id": "keymouse",
-  "updated_at": "2026-10-02T17:35:10.849Z",
+  "updated_at": "2026-10-03T07:30:56.811Z",
   "mode": "groups",
   "reading": {
-    "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（可选的批量编排）→ 窗口识别与闸门 → 输入注入 → 原生互操作。下方三组是工程支撑。",
-    "en": "One invocation flows left to right: the CLI resolves target and action, the script runner batches them, the window layer verifies the target, input injects, native does the syscalls. The lower group is engineering support."
+    "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（可选的批量编排）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告）→ 输入注入 → 原生互操作。下方三组是工程支撑。",
+    "en": "One invocation flows left to right: the CLI resolves target and action, the script runner batches them, the window layer verifies the target, the perception exit reads the screen and only reports, input injects, native does the syscalls. The lower group is engineering support."
   },
   "order": [
     "keymouse.cli",
     "keymouse.script",
     "keymouse.window",
+    "keymouse.probe",
     "keymouse.input",
     "keymouse.native",
     "keymouse.keys",
@@ -30,6 +31,7 @@
         "keymouse.cli",
         "keymouse.script",
         "keymouse.window",
+        "keymouse.probe",
         "keymouse.input",
         "keymouse.native",
         "keymouse.keys",

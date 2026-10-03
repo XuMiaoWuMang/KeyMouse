@@ -11,9 +11,9 @@ description:
   en: >
       Everything Main does: map CommandFailure and argument errors onto exit codes (2 = usage), pick a command group by the first argument and forward the rest, print help when nothing is given.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:39:02.865Z"
-fingerprint: ed066abe077cf617475b89420866941ec0b7c26b595508435b3db3daac6799d5
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:31:10.400Z"
+fingerprint: 2002c7c0806c2cc60e9cdeb156af20af0b5bd3ede859541c1f12dbf68f0b71ac
 source:
   - path: "Program.cs"
     line: 9
@@ -62,4 +62,8 @@ deps:
     from_api: "rpc:keymouse <命令组>"
     to_api: "rpc:CommandFailure"
     label: {zh: "异常→退出码", en: "Exception to code"}
+  - kind: call
+    to: keymouse.probe
+    from_api: "rpc:keymouse <命令组>"
+    label: {zh: "probe 组交给感知出口", en: "Hand probe to perception"}
 ---

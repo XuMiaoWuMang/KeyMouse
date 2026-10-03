@@ -7,11 +7,13 @@ name: {zh: "前台窗口控制", en: "Foreground control"}
 description:
   zh: >
       读取当前前台窗口、请求把它换成目标（SetForegroundWindow/BringWindowToTop），以及取根窗口/属主/窗口线程进程号——聚焦验证的全部依据。
+      
   en: >
       Reads the current foreground window, asks for the target to become it, and resolves root/owner/thread-pid - the whole basis of focus verification.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:00:00Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.453Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 69
@@ -22,34 +24,44 @@ apis:
     description:
       zh: >
           当前前台窗口。
+          
       en: >
           The current foreground window.
+          
   - protocol: rpc
     path: "user32!SetForegroundWindow"
     description:
       zh: >
           请求切换前台。
+          
       en: >
           Asks to change the foreground window.
+          
   - protocol: rpc
     path: "user32!BringWindowToTop"
     description:
       zh: >
           提到 Z 序顶部。
+          
       en: >
           Raises the window in Z order.
+          
   - protocol: rpc
     path: "user32!GetAncestor"
     description:
       zh: >
           取根窗口/属主链。
+          
       en: >
           Resolves root and owner chain.
+          
   - protocol: rpc
     path: "user32!GetWindowThreadProcessId"
     description:
       zh: >
           窗口→进程号。
+          
       en: >
           Window to process id.
+          
 ---

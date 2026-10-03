@@ -7,10 +7,12 @@ name: {zh: "执行循环与逐行作用域", en: "Execution loop & per-line scop
 description:
   zh: >
       程序计数器 + 循环栈展开 repeat/end；每行重建作用域（--set 变量 + 循环变量）、做替换、处理目标继承、再交出去执行。不复制脚本、不重解析，一条命令一次派发。
+      
   en: >
       A program counter plus a loop stack expands repeat/end; each line rebuilds its scope (set variables plus loop variables), substitutes, resolves target inheritance and is handed over to execute. No script copying, no re-parsing, one dispatch per command.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.459Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           执行入口（接受一个派发委托）。
+          
       en: >
           The entry point, taking a dispatch delegate.
+          
 deps:
   - kind: call
     to: keymouse.script.vars.substitute

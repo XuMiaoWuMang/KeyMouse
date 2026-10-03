@@ -7,10 +7,12 @@ name: {zh: "目标继承用例", en: "Target inheritance cases"}
 description:
   zh: >
       继承规则的断言集：选择器识别（含 --flag=value 与多条件）、哪些命令继承（mouse/key）与哪些刻意不继承（waitfor / waitgone / window list）、客户区坐标不算目标。
+      
   en: >
       Assertions for the inheritance rules: selector extraction (inline values, several conditions), which commands inherit (mouse and key) and which deliberately do not (waitfor, waitgone, window list).
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:20:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.466Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           目标继承规则的断言集。
+          
       en: >
           Assertions for the inheritance rules.
+          
 deps:
   - kind: reference
     to: keymouse.script.target.extract

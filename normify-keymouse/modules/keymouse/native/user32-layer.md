@@ -11,9 +11,9 @@ description:
   en: >
       Owner and Z-order relations, screen-point hit testing, and explicit restore of a minimized window - a restore that only happens under --allow-restore.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:07:37.001Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.454Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 90

@@ -11,8 +11,8 @@ description:
   en: >
       The full result of one resolution: every window, the matches, the candidates that took part, the survivors, and why the rest were rejected. One enumeration feeds every later check and message.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.450Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.468Z"
 fingerprint: cb836896284ad7465ff444e852b54fea542faf0070408a40a1f7df4966fb2bee
 source:
   - path: "WindowResolver.cs"

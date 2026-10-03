@@ -11,8 +11,8 @@ description:
   en: >
       Measures instead of guessing: for the same 2000 commands, text tokenising takes 2 ms, JSON parsing 3.5 ms, and executing them with selectors takes 6 s - plus a breakdown of what a selector command actually costs.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:40.663Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.462Z"
 fingerprint: 6161b6622d8d87948eec5d528c741e6978629bb0c5b40e791e17fa162d0304ab
 source:
   - path: "tests/KeyMouse.Tests/ParseBench.cs"

@@ -7,11 +7,13 @@ name: {zh: "响应探测（WM_NULL）", en: "Responsiveness probe"}
 description:
   zh: >
       SendMessageTimeout(WM_NULL, SMTO_ABORTIFHUNG)：窗口在超时内回应即视为活着，并记录耗时；“没回应”与“没探测过”在数据里是两个不同状态（未探测/无响应/响应=Nms）。
+      
   en: >
       SendMessageTimeout(WM_NULL, SMTO_ABORTIFHUNG) treats an answer within the timeout as alive and records how long it took. Not-probed and no-answer are distinct states in the data.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:00:00Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.454Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 84
@@ -25,13 +27,17 @@ apis:
     description:
       zh: >
           带超时发消息。
+          
       en: >
           Sends a message with a timeout.
+          
   - protocol: rpc
     path: "NativeWindow.ResponseMs"
     description:
       zh: >
           往返耗时（null = 无响应）。
+          
       en: >
           Round-trip time, null when unresponsive.
+          
 ---

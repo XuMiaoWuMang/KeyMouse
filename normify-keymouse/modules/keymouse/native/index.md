@@ -7,11 +7,13 @@ name: {zh: "原生互操作", en: "Native interop"}
 description:
   zh: >
       全部 P/Invoke 声明与其薄封装：user32 输入/窗口 API、DWM 遮盖查询、WM_NULL 响应探测、进程名查询（QueryFullProcessImageName + pid 缓存）。这一层只管「怎么调」，不含业务判断。
+      
   en: >
       Every P/Invoke declaration and its thin wrapper: user32 input/window APIs, DWM cloaking, the WM_NULL responsiveness probe, and process names via QueryFullProcessImageName with a pid cache.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:50:00Z"
-fingerprint: 47db1ca319aa59443427ab4f19ee11a3384ce48bde1eb8c6c1d8e5012b919252
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:31:02.527Z"
+fingerprint: 0b87df5cca1badf5983b75c5f73c140e8c388819cd6404f29cf2eef6978e4f42
 source:
   - path: "NativeWindow.cs"
     line: 1

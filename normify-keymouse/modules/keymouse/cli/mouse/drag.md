@@ -11,9 +11,9 @@ description:
   en: >
       Two forms: four absolute coordinates, or client-relative start/end (all four required, never mixed with absolute). Button, steps and duration are optional.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.449Z"
-fingerprint: ed066abe077cf617475b89420866941ec0b7c26b595508435b3db3daac6799d5
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.448Z"
+fingerprint: 2002c7c0806c2cc60e9cdeb156af20af0b5bd3ede859541c1f12dbf68f0b71ac
 source:
   - path: "Program.cs"
     line: 291

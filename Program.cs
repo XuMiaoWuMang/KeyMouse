@@ -32,8 +32,10 @@ internal static class Program
                     return WindowGroup(rest[1..], global);
                 case "run":
                     return ScriptRunner.Run(rest[1..], global, Main);
+                case "probe":
+                    return Probe.Run(rest[1..], global);
                 default:
-                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | help）");
+                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | probe | help）");
             }
         }
         catch (CommandFailure ex)
@@ -54,14 +56,12 @@ internal static class Program
     // ------------------------------------------------------- window targeting
 
     /// <summary>
-    /// Resolves the selector, applies the eligibility gate, brings the window to the
-    /// foreground and re-verifies it. Throws CommandFailure (nothing sent) otherwise.
-    /// Returns null only when the caller gave no selector at all.
+    /// Resolves the selector and applies the eligibility gate, without touching focus.
+    /// Reading needs exactly this half of the work: a background window can be read, but it
+    /// still has to be able to paint. Throws CommandFailure (nothing read, nothing sent).
     /// </summary>
-    private static WindowInfo? PrepareTarget(GlobalOptions g)
+    internal static WindowInfo ResolveUsable(GlobalOptions g)
     {
-        if (!g.HasSelector) return null;
-
         var selector = g.ToSelector();
         var resolution = WindowResolver.Resolve(selector, g.AllowRestore);
         if (resolution.Matched.Count == 0)
@@ -77,20 +77,23 @@ internal static class Program
                 $"{head}:\n{string.Join("\n", resolution.Rejections)}");
         }
 
-        WindowInfo target;
-        if (usable.Count == 1)
-        {
-            target = usable[0];
-        }
-        else if (g.Pick is int pick && pick >= 1 && pick <= usable.Count)
-        {
-            target = usable[pick - 1];
-        }
-        else
-        {
-            throw new CommandFailure(3,
-                $"有 {usable.Count} 个可用窗口匹配——请用 --pick <n> 指定一个：\n{WindowLocator.CandidateTable(usable)}");
-        }
+        if (usable.Count == 1) return usable[0];
+        if (g.Pick is int pick && pick >= 1 && pick <= usable.Count) return usable[pick - 1];
+
+        throw new CommandFailure(3,
+            $"有 {usable.Count} 个可用窗口匹配——请用 --pick <n> 指定一个：\n{WindowLocator.CandidateTable(usable)}");
+    }
+
+    /// <summary>
+    /// Resolves the selector, applies the eligibility gate, brings the window to the
+    /// foreground and re-verifies it. Throws CommandFailure (nothing sent) otherwise.
+    /// Returns null only when the caller gave no selector at all.
+    /// </summary>
+    private static WindowInfo? PrepareTarget(GlobalOptions g)
+    {
+        if (!g.HasSelector) return null;
+
+        WindowInfo target = ResolveUsable(g);
 
         FocusTarget(target, g);
 
@@ -637,12 +640,12 @@ internal static class Program
         return (positional, options);
     }
 
-    private static int IntArg(string raw, string what) =>
+    internal static int IntArg(string raw, string what) =>
         int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)
             ? v
             : throw new ArgumentException($"'{raw}' 不是合法的整数（{what}）");
 
-    private static int IntOr(Dictionary<string, string> options, string name, int fallback) =>
+    internal static int IntOr(Dictionary<string, string> options, string name, int fallback) =>
         options.TryGetValue(name, out string? raw) &&
         int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)
             ? v

@@ -87,6 +87,29 @@ internal static class NativeWindow
     [DllImport("dwmapi.dll")]
     private static extern int DwmGetWindowAttribute(IntPtr hwnd, uint dwAttribute, out int pvAttribute, int cbAttribute);
 
+    [DllImport("dwmapi.dll", EntryPoint = "DwmGetWindowAttribute")]
+    private static extern int DwmGetWindowAttributeRect(IntPtr hwnd, uint dwAttribute, out RECT pvAttribute, int cbAttribute);
+
+    /// <summary>
+    /// The window's *visible* frame, in screen coordinates.
+    ///
+    /// GetWindowRect is not the same rectangle: since Windows 10 it includes the invisible
+    /// resize border, about eight pixels per side, while PrintWindow paints only what is
+    /// visible. Mixing the two offsets a capture by exactly that border - measured as captured
+    /// text with its top sliced off. Falls back to GetWindowRect when DWM has no answer.
+    /// </summary>
+    internal static bool TryGetVisibleFrame(IntPtr hwnd, out RECT bounds)
+    {
+        const uint DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+        if (DwmGetWindowAttributeRect(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, out RECT visible, Marshal.SizeOf<RECT>()) == 0 &&
+            visible.Right > visible.Left && visible.Bottom > visible.Top)
+        {
+            bounds = visible;
+            return true;
+        }
+        return GetWindowRect(hwnd, out bounds);
+    }
+
     [DllImport("user32.dll")]
     public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 

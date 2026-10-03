@@ -7,10 +7,12 @@ name: {zh: "分词与行语法用例", en: "Tokeniser & line cases"}
 description:
   zh: >
       引号、转义、行内注释、KeyMouse 前缀容忍、行号保留——脚本语法那一层的行为断言。
+      
   en: >
       Quotes, escapes, trailing comments, tolerating a copied KeyMouse prefix, keeping line numbers: the behaviour of the script-syntax layer.
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T18:40:00Z"
+      
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.467Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"
@@ -22,8 +24,10 @@ apis:
     description:
       zh: >
           分词器与行处理的断言集。
+          
       en: >
           Assertions for the tokeniser and line handling.
+          
 deps:
   - kind: reference
     to: keymouse.script.parse.tokenize

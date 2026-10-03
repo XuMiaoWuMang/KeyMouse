@@ -11,8 +11,8 @@ description:
   en: >
       Answers whether a window may safely receive input: enumerate top-level windows, match the selector, judge visibility/minimized/cloaked/disabled/responding, then focus and read the foreground window back to confirm.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:35:07.707Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.468Z"
 fingerprint: 99039c06d973423bde9df1d9872d3f46516251ed96000c0019981083286fa8a2
 source:
   - path: "WindowInfo.cs"

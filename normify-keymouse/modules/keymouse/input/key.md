@@ -11,8 +11,8 @@ description:
   en: >
       Press, release and tap, plus chords pressed in order and released in reverse; when the caller does not mark an extended key, MapVirtualKey infers it so arrows and numpad are not sent as plain keys.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.449Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.452Z"
 fingerprint: 3618318b51206f21111b1abedb3cc5ef20caa74b67c90f6583a8fea20b8a2783
 source:
   - path: "NativeInput.cs"

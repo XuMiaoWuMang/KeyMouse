@@ -11,8 +11,8 @@ description:
   en: >
       One lazy snapshot per window: title, class and pid are read up front; visibility, minimized, cloaked, owner, rect and process name are resolved from the handle on first read and cached. Enumerating ~400 windows per targeted command drops from a dozen API calls each to four.
       
-revision: 8d69164cfe5fa0896f595c0bca51f97977ff51b9
-updated_at: "2026-10-02T17:37:21.449Z"
+revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
+updated_at: "2026-10-03T07:28:04.469Z"
 fingerprint: 6a2bd609bf0fc3bf8db47fe338a49825858a3cfa866d96d2932f9ca2d98066b1
 source:
   - path: "WindowInfo.cs"

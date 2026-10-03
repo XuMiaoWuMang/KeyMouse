@@ -4,7 +4,7 @@
 
 ## keymouse（https://github.com/XuMiaoWuMang/KeyMouse）
 
-- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 123 · API 175]
+- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 129 · API 185]
   - keymouse.build — 构建与发布 / Build & release — 单文件发布脚本、发布前四道关卡的一键验证入口，以及 CI / Release 两条工作流。发布由 v* tag 触发，且必须先经人工跑通 verify.ps1。 — [模块 5 · API 6]
     - keymouse.build.ci — CI 工作流 / CI workflow — 每次 push/PR：构建整个解决方案、跑单元测试、查文档链接、再做一次发布构建（保证发布命令本身没坏）。CI 不跑桌面冒烟——runner 没有交互式桌面。 — [模块 1 · API 1]
     - keymouse.build.publish — 单文件发布 / Single-file publish — 把程序打成 dist\KeyMouse.exe 单文件：默认框架依赖（需 .NET 运行时，约 240 KB），-SelfContained 打成自包含（约 3… — [模块 1 · API 2]
@@ -52,7 +52,8 @@
     - keymouse.input.text — Unicode 文本注入 / Unicode text injection — 逐字符发送 KEYEVENTF_UNICODE：绕过键盘布局与输入法，因此中文、日文、emoji 一样能打；字符之间留间隔，末尾额外留一段排空时间，避免最后一个… — [模块 1 · API 1]
     - keymouse.input.wheel — 滚轮事件 / Wheel events — 纵向与横向滚轮，增量为 120 的整数倍，方向由符号决定。 — [模块 1 · API 1]
   - keymouse.keys — 按键名映射 / Key name map — 按键名 → 虚拟键码/是否扩展键：字母数字、F1-F24、方向键、修饰键、小键盘、符号键名，以及 vk:0x5B 这样的裸虚拟键逃生口。名字大小写不敏感，未知按… — [模块 1 · API 2]
-  - keymouse.native — 原生互操作 / Native interop — 全部 P/Invoke 声明与其薄封装：user32 输入/窗口 API、DWM 遮盖查询、WM_NULL 响应探测、进程名查询（QueryFullProces… — [模块 10 · API 34]
+  - keymouse.native — 原生互操作 / Native interop — 全部 P/Invoke 声明与其薄封装：user32 输入/窗口 API、DWM 遮盖查询、WM_NULL 响应探测、进程名查询（QueryFullProces… — [模块 11 · API 36]
+    - keymouse.native.capture — 窗口内容采集 / Window content capture — PrintWindow + GDI DIB 区块：把窗口（含后台窗口）渲染成像素，不画文本光标、不需要前台。同文件的屏幕抓取兄弟函数是已验证的默认路径，因为 P… — [模块 1 · API 2]
     - keymouse.native.dwm — DWM 遮盖查询 / DWM cloaking — DwmGetWindowAttribute(DWMWA_CLOAKED)：识别挂起的 UWP 应用与属于其他虚拟桌面的窗口——这类窗口“可见”但永远收不到输入。 — [模块 1 · API 2]
     - keymouse.native.process — 进程名查询与缓存 / Process name & cache — QueryFullProcessImageName 一次系统调用取进程名（相比 Process.GetProcessById 快三十多倍），并按 pid 缓存整… — [模块 1 · API 3]
     - keymouse.native.user32-enumerate — 窗口枚举与文字 / Window enumeration & text — EnumWindows 与两个文字读取（GetWindowText/GetClassName）及其定长缓冲封装。 — [模块 1 · API 4]
@@ -62,6 +63,11 @@
     - keymouse.native.user32-layer — 层级、命中与显示 / Layering, hit test & show — Z 序/属主关系（GetWindow）、屏幕点命中（WindowFromPoint）、以及最小化窗口的显式还原（ShowWindow）——还原只会在 --all… — [模块 1 · API 5]
     - keymouse.native.user32-state — 窗口状态查询 / Window state queries — 四个布尔状态：可见、最小化、被禁用（WS_DISABLED）、是否仍是有效窗口。闸门的一半判据来自这里。 — [模块 1 · API 4]
     - keymouse.native.window-probe — 响应探测（WM_NULL） / Responsiveness probe — SendMessageTimeout(WM_NULL, SMTO_ABORTIFHUNG)：窗口在超时内回应即视为活着，并记录耗时；“没回应”与“没探测过”在数… — [模块 1 · API 2]
+  - keymouse.probe — 感知出口 / Perception exit — `probe` 命令：把一块客户区区域读成结构化文本并诚实报告可信度。三条硬边界在这里汇合——只报告不判断、读不到就是退出码 6、读到空是事实而不是失败。 — [模块 5 · API 8]
+    - keymouse.probe.capture — 区域定位与采集 / Region mapping and capture — 把客户区相对坐标映射到取像请求上，用真实客户区尺寸校验，越界就拒绝而不是截断。这个边界检查就是工具态度的缩影：不猜、不静默截断。 — [模块 1 · API 1]
+    - keymouse.probe.consensus — 共识判定与置信度地板 / Consensus and confidence floor — N 次重新采集必须逐字一致才算“看清”，置信度还需过 30 的地板。两个数字都是实测定的：合成图上 60 以下全是垃圾，但真实屏幕上一次读对的只有 55.8，所… — [模块 1 · API 1]
+    - keymouse.probe.engine — 外部 OCR 引擎调用 / External OCR engine — 调用显式配置的外部引擎（默认 Tesseract）并读 tsv 拿逐词置信度。不打包任何模型；引擎版本、tessdata 目录与模型体积都进输出，否则事后“为什… — [模块 1 · API 3]
+    - keymouse.probe.preprocess — 对比度、放大与白边 / Contrast, upscale, padding — 三个变换，每个都是被实测逼出来的：以背景众数归一化对比度（百分位拉伸因窗口图标把直方图钉死而失效）、3× 双线性放大加白边（引擎舒适区约 300 DPI，屏幕区… — [模块 1 · API 3]
   - keymouse.script — 脚本执行器 / Script runner — run 命令的实现：读脚本 → 分词与结构分析（含 repeat/end 循环）→ 变量与目标继承 → 在一个进程内逐条派发，支持 --dry-run、安全重试… — [模块 30 · API 36]
     - keymouse.script.capture — 子命令输出捕获与重试 / Output capture & retry — 执行一条命令并捕获它的 stdout/stderr（不是直接往终端喷），供日志与 JSON 报告使用；同时实现安全重试：只有退出码 3/4/5（可证明一个字节都… — [模块 1 · API 1]
     - keymouse.script.display — 回显与错误输出 / Echo & error output — 把 token 重新拼回可读文本（带空格的值加引号，日志才能无歧义地复现），以及脚本层面的错误输出。 — [模块 1 · API 2]

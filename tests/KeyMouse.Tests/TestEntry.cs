@@ -19,6 +19,7 @@ internal static class TestEntry
         Console.WriteLine("KeyMouse tests (no desktop required)");
         Harness.Section("parsing", ParsingTests.Run);
         Harness.Section("windows", WindowTests.Run);
+        Harness.Section("probe", ProbeTests.Run);
 
         return Harness.Summary();
     }
