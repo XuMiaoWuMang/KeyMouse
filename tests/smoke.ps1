@@ -34,6 +34,7 @@ $modules = [ordered]@{
     'serve'     = '常驻 Runner：CLI 当客户端驱动它'
     'act'       = '--find / click-text / when'
     'flowloops' = '流程里的循环与变量'
+    'calls'     = '子流程：内联、vars 与 export'
 }
 
 if ($List) {

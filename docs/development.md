@@ -104,12 +104,12 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 
 ```powershell
 # 单元测试（不需要桌面）：8 个模块，各一个文件
-dotnet run -c Release --project tests\KeyMouse.Tests -- --list            # 看有哪些
+dotnet run -c Release --project tests\KeyMouse.Tests -- --list            # 看有哪些（现有 9 个）
 dotnet run -c Release --project tests\KeyMouse.Tests -- --only loops     # 只跑该模块
 dotnet run -c Release --project tests\KeyMouse.Tests                     # 全部
 
 # 桌面冒烟：10 个模块，各一个文件（tests\smoke\）
-pwsh tests\smoke.ps1 -List                                               # 看有哪些
+pwsh tests\smoke.ps1 -List                                               # 看有哪些（现有 11 个）
 pwsh tests\smoke.ps1 -Only typing,flowloops                              # 只跑相关的
 pwsh tests\smoke.ps1                                                     # 全部
 
@@ -126,6 +126,7 @@ pwsh .\verify.ps1
 | `region` | 选区坐标换算与描述 | `RegionTests.cs` |
 | `flow` | 流程编译、条件与前置条件 | `FlowTests.cs` |
 | `loops` | 循环、变量与展平 | `LoopTests.cs` |
+| `calls` | 子流程：内联、作用域与导出 | `CallTests.cs` |
 | `runner` | 常驻 Runner 协议与作业控制 | `RunnerTests.cs` |
 
 | 冒烟模块 | 覆盖 | 文件 |
@@ -140,6 +141,7 @@ pwsh .\verify.ps1
 | `serve` | 常驻 Runner 被 CLI 驱动 | `serve.ps1` |
 | `act` | `--find` / `click-text` / `when` | `act.ps1` |
 | `flowloops` | 流程格式的循环与变量 | `flowloops.ps1` |
+| `calls` | 子流程：vars、export、作用域不外泄 | `calls.ps1` |
 
 两条规矩：
 
@@ -169,6 +171,9 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
    两次不一致就是退出码 6），而光标会闪；更糟的是光标进画面能让整行读崩
    （`你好，世界` 84.7 → 加光标 `Re,Hh` 49.8）。做法是打完字后 `key press enter -n 3` 把它挪到区域外。
 2. **区域高度要盖住整行**：`0,0,400,20` 会切掉字底、同一行读成乱码，`0,0,400,32` 正常。
+4. **读屏有字号下限**：冒烟靶子的小字号下，复杂汉字读不准——「子流程:甲」读成 `FRE: F`，置信度 44.6，
+   把横带从 24px 加到 64px **一点没变**（24px 时 9.8，32px 时 60.0，40/48/64px 都是 44.6）。所以
+   读屏能力用**够大的字**单独验，UI 用例里用 ASCII 数据——否则测的是字体不是功能。
 3. **别在选区上读**：选中反色会把同一行的置信度从 92.0 打到 65.0、多读字符甚至读空（实测）。
    做法是先点一下区域外：既取消选区，也把光标挪走。
 
@@ -181,13 +186,13 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 248 个 API 的索引 |
+| `api-index.json` | 254 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 165 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 168 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
-`smoke.loops` 都各占一格。186 条箭头锚定到了具体 API 行，所以图上读到的是
+`smoke.loops` 都各占一格。192 条箭头锚定到了具体 API 行，所以图上读到的是
 `mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
 
 改动代码后同步（伴随开发流程）：

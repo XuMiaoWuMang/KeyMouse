@@ -1,15 +1,16 @@
 {
   "schema_version": 1,
   "id": "keymouse.flow",
-  "updated_at": "2026-10-03T10:20:29.280Z",
+  "updated_at": "2026-10-03T12:49:08.093Z",
   "mode": "layers",
   "reading": {
-    "zh": "文件进来先过校验（格式/版本/步骤类型/条件字段），再由执行器逐步编译成命令交给同一个派发；没有命令行等价物的步骤（sleep、wait-window、wait-text）由执行器自己处理，后者每轮读一次区域并交给谓词判断。",
-    "en": "A file is validated first (format, version, step types, condition fields), then the runner compiles each step into a command for the shared dispatch; steps without a command-line equivalent (sleep, wait-window, wait-text) are handled by the runner itself, the last one reading a region per poll and asking the predicate."
+    "zh": "先看\"文档与编译器\"，再看\"执行计划与变量帧\"（内联与作用域都在这里），最后是\"执行器\"（按帧跑并上报）。",
+    "en": "Read the document and compiler first, then the execution plan (inlining and scope), then the runner."
   },
   "order": [
     "keymouse.flow.model",
     "keymouse.flow.runner",
-    "keymouse.flow.predicate"
+    "keymouse.flow.predicate",
+    "keymouse.flow.plan"
   ]
 }

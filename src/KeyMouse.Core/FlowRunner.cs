@@ -70,9 +70,8 @@ internal static class FlowRunner
         // Loops are flattened before anything runs: a `repeat`/`foreach` becomes the steps it would
         // run, with the loop variables already substituted. One execution loop keeps one place where
         // pause, cancel and step reporting live - no second interpreter for groups.
-        List<FlowStep> plan = FlowDocument.ExpandLoops(document.Steps, document);
-        if (plan.Count == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
-        var scope = new Dictionary<string, string>(document.Texts, StringComparer.Ordinal);
+        FlowPlan plan = FlowPlan.Build(document, Path.GetFullPath(options.Path!));
+        if (plan.StepCount == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
 
         string source = Path.GetFullPath(options.Path);
         var report = new ScriptReport
@@ -80,41 +79,59 @@ internal static class FlowRunner
             Script = source,
             StartedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
             DryRun = options.DryRun,
-            Total = plan.Count,
+            Total = plan.StepCount,
         };
 
         Console.WriteLine($"流程 {source}");
-        Console.WriteLine($"  {plan.Count} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
+        Console.WriteLine($"  {plan.StepCount} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
         if (document.RecordedAt is not null) Console.WriteLine($"  录制于 {document.RecordedAt}");
 
         int exitCode = 0;
         _running = true;
         try
         {
-            for (int i = 0; i < plan.Count; i++)
+            // Numbered by step, not by plan item: an export item is bookkeeping, and counting it would
+            // report "23/21" in the log and in a UI's progress bar.
+            int stepNo = 0;
+            for (int i = 0; i < plan.Items.Count; i++)
             {
+                // A step-less item is a `call`'s export: copy the names the subflow agreed to hand back
+                // into the caller's frame, which is what makes a subflow reusable for real work.
+                if (plan.Items[i].Step is null)
+                {
+                    FlowPlan.Item export = plan.Items[i];
+                    foreach (string name in export.Export ?? [])
+                    {
+                        string? value = export.ExportFrom?.Lookup(name);
+                        if (value is not null) export.Frame.Set(name, value);
+                    }
+                    continue;
+                }
                 // The Runner's seam: with no control installed (the CLI path) these are no-ops; with a
                 // client attached they block while paused, throw when cancelled, and report the step
                 // boundary so a UI can highlight the row that is executing right now.
-                Execution.BetweenSteps(i + 1);
+                stepNo++;
+                Execution.BetweenSteps(stepNo);
 
                 // Resolved per step, not per run: a `read-text` can put something in scope that later
                 // steps interpolate, which is what makes variables worth having.
-                FlowStep step = FlowDocument.Resolve(plan[i], scope);
-                var record = new CommandRecord { Index = i + 1, Line = i + 1 };
+                FlowPlan.Item item = plan.Items[i];
+                FlowStep step = FlowDocument.Resolve(item.Step!, item.Frame);
+                VariableFrame frame = item.Frame;
+                var record = new CommandRecord { Index = stepNo, Line = stepNo };
                 var clock = Stopwatch.StartNew();
                 int attempt = 0;
                 int code;
                 string output;
                 bool skipped = false;
-                Execution.StepStarted(i + 1, step.Type);
+                Execution.StepStarted(stepNo, step.Type);
 
                 // A step may carry a precondition: run it only if that text is on screen in time.
                 // Skipping sends nothing, and failing is exit 3 for the same reason - the caller can
                 // retry without wondering whether half of something happened.
                 if (step.When is { } condition)
                 {
-                    PollResult when = EvaluateWhen(step, condition, options.DryRun, i + 1);
+                    PollResult when = EvaluateWhen(step, condition, options.DryRun, stepNo);
                     if (!when.Found)
                     {
                         if ((condition.Else ?? "skip") == "fail")
@@ -127,11 +144,11 @@ internal static class FlowRunner
                             record.Output = output;
                             record.Command = Describe(step);
                             report.Commands.Add(record);
-                            Execution.StepFinished(i + 1, code, clock.ElapsedMilliseconds);
+                            Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
                             report.Failed++;
                             exitCode = code;
                             report.ExitCode = code;
-                            report.StoppedAtLine = i + 1;
+                            report.StoppedAtLine = stepNo;
                             break;
                         }
 
@@ -155,14 +172,14 @@ internal static class FlowRunner
                 while (!skipped && true)
                 {
                     attempt++;
-                    (code, output) = RunStep(step, options, execute, i + 1, scope);
+                    (code, output) = RunStep(step, options, execute, stepNo, frame);
                     if (code == 0 || attempt > options.Retry || !ScriptRunner.IsRetryable(code)) break;
-                    Console.WriteLine($"  [{i + 1,3}] 第 {attempt} 次重试（退出码 {code} 可重试，等 {options.RetryDelayMs} ms）");
+                    Console.WriteLine($"  [{stepNo,3}] 第 {attempt} 次重试（退出码 {code} 可重试，等 {options.RetryDelayMs} ms）");
                     Thread.Sleep(options.RetryDelayMs);
                 }
 
                 clock.Stop();
-                Execution.StepFinished(i + 1, code, clock.ElapsedMilliseconds);
+                Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
                 record.Attempts = attempt;
                 record.ExitCode = code;
                 record.DurationMs = clock.ElapsedMilliseconds;
@@ -172,7 +189,7 @@ internal static class FlowRunner
                 report.Commands.Add(record);
 
                 string tag = skipped ? "skip" : code == 0 ? "ok" : $"exit {code}";
-                Console.WriteLine($"  [{i + 1,3}/{plan.Count}] {tag,-8} {record.Command}" +
+                Console.WriteLine($"  [{stepNo,3}/{plan.StepCount}] {tag,-8} {record.Command}" +
                                   (output.Length > 0 && (options.Echo || code != 0 || skipped) ? $"  <- {Shorten(output)}" : ""));
 
                 if (code == 0)
@@ -186,13 +203,13 @@ internal static class FlowRunner
                     {
                         exitCode = code;
                         report.ExitCode = code;
-                        report.StoppedAtLine = i + 1;
+                        report.StoppedAtLine = stepNo;
                         break;
                     }
                     exitCode = exitCode == 0 ? code : exitCode;
                 }
 
-                if (options.DelayMs > 0 && i < plan.Count - 1) Thread.Sleep(options.DelayMs);
+                if (options.DelayMs > 0 && i < plan.Items.Count - 1) Thread.Sleep(options.DelayMs);
             }
         }
         finally
@@ -211,7 +228,7 @@ internal static class FlowRunner
         return exitCode;
     }
 
-    private static (int ExitCode, string Output) RunStep(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex, Dictionary<string, string> scope)
+    private static (int ExitCode, string Output) RunStep(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex, VariableFrame frame)
     {
         switch (step.Type)
         {
@@ -230,7 +247,7 @@ internal static class FlowRunner
                 return ClickText(step, options, execute, stepIndex);
 
             case "read-text":
-                return ReadText(step, options, stepIndex, scope);
+                return ReadText(step, options, stepIndex, frame);
 
             default:
                 string[] argv = FlowDocument.ToArguments(step);
@@ -246,7 +263,7 @@ internal static class FlowRunner
     /// the matched piece instead of the whole line - the same locator `--find` uses.
     /// </summary>
     private static (int ExitCode, string Output) ReadText(
-        FlowStep step, ScriptOptions options, int stepIndex, Dictionary<string, string> scope)
+        FlowStep step, ScriptOptions options, int stepIndex, VariableFrame frame)
     {
         WindowSelector selector = SelectorOf(step.Target);
         if (!HasSelector(selector))
@@ -283,7 +300,7 @@ internal static class FlowRunner
                 value = match.Matched;
             }
 
-            scope[step.Into!] = value;
+            frame.Set(step.Into!, value);
             return (0, $"{step.Into} = 「{value}」" + (confidence is double c ? $"（置信度 {c:0.0}）" : ""));
         }
         catch (CommandFailure ex)

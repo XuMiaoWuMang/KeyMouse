@@ -112,6 +112,15 @@ internal sealed class FlowStep
 
     /// <summary>`read-text`: the variable to store what was read into.</summary>
     public string? Into { get; set; }
+
+    /// <summary>`call`: the subflow file, relative to the file that calls it.</summary>
+    public string? Flow { get; set; }
+
+    /// <summary>`call`: values handed to the subflow (each may use `{{...}}` from the caller).</summary>
+    public Dictionary<string, string>? Vars { get; set; }
+
+    /// <summary>`call`: names the subflow hands back to the caller once it has run.</summary>
+    public string[]? Export { get; set; }
 }
 
 internal sealed class FlowOptions
@@ -155,7 +164,7 @@ internal sealed class FlowDocument
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    internal static FlowDocument Load(string path, IReadOnlyDictionary<string, string>? provided = null)
+    internal static FlowDocument Load(string path, IReadOnlyDictionary<string, string>? provided = null, IReadOnlyList<string>? stack = null, IEnumerable<string>? inherited = null)
     {
         string text;
         try
@@ -208,7 +217,12 @@ internal sealed class FlowDocument
             if (document.Lists.ContainsKey(name)) document.Lists[name] = [value];
         }
 
+        // A subflow sees what its caller had (frames are chained, not copied), so the caller's names
+        // are in scope while validating it too - otherwise a subflow that documents "call me with a
+        // `who`" would be refused for using it.
         var scope = new HashSet<string>(document.Texts.Keys, StringComparer.Ordinal);
+        foreach (string name in inherited ?? []) scope.Add(name);
+        var calls = new CallContext(Path.GetDirectoryName(Path.GetFullPath(path)) ?? ".", stack ?? [], 0);
 
         for (int i = 0; i < document.Steps.Count; i++)
         {
@@ -281,11 +295,19 @@ internal sealed class FlowDocument
             // straightforward forward pass instead of a guess about what a capture might produce.
             if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
 
+            // An export is the same promise one level out: the caller may use those names afterwards.
+            if (step.Type == "call" && step.Export is { Length: > 0 })
+            {
+                foreach (string name in step.Export) scope.Add(name);
+            }
+
+            if (step.Type == "call") ValidateCall(step, $"第 {i + 1} 步", calls);
+
             if (step.Steps is { Count: > 0 })
             {
                 var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
                 if (step.Type == "foreach") inner.Add("item");
-                ValidateSteps(step.Steps, inner, $"第 {i + 1} 步里");
+                ValidateSteps(step.Steps, inner, $"第 {i + 1} 步里", calls);
             }
             else if (step.Type is "repeat" or "foreach")
             {
@@ -301,7 +323,7 @@ internal sealed class FlowDocument
     /// the names in scope, so a `{{typo}}` is refused when the file is loaded - with the path to the
     /// step that used it - instead of half-way through a run.
     /// </summary>
-    private static void ValidateSteps(List<FlowStep> steps, HashSet<string> scope, string path)
+    private static void ValidateSteps(List<FlowStep> steps, HashSet<string> scope, string path, CallContext calls)
     {
         for (int i = 0; i < steps.Count; i++)
         {
@@ -326,17 +348,48 @@ internal sealed class FlowDocument
             CheckPlaceholders(step, scope, where);
             if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
 
+            // An export is the same promise one level out: the caller may use those names afterwards.
+            if (step.Type == "call" && step.Export is { Length: > 0 })
+            {
+                foreach (string name in step.Export) scope.Add(name);
+            }
+
+            if (step.Type == "call") ValidateCall(step, where, calls);
+
             if (step.Steps is { Count: > 0 } children)
             {
                 var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
                 if (step.Type == "foreach") inner.Add("item");
-                ValidateSteps(children, inner, $"{where}里");
+                ValidateSteps(children, inner, $"{where}里", calls);
             }
             else if (step.Type is "repeat" or "foreach")
             {
                 throw new CommandFailure(2, $"{where}的 {step.Type} 里没有步骤");
             }
         }
+    }
+
+    /// <summary>Where a `call` is being validated from: its own directory, the files already on the
+    /// call stack (a subflow may not call back into one of them), and how deep we already are.</summary>
+    private readonly record struct CallContext(string BaseDirectory, IReadOnlyList<string> Stack, int Depth);
+
+    /// <summary>
+    /// A subflow is checked here rather than at the first step: a missing file, a cycle or a call
+    /// tower is a property of the file, not of the moment it happens to run.
+    /// </summary>
+    private static void ValidateCall(FlowStep step, string where, CallContext calls)
+    {
+        if (string.IsNullOrEmpty(step.Flow))
+            throw new CommandFailure(2, $"{where}的 call 需要 flow（子流程文件，相对当前文件）");
+
+        string path = Path.GetFullPath(Path.Combine(calls.BaseDirectory, step.Flow!));
+        if (!File.Exists(path))
+            throw new CommandFailure(2, $"{where}的 call 指向的子流程不存在：{path}");
+        if (calls.Depth + 1 > FlowPlan.MaxCallDepth)
+            throw new CommandFailure(2, $"{where}的 call 嵌套超过 {FlowPlan.MaxCallDepth} 层（子流程树不是用来堆栈的）");
+        if (calls.Stack.Contains(path, StringComparer.OrdinalIgnoreCase))
+            throw new CommandFailure(2,
+                $"{where}的 call 成环了：{string.Join(" → ", calls.Stack)} → {path}");
     }
 
     /// <summary>Every `{{name}}` a step mentions, taken from the step's own JSON so a new field cannot
@@ -354,10 +407,25 @@ internal sealed class FlowDocument
         }
     }
 
-    internal static IEnumerable<string> Placeholders(FlowStep step) =>
-        PlaceholderPattern.Matches(JsonSerializer.Serialize(step, Json))
-            .Select(m => m.Groups[1].Value)
-            .Distinct(StringComparer.Ordinal);
+    internal static IEnumerable<string> Placeholders(FlowStep step)
+    {
+        // A group's children are validated on their own, with the scope their loop provides - so a
+        // group is checked for the placeholders in its *own* fields. Serializing the whole step here
+        // would make `foreach` look like it used `{{item}}` before the loop variable existed.
+        string json;
+        if (step.Steps is null)
+        {
+            json = JsonSerializer.Serialize(step, Json);
+        }
+        else
+        {
+            FlowStep shallow = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
+            shallow.Steps = null;
+            json = JsonSerializer.Serialize(shallow, Json);
+        }
+
+        return PlaceholderPattern.Matches(json).Select(m => m.Groups[1].Value).Distinct(StringComparer.Ordinal);
+    }
 
     internal static readonly System.Text.RegularExpressions.Regex PlaceholderPattern =
         new(@"\{\{([A-Za-z0-9_.]+)\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -366,68 +434,24 @@ internal sealed class FlowDocument
     /// Replaces `{{name}}` with what the scope holds. Called at the last moment before dispatch, on the
     /// compiled arguments, so every step type gets variables without a line of per-type code.
     /// </summary>
-    internal static string Expand(string text, IReadOnlyDictionary<string, string> scope)
+    internal static string Expand(string text, VariableFrame frame)
     {
         if (!text.Contains("{{", StringComparison.Ordinal)) return text;
         return PlaceholderPattern.Replace(text, match =>
         {
             string name = match.Groups[1].Value;
-            if (scope.TryGetValue(name, out string? value)) return value;
+            if (frame.Lookup(name) is { } value) return value;
             throw new CommandFailure(2, $"用了未定义的变量 {{{{{name}}}}}（文档 variables、循环变量，或者 --set）");
         });
     }
 
     /// <summary>
-    /// Turns loops into the steps they would run, with the loop variables substituted: a `repeat` of
-    /// three becomes three copies, a `foreach` one copy per item. Loops are the only structural
-    /// construct, so flattening here keeps exactly one execution loop - and one place where pause,
-    /// cancel and step reporting live - instead of a second interpreter for groups.
-    /// </summary>
-    internal static List<FlowStep> ExpandLoops(List<FlowStep> steps, FlowDocument document)
-    {
-        var plan = new List<FlowStep>();
-        foreach (FlowStep step in steps)
-        {
-            if (step.Type is not ("repeat" or "foreach"))
-            {
-                plan.Add(step);
-                continue;
-            }
-
-            string[] items = step.Type == "foreach" && step.In is { } name && document.Lists.TryGetValue(name, out string[]? list)
-                ? list
-                : [];
-            int iterations = step.Type == "repeat" ? Math.Clamp(step.Times ?? 0, 0, MaxLoopIterations) : items.Length;
-
-            for (int round = 0; round < iterations; round++)
-            {
-                var loopScope = new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["index"] = round.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                };
-                if (step.Type == "foreach") loopScope["item"] = items[round];
-
-                foreach (FlowStep child in ExpandLoops(step.Steps ?? [], document))
-                {
-                    plan.Add(Substitute(child, loopScope));
-                }
-            }
-        }
-        return plan;
-    }
-
-    /// <summary>
-    /// A copy of the step with the loop variables filled in. Only the string fields that a loop can
-    /// meaningfully vary: numbers cannot hold a placeholder in JSON, which is a limitation worth
-    /// stating rather than working around.
-    /// </summary>
-    /// <summary>
-    /// The step as it will run: a copy with every `{{name}}` resolved against the current scope.
+    /// The step as it will run: a copy with every `{{name}}` resolved against the frame it runs in.
     /// Unknown names are refused here, at the last moment before dispatch, because the loader can only
-    /// check what is statically in scope (document variables and loop variables) - not what a
-    /// `read-text` captured two steps ago.
+    /// check what is statically in scope - not what a `read-text` captured two steps ago, and not what
+    /// a `call` handed down.
     /// </summary>
-    internal static FlowStep Resolve(FlowStep step, IReadOnlyDictionary<string, string> scope)
+    internal static FlowStep Resolve(FlowStep step, VariableFrame frame)
     {
         FlowStep copy = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
         if (copy.Target is { } target)
@@ -442,32 +466,7 @@ internal sealed class FlowDocument
         copy.Note = Fill(copy.Note);
         return copy;
 
-        string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, scope);
-    }
-
-    private static FlowStep Substitute(FlowStep step, IReadOnlyDictionary<string, string> scope)
-    {
-        // A deep copy through the serializer: the plan must not share fields with the document, or the
-        // second loop round would substitute into an already-substituted step.
-        FlowStep copy = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
-        if (copy.Target is { } target)
-        {
-            target.Process = Fill(target.Process);
-            target.Class = Fill(target.Class);
-            target.Title = Fill(target.Title);
-        }
-        copy.Text = Fill(copy.Text);
-        copy.Combo = Fill(copy.Combo);
-        copy.Into = Fill(copy.Into);
-        copy.In = Fill(copy.In);
-        copy.Note = Fill(copy.Note);
-        return copy;
-
-        string? Fill(string? value) =>
-            string.IsNullOrEmpty(value) || !value.Contains("{{", StringComparison.Ordinal)
-                ? value
-                : PlaceholderPattern.Replace(value, m =>
-                    scope.TryGetValue(m.Groups[1].Value, out string? replaced) ? replaced : m.Value);
+        string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, frame);
     }
 
     internal void Save(string path)
@@ -480,7 +479,7 @@ internal sealed class FlowDocument
     internal static readonly string[] KnownTypes =
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
-        "click-text", "read-text", "repeat", "foreach",
+        "click-text", "read-text", "repeat", "foreach", "call",
     ];
 
     /// <summary>Steps that read a region: they share the region/target/match rules and the runner.</summary>

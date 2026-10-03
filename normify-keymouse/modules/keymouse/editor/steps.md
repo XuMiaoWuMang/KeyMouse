@@ -11,9 +11,9 @@ description:
   en: >
       The editable model behind the list and the inspector: every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first (collapsed cards do write defaults back - measured). Groups and read-text get their own summaries and fields, and child steps are preserved verbatim: the view model wraps whole objects, so saving never loses a loop body.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:09.823Z"
-fingerprint: 72dd5bc2ccab053f7ab9073484d8675d9c162c2ec8000098e273873235f7ea76
+revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
+updated_at: "2026-10-03T12:49:24.519Z"
+fingerprint: 7f785b14625f81571c79580f2f3eaa14957572be6879d17a5367e6586f9b46d5
 source:
   - path: "editor/KeyMouse.FlowEditor/StepVm.cs"
   - path: "editor/KeyMouse.FlowEditor/EditorModel.cs"

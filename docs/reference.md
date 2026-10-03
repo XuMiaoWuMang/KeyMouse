@@ -442,6 +442,7 @@ KeyMouse run flow.json                          # 回放
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
 | `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` || `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
 | `read-text` | `target`、`region`、`into`、`text`（可选） | 读一次区域，把内容存进变量（给了 `text` 就存匹配到的那段）；没匹配到 → 退出码 `3`，变量不动 |
+| `call` | `flow`、`vars`、`export` | 运行另一个流程文件：**内联**执行，子流程有自己的变量作用域，`export` 里的名字交回调用者 |
 
 ### wait-text：等一块区域上出现某段文字
 
@@ -542,6 +543,21 @@ KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一�
 - 前提不成立时的跳过会在报告里标成 `skipped`，控制台那一行显示 `skip`。
 - 一串步骤各自带 `when`，就是最常用的分支写法；真正的 if/else 块与循环留给后续版本。
 
+
+
+### 子流程（call）
+
+```json
+{ "type": "call", "flow": "sub/login.json",
+  "vars": { "user": "{{item}}" },      // 传给子流程（可引用调用者的变量）
+  "export": ["seen"] }                 // 子流程跑完后，把 seen 交回调用者
+```
+
+- **`flow`** 相对于**调用它的那个文件**（嵌套调用同理），所以整个目录可以整体搬走。
+- **作用域是链式的**：子流程看得到调用者的变量，也能用自己的 `variables` 覆盖；`vars` 优先级最高。
+- **子流程里的 `read-text` 捕获留在子流程内**，不会悄悄改掉调用者的同名变量——要交回来就写 `export`，而且只有 `export` 列出的名字会回来。
+- **加载时就查**：文件不存在、`flow` 缺失、调用成环（a → b → a）、嵌套超过 8 层，都是退出码 `2` 并指出是第几步。
+- 一次 `call` 的步骤会**内联**进这次运行：日志与事件里的编号是"第几步"（按实际要跑的步数），不是文件里的行号。
 
 ### 变量与循环
 

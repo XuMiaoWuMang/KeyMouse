@@ -110,7 +110,7 @@ internal sealed class RunnerHost
             // The plan, not the file: a `repeat`/`foreach` runs its body more than once, and progress
             // in the UI should count what will actually run.
             FlowDocument document = FlowDocument.Load(p.Flow, null);
-            job.Total = FlowDocument.ExpandLoops(document.Steps, document).Count;
+            job.Total = FlowPlan.Build(document, Path.GetFullPath(p.Flow!)).StepCount;
         }
 
         var arguments = new List<string> { request.Method };

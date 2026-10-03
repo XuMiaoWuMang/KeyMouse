@@ -54,12 +54,13 @@ KeyMouse run flow.json                               # 原样回放，或改完�
 | **图形编辑器** | `KeyMouse flow edit 流程.json` 打开 WinUI 3 编辑器：左边步骤列表（拖拽排序、缩略图），右边改参数，「从屏幕取区域」直接拉选区浮层，「试运行/播放」调用的还是 `run` 本身 |
 | **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**（客户区坐标）；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提（不成立则跳过，或按 `else` 失败） |
 | **循环与变量** | 流程可以带 `variables`（字符串或列表）、用 `{{名字}}` 传值、用 `repeat` / `foreach` 循环；`read-text` 能把屏幕上的内容读进变量供后面的步骤使用（`--set` 覆盖文档值） |
+| **子流程** | 一个流程可以 `call` 另一个流程文件：内联执行、变量作用域链式（调用者 → 子流程 → call 的 `vars`）、`export` 把结果交回调用者；成环、缺文件、超过 8 层在加载时就被拒 |
 | **条件步骤** | 流程里可以等：`sleep`、`wait-window`（等窗口可用）、`wait-text`（读一块区域等某段文字出现，容错预算自己声明，连续两次读到同一段才算数，超时退出码 3） |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：165 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：168 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 

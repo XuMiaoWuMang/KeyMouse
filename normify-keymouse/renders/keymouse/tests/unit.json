@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.unit",
-  "updated_at": "2026-10-03T11:41:00.470Z",
+  "updated_at": "2026-10-03T12:49:08.193Z",
   "mode": "layers",
   "order": [
     "keymouse.tests.unit.harness",
@@ -11,6 +11,7 @@
     "keymouse.tests.unit.window",
     "keymouse.tests.unit.runner",
     "keymouse.tests.unit.locator",
-    "keymouse.tests.unit.loops"
+    "keymouse.tests.unit.loops",
+    "keymouse.tests.unit.calls"
   ]
 }

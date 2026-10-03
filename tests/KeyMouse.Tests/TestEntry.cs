@@ -19,6 +19,7 @@ internal static class TestEntry
         ("region", "选区坐标换算与描述", RegionTests.Run),
         ("flow", "流程编译、条件与前置条件", FlowTests.Run),
         ("loops", "循环、变量与展平", LoopTests.Run),
+        ("calls", "子流程：内联、作用域与导出", CallTests.Run),
         ("runner", "常驻 Runner 协议与作业控制", RunnerTests.Run),
     ];
 

@@ -11,9 +11,9 @@ description:
   en: >
       No desktop needed: flattening repeats and foreach loops (nested multiplication, zero times, an unknown list), flattening leaving the document untouched, placeholder substitution and the refusal of undefined variables, groups that cannot carry a when, missing times/in/into, and the ordering rule that a read-text into is visible to the steps after it.
       
-revision: 69321dbdf0d2f94c72a77144dd1c35e063d13815
-updated_at: "2026-10-03T11:41:09.822Z"
-fingerprint: ce993c5b52da2a77cf0d139162628103d2a9dc9d34817c90231cba230e4f5b52
+revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
+updated_at: "2026-10-03T12:49:24.518Z"
+fingerprint: 861880dd131c1aa1756f1248d78b0c2f8be1e9c269fdecb8d1b55283a6b57cf3
 source:
   - path: "tests/KeyMouse.Tests/LoopTests.cs"
 apis:

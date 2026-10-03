@@ -29,6 +29,7 @@ internal static class StepCatalog
         new("read-text", "读进变量", "\uE8D5", "读一块区域，把读到的东西存进一个变量"),
         new("repeat", "重复 N 次", "\uE8EE", "把里面的步骤重复若干次（子步骤在 JSON 里编辑）"),
         new("foreach", "遍历列表", "\uE8FD", "对列表变量里的每一项执行一次里面的步骤"),
+        new("call", "调用子流程", "\uE8F4", "运行另一个流程文件；子流程有独立的变量作用域，结果靠 export 交回来"),
     ];
 
     internal static Kind? Find(string type) => All.FirstOrDefault(k => k.Type == type);
@@ -114,6 +115,7 @@ internal static class StepCatalog
         },
         "repeat" => new FlowStep { Type = type, Times = 3, Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
         "foreach" => new FlowStep { Type = type, In = "rows", Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
+        "call" => new FlowStep { Type = type, Flow = "sub.json" },
         _ => new FlowStep { Type = type },
     };
 
@@ -142,6 +144,7 @@ internal static class StepCatalog
             "read-text" => $"读一块区域 → 变量 {step.Into}",
             "repeat" => $"重复 {(step.Times ?? 0)} 次（{step.Steps?.Count ?? 0} 步）",
             "foreach" => $"遍历 {step.In}（{step.Steps?.Count ?? 0} 步）",
+            "call" => $"调用子流程 {step.Flow}" + (step.Vars is { Count: > 0 } vars ? $"（传 {vars.Count} 个变量）" : "") + (step.Export is { Length: > 0 } export ? $"，导出 {string.Join("/", export)}" : ""),
             _ => step.Type,
         };
     }

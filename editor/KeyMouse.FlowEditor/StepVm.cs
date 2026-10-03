@@ -248,6 +248,16 @@ public sealed class StepVm : INotifyPropertyChanged
     /// goes. The children of a group are edited in the JSON preview for now - they are preserved on
     /// save either way, because the view model wraps whole step objects.</summary>
     public Visibility GroupVisibility => Ui.Show(Step.Type is "repeat" or "foreach");
+    public Visibility CallVisibility => Ui.Show(Step.Type == "call");
+
+    /// <summary>`call`: the subflow file, relative to this one. `vars` and `export` are edited in the
+    /// JSON card - a table widget for them would be more UI than the feature needs right now.</summary>
+    public string Flow
+    {
+        get => Step.Flow ?? "";
+        set => Edit(Step.Flow ?? "", value, v => Step.Flow = Blank(v));
+    }
+
     public Visibility IntoVisibility => Ui.Show(Step.Type is "read-text");
     public Visibility TimesVisibility => Ui.Show(Step.Type is "repeat");
     public Visibility InVisibility => Ui.Show(Step.Type is "foreach");

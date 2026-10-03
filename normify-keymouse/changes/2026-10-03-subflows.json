@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-subflows",
+  "title": {
+    "zh": "子流程：call / vars / export，内联执行 + 链式变量帧",
+    "en": "Subflows: call / vars / export, inlined with chained variable frames"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "流程可以 `call` 另一个流程文件：展平时**内联**成同一条计划（仍然只有一套执行循环：暂停/取消/逐步事件/重试全部复用），变量改成**帧链**（不拷贝）——子流程看得到调用者、能用自己的 `variables` 覆盖、`vars` 优先级最高，`read-text` 的捕获留在子流程里，只有 `export` 列出的名字由账目项搬回调用者那一帧。加载期校验覆盖：文件必须存在（相对当前文件）、缺 `flow`、成环 a→b→a、嵌套超过 8 层；子流程按\"调用者可见的名字 + 这次 vars 的名字\"校验，所以写着要用谁传进来的变量也不会被误拒。顺带修掉两处：分组只该检查自己字段的占位符（否则 `foreach` 会被子步骤里的 `{{item}}` 误判），以及展平后日志按实际步数编号（导出项不再把编号撑过总数）。",
+    "en": "A flow can call another flow file: inlined into the same plan at build time (so there is still exactly one execution loop - pause, cancel, per-step events and retries are all reused), with variables turned into a chain of frames rather than copies. A subflow sees the caller values, may shadow them, loses to the call vars, keeps its own read-text captures, and hands values back only through an export that a bookkeeping item carries into the caller frame. Load-time validation covers a missing file (relative to the caller), a missing flow, a cycle a-b-a and nesting past eight levels; a subflow is validated with the names its caller can see plus the names this call passes. Two fixes came with it: a group is checked only for the placeholders in its own fields, and the run log numbers real steps instead of plan items."
+  },
+  "modules": {
+    "create": [
+      "keymouse.flow.plan",
+      "keymouse.tests.unit.calls",
+      "keymouse.tests.smoke.calls"
+    ],
+    "modify": [
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.runner.host",
+      "keymouse.tests.unit.loops",
+      "keymouse.tests.unit",
+      "keymouse.tests.smoke",
+      "keymouse.editor.steps",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development",
+      "keymouse.docs.readme"
+    ]
+  },
+  "acceptance": [
+    "call 被内联进同一条计划：嵌套子流程也只产生线性步骤；步数（含循环）在执行前可知",
+    "作用域链：调用者变量可见、子流程 variables 覆盖、vars 优先级最高；子流程里的捕获不外泄",
+    "export 把指定变量搬回调用者那一帧；未 export 的名字在调用者这边不可用（退出码 2）",
+    "加载期拒绝：flow 缺失、文件不存在、成环、嵌套超过 8 层",
+    "冒烟：循环两轮各调一次子流程，vars 生效、默认值保持、export 值被打印出来"
+  ],
+  "note": "子流程落地：内联 + 链式帧；vars/export 语义；加载期查环与深度；顺带修分组占位符误判与步号编号。",
+  "revision": {
+    "before": null,
+    "after": "1ebae14ff2430b597cc4a1695a71ddf788879db1"
+  },
+  "created_at": "2026-10-03T12:49:08.407Z",
+  "updated_at": "2026-10-03T12:49:26.514Z",
+  "closed_at": "2026-10-03T12:49:26.514Z"
+}
