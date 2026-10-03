@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T10:12:05.089Z",
+    "compiled_at": "2026-10-03T10:20:44.232Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 143,
-      "leaf_count": 115,
-      "api_count": 206,
-      "dep_count": 162,
+      "module_count": 144,
+      "leaf_count": 116,
+      "api_count": 210,
+      "dep_count": 164,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
       "layout_count": 28,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 8,
+      "change_count": 9,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 142,
+        "descendant_count": 143,
         "own_api_count": 0,
-        "inherited_api_count": 206,
+        "inherited_api_count": 210,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -2261,9 +2261,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.003Z",
-      "fingerprint": "95e8a9241deb844d8f293ff73041e169ba94c84ccbfefaaa31f668d53480b9e5",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:43.818Z",
+      "fingerprint": "7a762a7909df422de4a365a7ae0807c4c827d7aba9788caceafe378cad18ed36",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2296,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.457Z",
-      "fingerprint": "21cf67bbee3cc99bd3439c4cdfe0084dd37950179320678bed82dadc050263f0",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.521Z",
+      "fingerprint": "2bbdbd5c1753d21f9dda37499eeb7e639bb3aa3a81756e246b52d4d463f0ee19",
       "apis": [
         {
           "protocol": "file",
@@ -2340,9 +2340,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "85e950e25a3270a308e88673382b52020c16d9c6",
-      "updated_at": "2026-10-03T09:42:10.583Z",
-      "fingerprint": "5c2f8af859e801d3d14928f4fac13b0e8bbaf124c55f53ce0963c3ac7999ff3b",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:43.817Z",
+      "fingerprint": "2f11ac96ab3b0829d17146951a3cb5af685bebe26e7b83fdc0ff17f180478254",
       "apis": [
         {
           "protocol": "file",
@@ -2384,9 +2384,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "c8084548d30886afc6b2784adf618f9dcf55167fa8cc7cd48b520e6bd4449213",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:43.819Z",
+      "fingerprint": "8dbd77db9c77134d5b7f7fa56bd000a86eca2853808e61c67085478e92103255",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2428,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.457Z",
-      "fingerprint": "025f212b5c079759661a799037dd784ec206360b81f86726e4c7276998b4ccb2",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.521Z",
+      "fingerprint": "cb666cb55ff96ea3f54ecd2f0dc83caade4f972ca2247487aae247d47c6b4f33",
       "apis": [
         {
           "protocol": "file",
@@ -2522,13 +2522,13 @@
           "path": "FlowRunner.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.454Z",
-      "fingerprint": "d1f6b78f1a29ec8cd4883034edac8a12024b64e2cd074fa5b53c88c92ade03f8",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.618Z",
+      "fingerprint": "f27d4f0b2636751b2128b373a2bb41959b6f8c644eea836083948017ca54b332",
       "aggregate": {
-        "descendant_count": 2,
+        "descendant_count": 3,
         "own_api_count": 0,
-        "inherited_api_count": 5,
+        "inherited_api_count": 9,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -2548,24 +2548,27 @@
         "en": "Document and compiler"
       },
       "description": {
-        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；编译器把一步翻成 argv（客户区坐标 → `-wx/-wy` 加选择器，屏幕坐标 → 绝对坐标，拖拽带时长，组合键与单键分流）。纯函数，可离线单测；客户区坐标没有选择器时直接报错，因为坐标无从换算。\n",
-        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and the compiler turns one step into argv (client coordinates become -wx/-wy plus a selector, screen coordinates stay absolute, a drag carries its duration, combinations and single keys split). Pure and unit-tested; client coordinates without a selector are refused because there is nothing to convert against.\n"
+        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；条件步骤也在加载时校验（`wait-text` 必须有 region 与 text、match 必须是已知模式、region 只能是客户区坐标），让一个拼写错误只花一秒钟而不是等满超时。编译器把一步翻成 argv，客户区坐标没有选择器时直接报错，因为坐标无从换算。\n",
+        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time instead of half-way through a replay, and conditions are validated there too (a wait-text must carry a region and text, its match must be a known mode, its region must be client-relative), so a typo costs a second instead of a full timeout. The compiler turns a step into argv and refuses client coordinates without a selector, because there is nothing to convert against.\n"
       },
       "source": [
         {
           "path": "FlowModel.cs"
+        },
+        {
+          "path": "TextPredicate.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.455Z",
-      "fingerprint": "8a860c091224e57d74f0b90ed8892f40b2bf1fd8e69e12860546fc2138c06348",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.520Z",
+      "fingerprint": "287793196d347ecb59faae080d78a191ff61e10e1383430f7c651bfca3f73a37",
       "apis": [
         {
           "protocol": "rpc",
           "path": "FlowDocument.Load",
           "description": {
-            "zh": "读并校验流程文件（格式、版本、步骤类型）。\n",
-            "en": "Loads and validates a flow file (format, version, step types).\n"
+            "zh": "读并校验流程文件（格式、版本、步骤类型、条件字段）。\n",
+            "en": "Loads and validates a flow file (format, version, step types, condition fields).\n"
           },
           "key": "rpc:FlowDocument.Load"
         },
@@ -2588,12 +2591,96 @@
           "key": "rpc:FlowDocument.ToArguments"
         }
       ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.predicate",
+          "to_api": "rpc:TextPredicate.IsKnownMode",
+          "label": {
+            "zh": "加载时校验匹配方式",
+            "en": "Validate the mode at load time"
+          },
+          "cross_tree": false
+        }
+      ],
       "aggregate": {
         "descendant_count": 0,
         "own_api_count": 3,
         "inherited_api_count": 0,
-        "dep_out": 0,
+        "dep_out": 1,
         "dep_in": 3
+      }
+    },
+    "keymouse.flow.predicate": {
+      "uid": "7a1f0c58",
+      "id": "keymouse.flow.predicate",
+      "parent": "keymouse.flow",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "flow",
+        "probe"
+      ],
+      "name": {
+        "zh": "文字判定谓词",
+        "en": "Text predicate"
+      },
+      "description": {
+        "zh": "`wait-text` 的比较规则：contains / exact / fuzzy（编辑距离 ≤ 调用方声明的 maxErrors）。**比较时忽略空白，两侧都是**——引擎把中文按字切词并加空格，按字面比较会让用户照屏幕原文写的那串字永远匹配不上；这是比较规则，不是对读出来的文字做加工，probe 打印的仍是引擎原样输出。纯函数，可离线单测。\n",
+        "en": "The comparison rule behind `wait-text`: contains / exact / fuzzy (edit distance within the budget the caller declares). Whitespace is ignored on both sides - the engine splits CJK into one word per character, so a literal comparison would never match the text a user can see; that is a comparison rule, not post-processing of the read, and `probe` still prints the engine output verbatim. Pure and unit-tested.\n"
+      },
+      "source": [
+        {
+          "path": "TextPredicate.cs"
+        }
+      ],
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.519Z",
+      "fingerprint": "391f210fd22534cbfc35f6a5f6425ac83b1c8591ace98048b8c5bd91301acc6e",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "TextPredicate.Matches",
+          "description": {
+            "zh": "读到的东西是否算等到了（并给出差几个字符的解释）。\n",
+            "en": "Whether what was read counts as the wait being over, with an explanation of the near miss.\n"
+          },
+          "key": "rpc:TextPredicate.Matches"
+        },
+        {
+          "protocol": "rpc",
+          "path": "TextPredicate.Distance",
+          "description": {
+            "zh": "编辑距离：容错预算以字符计，就用字符量。\n",
+            "en": "Edit distance: the budget is stated in characters, so it is measured in them.\n"
+          },
+          "key": "rpc:TextPredicate.Distance"
+        },
+        {
+          "protocol": "rpc",
+          "path": "TextPredicate.Squash",
+          "description": {
+            "zh": "比较用的去空白形式。\n",
+            "en": "The whitespace-free form used for every comparison.\n"
+          },
+          "key": "rpc:TextPredicate.Squash"
+        },
+        {
+          "protocol": "rpc",
+          "path": "TextPredicate.IsKnownMode",
+          "description": {
+            "zh": "加载时校验 match 模式是否认识。\n",
+            "en": "Validates a match mode at load time.\n"
+          },
+          "key": "rpc:TextPredicate.IsKnownMode"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 4,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 2
       }
     },
     "keymouse.flow.runner": {
@@ -2611,17 +2698,17 @@
         "en": "Flow runner"
       },
       "description": {
-        "zh": "`run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码（3/4/5/6）按 `--retry` 重试，输出报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用为止，超时退出码 3；wait-text 还没有实现，遇到就明确报错而不是装作跑过。\n",
-        "en": "`run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes (3/4/5/6) per --retry, and writing the same report shape as the text runner. sleep does not really wait under --dry-run; wait-window polls until a usable window appears and exits 3 on timeout; wait-text is not implemented yet and says so instead of pretending.\n"
+        "zh": "`run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码按 `--retry` 重试，报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用；wait-text 每轮一次 OCR，连续 confirm 次读到同一段满足条件的文字才算等到，超时退出码 3 并说明最后读到什么。\n",
+        "en": "`run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry, and writing the same report shape as the text runner. sleep does not wait under --dry-run; wait-window polls for a usable window; wait-text reads once per poll and counts a match only after `confirm` consecutive identical reads, exiting 3 on timeout with what it read.\n"
       },
       "source": [
         {
           "path": "FlowRunner.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.455Z",
-      "fingerprint": "2498471aac9f04d718e85f9575f848fab9cbdb6b895f85fafffbfc3513273ab6",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.520Z",
+      "fingerprint": "43b42b8b5255e7029c9b4c0d9f929e71f833ad1cfeda1e9dd76eec1d9f31b10c",
       "apis": [
         {
           "protocol": "rpc",
@@ -4357,9 +4444,9 @@
           "end_line": 240
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.898Z",
-      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.619Z",
+      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
       "deps": [
         {
           "kind": "call",
@@ -4414,9 +4501,9 @@
           "end_line": 322
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:20:55.385Z",
-      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.618Z",
+      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
       "apis": [
         {
           "protocol": "rpc",
@@ -4474,9 +4561,9 @@
           "end_line": 292
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.898Z",
-      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.618Z",
+      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
       "apis": [
         {
           "protocol": "rpc",
@@ -4522,36 +4609,36 @@
           "end_line": 628
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:20:55.385Z",
-      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.520Z",
+      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
       "apis": [
         {
           "protocol": "rpc",
-          "path": "Probe.RunEngine",
+          "path": "Probe.ReadOnce",
           "description": {
-            "zh": "调用外部引擎并把 tsv 解析成带置信度的词。\n",
-            "en": "Runs the external engine and parses tsv into words with confidence.\n"
+            "zh": "读一次区域并返回文字（谓词每轮用它）。\n",
+            "en": "Reads a region once and returns the text (one poll of the predicate).\n"
           },
-          "key": "rpc:Probe.RunEngine"
+          "key": "rpc:Probe.ReadOnce"
         },
         {
           "protocol": "rpc",
-          "path": "Probe.ResolveEngine",
+          "path": "Probe.CaptureRegion",
           "description": {
-            "zh": "把裸引擎名按常见安装位置解析成可执行路径。\n",
-            "en": "Turns a bare engine name into a runnable path via the well-known install locations.\n"
+            "zh": "按坐标系抓一块区域（CLI 与谓词共用同一规则）。\n",
+            "en": "Captures one region for the addressed space (shared by the CLI and the predicate).\n"
           },
-          "key": "rpc:Probe.ResolveEngine"
+          "key": "rpc:Probe.CaptureRegion"
         },
         {
           "protocol": "rpc",
-          "path": "Probe.DescribeEngine",
+          "path": "Probe.ValidateRegion",
           "description": {
-            "zh": "描述引擎：版本、tessdata 目录、模型文件与体积。\n",
-            "en": "Describes the engine: version, tessdata directory, model files and sizes.\n"
+            "zh": "区域越界检查（CLI 与谓词共用同一条规则）。\n",
+            "en": "Out-of-bounds check shared by the CLI and the predicate.\n"
           },
-          "key": "rpc:Probe.DescribeEngine"
+          "key": "rpc:Probe.ValidateRegion"
         }
       ],
       "aggregate": {
@@ -4587,9 +4674,9 @@
           "end_line": 513
         }
       ],
-      "revision": "df4356ba04850d65df87f2c6f6d4e83f34b0f709",
-      "updated_at": "2026-10-03T09:21:00.898Z",
-      "fingerprint": "dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.619Z",
+      "fingerprint": "4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8",
       "apis": [
         {
           "protocol": "rpc",
@@ -4671,9 +4758,9 @@
           "path": "FlowRunner.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.454Z",
-      "fingerprint": "cf02474e9c68245410864f0eb1993e1a09ae623dc729398ccc55975937a0b79c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.619Z",
+      "fingerprint": "2b831d1992088435328cba9d333a00d18bec25e8b8f8c7c5b502f23022470d8b",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -6647,9 +6734,9 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.010Z",
-      "fingerprint": "1b43d16283f7cef483816fcd908ae660eb950cf67a756e9032b9205e591182b7",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.620Z",
+      "fingerprint": "7aa3d19f1e01f93cdfbff6b7b0291d332ac5d96fbf6941708713d8615b1f1374",
       "aggregate": {
         "descendant_count": 26,
         "own_api_count": 0,
@@ -6877,9 +6964,9 @@
           "end_line": 343
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.620Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "aggregate": {
         "descendant_count": 7,
         "own_api_count": 0,
@@ -6960,9 +7047,9 @@
           "end_line": 76
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.620Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7020,9 +7107,9 @@
           "end_line": 289
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.620Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7081,9 +7168,9 @@
           "end_line": 343
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.621Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7132,8 +7219,8 @@
         "en": "Record and replay smoke"
       },
       "description": {
-        "zh": "用 KeyMouse 自己的输入驱动录制器（钩子不过滤注入事件，所以合成会话就是真会话）：录一次点击与打字 → 检查 JSON 里有对应步骤、点击是客户区坐标、步骤带窗口上下文 → 原样 `--dry-run` 回放必须干净 → 再拿一份手写流程真回放，回读剪贴板确认字真的打进了靶子窗口。\n",
-        "en": "Drives the recorder with KeyMouse input (the hooks do not filter injected events, so a synthetic session is a real one): record a click and some typing, check the JSON holds those steps with client-relative coordinates and window context, dry-run the recording clean, then replay a hand-written flow for real and read the clipboard back to prove the text landed in the target window.\n"
+        "zh": "用 KeyMouse 自己的输入驱动录制器（钩子不过滤注入事件，所以合成会话就是真会话）：录一次点击与打字 → 检查 JSON 里有对应步骤、点击是客户区坐标、步骤带窗口上下文 → `--dry-run` 回放干净 → 手写流程真回放，回读剪贴板确认字真的打进了靶子窗口 → wait-text 两条路：屏幕上已有的文字等到（并报出连续确认次数），屏幕上没有的文字超时退出码 3 且说明读到什么。\n",
+        "en": "Drives the recorder with KeyMouse input (the hooks do not filter injected events, so a synthetic session is a real one): record a click and some typing, check the JSON holds those steps with client-relative coordinates and window context, dry-run the recording clean, replay a hand-written flow for real and read the clipboard back, then walk both wait-text paths - text on screen is found with its confirmation count, text that is not times out with exit 3.\n"
       },
       "source": [
         {
@@ -7142,9 +7229,9 @@
           "end_line": 568
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.455Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.521Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7212,9 +7299,9 @@
           "end_line": 515
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.621Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7291,9 +7378,9 @@
           "end_line": 215
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.621Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7351,9 +7438,9 @@
           "end_line": 166
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.011Z",
-      "fingerprint": "eadaa108ac9f863522a90e9ed23758b50b503022f84b73063f2608ffa340dc2c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:29.621Z",
+      "fingerprint": "3947e57c49c973f54657695e4e6fd0b5ac02407972b3057f1ea2494bc5a53b02",
       "apis": [
         {
           "protocol": "rpc",
@@ -7445,30 +7532,30 @@
         "unit"
       ],
       "name": {
-        "zh": "流程编译与录制规则单测",
-        "en": "Flow and recorder unit tests"
+        "zh": "流程编译、谓词与录制规则单测",
+        "en": "Flow, predicate and recorder unit tests"
       },
       "description": {
-        "zh": "不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本的拒绝、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及\"退出码 6 可重试\"这条文档承诺。真正的钩子与回放由 smoke 覆盖。\n",
-        "en": "The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats and future versions, the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit code 6 is retryable. The hooks and the actual replay live in smoke.\n"
+        "zh": "不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及\"退出码 6 可重试\"这条文档承诺。真正的钩子、OCR 与回放由 smoke 覆盖。\n",
+        "en": "The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule (including a string past the stack buffer), the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit 6 is retryable. The hooks, the OCR and the replay live in smoke.\n"
       },
       "source": [
         {
           "path": "tests/KeyMouse.Tests/FlowTests.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.455Z",
-      "fingerprint": "cd3419e243c55c937f13018b39caf1728d6a4afa901607877467c84433b3e83c",
+      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
+      "updated_at": "2026-10-03T10:20:36.520Z",
+      "fingerprint": "fce6146e4cc35604bd0d4a13847620d16ee46d1ee829ede791fd71350d6a47a9",
       "apis": [
         {
           "protocol": "rpc",
-          "path": "流程编译与录制规则断言组",
+          "path": "流程、谓词与录制规则断言组",
           "description": {
-            "zh": "步骤→命令、加载校验、抽稀与拖拽。\n",
-            "en": "Steps to commands, load validation, thinning and drags.\n"
+            "zh": "步骤→命令、加载校验、谓词模式、抽稀与拖拽。\n",
+            "en": "Steps to commands, load validation, predicate modes, thinning and drags.\n"
           },
-          "key": "rpc:流程编译与录制规则断言组"
+          "key": "rpc:流程、谓词与录制规则断言组"
         }
       ],
       "deps": [
@@ -7479,6 +7566,16 @@
           "label": {
             "zh": "被测的编译器",
             "en": "The compiler under test"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.predicate",
+          "to_api": "rpc:TextPredicate.Matches",
+          "label": {
+            "zh": "被测的谓词",
+            "en": "The predicate under test"
           },
           "cross_tree": false
         },
@@ -7497,7 +7594,7 @@
         "descendant_count": 0,
         "own_api_count": 1,
         "inherited_api_count": 0,
-        "dep_out": 2,
+        "dep_out": 3,
         "dep_in": 0
       }
     },
@@ -9173,7 +9270,7 @@
     "rpc:打字与拖拽断言组": "keymouse.tests.smoke.typing",
     "rpc:进度与详情输出": "keymouse.script.run.progress",
     "rpc:零散入口断言组": "keymouse.tests.smoke.features",
-    "rpc:流程编译与录制规则断言组": "keymouse.tests.unit.flow",
+    "rpc:流程、谓词与录制规则断言组": "keymouse.tests.unit.flow",
     "rpc:录制与回放断言组": "keymouse.tests.smoke.record",
     "rpc:退出码与失败清单": "keymouse.script.run.summary",
     "rpc:选区浮层与坐标系回归断言组": "keymouse.tests.smoke.region",
@@ -9264,13 +9361,13 @@
     "rpc:ParsingTests.Run": "keymouse.tests.unit.parsing.entry",
     "rpc:PreferCandidates": "keymouse.cli.window.targeting",
     "rpc:PrepareTarget": "keymouse.cli.window.targeting",
-    "rpc:Probe.DescribeEngine": "keymouse.probe.engine",
+    "rpc:Probe.CaptureRegion": "keymouse.probe.engine",
     "rpc:Probe.IsSeen": "keymouse.probe.consensus",
     "rpc:Probe.Normalize": "keymouse.probe.preprocess",
     "rpc:Probe.ParseRegion": "keymouse.probe.capture",
     "rpc:Probe.Preprocess": "keymouse.probe.preprocess",
-    "rpc:Probe.ResolveEngine": "keymouse.probe.engine",
-    "rpc:Probe.RunEngine": "keymouse.probe.engine",
+    "rpc:Probe.ReadOnce": "keymouse.probe.engine",
+    "rpc:Probe.ValidateRegion": "keymouse.probe.engine",
     "rpc:Probe.WriteBmp": "keymouse.probe.preprocess",
     "rpc:pwsh tests/check-docs.ps1": "keymouse.tests.docs-link",
     "rpc:pwsh tests/smoke.ps1": "keymouse.tests.smoke.entry",
@@ -9312,6 +9409,10 @@
     "rpc:ScriptRunner.WriteReport": "keymouse.script.report",
     "rpc:SingleProcessExecution 用例": "keymouse.tests.unit.parsing.singleproc",
     "rpc:TargetInheritance 用例": "keymouse.tests.unit.parsing.invariants.inheritance",
+    "rpc:TextPredicate.Distance": "keymouse.flow.predicate",
+    "rpc:TextPredicate.IsKnownMode": "keymouse.flow.predicate",
+    "rpc:TextPredicate.Matches": "keymouse.flow.predicate",
+    "rpc:TextPredicate.Squash": "keymouse.flow.predicate",
     "rpc:Tokenizer / ScriptLines 用例": "keymouse.tests.unit.parsing.tokenizer",
     "rpc:Usage.Print": "keymouse.cli.help",
     "rpc:user32!BringWindowToTop": "keymouse.native.user32-focus",
@@ -9895,6 +9996,17 @@
       "label": {
         "zh": "读取控制台码页",
         "en": "Read console code page"
+      }
+    },
+    {
+      "from": "keymouse.flow.model",
+      "to": "keymouse.flow.predicate",
+      "to_api": "rpc:TextPredicate.IsKnownMode",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "加载时校验匹配方式",
+        "en": "Validate the mode at load time"
       }
     },
     {
@@ -10777,6 +10889,17 @@
     },
     {
       "from": "keymouse.tests.unit.flow",
+      "to": "keymouse.flow.predicate",
+      "to_api": "rpc:TextPredicate.Matches",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的谓词",
+        "en": "The predicate under test"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.flow",
       "to": "keymouse.record.session",
       "to_api": "rpc:Recorder.ThinTrajectoryIndices",
       "kind": "reference",
@@ -11494,15 +11617,16 @@
     "keymouse.flow": {
       "schema_version": 1,
       "id": "keymouse.flow",
-      "updated_at": "2026-10-03T10:11:47.712Z",
+      "updated_at": "2026-10-03T10:20:29.280Z",
       "mode": "layers",
       "reading": {
-        "zh": "文件进来先过校验（格式/版本/步骤类型），再由执行器逐步编译成命令交给同一个派发；没有命令行等价物的步骤（sleep、wait-window）由执行器自己处理。",
-        "en": "A file is validated first (format, version, step types), then the runner compiles each step into a command for the shared dispatch; steps without a command-line equivalent (sleep, wait-window) are handled by the runner itself."
+        "zh": "文件进来先过校验（格式/版本/步骤类型/条件字段），再由执行器逐步编译成命令交给同一个派发；没有命令行等价物的步骤（sleep、wait-window、wait-text）由执行器自己处理，后者每轮读一次区域并交给谓词判断。",
+        "en": "A file is validated first (format, version, step types, condition fields), then the runner compiles each step into a command for the shared dispatch; steps without a command-line equivalent (sleep, wait-window, wait-text) are handled by the runner itself, the last one reading a region per poll and asking the predicate."
       },
       "order": [
         "keymouse.flow.model",
-        "keymouse.flow.runner"
+        "keymouse.flow.runner",
+        "keymouse.flow.predicate"
       ]
     },
     "keymouse.input": {
@@ -12294,6 +12418,15 @@
         "zh": "2.0.0 发布前收尾：证据归档不再入库"
       },
       "updated_at": "2026-10-03T09:42:11.343Z"
+    },
+    {
+      "id": "2026-10-03-wait-text-predicate",
+      "status": "verified",
+      "title": {
+        "zh": "条件步骤 wait-text：读区域等文字",
+        "en": "Condition step wait-text: wait for text in a region"
+      },
+      "updated_at": "2026-10-03T10:20:37.387Z"
     }
   ]
 }

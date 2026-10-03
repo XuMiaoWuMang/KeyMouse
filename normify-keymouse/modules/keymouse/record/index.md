@@ -11,9 +11,9 @@ description:
   en: >
       Turns one real session into replayable, editable data instead of inventing another automation language: global hooks observe without swallowing, each action records which window it happened in (process + class, the title only for humans) and client-relative coordinates, the trajectory is thinned by distance, and key steps keep a small screenshot. Replay compiles the flow into the same command lines a human would type.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.454Z"
-fingerprint: cf02474e9c68245410864f0eb1993e1a09ae623dc729398ccc55975937a0b79c
+revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
+updated_at: "2026-10-03T10:20:29.619Z"
+fingerprint: 2b831d1992088435328cba9d333a00d18bec25e8b8f8c7c5b502f23022470d8b
 source:
   - path: "Recorder.cs"
   - path: "NativeHooks.cs"

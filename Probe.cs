@@ -159,28 +159,8 @@ internal static class Probe
         // Client-relative by default; --space window addresses the whole window, because a title
         // bar lives outside the client area and is often the only text a window has. The space
         // used is echoed in the output so a reader never has to guess which one was meant.
-        int spaceWidth = windowSpace ? fullWidth : clientWidth;
-        int spaceHeight = windowSpace ? fullHeight : clientHeight;
         string spaceName = windowSpace ? "窗口" : "客户区";
-        if (region.X < 0 || region.Y < 0 || region.W <= 0 || region.H <= 0 ||
-            region.X + region.W > spaceWidth || region.Y + region.H > spaceHeight)
-        {
-            throw new ArgumentException(
-                $"区域 {region.X},{region.Y},{region.W},{region.H} 超出{spaceName}（{spaceWidth}x{spaceHeight}）——" +
-                $"probe 的区域是{spaceName}相对坐标，不猜、也不截断");
-        }
-
-        int originX = windowSpace ? 0 : offsetX;
-        int originY = windowSpace ? 0 : offsetY;
-
-        // The screen grab starts on the desktop, so its origin depends on the space being
-        // addressed: a window-space region is measured from the window's outer rectangle, a
-        // client-space one from the client origin ClientToScreen reports. Getting this wrong is
-        // silent - the first version always started at the client origin, so a title-bar selection
-        // read the top strip of the client area instead. Proof: `--space window` and `--space client`
-        // produced byte-identical images for the same region.
-        int screenOriginX = windowSpace ? windowRect.Left : client.X;
-        int screenOriginY = windowSpace ? windowRect.Top : client.Y;
+        ValidateRegion(window, windowSpace, region);
 
         var engineInfo = DescribeEngine(engineCommand, languages, tessdata);
 
@@ -195,23 +175,7 @@ internal static class Probe
         {
             for (int i = 0; i < reads; i++)
             {
-                NativeCapture.Frame frame;
-                if (capture == "print")
-                {
-                    var windowFrame = NativeCapture.TryCapture(window.Handle, fullWidth, fullHeight)
-                        ?? throw new CommandFailure(ExitUnreadable,
-                            $"「{window.Title}」拒绝为读取而绘制（最小化、被挂起或只剩一帧陈旧画面）——未读取到任何内容");
-                    frame = windowFrame.Crop(originX + region.X, originY + region.Y, region.W, region.H);
-                }
-                else
-                {
-                    // Screen space: the window does have to be on screen, but there is no frame
-                    // arithmetic beyond the origin picked above.
-                    frame = NativeCapture.TryCaptureScreen(
-                                screenOriginX + region.X, screenOriginY + region.Y, region.W, region.H)
-                        ?? throw new CommandFailure(ExitUnreadable,
-                            $"屏幕区域 {screenOriginX + region.X},{screenOriginY + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
-                }
+                NativeCapture.Frame frame = CaptureRegion(window, windowSpace, region, capture);
 
                 // --keep-image keeps the pixels as captured: no upscale, no padding, no contrast
                 // normalisation. Written on every read, so a failed (inconsistent) read still leaves
@@ -271,6 +235,101 @@ internal static class Probe
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /// <summary>
+    /// Checks a region against the space it claims to live in. Shared by the CLI and by the
+    /// `wait-text` predicate so the two can never disagree about what "out of bounds" means.
+    /// </summary>
+    internal static void ValidateRegion(WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region)
+    {
+        NativeWindow.GetWindowRect(window.Handle, out NativeWindow.RECT windowRect);
+        int fullWidth = windowRect.Right - windowRect.Left;
+        int fullHeight = windowRect.Bottom - windowRect.Top;
+        NativeWindow.GetClientRect(window.Handle, out NativeWindow.RECT clientRect);
+        int clientWidth = clientRect.Right - clientRect.Left;
+        int clientHeight = clientRect.Bottom - clientRect.Top;
+
+        int spaceWidth = windowSpace ? fullWidth : clientWidth;
+        int spaceHeight = windowSpace ? fullHeight : clientHeight;
+        string spaceName = windowSpace ? "窗口" : "客户区";
+        if (region.X < 0 || region.Y < 0 || region.W <= 0 || region.H <= 0 ||
+            region.X + region.W > spaceWidth || region.Y + region.H > spaceHeight)
+        {
+            throw new ArgumentException(
+                $"区域 {region.X},{region.Y},{region.W},{region.H} 超出{spaceName}（{spaceWidth}x{spaceHeight}）——" +
+                $"probe 的区域是{spaceName}相对坐标，不猜、也不截断");
+        }
+    }
+
+    /// <summary>
+    /// Captures one region. The screen grab starts on the desktop, so its origin depends on the
+    /// space being addressed: a window-space region is measured from the window's outer rectangle, a
+    /// client-space one from the client origin ClientToScreen reports. Getting this wrong is silent -
+    /// the first version always started at the client origin, so a title-bar selection read the top
+    /// strip of the client area instead (proof: both spaces produced byte-identical images).
+    /// </summary>
+    internal static NativeCapture.Frame CaptureRegion(
+        WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region, string capture)
+    {
+        NativeWindow.GetWindowRect(window.Handle, out NativeWindow.RECT windowRect);
+        int fullWidth = windowRect.Right - windowRect.Left;
+        int fullHeight = windowRect.Bottom - windowRect.Top;
+        var client = new NativeWindow.POINT { X = 0, Y = 0 };
+        if (!NativeWindow.ClientToScreen(window.Handle, ref client))
+            throw new CommandFailure(4, $"「{window.Title}」的客户区原点读不出来——未读取任何内容");
+
+        if (capture == "print")
+        {
+            // PrintWindow paints the window itself, so a client-relative region has to be shifted by
+            // the client origin inside the window rectangle. (Window space is rejected earlier for
+            // this path: the painted geometry is inset and does not line up on this machine.)
+            int offsetX = client.X - windowRect.Left;
+            int offsetY = client.Y - windowRect.Top;
+            var windowFrame = NativeCapture.TryCapture(window.Handle, fullWidth, fullHeight)
+                ?? throw new CommandFailure(ExitUnreadable,
+                    $"「{window.Title}」拒绝为读取而绘制（最小化、被挂起或只剩一帧陈旧画面）——未读取到任何内容");
+            return windowFrame.Crop(offsetX + region.X, offsetY + region.Y, region.W, region.H);
+        }
+
+        int originX = windowSpace ? windowRect.Left : client.X;
+        int originY = windowSpace ? windowRect.Top : client.Y;
+        return NativeCapture.TryCaptureScreen(originX + region.X, originY + region.Y, region.W, region.H)
+            ?? throw new CommandFailure(ExitUnreadable,
+                $"屏幕区域 {originX + region.X},{originY + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
+    }
+
+    /// <summary>
+    /// Reads one region once and hands back the text, for callers that want a value rather than a
+    /// report - the `wait-text` predicate polls this. It deliberately runs the same capture,
+    /// preprocessing and engine call as the CLI, so "what the predicate saw" and "what `probe`
+    /// prints" cannot drift apart.
+    /// </summary>
+    internal static (string Text, double? Confidence) ReadOnce(
+        WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region, string capture = "screen")
+    {
+        ValidateRegion(window, windowSpace, region);
+        NativeCapture.Frame frame = CaptureRegion(window, windowSpace, region, capture);
+        string engineCommand = ResolveEngine("tesseract");
+        string? tessdata = DefaultTessdata();
+        var prepared = Preprocess(frame, 1, 0, nearest: false);
+        string imagePath = Path.Combine(Path.GetTempPath(), $"keymouse-probe-{Environment.ProcessId}.bmp");
+        try
+        {
+            WriteBmp(imagePath, prepared);
+            var read = RunEngine(engineCommand, imagePath, DefaultLanguages, tessdata);
+            return (read.Text, read.Confidence);
+        }
+        finally
+        {
+            if (File.Exists(imagePath))
+            {
+                try { File.Delete(imagePath); } catch (IOException) { /* a leftover temp file is not a failure */ }
+            }
+        }
+    }
+
+    /// <summary>The language set the CLI defaults to; the predicate must agree with it.</summary>
+    internal const string DefaultLanguages = "eng+chi_sim";
 
     /// <summary>
     /// The whole "did we see it" policy, in one testable place.

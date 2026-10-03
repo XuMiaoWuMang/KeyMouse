@@ -4,7 +4,7 @@
 
 ## keymouse（https://github.com/XuMiaoWuMang/KeyMouse）
 
-- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 143 · API 206]
+- keymouse — KeyMouse / KeyMouse — Windows 命令行输入模拟工具：一条命令 = 一次真实的鼠标/键盘事件，底层 SendInput，事件进系统输入队列；执行完即退出，无常驻进程。核心是「指定… — [模块 144 · API 210]
   - keymouse.build — 构建与发布 / Build & release — 单文件发布脚本、发布前四道关卡的一键验证入口，以及 CI / Release 两条工作流。发布由 v* tag 触发，且必须先经人工跑通 verify.ps1。 — [模块 5 · API 6]
     - keymouse.build.ci — CI 工作流 / CI workflow — 每次 push/PR：构建整个解决方案、跑单元测试、查文档链接、再做一次发布构建（保证发布命令本身没坏）。CI 不跑桌面冒烟——runner 没有交互式桌面。 — [模块 1 · API 1]
     - keymouse.build.publish — 单文件发布 / Single-file publish — 把程序打成 dist\KeyMouse.exe 单文件：默认框架依赖（需 .NET 运行时，约 240 KB），-SelfContained 打成自包含（约 3… — [模块 1 · API 2]
@@ -43,9 +43,10 @@
     - keymouse.docs.readme — 概览 README / README overview — 一页说清“它是什么、和常见自动化脚本的区别、能力一览、安装与快速开始”，并把细节链接到另外三份文档。 — [模块 1 · API 1]
     - keymouse.docs.reference — 命令参考 / Command reference — 逐条命令与选项的完整说明：选择器、窗口策略、退出码、脚本（含目标继承、循环、变量、报告与 API 约定）。与内置帮助互补：帮助给了概要，这里给了细节与理由。 — [模块 1 · API 1]
     - keymouse.docs.sample — 示例脚本 / Sample script — 一份可直接跑的示例：focus 一次后继承目标、命名循环、显式选择器混用，并在注释里点名两个初次上手的坑（窗口最小化、同名多窗口）。 — [模块 1 · API 1]
-  - keymouse.flow — JSON 流程 / JSON flow — `keymouse-flow` v1：录制产物与手写/编辑的载体。它刻意不是第二套执行语义——每一步都会编译成一条人类会敲的命令，因此选择器、焦点闸门、退出码与… — [模块 3 · API 5]
-    - keymouse.flow.model — 流程文档与编译器 / Document and compiler — 流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；编译器把一步翻成 argv（客户区坐标 → `-wx/-wy` 加选择… — [模块 1 · API 3]
-    - keymouse.flow.runner — 流程执行器 / Flow runner — `run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码（3/… — [模块 1 · API 2]
+  - keymouse.flow — JSON 流程 / JSON flow — `keymouse-flow` v1：录制产物与手写/编辑的载体。它刻意不是第二套执行语义——每一步都会编译成一条人类会敲的命令，因此选择器、焦点闸门、退出码与… — [模块 4 · API 9]
+    - keymouse.flow.model — 流程文档与编译器 / Document and compiler — 流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西，而不是回放到一半才炸；条件步骤也在加载时校验（`wait-text` 必须有 region … — [模块 1 · API 3]
+    - keymouse.flow.predicate — 文字判定谓词 / Text predicate — `wait-text` 的比较规则：contains / exact / fuzzy（编辑距离 ≤ 调用方声明的 maxErrors）。**比较时忽略空白，两侧… — [模块 1 · API 4]
+    - keymouse.flow.runner — 流程执行器 / Flow runner — `run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码按 `… — [模块 1 · API 2]
   - keymouse.input — 输入注入 / Input injection — 把命令翻译成 SendInput 事件：光标移动（绝对/相对）、鼠标键、滚轮、拖拽、单键与组合键、以及不依赖输入法的 Unicode 文本注入。所有事件一次性投… — [模块 8 · API 13]
     - keymouse.input.drag — 拖拽序列 / Drag sequence — 按下 → 分步移动 → 抬起，分步数与总时长可控：一次跳过去很多应用不认，分步才能让目标窗口看到连续移动。 — [模块 1 · API 1]
     - keymouse.input.key — 键盘按键与组合键 / Keys & chords — 单键按下/抬起、敲击，以及组合键的顺序按下与逆序抬起；没有显式扩展键标志时用 MapVirtualKey 推断，避免方向键/小键盘被当成普通键。 — [模块 1 · API 3]
@@ -121,7 +122,7 @@
       - keymouse.tests.smoke.typing — 打字往返、拖拽与变量 / Typing, drag & variables — 最核心的一组：把文本打进靶子再回读剪贴板逐字比对、窗口相对拖拽是否真的选中了文本、${} 变量是否真的把光标移到了替代后的坐标。 — [模块 1 · API 1]
     - keymouse.tests.smoke-target — 冒烟靶子窗口 / Smoke target window — 一个整块客户区都是文本框的 WinForms 窗口，供冒烟测试驱动。存在理由：以前借记事本，既要先杀掉用户所有记事本才能确定哪扇是自己开的，又会碰上 Win11… — [模块 1 · API 1]
     - keymouse.tests.unit — 单元测试 / Unit tests — 零依赖控制台程序：不引测试框架、离线可跑、dotnet run 就是全部用法，非零退出码即失败。它已经抳下过真问题（vk:0x5B 从 v1.0 就写在文档里却… — [模块 14 · API 14]
-      - keymouse.tests.unit.flow — 流程编译与录制规则单测 / Flow and recorder unit tests — 不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本的拒绝、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及"退出码 6 可重试"… — [模块 1 · API 1]
+      - keymouse.tests.unit.flow — 流程编译、谓词与录制规则单测 / Flow, predicate and recorder unit tests — 不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽… — [模块 1 · API 1]
       - keymouse.tests.unit.harness — 断言与小节输出 / Assertions & section output — 几十行的极小测试库：Check/Equal/Sequence/Throws/Group，按小节打印 ok/FAIL 并统计总数；不做发现、不做并行、不抛控制流异… — [模块 1 · API 4]
       - keymouse.tests.unit.parsing — 解析与脚本用例 / Parsing & script cases — 不需要桌面的全部逻辑断言：分词器、全局选项、按键名、run 选项、重试策略、变量替换与预校验、循环结构分析与展开计数、目标继承。约 400 行里藏着几次真实回归… — [模块 9 · API 7]
         - keymouse.tests.unit.parsing.entry — 用例入口 / Case entry — 按顺序调用全部用例组并汇总计数；一个用例组抛异常就中止整轮（说明断言之外发生了意外）。 — [模块 1 · API 1]

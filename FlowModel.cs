@@ -37,6 +37,18 @@ internal sealed class FlowPoint
     public int Y { get; set; }
 }
 
+/// <summary>A rectangle a condition reads, in the same vocabulary `probe` uses.</summary>
+internal sealed class FlowRegion
+{
+    public string Space { get; set; } = FlowSpace.Client;
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+
+    internal (int X, int Y, int W, int H) Rect() => (X, Y, Width, Height);
+}
+
 /// <summary>
 /// One recorded or hand-written step. The shape is deliberately flat and nullable: a JSON document
 /// a human edits by hand has to survive missing fields, and the editor writes back only what a step
@@ -46,6 +58,7 @@ internal sealed class FlowStep
 {
     public string Type { get; set; } = "";
     public FlowTarget? Target { get; set; }
+    public FlowRegion? Region { get; set; }
     public FlowPoint? At { get; set; }
     public FlowPoint? From { get; set; }
     public FlowPoint? To { get; set; }
@@ -133,6 +146,22 @@ internal sealed class FlowDocument
             {
                 throw new CommandFailure(2,
                     $"第 {i + 1} 步的类型 '{step.Type}' 不认识（可用：{string.Join(" | ", KnownTypes)}）");
+            }
+
+            // Conditions are validated when the file is loaded, not half-way through a replay: a
+            // typo in a match mode should cost a second, not the five minutes the step might wait.
+            if (step.Type == "wait-text")
+            {
+                if (step.Region is null)
+                    throw new CommandFailure(2, $"第 {i + 1} 步 wait-text 需要 region（读哪一块）");
+                if (string.IsNullOrEmpty(step.Text))
+                    throw new CommandFailure(2, $"第 {i + 1} 步 wait-text 需要 text（等什么字）");
+                if (step.Match is { } mode && !TextPredicate.IsKnownMode(mode))
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步 wait-text 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
+                if (step.Region.Space != FlowSpace.Client)
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步 wait-text 的 region 只支持客户区坐标（space=client）：屏幕坐标会因为窗口移动而失效");
             }
         }
 

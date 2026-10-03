@@ -158,6 +158,69 @@ internal static class FlowTests
         Harness.Check("a gesture past the threshold is a drag",
             Recorder.IsDrag(new System.Drawing.Point(0, 0), new System.Drawing.Point(20, 20), 8));
 
+        Harness.Group("flow: the wait-text predicate");
+        Harness.Check("whitespace is ignored: the engine splits CJK into one word per character",
+            TextPredicate.Matches("你 好 ， 世 界", "你好，世界", TextPredicate.Contains, 0, out _));
+        Harness.Check("contains finds a UI string inside a longer read",
+            TextPredicate.Matches("是否保存更改？[是] [否] [取消]", "取消", TextPredicate.Contains, 0, out _));
+        Harness.Check("...and refuses one that is not there",
+            !TextPredicate.Matches("保存 取消 确定", "另存为", TextPredicate.Contains, 0, out _));
+        Harness.Check("exact demands every character",
+            TextPredicate.Matches("用户名或密码不正确", "用户名或密码不正确", TextPredicate.Exact, 0, out _));
+        Harness.Check("...including the ones it got wrong",
+            !TextPredicate.Matches("用户名或密码不正确", "用户名或密码错误", TextPredicate.Exact, 0, out _));
+        Harness.Check("fuzzy spends the caller's budget: one wrong character fits in one",
+            TextPredicate.Matches("保存近钮", "保存按钮", TextPredicate.Fuzzy, 1, out _));
+        Harness.Check("...and does not fit in zero",
+            !TextPredicate.Matches("保存近钮", "保存按钮", TextPredicate.Fuzzy, 0, out _));
+        Harness.Check("two edits need a budget of two",
+            TextPredicate.Matches("保存控钮", "保存按钮", TextPredicate.Fuzzy, 2, out _));
+        Harness.Check("an unknown mode is a failure with an explanation, not a silent no",
+            !TextPredicate.Matches("a", "a", "roughly", 1, out string unknownMode) &&
+            unknownMode.Contains("未知的匹配方式"));
+        Harness.Equal("edit distance counts characters", 3, TextPredicate.Distance("", "abc"));
+        Harness.Equal("...and is zero for an exact match", 0, TextPredicate.Distance("按钮", "按钮"));
+        Harness.Equal("squashing drops every kind of whitespace", "abc",
+            TextPredicate.Squash("a b\tc\n d".Replace("d", "")));
+        Harness.Equal("...and works past the stack buffer (300 characters)", 300,
+            TextPredicate.Squash(string.Join(' ', new string('x', 300).ToCharArray())).Length);
+        Harness.Check("every mode the loader accepts is one the predicate knows",
+            TextPredicate.Modes.All(TextPredicate.IsKnownMode) && !TextPredicate.IsKnownMode("regex"));
+
+        Harness.Group("flow: wait-text is validated when the file loads");
+        var waitPath = Path.Combine(Path.GetTempPath(), $"keymouse-wait-test-{Environment.ProcessId}.json");
+        try
+        {
+            void Write(string steps) =>
+                File.WriteAllText(waitPath, $$"""{"format":"keymouse-flow","version":1,"steps":[{{steps}}]}""");
+
+            Write("""{"type":"wait-text","text":"保存成功","target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("a wait-text without a region is refused",
+                () => FlowDocument.Load(waitPath));
+
+            Write("""{"type":"wait-text","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("a wait-text without text is refused",
+                () => FlowDocument.Load(waitPath));
+
+            Write("""{"type":"wait-text","text":"保存成功","match":"roughly","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("an unknown match mode is refused before anything runs",
+                () => FlowDocument.Load(waitPath));
+
+            Write("""{"type":"wait-text","text":"保存成功","region":{"space":"screen","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("a screen-space region is refused: it goes stale with the window",
+                () => FlowDocument.Load(waitPath));
+
+            Write("""{"type":"wait-text","text":"保存成功","match":"fuzzy","maxErrors":1,"timeoutMs":3000,"confirm":2,"region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
+            var valid = FlowDocument.Load(waitPath);
+            Harness.Equal("a complete condition loads", "wait-text", valid.Steps[0].Type);
+            Harness.Equal("...with its budget", 1, valid.Steps[0].MaxErrors);
+            Harness.Equal("...and its rectangle", 200, valid.Steps[0].Region!.Width);
+        }
+        finally
+        {
+            if (File.Exists(waitPath)) File.Delete(waitPath);
+        }
+
         Harness.Group("flow: keys and retryable codes");
         Harness.Equal("virtual keys map back to names for recording", "enter", KeyMap.NameOf(0x0D));
         Harness.Equal("...and escape is 'esc'", "esc", KeyMap.NameOf(0x1B));

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-wait-text-predicate",
+  "title": {
+    "zh": "条件步骤 wait-text：读区域等文字",
+    "en": "Condition step wait-text: wait for text in a region"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "实现流程里的第一个条件：wait-text 读一块客户区区域，等某段文字出现。读复用 probe 的抓取/预处理/引擎调用（抽成 CaptureRegion / ValidateRegion / ReadOnce，CLI 与谓词共用一条规则），判定抽成纯函数 TextPredicate（contains/exact/fuzzy + 调用方声明的 maxErrors，比较时忽略空白并写明理由），连续 confirm 次读到同一段文字才算等到，超时退出码 3 并说明最后读到什么、差几个字符；--dry-run 只校验窗口与区域不读。",
+    "en": "Implements the first condition a flow can carry: wait-text reads a client-area region and waits for text to appear. Reading reuses the probe capture/preprocess/engine path (extracted as CaptureRegion / ValidateRegion / ReadOnce so the CLI and the predicate cannot disagree), judging is a pure TextPredicate (contains/exact/fuzzy with a caller-declared maxErrors, whitespace-insensitive with the reason written down), a match only counts after consecutive identical reads, timeout is exit 3 with what was read and how far off it was, and --dry-run checks the window and rectangle without reading."
+  },
+  "modules": {
+    "create": [
+      "keymouse.flow.predicate"
+    ],
+    "modify": [
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.probe.engine",
+      "keymouse.tests.unit.flow",
+      "keymouse.tests.smoke.record",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design"
+    ]
+  },
+  "acceptance": [
+    "wait-text 在屏幕上已有的文字上退出码 0，并报出连续确认次数",
+    "屏幕上没有的文字超时退出码 3，且失败信息说明最后读到什么、差几个字符",
+    "match 模式与 region 缺字段/越界/非客户区坐标在加载时退出码 2",
+    "--dry-run 不调用引擎，只校验窗口与区域",
+    "谓词去掉空白后比较（中文按字切词），probe 的读仍原样输出；单测与冒烟全绿；validate 0 error"
+  ],
+  "note": "wait-text 落地：probe 抽出共享的取像/校验/一次性读取，新增纯函数谓词模块，执行器实现等文字的轮询与确认；文档补齐语义与三条边界（忽略空白比较、容错预算是调用方声明的、读本身不被加工）。",
+  "revision": {
+    "before": null,
+    "after": "89f30aa8db66e03f9c60253d85abc64d7760319e"
+  },
+  "created_at": "2026-10-03T10:20:29.346Z",
+  "updated_at": "2026-10-03T10:20:37.387Z",
+  "closed_at": "2026-10-03T10:20:37.387Z"
+}

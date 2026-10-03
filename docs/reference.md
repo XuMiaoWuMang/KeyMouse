@@ -392,7 +392,8 @@ KeyMouse run flow.json                          # 回放
 - 录制期间**你敲的每个键都会被记录**（包括密码这种敏感内容），流程文件是明文，
   关键步骤的截图也可能含敏感画面——录完自己看一眼再分享。
 - 回放走的还是同一条路：流程被编译成一条条命令，**选择器、焦点闸门、退出码语义与手打命令完全一致**，
-  `--dry-run` / `--report` / `--retry` 也照常工作。（`wait-text` 还没实现，见 design.md 的下一步。）
+  `--dry-run` / `--report` / `--retry` 也照常工作；流程里可以加条件步骤（`sleep` / `wait-window` /
+  `wait-text`，见下一节），它们是"等到什么"而不是"再敲一下"。
 
 ## 流程 JSON（`keymouse-flow`）
 
@@ -422,7 +423,39 @@ KeyMouse run flow.json                          # 回放
 | `key` | `combo`（组合）或 `text`（单个键） | `key combo` / `key press` |
 | `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
-| `wait-text` | `at`、`text`、`match`、`maxErrors`、`timeoutMs` | **尚未实现**（需要 probe 的判定谓词，下一步） |
+| `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
+
+### wait-text：等一块区域上出现某段文字
+
+```json
+{ "type": "wait-text",
+  "target": { "process": "notepad" },
+  "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 },
+  "text": "保存成功", "match": "fuzzy", "maxErrors": 1,
+  "timeoutMs": 8000, "intervalMs": 250, "confirm": 2 }
+```
+
+| 字段 | 默认 | 说明 |
+| --- | --- | --- |
+| `region` | 必填 | 读哪一块（`space` 只支持 `client`：屏幕坐标会随窗口移动失效）。越界在**加载时**就报错（退出码 2） |
+| `text` | 必填 | 等什么字 |
+| `match` | `contains` | `contains`（读到里含期望）/ `exact`（完全一致）/ `fuzzy`（编辑距离 ≤ `maxErrors`） |
+| `maxErrors` | 1 | 只对 `fuzzy` 有意义。**这是你声明的容错预算，不是工具偷偷放宽的阈值** |
+| `timeoutMs` | 5000 | 等多久；超时退出码 `3`（= 没做任何操作，可安全重试） |
+| `intervalMs` | 250 | 两轮之间等多久（每轮都是一次真实的引擎调用，约 0.2~0.6 秒） |
+| `confirm` | 2 | 需要连续几轮**读到同一段**满足条件的文字才算数；设 1 就是"一眼看到就算" |
+
+三条语义值得记住：
+
+- **比较时忽略空白**，两侧都是。引擎把中文按字切词并加空格（`你 好 ， 世 界`），
+  若按字面比较，你写屏幕上的原文 `你好，世界` 反而永远不匹配。**读本身没有被加工**：
+  `probe` 打印的仍是引擎原样输出。
+- **`confirm` 是可信度的来源**：单次读取可能正好撞上重绘/光标（实测同一个区域两次读取会不一致），
+  连续两次读到同一段才算"等到了"。
+- `--dry-run` 下不读：只解析窗口并校验区域是否越界，然后报告"会等什么、等多久"。
+
+超过 `confirm` 次仍未等到就是退出码 `3`，并且失败信息会告诉你**最后读到的是什么**、
+离期望差几个字符——这才是这个条件能被调试的原因。
 
 `at` / `from` / `to` 的 `space` 只认 `client`（客户区相对，窗口一动也不失效）与 `screen`
 （绝对屏幕坐标，窗口移动后就失效——录制器只在客户区之外才用它，并会写进 `note`）。

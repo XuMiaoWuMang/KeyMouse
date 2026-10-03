@@ -11,39 +11,39 @@ description:
   en: >
       Invokes the explicitly configured external engine (Tesseract by default) and reads tsv for per-word confidence. Nothing is bundled; engine version, tessdata directory and model sizes go into the output, or a later 'why did this work yesterday' has no answer. A model directory without configs/ produces no tsv at all - that trap cost a whole debugging round.
       
-revision: df4356ba04850d65df87f2c6f6d4e83f34b0f709
-updated_at: "2026-10-03T09:20:55.385Z"
-fingerprint: dd58b0d5dc475cdcfaeef44895e79dfaf8b57665d5fe95998f3117b855ff9692
+revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
+updated_at: "2026-10-03T10:20:36.520Z"
+fingerprint: 4db3095a35b63686b846dcf1cccf8494415ec81c433617e95b27c91cd9d85ab8
 source:
   - path: "Probe.cs"
     line: 491
     end_line: 628
 apis:
   - protocol: rpc
-    path: "Probe.RunEngine"
+    path: "Probe.ReadOnce"
     description:
       zh: >
-          调用外部引擎并把 tsv 解析成带置信度的词。
+          读一次区域并返回文字（谓词每轮用它）。
           
       en: >
-          Runs the external engine and parses tsv into words with confidence.
+          Reads a region once and returns the text (one poll of the predicate).
           
   - protocol: rpc
-    path: "Probe.ResolveEngine"
+    path: "Probe.CaptureRegion"
     description:
       zh: >
-          把裸引擎名按常见安装位置解析成可执行路径。
+          按坐标系抓一块区域（CLI 与谓词共用同一规则）。
           
       en: >
-          Turns a bare engine name into a runnable path via the well-known install locations.
+          Captures one region for the addressed space (shared by the CLI and the predicate).
           
   - protocol: rpc
-    path: "Probe.DescribeEngine"
+    path: "Probe.ValidateRegion"
     description:
       zh: >
-          描述引擎：版本、tessdata 目录、模型文件与体积。
+          区域越界检查（CLI 与谓词共用同一条规则）。
           
       en: >
-          Describes the engine: version, tessdata directory, model files and sizes.
+          Out-of-bounds check shared by the CLI and the predicate.
           
 ---

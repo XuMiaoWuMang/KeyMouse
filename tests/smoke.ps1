@@ -566,6 +566,37 @@ try {
     Set-Content -LiteralPath $badFlow -Value '{"format":"keymouse-flow","version":1,"steps":[{"type":"teleport"}]}' -Encoding utf8
     $null = & $Exe run $badFlow 2>&1
     Check 'an unknown step type is exit 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+
+    # wait-text: a condition that reads a region and waits for the text to be there. The caret is
+    # parked below the region first - a blinking caret makes two reads disagree (see probe tests).
+    $waitKnown = 'WaitTextCheck99'
+    $null = & $Exe key combo ctrl+a @target
+    $null = & $Exe key press delete @target
+    $null = & $Exe key type $waitKnown @target
+    $null = & $Exe key press enter -n 3 @target
+    Start-Sleep -Milliseconds 400
+
+    $waitFlow = Join-Path $env:TEMP "km-smoke-wait-$PID.json"
+    function WaitFlowJson([string]$wanted, [int]$timeoutMs) {
+        '{"format":"keymouse-flow","version":1,"steps":[{"type":"wait-text",' +
+        '"target":{"process":"KeyMouse.SmokeTarget"},"text":"' + $wanted + '","match":"contains",' +
+        '"timeoutMs":' + $timeoutMs + ',"intervalMs":200,"confirm":2,' +
+        '"region":{"space":"client","x":0,"y":0,"width":600,"height":40}}]}'
+    }
+    Set-Content -LiteralPath $waitFlow -Value (WaitFlowJson $waitKnown 8000) -Encoding utf8
+    $waitOut = & $Exe run $waitFlow --echo 2>&1
+    Check 'wait-text finds text that is on screen' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE :: $($waitOut -join ' / ')"
+    Check '...and says how many reads confirmed it' (($waitOut -join ' ') -match '连续 2 次') ($waitOut -join ' / ')
+
+    $null = & $Exe run $waitFlow --dry-run 2>&1
+    Check 'a wait-text flow dry-runs without reading' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
+
+    Set-Content -LiteralPath $waitFlow -Value (WaitFlowJson 'NeverAppearsXYZ' 1200) -Encoding utf8
+    $missOut = & $Exe run $waitFlow 2>&1
+    Check 'wait-text exits 3 when the text never appears' ($LASTEXITCODE -eq 3) "exit=$LASTEXITCODE :: $($missOut -join ' / ')"
+    Check '...and the failure says what it read instead' (($missOut -join ' ') -match '没等到') ($missOut -join ' / ')
+    Remove-Item $waitFlow -ErrorAction SilentlyContinue
+
     Remove-Item $flowPath, $handFlow, $badFlow -ErrorAction SilentlyContinue
 }
 finally {

@@ -6,14 +6,14 @@ tags: [flow, cli]
 name: {zh: "流程执行器", en: "Flow runner"}
 description:
   zh: >
-      `run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码（3/4/5/6）按 `--retry` 重试，输出报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用为止，超时退出码 3；wait-text 还没有实现，遇到就明确报错而不是装作跑过。
+      `run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码按 `--retry` 重试，报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用；wait-text 每轮一次 OCR，连续 confirm 次读到同一段满足条件的文字才算等到，超时退出码 3 并说明最后读到什么。
       
   en: >
-      `run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes (3/4/5/6) per --retry, and writing the same report shape as the text runner. sleep does not really wait under --dry-run; wait-window polls until a usable window appears and exits 3 on timeout; wait-text is not implemented yet and says so instead of pretending.
+      `run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry, and writing the same report shape as the text runner. sleep does not wait under --dry-run; wait-window polls for a usable window; wait-text reads once per poll and counts a match only after `confirm` consecutive identical reads, exiting 3 on timeout with what it read.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.455Z"
-fingerprint: 2498471aac9f04d718e85f9575f848fab9cbdb6b895f85fafffbfc3513273ab6
+revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
+updated_at: "2026-10-03T10:20:36.520Z"
+fingerprint: 43b42b8b5255e7029c9b4c0d9f929e71f833ad1cfeda1e9dd76eec1d9f31b10c
 source:
   - path: "FlowRunner.cs"
 apis:
