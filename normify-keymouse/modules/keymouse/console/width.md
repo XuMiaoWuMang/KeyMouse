@@ -11,8 +11,8 @@ description:
   en: >
       A CJK glyph occupies two terminal cells but is one char, so PadRight drifts one column per Chinese character. Width is measured in terminal cells here so window-list columns line up.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.450Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.854Z"
 fingerprint: 27b97c5497a18a075d4b147d795c51c354f85c1b750f67f2fd59ae6ddc0124f1
 source:
   - path: "ConsoleText.cs"

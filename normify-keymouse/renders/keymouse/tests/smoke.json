@@ -1,18 +1,19 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.smoke",
-  "updated_at": "2026-10-02T17:38:53.543Z",
+  "updated_at": "2026-10-03T08:15:15.731Z",
   "mode": "layers",
   "max_columns": 3,
   "reading": {
-    "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→不变量”逐段验证；最后一组同时盯住循环结果与进程数。",
-    "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety semantics, odds and ends, and finally the invariants."
+    "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→感知与选区→不变量”逐段验证；选区那一段用 KeyMouse 自己的鼠标键盘驱动浮层。",
+    "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety, odds and ends, perception and region selection, invariants. The region band drives the overlay with KeyMouse own input."
   },
   "order": [
     "keymouse.tests.smoke.entry",
     "keymouse.tests.smoke.typing",
     "keymouse.tests.smoke.safety",
     "keymouse.tests.smoke.features",
+    "keymouse.tests.smoke.region",
     "keymouse.tests.smoke.loops"
   ],
   "groups": [
@@ -45,6 +46,16 @@
       "children": [
         "keymouse.tests.smoke.safety",
         "keymouse.tests.smoke.features"
+      ]
+    },
+    {
+      "id": "perception",
+      "title": {
+        "zh": "感知与选区",
+        "en": "Perception & region"
+      },
+      "children": [
+        "keymouse.tests.smoke.region"
       ]
     },
     {

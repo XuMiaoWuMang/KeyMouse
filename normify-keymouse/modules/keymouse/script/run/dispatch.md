@@ -11,8 +11,8 @@ description:
   en: >
       A program counter plus a loop stack expands repeat/end; each line rebuilds its scope (set variables plus loop variables), substitutes, resolves target inheritance and is handed over to execute. No script copying, no re-parsing, one dispatch per command.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.459Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.873Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"

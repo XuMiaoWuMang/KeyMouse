@@ -11,8 +11,8 @@ description:
   en: >
       Assertions for the pure window functions: selector matching, candidate preference, state text and gate verdicts, including that not-probed and no-answer stay distinct.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.467Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.892Z"
 fingerprint: 5e9aafbe1597a6b6d8442db5bb7d64049bf6e2f2e780ccd8b7e8805d20c3a6e0
 source:
   - path: "tests/KeyMouse.Tests/WindowTests.cs"

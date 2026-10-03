@@ -11,8 +11,8 @@ description:
   en: >
       A tiny test harness: Check/Equal/Sequence/Throws/Group, printing ok/FAIL per check with a total count; no discovery, no parallelism, no exception-driven flow.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.465Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.891Z"
 fingerprint: 1cc617da687ba0e4db55cb590a4aadf6034074f95a278c8b787c4433f3ba23c5
 source:
   - path: "tests/KeyMouse.Tests/Harness.cs"

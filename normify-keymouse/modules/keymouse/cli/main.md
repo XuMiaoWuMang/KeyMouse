@@ -11,13 +11,13 @@ description:
   en: >
       Everything Main does: map CommandFailure and argument errors onto exit codes (2 = usage), pick a command group by the first argument and forward the rest, print help when nothing is given.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:31:10.400Z"
-fingerprint: 2002c7c0806c2cc60e9cdeb156af20af0b5bd3ede859541c1f12dbf68f0b71ac
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:51.237Z"
+fingerprint: 1177fec2587430ef3152436f51e478c00e5e3607fc21abd0f28040dc25fcc1ef
 source:
   - path: "Program.cs"
     line: 9
-    end_line: 59
+    end_line: 63
 apis:
   - protocol: rpc
     path: "keymouse <命令组>"
@@ -66,4 +66,8 @@ deps:
     to: keymouse.probe
     from_api: "rpc:keymouse <命令组>"
     label: {zh: "probe 组交给感知出口", en: "Hand probe to perception"}
+  - kind: call
+    to: keymouse.pick.placement
+    to_api: "rpc:RegionCommand.Run"
+    label: {zh: "派发 region 组", en: "Dispatch the region group"}
 ---

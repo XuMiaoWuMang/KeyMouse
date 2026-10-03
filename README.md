@@ -29,11 +29,12 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 | **坐标** | 绝对像素，或**窗口客户区相对**坐标（窗口移动也不失效） |
 | **脚本** | 顺序执行、注释、`sleep`、`waitfor`/`waitgone`、`${变量}`、**目标继承**（`window focus` 写一次，之后 `mouse`/`key` 不再重复选择器）、**循环**（`repeat n [as 名字] … end`）、`--dry-run`、安全重试、JSON 报告 |
 | **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
+| **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令；`probe --pick-region` 是"框完直接读" |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：129 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：134 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 
@@ -41,8 +42,11 @@ KeyMouse run script.txt                              # 一批命令顺序执行
 
 | 文件 | 需要什么 | 体积 |
 | --- | --- | --- |
-| `KeyMouse-x64.exe` | 什么都不用装 | 约 36 MB |
-| `KeyMouse-fx-x64.exe` | .NET 10 运行时 | 约 240 KB |
+| `KeyMouse-x64.exe` | 什么都不用装 | 约 49 MB |
+| `KeyMouse-fx-x64.exe` | .NET 10 运行时 | 约 310 KB |
+
+> 体积主要来自交互式选区浮层需要的 WinForms：自包含产物从 36 MB 长到 49 MB（实测），
+> 不用选区的命令一行代码也没变重。见 [docs/design.md](docs/design.md) 的实测记录。
 
 **自己编译**：
 

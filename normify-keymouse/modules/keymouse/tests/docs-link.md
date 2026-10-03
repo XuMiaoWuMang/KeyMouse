@@ -11,8 +11,8 @@ description:
   en: >
       Checks that every relative markdown link resolves: once the docs split into four files, a rename leaves links nobody re-reads. Platform-agnostic and desktop-free, so CI runs it.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.462Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.878Z"
 fingerprint: 8d9330ee2f80dd385ef7021009a9891fe84f726f81a10d3c2c540c8283dc4c6d
 source:
   - path: "tests/check-docs.ps1"

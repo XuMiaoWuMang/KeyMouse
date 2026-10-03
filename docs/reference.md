@@ -8,7 +8,7 @@
 KeyMouse <group> <command> [参数] [选项]
 ```
 
-五组命令：`mouse`、`key`（别名 `keyboard`）、`window`、`run`、`probe`（只读）。
+六组命令：`mouse`、`key`（别名 `keyboard`）、`window`、`run`、`probe`（只读）、`region`（只报坐标）。
 无参数运行会打印内置帮助；`KeyMouse help probe` 打印某一组的完整选项。
 
 ---
@@ -296,7 +296,7 @@ KeyMouse window focus --process explorer --pick 3
 | 0 | 成功 |
 | 1 | 运行时失败（如 `SendInput` 被 UIPI 拦截） |
 | 2 | 参数错误 |
-| 3 | 选择器无匹配 / 多候选未 `--pick` / `waitfor` 超时 |
+| 3 | 选择器无匹配 / 多候选未 `--pick` / `waitfor` 超时 / **选区被取消**（`region pick`、`probe --pick-region`） |
 | 4 | 目标不可用（隐藏 / 最小化 / 被 DWM cloak / 无响应 / **被禁用**） |
 | 5 | **焦点验证失败 —— 未发送任何输入** |
 | 6 | **没看清**（`probe`：N 次读取不一致 / 置信度低于地板 / 没有可用引擎）—— 同样未发送任何输入 |
@@ -324,7 +324,8 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 | `--tessdata-dir` | `%LOCALAPPDATA%\KeyMouse\tessdata` | 模型目录，**两套模型就是两个目录** |
 | `--min-conf N` | 30 | 置信度地板，只用来抓"彻底没读出来" |
 | `--scale` / `--pad` | 3 / 16 | 放大与白边，实测必需（屏幕文字约 96 DPI，引擎舒适区约 300 DPI） |
-| `--capture` | `screen` | `print` 用 PrintWindow（不画光标，但本机几何对不齐，见 design.md） |
+| `--capture` | `screen` | `print` 用 PrintWindow（不画光标，但本机几何对不齐，见 design.md）；**`print` 与 `--space window` 不能同用**（退出码 `2`） |
+| `--pick-region` | 关 | 先打开全屏选区浮层（拖动框选 / 单击选整个客户区 / `ESC` 取消），再读选中的那块；**不要再给选择器、`--region` 或 `--space`** |
 | `--json` | 关 | 输出引擎身份、几何、逐词置信度 |
 | `--keep-image <路径>` | 关 | 留下送进引擎的 BMP，便于自查 |
 
@@ -341,6 +342,44 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 - 量级参考：记事本一条 600×80 的区域，`--reads 2`、退出码 `0`、置信度 76.9、耗时 689 ms。
 - `--engine` 目前只有 Tesseract 真正跑过；JSON 里 `kind` 对任何外部命令都写 `external`，
   引擎身份由 `command` / `version` / `models` 自证。
+- `--pick-region` 选到标题栏（窗口坐标）时不能配 `--capture print`（退出码 `2`）；取消选区（`ESC` / 右键）
+  是退出码 `3`，一个字也没读。
+
+## region（选区：给人挑坐标，不读文字）
+
+坐标写不准是个真问题：实测里三次凭记忆挑区域，三次都落在壁纸或空白上。`region pick` 把这件事交给鼠标——
+**拖动框选**，或**单击选中某个窗口的整个客户区**，`ESC` / 右键取消。它**只报坐标**，
+并给出一条可以直接粘贴的 `probe` 命令。
+
+```
+KeyMouse region pick                          # 框一块区域
+KeyMouse region pick --json                   # 机器可读：screen / window / space / region / probe
+KeyMouse region pick --rect 100,200,300,40    # 跳过浮层，屏幕坐标（脚本与测试用）
+```
+
+| 选项 | 默认 | 说明 |
+| --- | --- | --- |
+| `--rect x,y,w,h` | 打开浮层 | **屏幕坐标**的非交互入口；宽高必须为正 |
+| `--json` | 关 | 输出 `screen` / `window` / `space` / `region` / `probe` |
+
+坐标系只有一条判定规则：**整个选区落在客户区里 → `client`；落在窗口矩形里（标题栏）→ `window`；
+两者都不是 → 只报屏幕坐标并说明原因**（`probe` 只接受前两种，所以这种情况不会给出可粘贴的命令）。
+
+```
+选区  屏幕 700,470 260x40
+目标  0x1D097E  Notepad(31612)  "新建 文本文档.txt - Notepad"  类名=Notepad  [可见，响应=0ms]
+空间  客户区（client）  region 60,200,260,40
+命令  KeyMouse probe --hwnd 0x1D097E --region 60,200,260,40
+```
+
+浮层里几条**被实测逼出来**的细节（改它之前先看 design.md 的实测记录）：
+
+- 打开前先抓一张**冻结的屏幕快照**当背景：瞄准的东西不会动，浮层自己也不会被抓进图里。
+- 浮层必须真的在最顶层——只设 `TopMost` 不够，实测它仍在目标窗口**下面**，拖动落到了目标窗口上。
+- 取消键是**全局热键**：后台进程抢不到前台，只在有焦点时才灵的取消键不算取消键。
+- 线程必须是 Per-Monitor V2 并且**开浮层前验证**：WinForms 会把 UI 线程降成 SystemAware，
+  那样量到的桌面是逻辑尺寸（实测 2560×1440 vs 真实 5120×1532），交出来的坐标整体被缩放；
+  验证不过就退出码 `4`，宁可不给坐标。
 
 **它不做的事**：不判断"这算不算匹配"、不做容错匹配、不看颜色、不等状态变化。置信度只回答"到底读出来了没有"：
 实测读对时 55~96、读错时 14~52，两者**重叠**——所以精确与否必须由调用方用容错匹配声明，而不是靠提高阈值。

@@ -11,8 +11,8 @@ description:
   en: >
       Triggered only by a v* tag: run the unit suite (a failure blocks the release), build both artefacts (framework-dependent ~240 KB and self-contained ~36 MB) and attach them to the release. A push never publishes.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.445Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.844Z"
 fingerprint: 5ffdae790b856196f341ea38d42e20c030c62ea7bc55d88ceba98ddbc2ffee49
 source:
   - path: ".github/workflows/release.yml"

@@ -11,13 +11,13 @@ description:
   en: >
       Three transforms, each forced by a measurement: contrast normalisation against the background mode (a percentile stretch failed because the window icon pinned the histogram), 3x bilinear upscale with padding (the engine wants ~300 DPI, a screen region is 96), and a hand-written BMP writer so no image library is needed.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:31:02.526Z"
-fingerprint: c8a37194838b7eb26afe170b7729b9947ba9a014cdcb0881b2b4e87d9c1aa6aa
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:51.237Z"
+fingerprint: 55ffec1c5fe76cdac87f8fdb9317271575c268abf8197580f32d864301166b94
 source:
   - path: "Probe.cs"
-    line: 314
-    end_line: 448
+    line: 355
+    end_line: 488
 apis:
   - protocol: rpc
     path: "Probe.Normalize"

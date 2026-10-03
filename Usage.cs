@@ -44,9 +44,12 @@ internal static class Usage
         识图（读，不是发）
           probe <选择器> [--region x,y,w,h] [选项]     把窗口的一块区域读成文字。
                                                       它只报告看到什么，不做任何判断。
+          probe --pick-region [选项]                   先用鼠标框一块区域（单击则选整个客户区），
+                                                      然后读它；不要再给选择器 / --region
           --region x,y,w,h         客户区相对坐标（--space window 则相对整个窗口）；
                                    省略即整个客户区。越界一律拒绝，不猜也不截断
           --space client|window    区域坐标系，默认 client（标题栏在 client 之外）
+          --pick-region            打开全屏选区浮层：拖动框选、单击选整个客户区、ESC 取消
           --reads N                重复读取次数，默认 2；N 次必须逐字一致才算看清
           --lang <语言>            默认 eng+chi_sim
           --engine <命令>          OCR 引擎，默认 tesseract（会自动找常见安装位置）
@@ -54,9 +57,15 @@ internal static class Usage
           --min-conf N             置信度地板，默认 30；低于它判为没看清
           --scale N / --pad N      放大倍数（默认 3）与白边像素（默认 16）
           --capture screen|print   取像方式：默认 screen；print 用 PrintWindow 不画光标，
-                                   但在本机几何对不齐（见 docs/design.md）
+                                   但它不能用于 --space window（标题栏），且本机几何对不齐
+                                   （见 docs/design.md）
           --json                   输出 JSON（引擎身份、几何、逐词置信度）
           --keep-image <路径>      把送进引擎的那张图（BMP）留下来，便于自查
+
+        选区（给人挑坐标，不读文字）
+          region pick [--rect x,y,w,h] [--json]        框一块区域，报告它落在哪个窗口的哪个
+                                                      坐标系里，并给出一条可直接粘贴的 probe 命令。
+                                                      只报坐标；--rect 跳过浮层（脚本与测试用）
 
         脚本
           run <文件|-> [选项]                          按行顺序执行文件（或 stdin）里的命令；
@@ -131,7 +140,7 @@ internal static class Usage
 
         退出码
           0 = 成功              1 = 运行时失败（例如 SendInput 被 UIPI 拦截）
-          2 = 参数错误          3 = 没有匹配的窗口 / 多候选未 --pick / waitfor 超时
+          2 = 参数错误          3 = 没有匹配的窗口 / 多候选未 --pick / waitfor 超时 / 选区取消
           4 = 目标不可用（隐藏 / 最小化 / 被 DWM 遮盖 / 无响应 / 被禁用）
           5 = 焦点验证失败——未发送任何输入
           6 = 没看清（probe：N 次读取不一致 / 置信度低于地板 / 没有可用引擎）——同样未发送任何输入

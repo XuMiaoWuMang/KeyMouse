@@ -11,8 +11,8 @@ description:
   en: >
       Global option extraction (inline values, selector assembly, a dangling value being an error), per-command options, and the key-name map including the vk: hatch.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.467Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.892Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"

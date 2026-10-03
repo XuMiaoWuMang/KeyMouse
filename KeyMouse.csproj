@@ -12,6 +12,17 @@
     <InformationalVersion>2.0.0</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The interactive region picker needs a UI toolkit. Measured cost is in docs/design.md;
+         the rest of the tool still sends input through Win32 directly. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Per-monitor V2 has to survive the picker: WinForms would otherwise apply its own default
+         (SystemAware) when it initialises, and a virtualised desktop means the overlay measures the
+         screen in logical pixels - coordinates that SendInput and probe do not speak. The manifest
+         stays because it covers every path (mouse/key/probe never touch WinForms at all). -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- WFO0003 asks for exactly that move, but it also wants the manifest line deleted; the
+         manifest is the only setting that applies before WinForms starts, so it stays. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,6 +6,11 @@ internal static class Program
 {
     internal const string Version = "2.0.0";
 
+    /// <summary>
+    /// STA because the region picker is a WinForms window: an interactive desktop selection needs
+    /// a single-threaded apartment, and everything else here is unaffected by the choice.
+    /// </summary>
+    [STAThread]
     internal static int Main(string[] args)
     {
         // Speak the console's code page, so that whoever reads us decodes what we wrote.
@@ -34,8 +39,10 @@ internal static class Program
                     return ScriptRunner.Run(rest[1..], global, Main);
                 case "probe":
                     return Probe.Run(rest[1..], global);
+                case "region":
+                    return RegionCommand.Run(rest[1..], global);
                 default:
-                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | probe | help）");
+                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | probe | region | help）");
             }
         }
         catch (CommandFailure ex)

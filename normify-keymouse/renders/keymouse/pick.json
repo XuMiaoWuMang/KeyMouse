@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.pick",
+  "updated_at": "2026-10-03T08:15:15.606Z",
+  "mode": "layers",
+  "max_columns": 2,
+  "reading": {
+    "zh": "两条路共用一套换算：浮层只负责把人画出来的屏幕矩形交出来；把它翻译成 probe 认得的坐标系、并给出可粘贴的命令，由 placement 的一条规则决定（客户区 → 窗口 → 无）。",
+    "en": "Both paths share one conversion: the overlay only hands over the screen rectangle a human drew; turning it into a space probe accepts, and printing a paste-ready command, is placement single rule (client, then window, then nothing)."
+  },
+  "order": [
+    "keymouse.pick.overlay",
+    "keymouse.pick.placement"
+  ]
+}

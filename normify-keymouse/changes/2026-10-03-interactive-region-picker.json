@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-interactive-region-picker",
+  "title": {
+    "en": "Interactive region picker",
+    "zh": "交互式选区：region pick 与 probe --pick-region"
+  },
+  "status": "verified",
+  "intent": {
+    "en": "probe refuses to guess a region, and guessing coordinates from memory landed on blank space three times. region pick adds a full-screen overlay (drag a rectangle, click for a whole client area, ESC to cancel) that translates screen pixels into a space probe accepts and prints a paste-ready command; probe --pick-region reuses it. Building it exposed a real bug: --space window under --capture screen was offset by the frame, so title-bar reads silently read the client area. That is fixed and the title-bar conclusion corrected.",
+    "zh": "probe 坚持不猜区域，而人凭记忆报坐标实测三次都落在空白上。新增 region pick：拖框选矩形、单击选整个客户区、ESC 取消，把屏幕矩形翻译成 probe 认得的坐标系并给出可直接粘贴的命令；probe --pick-region 复用同一个浮层。过程中撞出并修掉 --space window 在 --capture screen 下的原点错位（标题栏读取实际读的是客户区顶部），probe 的标题栏结论随之改正。"
+  },
+  "modules": {
+    "create": [
+      "keymouse.pick",
+      "keymouse.pick.overlay",
+      "keymouse.pick.placement",
+      "keymouse.tests.unit.region",
+      "keymouse.tests.smoke.region"
+    ],
+    "modify": [
+      "keymouse.probe",
+      "keymouse.probe.capture",
+      "keymouse.probe.consensus",
+      "keymouse.probe.engine",
+      "keymouse.probe.preprocess",
+      "keymouse.cli.main",
+      "keymouse.cli",
+      "keymouse.docs",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development",
+      "keymouse.tests.unit",
+      "keymouse.tests.smoke"
+    ]
+  },
+  "acceptance": [
+    "region pick --rect 给出窗口与坐标系判定；零尺寸、带选择器是退出码 2",
+    "浮层的拖动 / 单击 / ESC 三条路径由 KeyMouse 自己的输入驱动并通过",
+    "--space window 与 client 在屏幕取像下命中同一批像素（原点 bug 的回归测试）",
+    "probe --pick-region 复用浮层，并拒绝与选择器 / --region / --space 同时使用",
+    "单元测试 231 项与冒烟 81 项全绿，normify_validate 0 error"
+  ],
+  "note": "region pick 与 probe --pick-region 落地：新增 keymouse.pick（overlay/placement）与两组测试模块，刷新受影响的 probe/cli/docs 模块与四层布局。顺带修掉 --space window 在 --capture screen 下的原点错位，并把被它污染的标题栏结论改正；smoke 加了“两个坐标系必须同像素”的回归。",
+  "revision": {
+    "before": null,
+    "after": "e03d53e4c41a8a7220e83123d7f8a44a54ff8dab"
+  },
+  "created_at": "2026-10-03T08:15:48.829Z",
+  "updated_at": "2026-10-03T08:15:52.673Z",
+  "closed_at": "2026-10-03T08:15:52.673Z"
+}

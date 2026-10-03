@@ -11,8 +11,8 @@ description:
   en: >
       A WinForms window whose whole client area is a text box, driven by the smoke suite. It exists because borrowing Notepad meant killing every Notepad to be sure which window was ours, and Win11's tab restore could turn 'the' window into two and make every selector ambiguous.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.464Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.882Z"
 fingerprint: 0ed48c8d7e475cebfcb023a72ba2db689a3f7cab21fc241ddd19ebb7ff567e5d
 source:
   - path: "tests/KeyMouse.SmokeTarget/Program.cs"

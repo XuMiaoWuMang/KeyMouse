@@ -11,8 +11,8 @@ description:
   en: >
       PrintWindow plus a GDI DIB section: renders a window (including background windows) into pixels, drawing no text caret and needing no foreground. Its screen-grab sibling is the verified default, because PrintWindow's geometry does not line up on this system.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:31:02.526Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.859Z"
 fingerprint: 059722e432c45e0fa57ce96dd33212062198928eadf36b7fed06d5a4b2415ff1
 source:
   - path: "NativeCapture.cs"

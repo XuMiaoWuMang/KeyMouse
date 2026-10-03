@@ -1,15 +1,16 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.unit",
-  "updated_at": "2026-10-02T17:36:00.951Z",
+  "updated_at": "2026-10-03T08:15:15.669Z",
   "mode": "layers",
   "reading": {
-    "zh": "入口逐个跑用例集，用例集共用同一套断言工具。",
-    "en": "The entry runs each case set; both case sets share one assertion harness."
+    "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区那一组只测不需要桌面的换算规则。",
+    "en": "The entry runs each case set; they share one assertion harness. The region set covers only the conversion rules that need no desktop."
   },
   "order": [
     "keymouse.tests.unit.harness",
     "keymouse.tests.unit.parsing",
+    "keymouse.tests.unit.region",
     "keymouse.tests.unit.window"
   ]
 }

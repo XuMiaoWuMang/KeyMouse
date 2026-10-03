@@ -11,8 +11,8 @@ description:
   en: >
       Implements `run`: read, tokenize and analyse a script (including repeat/end loops), expand variables and inherited targets, then dispatch every line inside one process, with --dry-run, safe retry, --keep-going and a JSON report.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.456Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.868Z"
 fingerprint: 0ef5fdcb1c18d3aaa81d059f6927d97a271aa0ff344d4e213fa1e7d677bd3959
 source:
   - path: "ScriptRunner.cs"

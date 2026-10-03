@@ -399,6 +399,118 @@ try {
         $null = & $Exe probe @target --region 0,0,600,40 --engine 'definitely-not-an-engine' 2>&1
         Check 'a missing OCR engine is exit 6' ($LASTEXITCODE -eq 6) "exit=$LASTEXITCODE"
     }
+
+    # Region selection: --rect drives the same conversion the overlay drives, the interactive paths
+    # are driven with KeyMouse's own mouse and keyboard, and the --space window origin is pinned by
+    # comparing the pixels reached from both coordinate spaces.
+    Write-Host "`n-- region pick (choose the region instead of guessing it) --"
+
+    Add-Type -Namespace KeyMouseRegion -Name Win -MemberDefinition @'
+[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+[DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
+[DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
+[StructLayout(LayoutKind.Sequential)] public struct RECT { public int L; public int T; public int R; public int B; }
+[StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
+'@
+
+    $pickedProcess = Get-Process KeyMouse.SmokeTarget | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+    $pickedHandle = $pickedProcess.MainWindowHandle
+    $windowRect = New-Object KeyMouseRegion.Win+RECT
+    $null = [KeyMouseRegion.Win]::GetWindowRect($pickedHandle, [ref]$windowRect)
+    $clientRect = New-Object KeyMouseRegion.Win+RECT
+    $null = [KeyMouseRegion.Win]::GetClientRect($pickedHandle, [ref]$clientRect)
+    $clientOrigin = New-Object KeyMouseRegion.Win+POINT
+    $clientOrigin.X = 0; $clientOrigin.Y = 0
+    $null = [KeyMouseRegion.Win]::ClientToScreen($pickedHandle, [ref]$clientOrigin)
+    $clientWidth = $clientRect.R - $clientRect.L
+    $clientHeight = $clientRect.B - $clientRect.T
+    $handleText = '0x{0:X}' -f $pickedHandle.ToInt64()
+
+    $pickJson = (& $Exe region pick --rect "$($clientOrigin.X + 60),$($clientOrigin.Y + 60),200,30" --json 2>&1) -join "`n"
+    $pickExit = $LASTEXITCODE
+    $pick = $null
+    try { $pick = $pickJson | ConvertFrom-Json } catch { }
+    Check 'region pick --rect exits 0' ($pickExit -eq 0) "exit=$pickExit :: $pickJson"
+    Check 'it reports the window that owns the selection' `
+        ($null -ne $pick -and $pick.window.handle -eq $handleText) "handle=$($pick.window.handle) expected=$handleText"
+    Check 'it reports the region in client space' `
+        ($null -ne $pick -and $pick.space -eq 'client' -and ($pick.region -join ',') -eq '60,60,200,30') `
+        "space=$($pick.space) region=$($pick.region -join ',')"
+    Check 'it suggests a paste-ready probe command' `
+        ($null -ne $pick -and $pick.probe -eq "KeyMouse probe --hwnd $handleText --region 60,60,200,30") "probe=$($pick.probe)"
+
+    $titleJson = (& $Exe region pick --rect "$($windowRect.L + 40),$($windowRect.T + 5),200,20" --json 2>&1) -join "`n"
+    $titlePick = $null
+    try { $titlePick = $titleJson | ConvertFrom-Json } catch { }
+    Check 'a title-bar selection is reported in window space' `
+        ($null -ne $titlePick -and $titlePick.space -eq 'window') "space=$($titlePick.space)"
+    Check '...and the suggested command says so' `
+        ($null -ne $titlePick -and $titlePick.probe -match '--space window --region 40,5,200,20') "probe=$($titlePick.probe)"
+
+    $null = & $Exe region pick --rect '0,0,0,5' 2>&1
+    Check 'a zero-sized rectangle is exit 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+    $null = & $Exe region pick --rect '0,0,10,10' --title 'x' 2>&1
+    Check 'a window selector next to a pick is exit 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
+
+    # Regression test for a real bug: with --capture screen, --space window used to start at the
+    # client origin, so a title-bar read silently read the client area - both spaces produced
+    # byte-identical images. Reaching the same screen pixels through both spaces must match exactly.
+    $offsetX = $clientOrigin.X - $windowRect.L
+    $offsetY = $clientOrigin.Y - $windowRect.T
+    $regionX = 60
+    $regionY = [Math]::Max(0, $clientHeight - 120)
+    $clientImage = "$env:TEMP\km-space-client.bmp"
+    $windowImage = "$env:TEMP\km-space-window.bmp"
+    Remove-Item $clientImage, $windowImage -ErrorAction SilentlyContinue
+    $null = & $Exe probe @target --region "$regionX,$regionY,200,60" --keep-image $clientImage 2>&1
+    $null = & $Exe probe @target --space window --region "$($regionX + $offsetX),$($regionY + $offsetY),200,60" --keep-image $windowImage 2>&1
+    $clientHash = if (Test-Path $clientImage) { (Get-FileHash $clientImage -Algorithm SHA256).Hash } else { '' }
+    $windowHash = if (Test-Path $windowImage) { (Get-FileHash $windowImage -Algorithm SHA256).Hash } else { '' }
+    Check 'client space and window space address the same screen pixels' `
+        ($clientHash -ne '' -and $clientHash -eq $windowHash) "client=$clientHash window=$windowHash"
+
+    # The overlay itself, driven by KeyMouse's own input. It covers the screen and is topmost, so
+    # the drag lands on the overlay rather than on the target underneath it.
+    $null = & $Exe window focus @target
+
+    $dragFile = "$env:TEMP\km-region-drag.json"
+    Remove-Item $dragFile -ErrorAction SilentlyContinue
+    $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
+        -RedirectStandardOutput $dragFile -RedirectStandardError "$dragFile.err" -NoNewWindow -PassThru
+    Start-Sleep -Milliseconds 1500
+    $null = & $Exe mouse drag ($clientOrigin.X + 60) ($clientOrigin.Y + 200) ($clientOrigin.X + 260) ($clientOrigin.Y + 230) --duration 200 --steps 8
+    $null = $picker.WaitForExit(10000)
+    $dragged = $null
+    if (Test-Path $dragFile) { try { $dragged = (Get-Content $dragFile -Raw) | ConvertFrom-Json } catch { } }
+    Check 'a dragged rectangle comes back as a client-space region' `
+        ($picker.HasExited -and $null -ne $dragged -and $dragged.space -eq 'client' -and ($dragged.region -join ',') -eq '60,200,200,30') `
+        "exited=$($picker.HasExited) region=$($dragged.region -join ',')"
+    if (-not $picker.HasExited) { $picker.Kill() }
+
+    $clickFile = "$env:TEMP\km-region-click.json"
+    Remove-Item $clickFile -ErrorAction SilentlyContinue
+    $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
+        -RedirectStandardOutput $clickFile -RedirectStandardError "$clickFile.err" -NoNewWindow -PassThru
+    Start-Sleep -Milliseconds 1500
+    $null = & $Exe mouse click left -x ($clientOrigin.X + 300) -y ($clientOrigin.Y + 300)
+    $null = $picker.WaitForExit(10000)
+    $clicked = $null
+    if (Test-Path $clickFile) { try { $clicked = (Get-Content $clickFile -Raw) | ConvertFrom-Json } catch { } }
+    Check 'a click selects the whole client area' `
+        ($picker.HasExited -and $null -ne $clicked -and ($clicked.region -join ',') -eq "0,0,$clientWidth,$clientHeight") `
+        "exited=$($picker.HasExited) region=$($clicked.region -join ',')"
+    if (-not $picker.HasExited) { $picker.Kill() }
+
+    $escFile = "$env:TEMP\km-region-esc.json"
+    Remove-Item $escFile -ErrorAction SilentlyContinue
+    $picker = Start-Process -FilePath $Exe -ArgumentList 'region', 'pick', '--json' `
+        -RedirectStandardOutput $escFile -RedirectStandardError "$escFile.err" -NoNewWindow -PassThru
+    Start-Sleep -Milliseconds 1500
+    $null = & $Exe key press esc
+    $null = $picker.WaitForExit(10000)
+    Check 'ESC cancels the picker with exit 3' `
+        ($picker.HasExited -and $picker.ExitCode -eq 3) "exited=$($picker.HasExited) exit=$($picker.ExitCode)"
+    if (-not $picker.HasExited) { $picker.Kill() }
 }
 finally {
     Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force

@@ -11,8 +11,8 @@ description:
   en: >
       Takes the foreground and verifies it by asking the system who is actually foreground now, retrying a few times. Success is judged by the real foreground window, not by the API's return value.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.467Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.892Z"
 fingerprint: e80d813e3fde8d15422e352901107627efc0dcfcf007d3a2054e4497d244417a
 source:
   - path: "WindowFocus.cs"

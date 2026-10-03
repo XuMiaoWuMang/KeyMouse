@@ -11,9 +11,9 @@ description:
   en: >
       The opening moves: check that the exe and the target exist, run one Chinese round-trip probe (a mismatched host decoder gets one clear error instead of a dozen puzzling failures), save the clipboard and start the target window.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.464Z"
-fingerprint: 1f158dacb5cb54e6d654c07fcb5decb35cd1b4712994f198f3641df4997b5b61
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.882Z"
+fingerprint: 2b0bcc62780e30e68665cfccee66576416b0b8c5c5aca54381a6d00561dc8637
 source:
   - path: "tests/smoke.ps1"
     line: 1

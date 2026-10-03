@@ -11,8 +11,8 @@ description:
   en: >
       A runnable sample: focus once and inherit, a named loop, an explicit selector mixed in, and the two first-run traps named in the comments.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.451Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.857Z"
 fingerprint: a2ee42cfdf8a5287300ee11bef622d2504843dad8a047ab01f19a7c05e24c84a
 source:
   - path: "samples/notepad-demo.txt"

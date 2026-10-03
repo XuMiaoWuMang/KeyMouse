@@ -11,8 +11,8 @@ description:
   en: >
       Injects a fake dispatcher and counts the calls: five expanded commands mean five calls, and the dispatcher never sees repeat/end. If anyone ever made it spawn a process per line, this delegate would never be called.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.467Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.892Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"

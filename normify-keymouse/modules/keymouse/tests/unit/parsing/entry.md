@@ -11,8 +11,8 @@ description:
   en: >
       Calls every case set in order and totals the counts; an unexpected exception in one set aborts the whole run.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.466Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.891Z"
 fingerprint: 8ae0988f099cc0964f5efa1371349b46dff1db459c556cf1cf842f00fbdee247
 source:
   - path: "tests/KeyMouse.Tests/ParsingTests.cs"

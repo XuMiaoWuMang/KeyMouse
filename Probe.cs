@@ -70,8 +70,42 @@ internal static class Probe
         if (capture == "print" && windowSpace)
             throw new ArgumentException("--capture print 目前只支持客户区坐标（--space window 请用 screen）");
 
+        // --pick-region: a human draws the rectangle, so a selector or a typed region would be a
+        // second, contradictory answer to the same question.
+        bool pickRegion = options.ContainsKey("pick-region");
+        if (pickRegion && (g.HasSelector || options.ContainsKey("region") || options.ContainsKey("space")))
+            throw new ArgumentException("--pick-region 自己决定窗口与区域：不要再给选择器、--region 或 --space");
+
         var started = Stopwatch.StartNew();
-        var window = Program.ResolveUsable(g);
+
+        // A picked region arrives in screen pixels and is converted here, once: the overlay only
+        // reports what the human drew, the placement decides which window and which space it
+        // belongs to. Everything after this point is the ordinary read path.
+        (int X, int Y, int W, int H)? picked = null;
+        WindowInfo window;
+        if (pickRegion)
+        {
+            var selection = RegionPicker.Pick()
+                ?? throw new CommandFailure(3, "已取消选区——未读取任何内容");
+            var placement = RegionCommand.Describe(
+                new ScreenRect(selection.X, selection.Y, selection.Width, selection.Height));
+            if (placement.Window is null || placement.Space is null || placement.Region is not { } pickedRegion)
+                throw new CommandFailure(3, placement.Note ?? "选区没有整个落在某个窗口里——未读取任何内容");
+
+            picked = (pickedRegion.X, pickedRegion.Y, pickedRegion.Width, pickedRegion.Height);
+            windowSpace = placement.Space == "window";
+            if (capture == "print" && windowSpace)
+                throw new ArgumentException("选到的是标题栏（窗口坐标），而 --capture print 只支持客户区——去掉它再试");
+
+            var resolution = WindowResolver.Resolve(new WindowSelector { Handle = placement.Window.Handle }, false);
+            if (resolution.Usable.Count == 0)
+                throw new CommandFailure(4, "选中的窗口不可用：\n" + string.Join("\n", resolution.Rejections));
+            window = resolution.Usable[0];
+        }
+        else
+        {
+            window = Program.ResolveUsable(g);
+        }
 
         if (!NativeWindow.GetWindowRect(window.Handle, out NativeWindow.RECT windowRect))
             throw new CommandFailure(4, $"「{window.Title}」的窗口矩形读不出来——未读取任何内容");
@@ -91,9 +125,6 @@ internal static class Probe
         int inset = Math.Max(0, (fullWidth - visibleWidth) / 2);
         if (visibleHeight <= 0) inset = 0;
 
-        int originScreenX = windowRect.Left + inset;
-        int originScreenY = windowRect.Top + inset;
-
         var geometry = new GeometryReference(
             [windowRect.Left, windowRect.Top, fullWidth, fullHeight],
             [visibleFrame.Left, visibleFrame.Top, visibleWidth, visibleHeight],
@@ -112,9 +143,10 @@ internal static class Probe
         int clientWidth = clientRect.Right - clientRect.Left;
         int clientHeight = clientRect.Bottom - clientRect.Top;
 
-        (int X, int Y, int W, int H) region = options.TryGetValue("region", out string? raw)
-            ? ParseRegion(raw)
-            : windowSpace ? (0, 0, fullWidth, fullHeight) : (0, 0, clientWidth, clientHeight);
+        (int X, int Y, int W, int H) region = picked
+            ?? (options.TryGetValue("region", out string? raw)
+                ? ParseRegion(raw)
+                : windowSpace ? (0, 0, fullWidth, fullHeight) : (0, 0, clientWidth, clientHeight));
 
         // Client-relative by default; --space window addresses the whole window, because a title
         // bar lives outside the client area and is often the only text a window has. The space
@@ -132,6 +164,15 @@ internal static class Probe
 
         int originX = windowSpace ? 0 : offsetX;
         int originY = windowSpace ? 0 : offsetY;
+
+        // The screen grab starts on the desktop, so its origin depends on the space being
+        // addressed: a window-space region is measured from the window's outer rectangle, a
+        // client-space one from the client origin ClientToScreen reports. Getting this wrong is
+        // silent - the first version always started at the client origin, so a title-bar selection
+        // read the top strip of the client area instead. Proof: `--space window` and `--space client`
+        // produced byte-identical images for the same region.
+        int screenOriginX = windowSpace ? windowRect.Left : client.X;
+        int screenOriginY = windowSpace ? windowRect.Top : client.Y;
 
         var engineInfo = DescribeEngine(engineCommand, languages, tessdata);
 
@@ -156,12 +197,12 @@ internal static class Probe
                 }
                 else
                 {
-                    // Screen space, from the client origin that ClientToScreen reports: no frame
-                    // arithmetic, so nothing to get wrong. The window does have to be on screen.
+                    // Screen space: the window does have to be on screen, but there is no frame
+                    // arithmetic beyond the origin picked above.
                     frame = NativeCapture.TryCaptureScreen(
-                                client.X + region.X, client.Y + region.Y, region.W, region.H)
+                                screenOriginX + region.X, screenOriginY + region.Y, region.W, region.H)
                         ?? throw new CommandFailure(ExitUnreadable,
-                            $"屏幕区域 {client.X + region.X},{client.Y + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
+                            $"屏幕区域 {screenOriginX + region.X},{screenOriginY + region.Y} {region.W}x{region.H} 抓取失败——未读取到任何内容");
                 }
 
                 prepared = Preprocess(Normalize(frame), scale, pad);

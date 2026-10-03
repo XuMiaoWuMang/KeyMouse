@@ -11,8 +11,8 @@ description:
   en: >
       Answers which window is under a screen point, and whether a point is inside the client area; the first backs --strict-point, the second refuses client coordinates that land on window chrome.
       
-revision: d870b0c5dfd7fe29675863c0288b572a6111a8d4
-updated_at: "2026-10-03T07:28:04.469Z"
+revision: e03d53e4c41a8a7220e83123d7f8a44a54ff8dab
+updated_at: "2026-10-03T08:15:19.893Z"
 fingerprint: e52dac08492f5ae3f8efd6a9e9cbe6e5af9a49c1c1402c8c9bedaf366fa57b9c
 source:
   - path: "WindowLocator.cs"
