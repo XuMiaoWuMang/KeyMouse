@@ -11,9 +11,9 @@ description:
   en: >
       Drives the overlay with KeyMouse own mouse and keyboard: a drag must return a client-space rectangle, a click the whole client area, ESC exit code 3. One more check pins the --space window origin bug: the same screen pixels reached through client and window space must be byte-identical (before the fix they also matched, for the wrong reason).
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.214Z"
-fingerprint: 7003376609f1fbb72481039dd0555357b0030ec8a0f55ec788c8f69683d72cdf
+revision: 1b316650150f1540368ee548f7d9992ccaa3239e
+updated_at: "2026-10-03T11:27:16.011Z"
+fingerprint: 2ab5b1e29a47f02cf1bf9588824895c65511b838f298921b03517b68cf0c2879
 source:
   - path: "tests/smoke.ps1"
     line: 406

@@ -11,9 +11,9 @@ description:
   en: >
       The `probe` command: reads a region into structured text and honestly reports how trustworthy the read is. Three hard boundaries meet here - it reports and never judges, an unreadable region exits 6, and an empty region is a fact rather than a failure. The captured pixels go to the engine unchanged by default (upscaling and normalisation are options), and the text comes back verbatim: two reads must agree byte for byte.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.205Z"
-fingerprint: 36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f
+revision: 1b316650150f1540368ee548f7d9992ccaa3239e
+updated_at: "2026-10-03T11:27:19.953Z"
+fingerprint: a2eb516cd040a7a60ad8ddefbc45604cb153a269959d6bfb4c10e52481e8655d
 source:
   - path: "src/KeyMouse.Core/Probe.cs"
     line: 45

@@ -52,12 +52,13 @@ KeyMouse run flow.json                               # 原样回放，或改完�
 | **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令；`probe --pick-region` 是"框完直接读" |
 | **录制** | `record` 全局监听键鼠（只观察、不拦截），把一次操作写成可回放的 JSON：窗口上下文、客户区相对坐标、抽稀后的轨迹、关键步骤截图；`run flow.json` 回放，闸门与退出码和手打命令一致 |
 | **图形编辑器** | `KeyMouse flow edit 流程.json` 打开 WinUI 3 编辑器：左边步骤列表（拖拽排序、缩略图），右边改参数，「从屏幕取区域」直接拉选区浮层，「试运行/播放」调用的还是 `run` 本身 |
+| **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**（客户区坐标）；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提（不成立则跳过，或按 `else` 失败） |
 | **条件步骤** | 流程里可以等：`sleep`、`wait-window`（等窗口可用）、`wait-text`（读一块区域等某段文字出现，容错预算自己声明，连续两次读到同一段才算数，超时退出码 3） |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：158 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：161 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 

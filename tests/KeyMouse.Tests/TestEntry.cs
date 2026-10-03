@@ -20,6 +20,7 @@ internal static class TestEntry
         Harness.Section("parsing", ParsingTests.Run);
         Harness.Section("windows", WindowTests.Run);
         Harness.Section("probe", ProbeTests.Run);
+        Harness.Section("locator", LocatorTests.Run);
         Harness.Section("region", RegionTests.Run);
         Harness.Section("flow", FlowTests.Run);
         Harness.Section("runner", RunnerTests.Run);

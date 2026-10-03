@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-find-and-act",
+  "title": {
+    "zh": "从读到点到：文字框、--find、click-text 与 when 前提",
+    "en": "From reading to acting: text boxes, --find, click-text and the when precondition"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "识图的另一半是动作。新增 keymouse.probe.locate（把读到的字变成可点的框：整行压平并记住每个字符来自哪个词，跨词取并集）、probe --find（报告文字的框与客户区点击点，没找到退出码 3）、流程步骤 click-text（等到就点匹配框中心，复用同一套轮询与确认规则）与 when 前置条件（可自己指名窗口；else: skip 跳过并标 skipped，else: fail 退出码 3）。顺手修掉行框只是\"第一个词的框\"这个悄悄错的地方，并在真桌面上端到端验证了找字→点它。",
+    "en": "The other half of perception is action. Adds keymouse.probe.locate (turn what was read into a clickable box: squash the line and remember which word each character came from, union across words), probe --find (reports the box and the client click point, exit 3 when absent), the flow step click-text (wait, then click the middle of the matched box, reusing the same polling and confirmation rules) and the when precondition (able to name its own window; else: skip reports skipped, else: fail exits 3). Also fixes the line box, which was quietly the first word box, and measures the find-then-click path on the real desktop."
+  },
+  "modules": {
+    "create": [
+      "keymouse.probe.locate",
+      "keymouse.tests.unit.locator",
+      "keymouse.tests.smoke.act"
+    ],
+    "modify": [
+      "keymouse.probe",
+      "keymouse.probe.engine",
+      "keymouse.flow",
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.script",
+      "keymouse.tests.unit",
+      "keymouse.tests.unit.flow",
+      "keymouse.tests.smoke",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design"
+    ]
+  },
+  "acceptance": [
+    "probe --find 报告文字的框与客户区点击点；屏幕上没有的文字退出码 3（什么都没发）",
+    "跨词匹配（中文按字切词）取框的并集；行框是并集而不是第一个词的框",
+    "click-text 真的点到它看到的字（冒烟里点完再回读剪贴板确认）",
+    "when 前提成立则执行、不成立按 else: skip 跳过（报告标 skipped）、else: fail 退出码 3",
+    "加载时拒绝缺 region/text、未知 match、未知 else、定位不到窗口的 when（退出码 2）",
+    "单测与冒烟全绿；validate 0 error"
+  ],
+  "note": "文字框与动作落地：--find 给坐标、click-text 看到就点、when 前提跳过/失败；行框改为并集；文档与三组测试同步。",
+  "revision": {
+    "before": null,
+    "after": "1b316650150f1540368ee548f7d9992ccaa3239e"
+  },
+  "created_at": "2026-10-03T11:27:15.691Z",
+  "updated_at": "2026-10-03T11:27:21.366Z",
+  "closed_at": "2026-10-03T11:27:21.366Z"
+}

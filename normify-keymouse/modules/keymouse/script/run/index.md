@@ -11,9 +11,9 @@ description:
   en: >
       The control flow of run: read, analyse, then execute line by line with a program counter, loop stack, current target and per-line scope; it prints progress, stops at the first failure unless --keep-going, and returns that exit code. Every command runs in this process through a dispatch delegate handed in by the caller.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.211Z"
-fingerprint: ca45bdaf4b9f154a70f5dbccdacf28399554f02a52725ac899164738ebdf95af
+revision: 1b316650150f1540368ee548f7d9992ccaa3239e
+updated_at: "2026-10-03T11:27:16.006Z"
+fingerprint: 77e8c215319806cea2fd833e231759721bc3125357c377795fe231100c8ddc3f
 source:
   - path: "src/KeyMouse.Core/ScriptRunner.cs"
     line: 81

@@ -361,6 +361,19 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 - `--pick-region` 选到标题栏（窗口坐标）时不能配 `--capture print`（退出码 `2`）；取消选区（`ESC` / 右键）
   是退出码 `3`，一个字也没读。
 
+| `--find <文字>` | 关 | **找文字并给出点击点**：在读到的东西里定位这段文字，报告它的框与中心点（客户区坐标）；没找到 → 退出码 `3`（没发任何输入，可重试） |
+| `--match <方式>` | `contains` | `--find` 的比较方式：`contains` / `exact` / `fuzzy`（编辑距离 ≤ `--max-errors`） |
+| `--max-errors N` | 1 | `fuzzy` 的容错预算（按字符计） |
+
+`--find` 的存在是因为"读到"和"点到"之间差一个坐标：引擎给的是**每个词的框**（`lines[].words[].rect`，
+相对区域），`--find` 把它变成可点的中心点。多词匹配（`取消确定` 这种跨词的串）取这些框的并集，
+所以 `lines[].rect` 也是并集而不是第一个词的框。JSON 里多一个 `find` 对象：
+
+```json
+"find": { "text": "取消", "found": true, "match": "contains", "rect": [79,7,51,22],
+          "at": { "space": "client", "x": 145, "y": 18 }, "line": "保存 取消 确定",
+          "distance": 0, "confidence": 91.0 }
+```
 ## record（录制：把一次操作变成可回放的 JSON）
 
 ```
@@ -424,7 +437,7 @@ KeyMouse run flow.json                          # 回放
 | `key` | `combo`（组合）或 `text`（单个键） | `key combo` / `key press` |
 | `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
-| `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
+| `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` || `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
 
 ### wait-text：等一块区域上出现某段文字
 
@@ -506,6 +519,24 @@ KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一�
   输出实时显示在「运行输出」里，退出码按 CLI 的同一套含义解释。
 
 编辑器**不重新实现**录制、取区域、读取与回放——那些行为（连同它们的实测结论）都只在命令行这边有一份。
+
+
+### `when`：任何一步都可以带前提
+
+```json
+{ "type": "click", "at": { "space": "client", "x": 200, "y": 300 },
+  "target": { "process": "notepad" },
+  "when": { "target": { "process": "notepad" },
+            "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 },
+            "text": "保存成功", "match": "contains", "timeoutMs": 2000, "else": "skip" } }
+```
+
+`when` 是这套格式里唯一的条件：前提成立才执行这一步。
+
+- `target` 可以自己给（**可以盯另一个窗口**）；不给就用步骤自己的 target。
+- `else`：`skip`（默认，跳过这一步、退出码仍是 0）或 `fail`（退出码 `3`，同样保证"什么都没发"）。
+- 前提不成立时的跳过会在报告里标成 `skipped`，控制台那一行显示 `skip`。
+- 一串步骤各自带 `when`，就是最常用的分支写法；真正的 if/else 块与循环留给后续版本。
 
 ## region（选区：给人挑坐标，不读文字）
 

@@ -1,13 +1,9 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.smoke",
-  "updated_at": "2026-10-03T10:11:47.844Z",
+  "updated_at": "2026-10-03T11:27:15.616Z",
   "mode": "layers",
   "max_columns": 3,
-  "reading": {
-    "zh": "先起靶子并校验宿主编码（不然后面全是假失败），再按“打字→安全语义→零散入口→感知与选区→录制与回放→不变量”逐段验证；录制那一段用 KeyMouse 自己的输入驱动钩子。",
-    "en": "Start the target and check the host encoding first (otherwise everything after is a false failure), then verify in bands: typing, safety, odds and ends, perception and region selection, recording and replay, invariants. The recording band drives the hooks with KeyMouse own input."
-  },
   "order": [
     "keymouse.tests.smoke.entry",
     "keymouse.tests.smoke.typing",
@@ -15,60 +11,7 @@
     "keymouse.tests.smoke.features",
     "keymouse.tests.smoke.region",
     "keymouse.tests.smoke.record",
-    "keymouse.tests.smoke.loops"
-  ],
-  "groups": [
-    {
-      "id": "setup",
-      "title": {
-        "zh": "先准备好",
-        "en": "Set up"
-      },
-      "children": [
-        "keymouse.tests.smoke.entry"
-      ]
-    },
-    {
-      "id": "core",
-      "title": {
-        "zh": "核心能力",
-        "en": "Core ability"
-      },
-      "children": [
-        "keymouse.tests.smoke.typing"
-      ]
-    },
-    {
-      "id": "safety",
-      "title": {
-        "zh": "安全语义与零散入口",
-        "en": "Safety & odds and ends"
-      },
-      "children": [
-        "keymouse.tests.smoke.safety",
-        "keymouse.tests.smoke.features"
-      ]
-    },
-    {
-      "id": "perception",
-      "title": {
-        "zh": "感知、选区与录制",
-        "en": "Perception, region & recording"
-      },
-      "children": [
-        "keymouse.tests.smoke.region",
-        "keymouse.tests.smoke.record"
-      ]
-    },
-    {
-      "id": "invariants",
-      "title": {
-        "zh": "不变量",
-        "en": "Invariants"
-      },
-      "children": [
-        "keymouse.tests.smoke.loops"
-      ]
-    }
+    "keymouse.tests.smoke.loops",
+    "keymouse.tests.smoke.act"
   ]
 }

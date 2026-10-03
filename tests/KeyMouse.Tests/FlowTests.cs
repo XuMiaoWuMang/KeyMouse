@@ -221,6 +221,43 @@ internal static class FlowTests
             if (File.Exists(waitPath)) File.Delete(waitPath);
         }
 
+        Harness.Group("flow: click-text and the when precondition");
+        var actPath = Path.Combine(Path.GetTempPath(), $"keymouse-act-test-{Environment.ProcessId}.json");
+        try
+        {
+            void WriteAct(string step) =>
+                File.WriteAllText(actPath, $$"""{"format":"keymouse-flow","version":1,"steps":[{{step}}]}""");
+
+            WriteAct("""{"type":"click-text","text":"保存","target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("a click-text without a region is refused",
+                () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click-text","text":"保存","at":{"space":"client","x":0,"y":0},"target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("...and a click-text without text is refused too",
+                () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click-text","text":"保存","match":"vibes","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
+            Harness.Throws<CommandFailure>("an unknown match mode is refused on load",
+                () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click","at":{"space":"client","x":10,"y":10},"target":{"process":"notepad"},"when":{"text":"保存成功"}}""");
+            Harness.Throws<CommandFailure>("a when without a region is refused",
+                () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click","at":{"space":"client","x":10,"y":10},"target":{"process":"notepad"},"when":{"text":"保存成功","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"else":"explode"}}""");
+            Harness.Throws<CommandFailure>("an unknown else is refused (skip | fail only)",
+                () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click-text","button":"right","text":"保存","match":"fuzzy","maxErrors":1,"timeoutMs":3000,"region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"},"when":{"text":"就绪","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"else":"skip"}}""");
+            var acted = FlowDocument.Load(actPath);
+            Harness.Equal("a click-text with a precondition loads", "click-text", acted.Steps[0].Type);
+            Harness.Equal("...keeping its button", "right", acted.Steps[0].Button);
+            Harness.Equal("...and its precondition's else", "skip", acted.Steps[0].When!.Else);
+        }
+        finally
+        {
+            if (File.Exists(actPath)) File.Delete(actPath);
+        }
         Harness.Group("flow: keys and retryable codes");
         Harness.Equal("virtual keys map back to names for recording", "enter", KeyMap.NameOf(0x0D));
         Harness.Equal("...and escape is 'esc'", "esc", KeyMap.NameOf(0x1B));

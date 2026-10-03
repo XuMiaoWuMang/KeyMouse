@@ -46,6 +46,10 @@ internal sealed class CommandRecord
     /// <summary>Loop variable values for this execution, e.g. { "row": 1, "col": 2 }.</summary>
     public Dictionary<string, int>? Iterations { get; set; }
     public int ExitCode { get; set; }
+
+    /// <summary>True when the step's `when` precondition did not hold and the step was skipped:
+    /// nothing was sent, and the exit code stays 0.</summary>
+    public bool Skipped { get; set; }
     public int Attempts { get; set; }
     public long DurationMs { get; set; }
     public long InjectedEvents { get; set; }

@@ -6,14 +6,14 @@ tags: [flow, cli]
 name: {zh: "流程执行器", en: "Flow runner"}
 description:
   zh: >
-      `run flow.json`：按顺序执行步骤，每一步都走与手打命令相同的派发（含闸门与退出码），失败即停或 `--keep-going`，可重试的退出码按 `--retry` 重试，报告与文本脚本同一形状。sleep 在 `--dry-run` 下不真等；wait-window 轮询到窗口可用；wait-text 每轮一次 OCR，连续 confirm 次读到同一段满足条件的文字才算等到，超时退出码 3 并说明最后读到什么。
+      执行一个流程：逐步编译成命令交给同一份派发，失败即停或 `--keep-going`，可重试退出码按 `--retry`，报告与文本脚本同形。每步之间经过执行接缝（暂停阻塞、取消抛退出码 7、边界作为事件上报）。文本条件共用同一个轮询：`wait-text` 等它、`click-text` 等到后点匹配框中心、`when` 不成立则跳过（报告标 skipped）或按 `else: fail` 退出码 3。
       
   en: >
-      `run flow.json`: executes steps in order, each through the same dispatch as a typed command (gate and exit codes included), stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry, and writing the same report shape as the text runner. sleep does not wait under --dry-run; wait-window polls for a usable window; wait-text reads once per poll and counts a match only after `confirm` consecutive identical reads, exiting 3 on timeout with what it read.
+      Runs a flow: steps are compiled into commands for the same dispatch, stopping at the first failure or honouring --keep-going, retrying the retryable codes per --retry. Between steps it passes the execution seam (a pause blocks, a cancel throws exit code 7, boundaries arrive as events). All text conditions share one polling loop: wait-text waits, click-text clicks the middle of the matched box, and an unmet when skips the step or fails with exit 3 - none of the three can send anything extra.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.048Z"
-fingerprint: f0afb9c88f544f9dd71bd8ceedb29f555d58848202faa27f7b3ed7f2c43d43d3
+revision: 1b316650150f1540368ee548f7d9992ccaa3239e
+updated_at: "2026-10-03T11:27:19.954Z"
+fingerprint: bd2b72f94f0675e0c622926b05b796ab39043aa3fb52c11067521d302fd74254
 source:
   - path: "src/KeyMouse.Core/FlowRunner.cs"
 apis:
@@ -21,10 +21,10 @@ apis:
     path: "FlowRunner.LooksLikeJson"
     description:
       zh: >
-          按内容判断 run 拿到的是不是流程（只认第一个参数是路径的形式）。
+          按内容判断 run 拿到的是不是流程。
           
       en: >
-          Content-based detection of a flow handed to run (only the documented first-argument form).
+          Content-based detection of a flow handed to run.
           
   - protocol: rpc
     path: "FlowRunner.Run"
@@ -41,6 +41,19 @@ deps:
     to_api: "rpc:FlowDocument.ToArguments"
     label: {zh: "步骤编译成命令", en: "Compile a step"}
   - kind: call
-    to: keymouse.cli.main
-    label: {zh: "同一条派发路径", en: "The same dispatch"}
+    to: keymouse.flow.predicate
+    to_api: "rpc:TextPredicate.Matches"
+    label: {zh: "判定等到了没有", en: "Decide if the wait is over"}
+  - kind: call
+    to: keymouse.probe.locate
+    to_api: "rpc:TextLocator.Find"
+    label: {zh: "找文字并给出框", en: "Locate text and its box"}
+  - kind: call
+    to: keymouse.probe.engine
+    to_api: "rpc:Probe.ReadOnce"
+    label: {zh: "每轮读一次区域", en: "One read per poll"}
+  - kind: call
+    to: keymouse.execution
+    to_api: "rpc:Execution.Control"
+    label: {zh: "等待期间也能被取消", en: "Cancellable while waiting"}
 ---

@@ -1,18 +1,15 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.unit",
-  "updated_at": "2026-10-03T11:13:04.128Z",
+  "updated_at": "2026-10-03T11:27:15.542Z",
   "mode": "layers",
-  "reading": {
-    "zh": "入口逐个跑用例集，用例集共用同一套断言工具；选区、流程与 Runner 三组只测不需要桌面的规则（Runner 那组会用私有命名管道跑真的往返）。",
-    "en": "The entry runs each case set; they share one assertion harness. The region, flow and runner sets cover only rules that need no desktop (the runner set does real round trips over a private named pipe)."
-  },
   "order": [
     "keymouse.tests.unit.harness",
     "keymouse.tests.unit.parsing",
     "keymouse.tests.unit.region",
     "keymouse.tests.unit.flow",
     "keymouse.tests.unit.window",
-    "keymouse.tests.unit.runner"
+    "keymouse.tests.unit.runner",
+    "keymouse.tests.unit.locator"
   ]
 }

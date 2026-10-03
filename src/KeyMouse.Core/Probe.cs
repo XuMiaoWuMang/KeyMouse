@@ -45,7 +45,7 @@ internal static class Probe
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(
-            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "keep-prepared", "space", "capture", "resample");
+            args, "region", "reads", "lang", "engine", "tessdata-dir", "min-conf", "scale", "pad", "keep-image", "keep-prepared", "space", "capture", "resample", "find", "match", "max-errors");
 
         if (positional.Count > 0)
             throw new ArgumentException($"probe 不接受位置参数 '{positional[0]}'");
@@ -53,6 +53,14 @@ internal static class Probe
             throw new ArgumentException("probe 需要一个窗口选择器（例如 --title 记事本）——工具不做全屏瞎猜");
 
         bool asJson = options.ContainsKey("json");
+        string? findText = options.TryGetValue("find", out string? rawFind) && rawFind.Length > 0 ? rawFind : null;
+        string matchMode = options.TryGetValue("match", out string? rawMatch) ? rawMatch : TextPredicate.Contains;
+        if (!TextPredicate.IsKnownMode(matchMode))
+        {
+            throw new ArgumentException(
+                $"--match '{matchMode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
+        }
+        int maxErrors = Math.Clamp(Commands.IntOr(options, "max-errors", 1), 0, 20);
         int reads = Math.Clamp(Commands.IntOr(options, "reads", 2), 1, 9);
         int minConfidence = Math.Clamp(Commands.IntOr(options, "min-conf", DefaultMinConfidence), 0, 100);
         int scale = Math.Clamp(Commands.IntOr(options, "scale", 1), 1, 8);
@@ -226,12 +234,57 @@ internal static class Probe
             MinConfidence: minConfidence,
             ElapsedMs: started.ElapsedMilliseconds,
             Note: anythingRead ? null : "区域内没有可读文字——这是结果，不是失败",
-            Lines: attempts[0].Lines);
+            Lines: attempts[0].Lines,
+            Find: findText is null
+                ? null
+                : DescribeFind(
+                    TextLocator.Find(attempts[0].Lines, findText, matchMode, maxErrors),
+                    findText, matchMode, maxErrors, window, windowSpace, region));
 
         if (asJson) Console.WriteLine(JsonSerializer.Serialize(report, JsonOptions));
         else PrintHuman(report, attempts[0].Text, engineInfo, window, region, preparation, spaceName);
 
+        // "Not there" is a match failure, not a read failure: exit 3 means nothing was sent and the
+        // caller may retry - the same promise the rest of the tool makes for "no match".
+        if (report.Find is { Found: false } missing)
+        {
+            if (!asJson)
+            {
+                Console.WriteLine($"没找到「{missing.Text}」" +
+                                  (attempts[0].Text.Length > 0 ? $"：读到「{Show(attempts[0].Text)}」" : "：区域里没读到文字"));
+            }
+            return 3;
+        }
+
         return 0;
+    }
+
+    /// <summary>
+    /// Turns a match into something a caller can act on: the box it was found in, and the point to
+    /// click - in client coordinates, whichever space the region was addressed in (a window-space
+    /// region is measured from the window's outer rectangle, so the client origin has to be removed).
+    /// </summary>
+    private static FindReference DescribeFind(
+        TextMatch? match, string expected, string mode, int maxErrors, WindowInfo window, bool windowSpace,
+        (int X, int Y, int W, int H) region)
+    {
+        if (match is null) return new FindReference(expected, false, mode, maxErrors, null, null, null, null, null);
+
+        int centreX = region.X + match.Rect[0] + match.Rect[2] / 2;
+        int centreY = region.Y + match.Rect[1] + match.Rect[3] / 2;
+        if (windowSpace)
+        {
+            var client = new NativeWindow.POINT { X = 0, Y = 0 };
+            NativeWindow.GetWindowRect(window.Handle, out NativeWindow.RECT windowRect);
+            if (NativeWindow.ClientToScreen(window.Handle, ref client))
+            {
+                centreX -= client.X - windowRect.Left;
+                centreY -= client.Y - windowRect.Top;
+            }
+        }
+
+        return new FindReference(expected, true, mode, maxErrors, match.Rect,
+            new FindPoint("client", centreX, centreY), match.LineText, match.Distance, match.Confidence);
     }
 
     // ------------------------------------------------------------------ helpers
@@ -299,12 +352,12 @@ internal static class Probe
     }
 
     /// <summary>
-    /// Reads one region once and hands back the text, for callers that want a value rather than a
-    /// report - the `wait-text` predicate polls this. It deliberately runs the same capture,
-    /// preprocessing and engine call as the CLI, so "what the predicate saw" and "what `probe`
-    /// prints" cannot drift apart.
+    /// Reads one region once and hands back what the engine saw - text, confidence and the boxes -
+    /// for callers that want a value rather than a report: the `wait-text` predicate, and the steps
+    /// that act on what they saw (`click-text`). It deliberately runs the same capture, preprocessing
+    /// and engine call as the CLI, so "what the step saw" and "what `probe` prints" cannot drift.
     /// </summary>
-    internal static (string Text, double? Confidence) ReadOnce(
+    internal static (string Text, double? Confidence, LineInfo[] Lines) ReadOnce(
         WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region, string capture = "screen")
     {
         ValidateRegion(window, windowSpace, region);
@@ -317,7 +370,7 @@ internal static class Probe
         {
             WriteBmp(imagePath, prepared);
             var read = RunEngine(engineCommand, imagePath, DefaultLanguages, tessdata);
-            return (read.Text, read.Confidence);
+            return (read.Text, read.Confidence, read.Lines);
         }
         finally
         {
@@ -661,14 +714,20 @@ internal static class Probe
 
             string key = $"{cells[2]}/{cells[3]}/{cells[4]}";
             if (lines.Count == 0 || lines[^1].Key != key)
+            {
                 lines.Add(new LineInfo(key, text, rect, [words[^1]]));
+            }
             else
             {
+                // The line's box is the union of its words. It used to stay the *first* word's box,
+                // which made lines[].rect quietly wrong for any line with more than one word.
                 var line = lines[^1];
+                WordInfo[] extended = [.. line.Words, words[^1]];
                 lines[^1] = line with
                 {
                     Text = line.Text + " " + text,
-                    Words = [.. line.Words, words[^1]],
+                    Rect = TextLocator.Union(extended.Select(w => w.Rect)),
+                    Words = extended,
                 };
             }
         }
@@ -677,8 +736,7 @@ internal static class Probe
 
         // Files come out one character per word for CJK, so "Save As" and "另存为" both arrive as
         // a run of pieces. The caller normalises whitespace; the pieces stay visible here.
-        string joined = string.Join(" ", words.Select(w => w.Text));
-        double? mean = words.Count > 0 ? Math.Round(words.Average(w => w.Conf ?? 0), 1) : null;
+        string joined = string.Join(" ", words.Select(w => w.Text));        double? mean = words.Count > 0 ? Math.Round(words.Average(w => w.Conf ?? 0), 1) : null;
         return (joined, mean, [.. lines]);
     }
 
@@ -760,6 +818,14 @@ internal static class Probe
         {
             Console.WriteLine($"          [{line.Rect[0]},{line.Rect[1]} {line.Rect[2]}x{line.Rect[3]}] {line.Text}");
         }
+
+        if (report.Find is { } find)
+        {
+            Console.WriteLine(find is { Found: true, At: { } at, Rect: { } rect }
+                ? $"找到      「{find.Text}」→ 客户点 {at.X},{at.Y}   框 {rect[0]},{rect[1]} {rect[2]}x{rect[3]}" +
+                  $"   差 {find.Distance} 字   置信度 {find.Confidence?.ToString("0.0", CultureInfo.InvariantCulture) ?? "n/a"}"
+                : $"查找      「{find.Text}」不在读到的内容里（匹配方式 {find.Match}，容错 {find.MaxErrors}）");
+        }
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -784,7 +850,15 @@ internal static class Probe
         int MinConfidence,
         long ElapsedMs,
         string? Note,
-        LineInfo[] Lines);
+        LineInfo[] Lines,
+        FindReference? Find);
+
+    /// <summary>Where the text the caller asked for was found, and where to click for it.</summary>
+    private sealed record FindReference(
+        string Text, bool Found, string Match, int MaxErrors, int[]? Rect, FindPoint? At,
+        string? Line, int? Distance, double? Confidence);
+
+    private sealed record FindPoint(string Space, int X, int Y);
 
     /// <summary>GetWindowRect versus the visible frame, so an offset bug is explainable.</summary>
     private sealed record GeometryReference(int[] ExtendedFrame, int[] VisibleFrame, int Inset);
@@ -798,7 +872,4 @@ internal static class Probe
 
     private sealed record RegionReference(string Space, int[] Rect);
 
-    private sealed record WordInfo(string Text, double? Conf, int[] Rect);
-
-    private sealed record LineInfo([property: System.Text.Json.Serialization.JsonIgnore] string Key, string Text, int[] Rect, WordInfo[] Words);
 }

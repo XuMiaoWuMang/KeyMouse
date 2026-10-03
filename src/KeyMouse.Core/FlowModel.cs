@@ -54,11 +54,35 @@ internal sealed class FlowRegion
 /// a human edits by hand has to survive missing fields, and the editor writes back only what a step
 /// actually uses. Unknown step types are rejected on load, not at replay time.
 /// </summary>
+/// <summary>
+/// A step's precondition: the step runs only when this text is on screen in time. It is the tool's
+/// one conditional, deliberately shaped like the other text conditions instead of introducing a block
+/// grammar - `else` says what happens when it does not hold (skip the step, or fail with exit 3).
+/// </summary>
+internal sealed class FlowCondition
+{
+    /// <summary>Which window to read. Falls back to the step's own target, so a condition on a step
+    /// that names a window does not have to repeat it - and a condition may deliberately watch a
+    /// different window than the one the step acts on.</summary>
+    public FlowTarget? Target { get; set; }
+    public FlowRegion? Region { get; set; }
+    public string? Text { get; set; }
+    public string? Match { get; set; }
+    public int? MaxErrors { get; set; }
+    public int? TimeoutMs { get; set; }
+    public int? IntervalMs { get; set; }
+    public int? Confirm { get; set; }
+
+    /// <summary>skip (default) or fail.</summary>
+    public string? Else { get; set; }
+}
+
 internal sealed class FlowStep
 {
     public string Type { get; set; } = "";
     public FlowTarget? Target { get; set; }
     public FlowRegion? Region { get; set; }
+    public FlowCondition? When { get; set; }
     public FlowPoint? At { get; set; }
     public FlowPoint? From { get; set; }
     public FlowPoint? To { get; set; }
@@ -150,18 +174,36 @@ internal sealed class FlowDocument
 
             // Conditions are validated when the file is loaded, not half-way through a replay: a
             // typo in a match mode should cost a second, not the five minutes the step might wait.
-            if (step.Type == "wait-text")
+            if (step.When is { } when)
+            {
+                if (when.Region is null || string.IsNullOrEmpty(when.Text))
+                    throw new CommandFailure(2, $"第 {i + 1} 步的 when 需要 region 与 text（前提是什么）");
+                if (when.Match is { } conditionMode && !TextPredicate.IsKnownMode(conditionMode))
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步 when 的 match '{conditionMode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
+                FlowTarget? conditionTarget = when.Target ?? step.Target;
+                if (string.IsNullOrWhiteSpace(conditionTarget?.Process) && string.IsNullOrWhiteSpace(conditionTarget?.Class))
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步的 when 需要 target（自己给，或者步骤本身有）——否则不知道该读哪个窗口");
+                if (when.Region.Space != FlowSpace.Client)
+                    throw new CommandFailure(2,
+                        $"第 {i + 1} 步 when 的 region 只支持客户区坐标（space=client）");
+                if (when.Else is { } otherwise && otherwise is not ("skip" or "fail"))
+                    throw new CommandFailure(2, $"第 {i + 1} 步 when 的 else '{otherwise}' 不认识（可用：skip | fail）");
+            }
+
+            if (step.Type is "wait-text" or "click-text")
             {
                 if (step.Region is null)
-                    throw new CommandFailure(2, $"第 {i + 1} 步 wait-text 需要 region（读哪一块）");
+                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 region（读哪一块）");
                 if (string.IsNullOrEmpty(step.Text))
-                    throw new CommandFailure(2, $"第 {i + 1} 步 wait-text 需要 text（等什么字）");
+                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 text（等什么字）");
                 if (step.Match is { } mode && !TextPredicate.IsKnownMode(mode))
                     throw new CommandFailure(2,
-                        $"第 {i + 1} 步 wait-text 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
+                        $"第 {i + 1} 步 {step.Type} 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
                 if (step.Region.Space != FlowSpace.Client)
                     throw new CommandFailure(2,
-                        $"第 {i + 1} 步 wait-text 的 region 只支持客户区坐标（space=client）：屏幕坐标会因为窗口移动而失效");
+                        $"第 {i + 1} 步 {step.Type} 的 region 只支持客户区坐标（space=client）：屏幕坐标会因为窗口移动而失效");
             }
         }
 
@@ -178,6 +220,7 @@ internal sealed class FlowDocument
     internal static readonly string[] KnownTypes =
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
+        "click-text",
     ];
 
     /// <summary>

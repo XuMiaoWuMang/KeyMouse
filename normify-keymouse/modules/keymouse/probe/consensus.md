@@ -11,9 +11,9 @@ description:
   en: >
       N re-captures must agree byte for byte before a read counts as seen, and confidence must clear a floor of 30. The floor is measured: everything under 60 was garbage on synthetic images while a correct real read scored 55.8, so it only catches outright failures. The comparison itself normalises nothing - no whitespace folding, no caret stripping: the text the engine produced is the text that is compared, and a disagreement is exit 6 for the caller to retry.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.205Z"
-fingerprint: 36a66c0dc3a27b099323e4630067f0df5069fd949bf0e364cf219eb7e539bb8f
+revision: 1b316650150f1540368ee548f7d9992ccaa3239e
+updated_at: "2026-10-03T11:27:16.002Z"
+fingerprint: a2eb516cd040a7a60ad8ddefbc45604cb153a269959d6bfb4c10e52481e8655d
 source:
   - path: "src/KeyMouse.Core/Probe.cs"
     line: 265
