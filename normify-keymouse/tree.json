@@ -9,7 +9,7 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T06:01:00.328Z",
+    "compiled_at": "2026-10-03T06:04:52.469Z",
     "stats": {
       "tree_count": 1,
       "module_count": 123,
@@ -2241,9 +2241,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "20f54999ca6d8eb01052e467d5bc9ed27b04b6c0",
-      "updated_at": "2026-10-03T06:00:56.959Z",
-      "fingerprint": "c313bbc9b03cdc31de7d3c0993c44c281734e1ab29952092b4f1e5b10b548b2e",
+      "revision": "1e18bc13533b9f3f1e9b57e31951dea72e5306d1",
+      "updated_at": "2026-10-03T06:04:49.119Z",
+      "fingerprint": "0925fb4d7be19cb561fafad233f32ed45dcb386970458446d66e0e56bff1c6da",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2276,9 +2276,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "20f54999ca6d8eb01052e467d5bc9ed27b04b6c0",
-      "updated_at": "2026-10-03T06:00:56.959Z",
-      "fingerprint": "c3604f16969c4e9010123ceb5fe8fbf79f88fe3a99ef77aad960680bb484612d",
+      "revision": "1e18bc13533b9f3f1e9b57e31951dea72e5306d1",
+      "updated_at": "2026-10-03T06:04:49.119Z",
+      "fingerprint": "a8dbb73ab845040d85dda50225749a2afdbb18e94aa98f6c1a5b130b61a7d574",
       "apis": [
         {
           "protocol": "file",
