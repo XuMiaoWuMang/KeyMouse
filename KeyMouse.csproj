@@ -30,6 +30,11 @@
          this project as well and break the build with a second entry point. -->
     <Compile Remove="tests/**" />
     <None Remove="tests/**" />
+    <!-- The WinUI editor is a separate application: it links FlowModel.cs deliberately, so globbing
+         its sources here would define every shared type twice (measured: duplicate-attribute errors
+         from editor/KeyMouse.FlowEditor/obj once that project existed). -->
+    <Compile Remove="editor/**" />
+    <None Remove="editor/**" />
     <InternalsVisibleTo Include="KeyMouse.Tests" />
   </ItemGroup>
 

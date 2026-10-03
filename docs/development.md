@@ -118,13 +118,13 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | `normify.html` | 单文件交互式架构图：点框下钻、悬停看介绍、`?lang=en` 切英文、`#module=<id>` / `#api=<key>` / `#view=outline` 深链直达 |
 | `tree.json` | 编译产物（含各层渲染数据） |
 | `outline.md` | 广度优先的派生索引，给 AI 导航用 |
-| `api-index.json` | 210 个 API 的索引 |
+| `api-index.json` | 223 个 API 的索引 |
 | `receipt.json` | 回执：统计、SHA-256 冻结、warning 计数 |
-| `modules/` | 144 个模块文件（frontmatter = 机器读，正文 = 人读） |
+| `modules/` | 150 个模块文件（frontmatter = 机器读，正文 = 人读） |
 | `renders/` | 每一层的渲染数据（顺序 / 分组 / 模式 / 阅读导语） |
 
 粒度是**单一功能单元**：`NativeInput.TypeText`、`WindowEligibility.Check`、`ScriptRunner.ParseRepeat`、
-`smoke.loops` 都各占一格。164 条箭头锚定到了具体 API 行，所以图上读到的是
+`smoke.loops` 都各占一格。172 条箭头锚定到了具体 API 行，所以图上读到的是
 `mouse click → rpc:NativeInput.Click`，而不是两个匿名框之间一条线。
 
 改动代码后同步（伴随开发流程）：

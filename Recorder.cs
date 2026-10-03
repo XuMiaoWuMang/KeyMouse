@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -29,8 +30,6 @@ internal static class Recorder
     private const int VkLWin = 0x5B;
     private const int VkRWin = 0x5C;
     private const int VkEscape = 0x1B;
-    private const int ShotWidth = 320;
-    private const int ShotHeight = 200;
 
     internal static int Run(string[] args, Program.GlobalOptions g)
     {
@@ -429,7 +428,7 @@ internal static class Recorder
 
             if (_shots && reference is { } shotAt && type is "click" or "drag" or "wheel" or "type" or "key")
             {
-                step.Shot = TakeShot(shotAt, type);
+                step.Shot = TakeShot(window, shotAt, type);
             }
 
             return step;
@@ -456,33 +455,61 @@ internal static class Recorder
             return new FlowPoint { Space = FlowSpace.Screen, X = screen.X, Y = screen.Y };
         }
 
-        private string? TakeShot(Point center, string type)
+        /// <summary>
+        /// The step's screenshot: the whole client area of the window the action happened in, scaled
+        /// down to fit, with a mark on the point the action used.
+        ///
+        /// Measured why: a 1:1 crop around the click (320x200) came out as a blank white square on a
+        /// form with empty space, which answers nothing. The window as a whole answers the question
+        /// the shot exists for - "what was on screen when I did this" - and the mark keeps the
+        /// coordinates visible.
+        /// </summary>
+        private string? TakeShot(IntPtr window, Point actionPoint, string type)
         {
-            Directory.CreateDirectory(ShotDirectory);
-            int x = Math.Max(0, center.X - ShotWidth / 2);
-            int y = Math.Max(0, center.Y - ShotHeight / 2);
-            var frame = NativeCapture.TryCaptureScreen(x, y, ShotWidth, ShotHeight);
+            if (window == IntPtr.Zero) return null;
+            if (!NativeWindow.GetClientRect(window, out NativeWindow.RECT client)) return null;
+            int width = client.Right - client.Left;
+            int height = client.Bottom - client.Top;
+            if (width <= 0 || height <= 0) return null;
+
+            var origin = new NativeWindow.POINT { X = 0, Y = 0 };
+            if (!NativeWindow.ClientToScreen(window, ref origin)) return null;
+            var frame = NativeCapture.TryCaptureScreen(origin.X, origin.Y, width, height);
             if (frame is null) return null;
 
-            string name = $"{++_shotIndex:d4}-{type}.png";
-            string png = Path.Combine(ShotDirectory, name);
+            Directory.CreateDirectory(ShotDirectory);
+            string png = Path.Combine(ShotDirectory, $"{++_shotIndex:d4}-{type}.png");
             try
             {
-                using var bitmap = new Bitmap(frame.Width, frame.Height, PixelFormat.Format32bppRgb);
-                var data = bitmap.LockBits(new Rectangle(0, 0, frame.Width, frame.Height),
-                    ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-                try
+                using var full = ToBitmap(frame);
+                double scale = Math.Min(1.0, Math.Min(480.0 / width, 320.0 / height));
+                int scaledWidth = Math.Max(1, (int)(width * scale));
+                int scaledHeight = Math.Max(1, (int)(height * scale));
+
+                using var bitmap = new Bitmap(scaledWidth, scaledHeight, PixelFormat.Format32bppRgb);
+                using (var graphics = Graphics.FromImage(bitmap))
                 {
-                    for (int row = 0; row < frame.Height; row++)
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphics.DrawImage(full, 0, 0, scaledWidth, scaledHeight);
+
+                    // The pointer may have been outside the client area (a menu, another window):
+                    // mark the middle then, so the picture still says "somewhere in here".
+                    double relativeX = actionPoint.X - origin.X;
+                    double relativeY = actionPoint.Y - origin.Y;
+                    if (relativeX < 0 || relativeY < 0 || relativeX > width || relativeY > height)
                     {
-                        Marshal.Copy(frame.Bgra, row * frame.Width * 4, IntPtr.Add(data.Scan0, row * data.Stride),
-                            frame.Width * 4);
+                        relativeX = width / 2.0;
+                        relativeY = height / 2.0;
                     }
+
+                    float x = (float)(relativeX * scale);
+                    float y = (float)(relativeY * scale);
+                    using var pen = new Pen(Color.FromArgb(235, 255, 64, 64), 2f);
+                    graphics.DrawEllipse(pen, x - 9, y - 9, 18, 18);
+                    graphics.DrawLine(pen, x - 15, y, x + 15, y);
+                    graphics.DrawLine(pen, x, y - 15, x, y + 15);
                 }
-                finally
-                {
-                    bitmap.UnlockBits(data);
-                }
+
                 bitmap.Save(png, ImageFormat.Png);
             }
             catch (Exception)
@@ -491,8 +518,27 @@ internal static class Recorder
             }
 
             ShotCount++;
-            string file = Path.GetFileName(png);
-            return Path.Combine(Path.GetFileName(ShotDirectory), file).Replace('\\', '/');
+            return Path.Combine(Path.GetFileName(ShotDirectory), Path.GetFileName(png)).Replace('\\', '/');
+        }
+
+        private static Bitmap ToBitmap(NativeCapture.Frame frame)
+        {
+            var bitmap = new Bitmap(frame.Width, frame.Height, PixelFormat.Format32bppRgb);
+            var data = bitmap.LockBits(new Rectangle(0, 0, frame.Width, frame.Height),
+                ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+            try
+            {
+                for (int row = 0; row < frame.Height; row++)
+                {
+                    Marshal.Copy(frame.Bgra, row * frame.Width * 4, IntPtr.Add(data.Scan0, row * data.Stride),
+                        frame.Width * 4);
+                }
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
+            }
+            return bitmap;
         }
 
         private static int VirtualWidth() =>

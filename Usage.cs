@@ -84,6 +84,14 @@ internal static class Usage
                                     <流程>.shots/ 里各存一张 320x200 的截图。
                                     回放就是：KeyMouse run 流程.json
 
+        流程（录制出来的 JSON，以及图形编辑器）
+          flow edit <流程.json>                       用 WinUI 图形编辑器打开一个流程：
+                                                      左边是步骤列表（可拖拽排序），右边改参数，
+                                                      「从屏幕取区域」直接拉选区浮层，
+                                                      「试运行/播放」调用的还是 run 本身。
+                                                      编辑器在 editor\KeyMouse.FlowEditor，
+                                                      需要单独构建：dotnet build editor\KeyMouse.FlowEditor -c Release
+
         脚本
           run <文件|-> [选项]                          按行顺序执行文件（或 stdin）里的命令；
                                                       一行一条命令，# 开头是注释，另有三个伪命令：

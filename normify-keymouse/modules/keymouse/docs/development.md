@@ -11,9 +11,9 @@ description:
   en: >
       The four gates, the invariants (one process, fail closed, check before acting, never touch the user's things), the release flow, and where a new check belongs.
       
-revision: 89f30aa8db66e03f9c60253d85abc64d7760319e
-updated_at: "2026-10-03T10:20:43.817Z"
-fingerprint: 2f11ac96ab3b0829d17146951a3cb5af685bebe26e7b83fdc0ff17f180478254
+revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
+updated_at: "2026-10-03T10:33:39.276Z"
+fingerprint: b3e3d09ff1fb91d123c5af0c40b47a546e35eb59ee85aded9e96b8562ebbc839
 source:
   - path: "docs/development.md"
 apis:

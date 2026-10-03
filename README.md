@@ -33,12 +33,13 @@ KeyMouse run flow.json                               # 原样回放，或改完�
 | **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
 | **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令；`probe --pick-region` 是"框完直接读" |
 | **录制** | `record` 全局监听键鼠（只观察、不拦截），把一次操作写成可回放的 JSON：窗口上下文、客户区相对坐标、抽稀后的轨迹、关键步骤截图；`run flow.json` 回放，闸门与退出码和手打命令一致 |
+| **图形编辑器** | `KeyMouse flow edit 流程.json` 打开 WinUI 3 编辑器：左边步骤列表（拖拽排序、缩略图），右边改参数，「从屏幕取区域」直接拉选区浮层，「试运行/播放」调用的还是 `run` 本身 |
 | **条件步骤** | 流程里可以等：`sleep`、`wait-window`（等窗口可用）、`wait-text`（读一块区域等某段文字出现，容错预算自己声明，连续两次读到同一段才算数，超时退出码 3） |
 
 完整命令与选项 → **[docs/reference.md](docs/reference.md)**
 设计取舍、可靠性细节与已知限制 → **[docs/design.md](docs/design.md)**
 改动、测试与发布流程 → **[docs/development.md](docs/development.md)**
-架构结构树：144 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
+架构结构树：150 个模块、可下钻的交互式图 → **[normify-keymouse/normify.html](normify-keymouse/normify.html)**
 
 ## 安装
 
@@ -74,6 +75,7 @@ dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj    # 
 pwsh tests\check-docs.ps1                                                     # 文档链接检查
 pwsh tests\smoke.ps1 -Exe dist\KeyMouse.exe                                   # 桌面冒烟，需要交互式桌面
 pwsh tests\evidence.ps1                                                       # 把一次测量完整留档（本地，不入库）
+dotnet build editor\KeyMouse.FlowEditor -c Release                            # 图形编辑器（WinUI 3，单独构建）
 ```
 
 CI 每次 push 跑前三项；**发布由 `v*` tag 触发，且必须先经过人工验证**——

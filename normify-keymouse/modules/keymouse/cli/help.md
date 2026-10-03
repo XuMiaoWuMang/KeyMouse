@@ -11,9 +11,9 @@ description:
   en: >
       The version-packed help text: command tables, selector and policy notes, exit-code meanings. Written as an interpolated raw string with the version constant injected.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:12:03.456Z"
-fingerprint: 9645ae0ab6eb4ce394724b190e9325811c2bf44f429d8dc628ea2d25e7dca361
+revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
+updated_at: "2026-10-03T10:33:31.241Z"
+fingerprint: 750bc0aef435b8ef667c67f51b6b59c023e119da30118f9148eceefd5a260b19
 source:
   - path: "Usage.cs"
     line: 1

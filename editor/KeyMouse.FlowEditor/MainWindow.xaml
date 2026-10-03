@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="KeyMouse.FlowEditor.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:KeyMouse.FlowEditor">
+
+    <Grid x:Name="Root">
+        <Grid.Resources>
+            <Style x:Key="ToolButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="10,6" />
+            </Style>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <Grid x:Name="TitleBar" Grid.Row="0" Height="46" Padding="16,0" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE7C9;" FontSize="16" />
+                <TextBlock Text="KeyMouse 流程编辑器" Style="{StaticResource BodyStrongTextBlockStyle}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{x:Bind Model.Subtitle, Mode=OneWay}" VerticalAlignment="Center"
+                       HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Grid.Column="2" Text="{x:Bind Model.DirtyMark, Mode=OneWay}" VerticalAlignment="Center"
+                       Margin="0,0,140,0" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+        </Grid>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="1" Padding="16,4,16,10" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button x:Name="OpenButton" Click="OnOpen" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                        <TextBlock Text="打开" />
+                    </StackPanel>
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="O" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+                <Button x:Name="SaveButton" Click="OnSave" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                        <TextBlock Text="保存" />
+                    </StackPanel>
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="S" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+                <Button x:Name="SaveAsButton" Click="OnSaveAs" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE792;" FontSize="14" />
+                        <TextBlock Text="另存为" />
+                    </StackPanel>
+                </Button>
+
+                <Border Width="1" Height="24" Margin="6,0" Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        VerticalAlignment="Center" />
+
+                <DropDownButton x:Name="AddButton" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE710;" FontSize="14" />
+                        <TextBlock Text="添加步骤" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout x:Name="AddMenu" Placement="Bottom" />
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+                <Button x:Name="UpButton" Click="OnMoveUp" Style="{StaticResource ToolButton}"
+                        ToolTipService.ToolTip="上移">
+                    <FontIcon Glyph="&#xE74A;" FontSize="14" />
+                </Button>
+                <Button x:Name="DownButton" Click="OnMoveDown" Style="{StaticResource ToolButton}"
+                        ToolTipService.ToolTip="下移">
+                    <FontIcon Glyph="&#xE74B;" FontSize="14" />
+                </Button>
+                <Button x:Name="DuplicateButton" Click="OnDuplicate" Style="{StaticResource ToolButton}"
+                        ToolTipService.ToolTip="复制这一步">
+                    <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                </Button>
+                <Button x:Name="DeleteButton" Click="OnDelete" Style="{StaticResource ToolButton}"
+                        ToolTipService.ToolTip="删除这一步">
+                    <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                </Button>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="PickButton" Click="OnPickRegion" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE7C5;" FontSize="14" />
+                        <TextBlock Text="从屏幕取区域" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="StopButton" Click="OnStopRun" Visibility="Collapsed" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE71A;" FontSize="14" />
+                        <TextBlock Text="停止" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="DryRunButton" Click="OnDryRun" Style="{StaticResource ToolButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" />
+                        <TextBlock Text="试运行" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" />
+                        <TextBlock Text="播放" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Steps + inspector -->
+        <Grid Grid.Row="2" Padding="16,0,16,10" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="440" />
+                <ColumnDefinition Width="400" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource CardBorder}" Padding="8">
+                <Grid>
+                    <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Steps, Mode=OneWay}"
+                              SelectionMode="Single" SelectionChanged="OnStepSelected"
+                              CanReorderItems="True" CanDragItems="True" AllowDrop="True"
+                              ItemContainerTransitions="{x:Null}">
+                        <ListView.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="Delete" />
+                        </ListView.KeyboardAccelerators>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="local:StepVm">
+                                <Grid ColumnSpacing="12" Padding="4,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind Number}" Width="22" TextAlignment="Right"
+                                               VerticalAlignment="Center" Opacity="0.55"
+                                               Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <Border Grid.Column="1" Width="28" Height="28" CornerRadius="6"
+                                            Background="{ThemeResource AccentFillColorSecondaryBrush}">
+                                        <FontIcon Glyph="{x:Bind Glyph}" FontSize="13"
+                                                  Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind TypeName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                        <TextBlock Text="{x:Bind Summary, Mode=OneWay}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Border Grid.Column="3" Width="78" Height="49" CornerRadius="4"
+                                            BorderThickness="1"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            Visibility="{x:Bind ShotVisibility, Mode=OneWay}">
+                                        <Image Source="{x:Bind ShotImage, Mode=OneWay}" Stretch="UniformToFill" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Spacing="6" MaxWidth="360">
+                        <FontIcon Glyph="&#xE7C9;" FontSize="26" Opacity="0.45" />
+                        <TextBlock Text="还没有步骤" HorizontalAlignment="Center"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="用左上角「添加步骤」手动搭一条流程，或者先用 KeyMouse record 录一段操作再把 JSON 打开。"
+                                   TextWrapping="Wrap" TextAlignment="Center"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                <StackPanel x:Name="Inspector" Spacing="12">
+                    <Border Style="{StaticResource CardBorder}" Visibility="{x:Bind HasSelection, Mode=OneWay}">
+                        <StackPanel>
+                            <TextBlock Text="{x:Bind SelectedStep.TypeName, Mode=OneWay}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock Text="{x:Bind SelectedStep.Summary, Mode=OneWay}" TextWrapping="Wrap"
+                                       Margin="0,2,0,0"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <Expander Header="这一步的 JSON" Margin="0,10,0,0">
+                                <TextBox Text="{x:Bind SelectedStep.Json, Mode=OneWay}" IsReadOnly="True"
+                                         TextWrapping="Wrap" AcceptsReturn="True" FontFamily="Consolas"
+                                         FontSize="12" MinHeight="120" MaxHeight="240" />
+                            </Expander>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="12" Visibility="{x:Bind HasSelection, Mode=OneWay}">
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.TargetVisibility, Mode=OneWay}">
+                            <StackPanel>
+                                <TextBlock Text="目标窗口" Style="{StaticResource SectionLabel}" />
+                                <TextBox Header="进程名" Text="{x:Bind SelectedStep.TargetProcess, Mode=TwoWay}"
+                                         Style="{StaticResource FieldBox}" />
+                                <TextBox Header="窗口类名" Text="{x:Bind SelectedStep.TargetClass, Mode=TwoWay}"
+                                         Style="{StaticResource FieldBox}" />
+                                <TextBox Header="标题（只给人看）" Text="{x:Bind SelectedStep.TargetTitle, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.PointVisibility, Mode=OneWay}">
+                            <StackPanel>
+                                <TextBlock Text="坐标" Style="{StaticResource SectionLabel}" />
+                                <ComboBox HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                          SelectedIndex="{x:Bind SelectedStep.SpaceIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="客户区相对（推荐）" />
+                                    <ComboBoxItem Content="绝对屏幕坐标" />
+                                </ComboBox>
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox Header="X" Value="{x:Bind SelectedStep.X, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="1" Header="Y" Value="{x:Bind SelectedStep.Y, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.RegionVisibility, Mode=OneWay}">
+                            <StackPanel>
+                                <TextBlock Text="读取区域（客户区相对）" Style="{StaticResource SectionLabel}" />
+                                <Grid ColumnSpacing="8" RowSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <NumberBox Header="X" Value="{x:Bind SelectedStep.RegionX, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="1" Header="Y" Value="{x:Bind SelectedStep.RegionY, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Row="1" Header="宽" Value="{x:Bind SelectedStep.RegionWidth, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Row="1" Grid.Column="1" Header="高"
+                                               Value="{x:Bind SelectedStep.RegionHeight, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                </Grid>
+                                <TextBlock Text="区域高度要盖住整行文字，否则字被切掉会读错——这是实测过的。"
+                                           TextWrapping="Wrap" Margin="0,10,0,0"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}">
+                            <StackPanel>
+                                <TextBlock Text="这一步的参数" Style="{StaticResource SectionLabel}" />
+
+                                <ComboBox Header="鼠标键" HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                          Visibility="{x:Bind SelectedStep.ButtonVisibility, Mode=OneWay}"
+                                          SelectedIndex="{x:Bind SelectedStep.ButtonIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="左键" />
+                                    <ComboBoxItem Content="右键" />
+                                    <ComboBoxItem Content="中键" />
+                                </ComboBox>
+
+                                <TextBox Header="要输入的文字" Text="{x:Bind SelectedStep.Text, Mode=TwoWay}"
+                                         TextWrapping="Wrap" AcceptsReturn="True" MinHeight="72"
+                                         Style="{StaticResource FieldBox}"
+                                         Visibility="{x:Bind SelectedStep.TextVisibility, Mode=OneWay}" />
+
+                                <TextBox Header="按键或组合键（例如 ctrl+s、enter）"
+                                         Text="{x:Bind SelectedStep.Combo, Mode=TwoWay}"
+                                         Style="{StaticResource FieldBox}"
+                                         Visibility="{x:Bind SelectedStep.ComboVisibility, Mode=OneWay}" />
+
+                                <NumberBox Header="滚轮增量（正数向上）" Value="{x:Bind SelectedStep.Delta, Mode=TwoWay}"
+                                           SpinButtonPlacementMode="Compact" Margin="0,0,0,10"
+                                           Visibility="{x:Bind SelectedStep.DeltaVisibility, Mode=OneWay}" />
+
+                                <NumberBox Header="等待毫秒" Value="{x:Bind SelectedStep.Ms, Mode=TwoWay}"
+                                           SpinButtonPlacementMode="Compact" Margin="0,0,0,10"
+                                           Visibility="{x:Bind SelectedStep.MsVisibility, Mode=OneWay}" />
+
+                                <NumberBox Header="拖拽时长（毫秒）" Value="{x:Bind SelectedStep.DurationMs, Mode=TwoWay}"
+                                           SpinButtonPlacementMode="Compact" Margin="0,0,0,10"
+                                           Visibility="{x:Bind SelectedStep.DurationVisibility, Mode=OneWay}" />
+
+                                <Grid ColumnSpacing="8" Margin="0,0,0,10"
+                                      Visibility="{x:Bind SelectedStep.DragEndsVisibility, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox Header="起点 X" Value="{x:Bind SelectedStep.FromX, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="1" Header="起点 Y" Value="{x:Bind SelectedStep.FromY, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="2" Header="终点 X" Value="{x:Bind SelectedStep.ToX, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="3" Header="终点 Y" Value="{x:Bind SelectedStep.ToY, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                </Grid>
+
+                                <Grid ColumnSpacing="8" Margin="0,0,0,10"
+                                      Visibility="{x:Bind SelectedStep.TimeoutVisibility, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox Header="最长等多少毫秒" Value="{x:Bind SelectedStep.TimeoutMs, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="1" Header="每轮间隔毫秒"
+                                               Value="{x:Bind SelectedStep.IntervalMs, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                </Grid>
+
+                                <ComboBox Header="匹配方式" HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                          Visibility="{x:Bind SelectedStep.MatchVisibility, Mode=OneWay}"
+                                          SelectedIndex="{x:Bind SelectedStep.MatchIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="contains（读到里含期望）" />
+                                    <ComboBoxItem Content="exact（逐字一致）" />
+                                    <ComboBoxItem Content="fuzzy（允许少量错字）" />
+                                </ComboBox>
+
+                                <Grid ColumnSpacing="8" Visibility="{x:Bind SelectedStep.MatchVisibility, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox Header="容错字数" Value="{x:Bind SelectedStep.MaxErrors, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                    <NumberBox Grid.Column="1" Header="连续确认次数"
+                                               Value="{x:Bind SelectedStep.Confirm, Mode=TwoWay}"
+                                               SpinButtonPlacementMode="Compact" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.NoteVisibility, Mode=OneWay}">
+                            <TextBox Header="备注（只给人看）" Text="{x:Bind SelectedStep.Note, Mode=TwoWay}"
+                                     TextWrapping="Wrap" />
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorder}"
+                                Visibility="{x:Bind SelectedStep.ShotVisibility, Mode=OneWay}">
+                            <StackPanel>
+                                <TextBlock Text="录制时的截图" Style="{StaticResource SectionLabel}" />
+                                <Border CornerRadius="6" BorderThickness="1"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                    <Image Source="{x:Bind SelectedStep.ShotImage, Mode=OneWay}" Stretch="Uniform" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Text="选中左边的一步就能改它的参数。" TextWrapping="Wrap"
+                               Visibility="{x:Bind NoSelection, Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status + run output -->
+        <Grid Grid.Row="3" Padding="16,0,16,14" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <InfoBar x:Name="Status" IsOpen="False" IsClosable="True" />
+            <Expander Grid.Row="1" x:Name="LogExpander" Header="运行输出" HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Stretch">
+                <TextBox x:Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                         FontFamily="Consolas" FontSize="12" Height="170"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            </Expander>
+        </Grid>
+    </Grid>
+</Window>

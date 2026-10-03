@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T10:20:44.232Z",
+    "compiled_at": "2026-10-03T10:33:40.001Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 144,
-      "leaf_count": 116,
-      "api_count": 210,
-      "dep_count": 164,
+      "module_count": 150,
+      "leaf_count": 121,
+      "api_count": 223,
+      "dep_count": 172,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
-      "layout_count": 28,
+      "layout_count": 29,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 9,
+      "change_count": 10,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 143,
+        "descendant_count": 149,
         "own_api_count": 0,
-        "inherited_api_count": 210,
+        "inherited_api_count": 223,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -444,9 +444,9 @@
           "end_line": 658
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.998Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.209Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "deps": [
         {
           "kind": "call",
@@ -495,9 +495,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 23,
+        "descendant_count": 24,
         "own_api_count": 0,
-        "inherited_api_count": 36,
+        "inherited_api_count": 37,
         "dep_out": 5,
         "dep_in": 1
       }
@@ -532,9 +532,9 @@
           "end_line": 656
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.998Z",
-      "fingerprint": "c17273cdf9eb4cd83950f52fc835104500242160feb510e93b0a14201af05463",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.208Z",
+      "fingerprint": "1dc6315e5e6839b4070e982c6c81cf6216479ddf978a1b6c929e16feaa1f7c8a",
       "apis": [
         {
           "protocol": "rpc",
@@ -563,6 +563,51 @@
         "dep_in": 3
       }
     },
+    "keymouse.cli.flow": {
+      "uid": "7a1f0d15",
+      "id": "keymouse.cli.flow",
+      "parent": "keymouse.cli",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "cli",
+        "editor"
+      ],
+      "name": {
+        "zh": "flow edit 入口",
+        "en": "flow edit entry"
+      },
+      "description": {
+        "zh": "`KeyMouse flow edit <流程.json>`：先找编辑器（KeyMouse.exe 旁边 → 开发目录里的构建输出），找到就带着流程路径启动它，找不到就报清楚该构建什么（退出码 4）。控制台不自己渲染任何界面。\n",
+        "en": "`KeyMouse flow edit <flow.json>`: looks for the editor (next to KeyMouse.exe, then the build output of a development checkout), starts it with the flow path, and when it is nowhere says exactly what to build (exit code 4). The console renders no UI itself.\n"
+      },
+      "source": [
+        {
+          "path": "FlowEditorCommand.cs"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.240Z",
+      "fingerprint": "7b89223175c6951d371aee58cef8887e1b800bc48bd29e342b47ce54ffc6b589",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "FlowEditorCommand.Run",
+          "description": {
+            "zh": "定位并启动图形编辑器。\n",
+            "en": "Locates and launches the graphical editor.\n"
+          },
+          "key": "rpc:FlowEditorCommand.Run"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.cli.help": {
       "uid": "a5b6c7d8",
       "id": "keymouse.cli.help",
@@ -588,9 +633,9 @@
           "end_line": 128
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.456Z",
-      "fingerprint": "9645ae0ab6eb4ce394724b190e9325811c2bf44f429d8dc628ea2d25e7dca361",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.241Z",
+      "fingerprint": "750bc0aef435b8ef667c67f51b6b59c023e119da30118f9148eceefd5a260b19",
       "apis": [
         {
           "protocol": "rpc",
@@ -635,9 +680,9 @@
           "end_line": 650
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.209Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -690,9 +735,9 @@
           "end_line": 430
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.210Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "deps": [
         {
           "kind": "call",
@@ -754,9 +799,9 @@
           "end_line": 413
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.209Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -813,9 +858,9 @@
           "end_line": 399
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.210Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -881,9 +926,9 @@
           "end_line": 379
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.210Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -941,9 +986,9 @@
           "end_line": 430
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:53.999Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.211Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1000,9 +1045,9 @@
           "end_line": 63
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.455Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.241Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1119,9 +1164,9 @@
           "end_line": 341
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.212Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "deps": [
         {
           "kind": "call",
@@ -1174,9 +1219,9 @@
           "end_line": 260
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.211Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1260,9 +1305,9 @@
           "end_line": 341
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.211Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1343,9 +1388,9 @@
           "end_line": 349
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.212Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1418,9 +1463,9 @@
           "end_line": 209
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.212Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1495,9 +1540,9 @@
           "end_line": 219
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.213Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1554,9 +1599,9 @@
           "end_line": 188
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.000Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.213Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1613,9 +1658,9 @@
           "end_line": 290
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.213Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1682,9 +1727,9 @@
           "end_line": 604
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.213Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1737,9 +1782,9 @@
           "end_line": 545
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.214Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "deps": [
         {
           "kind": "call",
@@ -1784,9 +1829,9 @@
           "end_line": 545
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.214Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1855,9 +1900,9 @@
           "end_line": 496
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.214Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1922,9 +1967,9 @@
           "end_line": 464
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.001Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.215Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -1990,9 +2035,9 @@
           "end_line": 160
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.002Z",
-      "fingerprint": "35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.215Z",
+      "fingerprint": "bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5",
       "apis": [
         {
           "protocol": "rpc",
@@ -2084,9 +2129,9 @@
           "end_line": 128
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:11:54.002Z",
-      "fingerprint": "eaeb85e79e9ba8710dbb026e1fc3df0bae858efa3a68148fae4e0d70fc476609",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.216Z",
+      "fingerprint": "ac9b28b8ae71c52456a2c5db947518c0d26bd0315b2820602a649dcfc673768c",
       "deps": [
         {
           "kind": "call",
@@ -2261,9 +2306,9 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:43.818Z",
-      "fingerprint": "7a762a7909df422de4a365a7ae0807c4c827d7aba9788caceafe378cad18ed36",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:39.277Z",
+      "fingerprint": "2a262015b7323189571df6dc44cec8840df834437c88673e54303d0a5abc4c4c",
       "aggregate": {
         "descendant_count": 5,
         "own_api_count": 0,
@@ -2296,9 +2341,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.521Z",
-      "fingerprint": "2bbdbd5c1753d21f9dda37499eeb7e639bb3aa3a81756e246b52d4d463f0ee19",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.242Z",
+      "fingerprint": "ca9e3b636284787eb0992e0fafc6930f30714562327a127633aa34395c82745a",
       "apis": [
         {
           "protocol": "file",
@@ -2340,9 +2385,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:43.817Z",
-      "fingerprint": "2f11ac96ab3b0829d17146951a3cb5af685bebe26e7b83fdc0ff17f180478254",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:39.276Z",
+      "fingerprint": "b3e3d09ff1fb91d123c5af0c40b47a546e35eb59ee85aded9e96b8562ebbc839",
       "apis": [
         {
           "protocol": "file",
@@ -2384,9 +2429,9 @@
           "path": "README.md"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:43.819Z",
-      "fingerprint": "8dbd77db9c77134d5b7f7fa56bd000a86eca2853808e61c67085478e92103255",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:39.277Z",
+      "fingerprint": "b532a7adb200d6ebefe7d0a75a8c5d6fd82d48be7dcd5e03407af7532aa9f0f0",
       "apis": [
         {
           "protocol": "file",
@@ -2428,9 +2473,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:36.521Z",
-      "fingerprint": "cb666cb55ff96ea3f54ecd2f0dc83caade4f972ca2247487aae247d47c6b4f33",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.242Z",
+      "fingerprint": "445e09384aadd395ec29b54a1545f16e797d0f2b9d00da1051e28c26f52028e6",
       "apis": [
         {
           "protocol": "file",
@@ -2493,6 +2538,390 @@
         "inherited_api_count": 0,
         "dep_out": 0,
         "dep_in": 0
+      }
+    },
+    "keymouse.editor": {
+      "uid": "7a1f0d10",
+      "id": "keymouse.editor",
+      "parent": "keymouse",
+      "tree": "keymouse",
+      "depth": 2,
+      "tags": [
+        "editor",
+        "winui"
+      ],
+      "name": {
+        "zh": "图形编辑器",
+        "en": "Graphical editor"
+      },
+      "description": {
+        "zh": "WinUI 3 的无包自包含应用（editor/KeyMouse.FlowEditor），只做命令行做不好的那一件事——编辑流程。它把 keymouse-flow 的 schema 原样链接进来，取区域与播放都调命令行自身，因此\"编辑器写出来的东西 run 认不认\"不靠自觉。部署上必须自包含：本机只有 Windows App Runtime 的 CBS 版本，无包引导程序找不到可用运行时（启动即 0x80670016）。\n",
+        "en": "An unpackaged, self-contained WinUI 3 app (editor/KeyMouse.FlowEditor) that does the one thing the command line cannot: editing a flow. It links the keymouse-flow schema verbatim and asks the command line itself for region picking and replay, so \"does run accept what the editor wrote\" is not a matter of discipline. Self-contained is required here: only the CBS runtime exists, and the unpackaged bootstrapper finds nothing (0x80670016).\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/KeyMouse.FlowEditor.csproj"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.238Z",
+      "fingerprint": "b547ed01c9bbf6a73c3c3697f4479fe5950c2e08f5958f73a0e25034f24b8d9e",
+      "aggregate": {
+        "descendant_count": 4,
+        "own_api_count": 0,
+        "inherited_api_count": 12,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.editor.bridge": {
+      "uid": "7a1f0d13",
+      "id": "keymouse.editor.bridge",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "cli"
+      ],
+      "name": {
+        "zh": "命令行桥接",
+        "en": "Command-line bridge"
+      },
+      "description": {
+        "zh": "找 KeyMouse.exe（编辑器旁边 → 向上找 dist → PATH）、调 `region pick --json` 并把结果解析成\"坐标 + 窗口\"、调 `run` 并逐行流出输出。进程参数一个一个传（不过 shell），所以带空格的进程名安全；被取消时连同子进程一起杀掉。\n",
+        "en": "Finds KeyMouse.exe (next to the editor, then up the tree for a dist folder, then PATH), calls `region pick --json` and parses it into coordinates plus the window, and calls `run` while streaming its output. Arguments are passed one by one (never through a shell), so process names with spaces are safe, and cancelling kills the child tree.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/KeyMouseBridge.cs"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.240Z",
+      "fingerprint": "015005b8d11bc3d5c78598d0ad2ab1d86515dd31d07d3b3e308edf14297b84c4",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "KeyMouse.exe",
+          "description": {
+            "zh": "编辑器调用命令行工具的唯一入口（找不到时界面会说明去哪构建）。\n",
+            "en": "The only way the editor reaches the tool; when it is missing the UI says what to build.\n"
+          },
+          "key": "file:KeyMouse.exe"
+        },
+        {
+          "protocol": "rpc",
+          "path": "KeyMouseBridge.PickRegionAsync",
+          "description": {
+            "zh": "拉选区浮层并把结果填进当前步骤。\n",
+            "en": "Pulls up the region overlay and feeds the result into the current step.\n"
+          },
+          "key": "rpc:KeyMouseBridge.PickRegionAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "KeyMouseBridge.RunFlowAsync",
+          "description": {
+            "zh": "播放/试运行并把输出交给界面。\n",
+            "en": "Replays or dry-runs and hands the output to the UI.\n"
+          },
+          "key": "rpc:KeyMouseBridge.RunFlowAsync"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.pick.overlay",
+          "label": {
+            "zh": "取区域就是那个浮层",
+            "en": "Region picking is that overlay"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.runner",
+          "to_api": "rpc:FlowRunner.Run",
+          "label": {
+            "zh": "播放也是它",
+            "en": "And replay is that runner"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 1
+      }
+    },
+    "keymouse.editor.schema": {
+      "uid": "7a1f0d14",
+      "id": "keymouse.editor.schema",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "schema"
+      ],
+      "name": {
+        "zh": "共享 schema 链接",
+        "en": "Linked shared schema"
+      },
+      "description": {
+        "zh": "编辑器不重写流程格式：FlowModel.cs 与 TextPredicate.cs 通过 `<Compile Include=\"..\\..\\\" />` 原样编进编辑器程序集，只补一个 10 行的 CommandFailure 兼容声明（与原版同形：一个退出码 + 一句话）。代价是根项目必须 `<Compile Remove=\"editor/**\" />`，否则会把编辑器整个编进控制台程序（实测：重复 AssemblyInfo 特性）。\n",
+        "en": "The editor does not re-implement the flow format: FlowModel.cs and TextPredicate.cs are compiled in verbatim via `<Compile Include=\"..\\..\\\" />`, with only a ten-line CommandFailure declaration to match (a code and a message). The price: the root project must `<Compile Remove=\"editor/**\" />`, or it compiles the editor into the console app (measured: duplicate AssemblyInfo attributes).\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/CommandFailure.cs"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/Compat.cs"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.240Z",
+      "fingerprint": "e6fa3130a76c69103863f80e7d713dcb26987b89b3bfa5eb406132dd6c7a001d",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "FlowModel.cs",
+          "description": {
+            "zh": "原样链接进来的流程文档模型与编译器（编辑器的读写都走它）。\n",
+            "en": "The flow document model and compiler, linked verbatim (all editor reads and writes go through it).\n"
+          },
+          "key": "file:FlowModel.cs"
+        },
+        {
+          "protocol": "file",
+          "path": "TextPredicate.cs",
+          "description": {
+            "zh": "原样链接进来的匹配模式定义（检查器里那个下拉框就是它）。\n",
+            "en": "The match-mode definitions, linked verbatim (the inspector dropdown is this).\n"
+          },
+          "key": "file:TextPredicate.cs"
+        },
+        {
+          "protocol": "file",
+          "path": "CommandFailure.cs",
+          "description": {
+            "zh": "10 行兼容声明：与原版同形（一个退出码 + 一句话）。\n",
+            "en": "The ten-line compatible declaration: same shape as the original (a code and a message).\n"
+          },
+          "key": "file:CommandFailure.cs"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.model",
+          "label": {
+            "zh": "同一份文档模型",
+            "en": "The same document model"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.predicate",
+          "label": {
+            "zh": "同一套匹配方式",
+            "en": "The same match modes"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
+    "keymouse.editor.shell": {
+      "uid": "7a1f0d11",
+      "id": "keymouse.editor.shell",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "winui",
+        "ui"
+      ],
+      "name": {
+        "zh": "窗口外壳与交互",
+        "en": "Shell and interactions"
+      },
+      "description": {
+        "zh": "Mica 背景 + 自定义标题栏 + 工具栏（打开/保存/另存为/添加步骤/上移下移复制删除/取区域/试运行/播放/停止）+ 状态 InfoBar 与运行日志。退出码按 CLI 的同一套含义解释给用户看；有未保存改动时关窗先问；\"试运行/播放\"在未保存时写临时文件，绝不悄悄覆盖正在编辑的文件。\n",
+        "en": "Mica backdrop, custom title bar and toolbar (open/save/save-as/add/move/duplicate/delete/pick-region/dry-run/play/stop) plus a status InfoBar and a run log. Exit codes are explained with the same meanings the CLI documents, closing with unsaved changes asks first, and dry-run/play write a scratch file rather than silently overwriting the file being edited.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/MainWindow.xaml"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.239Z",
+      "fingerprint": "65d715ffe1844d7c294a307c26ffdf64ba4834f93ff8b388fb60835db4ec489b",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "MainWindow.OpenFile",
+          "description": {
+            "zh": "打开一个流程（命令行参数与\"打开\"按钮都走它）。\n",
+            "en": "Opens a flow (both the command line and the Open button go through it).\n"
+          },
+          "key": "rpc:MainWindow.OpenFile"
+        },
+        {
+          "protocol": "rpc",
+          "path": "MainWindow.RunAsync",
+          "description": {
+            "zh": "试运行/播放：存一份给 run，输出实时进日志。\n",
+            "en": "Dry run/play: hand a copy to run and stream its output into the log.\n"
+          },
+          "key": "rpc:MainWindow.RunAsync"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.editor.bridge",
+          "to_api": "rpc:KeyMouseBridge.RunFlowAsync",
+          "label": {
+            "zh": "播放走命令行",
+            "en": "Replay through the CLI"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.editor.steps",
+          "to_api": "rpc:EditorModel.Load",
+          "label": {
+            "zh": "读流程",
+            "en": "Load a flow"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
+    "keymouse.editor.steps": {
+      "uid": "7a1f0d12",
+      "id": "keymouse.editor.steps",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "ui"
+      ],
+      "name": {
+        "zh": "步骤视图模型",
+        "en": "Step view model"
+      },
+      "description": {
+        "zh": "列表与检查器背后的可编辑模型：每个字段直接读写共享 schema 的步骤对象，一次改动同时刷新摘要、JSON 预览与该显示的字段。**每个 setter 先比一次值**——折叠的卡片照样是绑定的，实测打开文件就会把默认值写回模型（click 步骤凭空多出 ms: 0），所以未保存标记按序列化内容比对，而不是\"动过手\"。\n",
+        "en": "The editable model behind the list and the inspector: every field reads and writes the shared schema step directly, and one edit refreshes the summary, the JSON preview and the visible sections together. Every setter compares first - a collapsed card is still bound, and opening a file measurably wrote defaults back (a click step gained ms: 0) - so the unsaved marker compares serialised content.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/StepVm.cs"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/EditorModel.cs"
+        }
+      ],
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.239Z",
+      "fingerprint": "da816a90787059deb4b7e6e2d465f9da0e512bf3514e4187f1923973ec95d12c",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "EditorModel.Load",
+          "description": {
+            "zh": "读入流程文件，失败时带着加载器的原话。\n",
+            "en": "Loads a flow file, carrying the loader own message on failure.\n"
+          },
+          "key": "rpc:EditorModel.Load"
+        },
+        {
+          "protocol": "rpc",
+          "path": "EditorModel.Save",
+          "description": {
+            "zh": "按共享 schema 写回文件。\n",
+            "en": "Writes the file back through the shared schema.\n"
+          },
+          "key": "rpc:EditorModel.Save"
+        },
+        {
+          "protocol": "rpc",
+          "path": "EditorModel.MarkDirty",
+          "description": {
+            "zh": "按内容判断是否有未保存改动。\n",
+            "en": "Decides \"unsaved\" by comparing content.\n"
+          },
+          "key": "rpc:EditorModel.MarkDirty"
+        },
+        {
+          "protocol": "rpc",
+          "path": "StepVm.Edit",
+          "description": {
+            "zh": "值没变就什么都不做的写入守卫。\n",
+            "en": "The write guard that ignores a no-op value.\n"
+          },
+          "key": "rpc:StepVm.Edit"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.Load",
+          "label": {
+            "zh": "同一份 schema",
+            "en": "The same schema"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.model",
+          "to_api": "rpc:FlowDocument.Save",
+          "label": {
+            "zh": "写回也是它",
+            "en": "And for writing back"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 4,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 1
       }
     },
     "keymouse.flow": {
@@ -2608,7 +3037,7 @@
         "own_api_count": 3,
         "inherited_api_count": 0,
         "dep_out": 1,
-        "dep_in": 3
+        "dep_in": 6
       }
     },
     "keymouse.flow.predicate": {
@@ -2680,7 +3109,7 @@
         "own_api_count": 4,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 2
+        "dep_in": 3
       }
     },
     "keymouse.flow.runner": {
@@ -2755,7 +3184,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 2,
-        "dep_in": 1
+        "dep_in": 2
       }
     },
     "keymouse.input": {
@@ -4308,7 +4737,7 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 3,
-        "dep_in": 3
+        "dep_in": 4
       }
     },
     "keymouse.pick.placement": {
@@ -4758,9 +5187,9 @@
           "path": "FlowRunner.cs"
         }
       ],
-      "revision": "89f30aa8db66e03f9c60253d85abc64d7760319e",
-      "updated_at": "2026-10-03T10:20:29.619Z",
-      "fingerprint": "2b831d1992088435328cba9d333a00d18bec25e8b8f8c7c5b502f23022470d8b",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:15.221Z",
+      "fingerprint": "22ce0469120a9174d89f08079d99530dc8ad1eaa2f30560eb005e1aced6f146d",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -4783,17 +5212,17 @@
         "en": "Session and step synthesis"
       },
       "description": {
-        "zh": "把钩子事件流变成步骤：按键按当前布局翻成字符（Unicode 注入也认）、组合键记键名、按钮按下与抬起配对成点击或拖拽、轨迹按阈值抽稀并就近插入、停顿超过阈值才记 sleep、每个动作解析出所属窗口与相对坐标。抽稀与拖拽判定是纯函数，可离线单测。\n",
-        "en": "Turns the hook stream into steps: keys become the characters the active layout produces (Unicode injection included), combinations keep their key names, button down/up pairs become a click or a drag, the trajectory is thinned and emitted in place, only pauses past the threshold become sleeps, and every action resolves its window and relative coordinates. Thinning and drag detection are pure functions, testable without a desktop.\n"
+        "zh": "把钩子事件流变成步骤：按键按当前布局翻成字符（Unicode 注入也认）、组合键记键名、按下与抬起配对成点击或拖拽、轨迹按阈值抽稀、停顿超过阈值才记 sleep、每个动作解析出所属窗口与相对坐标。步骤截图是**整个客户区缩小 + 动作点红十字**（原地 320×200 裁剪实测在空白窗体上就是一块白）。\n",
+        "en": "Turns the hook stream into steps: keys become the characters the active layout produces (Unicode injection included), combinations keep their key names, down/up pairs become a click or a drag, the trajectory is thinned, only pauses past the threshold become sleeps, and every action resolves its window and coordinates. A screenshot is the whole client area scaled down with a mark on the action point (a 320x200 crop measured as blank white on an empty form).\n"
       },
       "source": [
         {
           "path": "Recorder.cs"
         }
       ],
-      "revision": "8138caf9efa304f3487fcf5c6320ee4ac39f036b",
-      "updated_at": "2026-10-03T10:12:03.454Z",
-      "fingerprint": "58c8b1dd5878b04b57e5016e94ab766152608c969070cd71fe66230f6139395e",
+      "revision": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94",
+      "updated_at": "2026-10-03T10:33:31.241Z",
+      "fingerprint": "856732460646dab4b6162596fe0da6235d920b921f5cca8e3c854b153156fabe",
       "apis": [
         {
           "protocol": "rpc",
@@ -9256,11 +9685,15 @@
   "api_index": {
     "file:<报告>.json": "keymouse.script.report",
     "file:<脚本>.txt": "keymouse.script.read",
+    "file:CommandFailure.cs": "keymouse.editor.schema",
     "file:docs/design.md": "keymouse.docs.design",
     "file:docs/development.md": "keymouse.docs.development",
     "file:docs/reference.md": "keymouse.docs.reference",
+    "file:FlowModel.cs": "keymouse.editor.schema",
+    "file:KeyMouse.exe": "keymouse.editor.bridge",
     "file:README.md": "keymouse.docs.readme",
     "file:samples/notepad-demo.txt": "keymouse.docs.sample",
+    "file:TextPredicate.cs": "keymouse.editor.schema",
     "rpc:.\\build.ps1": "keymouse.build.publish",
     "rpc:.\\build.ps1 -SelfContained": "keymouse.build.publish",
     "rpc:.\\verify.ps1": "keymouse.build.verify",
@@ -9285,6 +9718,9 @@
     "rpc:ConsoleText.Truncate": "keymouse.console.width",
     "rpc:dotnet run -- bench": "keymouse.tests.bench",
     "rpc:dwmapi!DwmGetWindowAttribute": "keymouse.native.dwm",
+    "rpc:EditorModel.Load": "keymouse.editor.steps",
+    "rpc:EditorModel.MarkDirty": "keymouse.editor.steps",
+    "rpc:EditorModel.Save": "keymouse.editor.steps",
     "rpc:ExecutionMode.DryRun": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteInjected": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteSuppressed": "keymouse.script.execution-mode",
@@ -9292,6 +9728,7 @@
     "rpc:FlowDocument.Load": "keymouse.flow.model",
     "rpc:FlowDocument.Save": "keymouse.flow.model",
     "rpc:FlowDocument.ToArguments": "keymouse.flow.model",
+    "rpc:FlowEditorCommand.Run": "keymouse.cli.flow",
     "rpc:FlowRunner.LooksLikeJson": "keymouse.flow.runner",
     "rpc:FlowRunner.Run": "keymouse.flow.runner",
     "rpc:FocusTarget": "keymouse.cli.window.targeting",
@@ -9321,8 +9758,12 @@
     "rpc:KeyMouse run <脚本>": "keymouse.script.run.prepare",
     "rpc:KeyMouse.Fail": "keymouse.cli.failure",
     "rpc:KeyMouse.SmokeTarget.exe": "keymouse.tests.smoke-target",
+    "rpc:KeyMouseBridge.PickRegionAsync": "keymouse.editor.bridge",
+    "rpc:KeyMouseBridge.RunFlowAsync": "keymouse.editor.bridge",
     "rpc:LoopPlan": "keymouse.script.loop.analyze",
     "rpc:Loops 用例": "keymouse.tests.unit.parsing.invariants.loops",
+    "rpc:MainWindow.OpenFile": "keymouse.editor.shell",
+    "rpc:MainWindow.RunAsync": "keymouse.editor.shell",
     "rpc:mouse click": "keymouse.cli.mouse.button",
     "rpc:mouse dblclick": "keymouse.cli.mouse.button",
     "rpc:mouse down": "keymouse.cli.mouse.button",
@@ -9408,6 +9849,7 @@
     "rpc:ScriptRunner.WaitUntil": "keymouse.script.wait.until",
     "rpc:ScriptRunner.WriteReport": "keymouse.script.report",
     "rpc:SingleProcessExecution 用例": "keymouse.tests.unit.parsing.singleproc",
+    "rpc:StepVm.Edit": "keymouse.editor.steps",
     "rpc:TargetInheritance 用例": "keymouse.tests.unit.parsing.invariants.inheritance",
     "rpc:TextPredicate.Distance": "keymouse.flow.predicate",
     "rpc:TextPredicate.IsKnownMode": "keymouse.flow.predicate",
@@ -9996,6 +10438,91 @@
       "label": {
         "zh": "读取控制台码页",
         "en": "Read console code page"
+      }
+    },
+    {
+      "from": "keymouse.editor.bridge",
+      "to": "keymouse.flow.runner",
+      "to_api": "rpc:FlowRunner.Run",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "播放也是它",
+        "en": "And replay is that runner"
+      }
+    },
+    {
+      "from": "keymouse.editor.bridge",
+      "to": "keymouse.pick.overlay",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "取区域就是那个浮层",
+        "en": "Region picking is that overlay"
+      }
+    },
+    {
+      "from": "keymouse.editor.schema",
+      "to": "keymouse.flow.model",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "同一份文档模型",
+        "en": "The same document model"
+      }
+    },
+    {
+      "from": "keymouse.editor.schema",
+      "to": "keymouse.flow.predicate",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "同一套匹配方式",
+        "en": "The same match modes"
+      }
+    },
+    {
+      "from": "keymouse.editor.shell",
+      "to": "keymouse.editor.bridge",
+      "to_api": "rpc:KeyMouseBridge.RunFlowAsync",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "播放走命令行",
+        "en": "Replay through the CLI"
+      }
+    },
+    {
+      "from": "keymouse.editor.shell",
+      "to": "keymouse.editor.steps",
+      "to_api": "rpc:EditorModel.Load",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "读流程",
+        "en": "Load a flow"
+      }
+    },
+    {
+      "from": "keymouse.editor.steps",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.Load",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "同一份 schema",
+        "en": "The same schema"
+      }
+    },
+    {
+      "from": "keymouse.editor.steps",
+      "to": "keymouse.flow.model",
+      "to_api": "rpc:FlowDocument.Save",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "写回也是它",
+        "en": "And for writing back"
       }
     },
     {
@@ -11335,11 +11862,11 @@
     "keymouse": {
       "schema_version": 1,
       "id": "keymouse",
-      "updated_at": "2026-10-03T10:11:47.581Z",
+      "updated_at": "2026-10-03T10:33:08.027Z",
       "mode": "groups",
       "reading": {
-        "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制是从另一端进入这条链（钩子 → JSON 流程）。下方三组是工程支撑。",
-        "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer verifies the target, perception reads the screen and only reports (or lets a human draw the region), input injects, native does the syscalls. Recording enters the same chain from the other end (hooks -> JSON flow). The lower group is engineering support."
+        "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制从另一端进入这条链（钩子 → JSON 流程），编辑器是另一条前端（图形编辑，取区域与回放都回到命令行）。",
+        "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow), and the editor is another front end whose picking and replay come back to the command line."
       },
       "order": [
         "keymouse.cli",
@@ -11353,6 +11880,7 @@
         "keymouse.native",
         "keymouse.keys",
         "keymouse.console",
+        "keymouse.editor",
         "keymouse.tests",
         "keymouse.build",
         "keymouse.docs"
@@ -11376,6 +11904,16 @@
             "keymouse.native",
             "keymouse.keys",
             "keymouse.console"
+          ]
+        },
+        {
+          "id": "frontends",
+          "title": {
+            "zh": "图形前端",
+            "en": "Graphical front end"
+          },
+          "children": [
+            "keymouse.editor"
           ]
         },
         {
@@ -11612,6 +12150,22 @@
             "keymouse.docs.sample"
           ]
         }
+      ]
+    },
+    "keymouse.editor": {
+      "schema_version": 1,
+      "id": "keymouse.editor",
+      "updated_at": "2026-10-03T10:33:07.909Z",
+      "mode": "layers",
+      "reading": {
+        "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型（它读写共享 schema），取区域与播放都交给桥接去调命令行：编辑器自己不认识流程格式的细节，也不重做选区与回放。",
+        "en": "The shell lays out the step list and the inspector, edits go into the view model (which reads and writes the shared schema), and both region picking and replay are handed to the bridge to call the command line: the editor knows nothing about format details and re-does neither picking nor replay."
+      },
+      "order": [
+        "keymouse.editor.shell",
+        "keymouse.editor.steps",
+        "keymouse.editor.bridge",
+        "keymouse.editor.schema"
       ]
     },
     "keymouse.flow": {
@@ -12427,6 +12981,15 @@
         "en": "Condition step wait-text: wait for text in a region"
       },
       "updated_at": "2026-10-03T10:20:37.387Z"
+    },
+    {
+      "id": "2026-10-03-winui-flow-editor",
+      "status": "verified",
+      "title": {
+        "zh": "WinUI 3 图形编辑器",
+        "en": "WinUI 3 graphical flow editor"
+      },
+      "updated_at": "2026-10-03T10:33:33.276Z"
     }
   ]
 }

@@ -11,9 +11,9 @@ description:
   en: >
       One path from client coordinates to screen coordinates, and three refusals: a point outside the client area, mixing client and absolute coordinates, and --strict-point finding another window under the point.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:54.000Z"
-fingerprint: 35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78
+revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
+updated_at: "2026-10-03T10:33:15.212Z"
+fingerprint: bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5
 source:
   - path: "Program.cs"
     line: 161

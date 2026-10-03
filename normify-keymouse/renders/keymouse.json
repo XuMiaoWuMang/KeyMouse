@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "id": "keymouse",
-  "updated_at": "2026-10-03T10:11:47.581Z",
+  "updated_at": "2026-10-03T10:33:08.027Z",
   "mode": "groups",
   "reading": {
-    "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制是从另一端进入这条链（钩子 → JSON 流程）。下方三组是工程支撑。",
-    "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer verifies the target, perception reads the screen and only reports (or lets a human draw the region), input injects, native does the syscalls. Recording enters the same chain from the other end (hooks -> JSON flow). The lower group is engineering support."
+    "zh": "一次调用的路径：命令行入口解析出目标与动作 → 脚本引擎（文本批量）或流程执行器（JSON 回放）→ 窗口识别与闸门 → 感知出口（读屏幕，只报告；也可以先让人用鼠标框一块）→ 输入注入 → 原生互操作；录制从另一端进入这条链（钩子 → JSON 流程），编辑器是另一条前端（图形编辑，取区域与回放都回到命令行）。",
+    "en": "One invocation flows left to right: the CLI resolves target and action, then either the text script runner or the JSON flow runner, then the window layer, then perception (which only reports, or lets a human draw the region), then injection, then native syscalls. Recording enters the chain from the other end (hooks -> JSON flow), and the editor is another front end whose picking and replay come back to the command line."
   },
   "order": [
     "keymouse.cli",
@@ -19,6 +19,7 @@
     "keymouse.native",
     "keymouse.keys",
     "keymouse.console",
+    "keymouse.editor",
     "keymouse.tests",
     "keymouse.build",
     "keymouse.docs"
@@ -42,6 +43,16 @@
         "keymouse.native",
         "keymouse.keys",
         "keymouse.console"
+      ]
+    },
+    {
+      "id": "frontends",
+      "title": {
+        "zh": "图形前端",
+        "en": "Graphical front end"
+      },
+      "children": [
+        "keymouse.editor"
       ]
     },
     {

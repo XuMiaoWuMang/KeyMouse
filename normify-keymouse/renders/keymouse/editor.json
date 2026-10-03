@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.editor",
+  "updated_at": "2026-10-03T10:33:07.909Z",
+  "mode": "layers",
+  "reading": {
+    "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型（它读写共享 schema），取区域与播放都交给桥接去调命令行：编辑器自己不认识流程格式的细节，也不重做选区与回放。",
+    "en": "The shell lays out the step list and the inspector, edits go into the view model (which reads and writes the shared schema), and both region picking and replay are handed to the bridge to call the command line: the editor knows nothing about format details and re-does neither picking nor replay."
+  },
+  "order": [
+    "keymouse.editor.shell",
+    "keymouse.editor.steps",
+    "keymouse.editor.bridge",
+    "keymouse.editor.schema"
+  ]
+}

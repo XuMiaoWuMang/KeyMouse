@@ -43,12 +43,14 @@ internal static class Program
                     return ScriptRunner.Run(rest[1..], global, Main);
                 case "record":
                     return Recorder.Run(rest[1..], global);
+                case "flow":
+                    return FlowEditorCommand.Run(rest[1..]);
                 case "probe":
                     return Probe.Run(rest[1..], global);
                 case "region":
                     return RegionCommand.Run(rest[1..], global);
                 default:
-                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | record | probe | region | help）");
+                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | record | flow | probe | region | help）");
             }
         }
         catch (CommandFailure ex)

@@ -11,9 +11,9 @@ description:
   en: >
       The error contract used everywhere: CommandFailure carries an exit code (2 usage, 3 no match, 4 unusable target, 5 focus failed) and Fail writes it to stderr with a fixed prefix. The code is a promise: 3/4/5 mean nothing was sent.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:53.998Z"
-fingerprint: c17273cdf9eb4cd83950f52fc835104500242160feb510e93b0a14201af05463
+revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
+updated_at: "2026-10-03T10:33:15.208Z"
+fingerprint: 1dc6315e5e6839b4070e982c6c81cf6216479ddf978a1b6c929e16feaa1f7c8a
 source:
   - path: "WindowFocus.cs"
     line: 53

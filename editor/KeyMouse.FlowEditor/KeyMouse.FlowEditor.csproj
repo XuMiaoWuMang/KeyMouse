@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>KeyMouse.FlowEditor</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Unpackaged, and self-contained: measured on this machine the only Windows App Runtime
+         present is the CBS (inbox) one, which the bootstrapper refuses (exit 0x80670016), while
+         WindowsAppSDKSelfContained starts fine. It also means the editor needs nothing installed. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+    <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
+    <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+  </ItemGroup>
+
+  <!-- One schema, two consumers: the flow format is not re-implemented here, it is linked verbatim
+       from the console tool, so the editor cannot drift from what `run` accepts. Only the two
+       types the schema needs are linked (CommandFailure lives in Compat.cs). -->
+  <ItemGroup>
+    <Compile Include="..\..\FlowModel.cs" Link="Shared\FlowModel.cs" />
+    <Compile Include="..\..\TextPredicate.cs" Link="Shared\TextPredicate.cs" />
+  </ItemGroup>
+
+</Project>

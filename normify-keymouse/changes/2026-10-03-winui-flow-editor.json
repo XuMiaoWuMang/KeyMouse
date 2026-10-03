@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-winui-flow-editor",
+  "title": {
+    "zh": "WinUI 3 图形编辑器",
+    "en": "WinUI 3 graphical flow editor"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "新增 WinUI 3 编辑器（editor/KeyMouse.FlowEditor）：左边步骤列表（拖拽排序、缩略图）、右边参数检查器、从屏幕取区域、试运行/播放；schema 从命令行项目原样链接（不重写格式），取区域与回放都调命令行自身。顺带把录制截图从\"动作点周围 320×200\"改成\"整个客户区缩小 + 动作点红十字\"（前者在空白窗体上实测就是一块白），并加了 `KeyMouse flow edit` 入口与根项目的 editor/** 排除。",
+    "en": "Adds a WinUI 3 editor (editor/KeyMouse.FlowEditor): a step list that reorders by drag with thumbnails, a parameter inspector, region picking from the screen, and dry run/play. The schema is linked verbatim from the console project (the format is not re-implemented) and both picking and replay call the command line itself. Also changes recording screenshots from a 320x200 crop around the action point to the whole client area scaled down with a mark (measured: the crop is a blank white square on an empty form), and adds the `KeyMouse flow edit` entry point plus the editor/** exclusion in the root project."
+  },
+  "modules": {
+    "create": [
+      "keymouse.editor",
+      "keymouse.editor.shell",
+      "keymouse.editor.steps",
+      "keymouse.editor.bridge",
+      "keymouse.editor.schema",
+      "keymouse.cli.flow"
+    ],
+    "modify": [
+      "keymouse",
+      "keymouse.cli.main",
+      "keymouse.cli.help",
+      "keymouse.record.session",
+      "keymouse.docs.readme",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "编辑器构建通过并能在真机上打开一个录制出来的流程（已用 dist 里的工具截图确认外观）",
+    "编辑器写出的 JSON 由 run 直接接受：不重写 schema，而是链接 FlowModel.cs",
+    "打开未改动的流程时不显示\"未保存\"（setter 比值 + 脏标记按内容比对）",
+    "录制截图为整窗 + 动作点标记（缩略图在编辑器里能看出当时屏幕上是什么）",
+    "KeyMouse flow edit <流程.json> 能找到并启动编辑器；找不到时退出码 4 并说明怎么构建",
+    "verify.ps1 全绿（97 冒烟），validate 0 error"
+  ],
+  "note": "编辑器落地：WinUI 3 无包自包含（实测本机只有 CBS 运行时，引导程序 0x80670016）、schema 原样链接、取区域与回放都回到命令行；录制截图改为整窗 + 动作点标记。",
+  "revision": {
+    "before": null,
+    "after": "01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94"
+  },
+  "created_at": "2026-10-03T10:33:14.711Z",
+  "updated_at": "2026-10-03T10:33:33.276Z",
+  "closed_at": "2026-10-03T10:33:33.276Z"
+}

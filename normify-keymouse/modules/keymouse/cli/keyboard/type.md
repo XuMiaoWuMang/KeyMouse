@@ -11,9 +11,9 @@ description:
   en: >
       key type <text> [--interval ms] types character by character through Unicode injection, so it is layout- and IME-independent; the default 15 ms per character plus a drain grace keeps the last character from being lost.
       
-revision: 8138caf9efa304f3487fcf5c6320ee4ac39f036b
-updated_at: "2026-10-03T10:11:53.999Z"
-fingerprint: 35dd1463817a882de031cd047ed74cc24435245ab8196fecfafdc46f8c895c78
+revision: 01b8c3c91b12f7561f62aa9f6af36e7eb9e3bb94
+updated_at: "2026-10-03T10:33:15.211Z"
+fingerprint: bbcd909665ff033ce01c238b5437796aded55168ead822ef453ff228abd0fee5
 source:
   - path: "Program.cs"
     line: 414
