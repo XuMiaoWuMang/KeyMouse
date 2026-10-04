@@ -19,15 +19,15 @@ internal static class FlowEditorCommand
         string path = Path.GetFullPath(args[1]);
         if (!File.Exists(path)) return Commands.Fail(2, $"没有这个文件：{path}");
 
+        // 查找图形编辑器
         string? editor = ResolveEditor();
         if (editor is null)
         {
             return Commands.Fail(4,
-                "找不到编辑器 KeyMouse.FlowEditor.exe。先构建它：" +
-                "dotnet build editor\\KeyMouse.FlowEditor -c Release" +
-                "（或者把发布出来的 KeyMouse.FlowEditor.exe 放在 KeyMouse.exe 旁边）");
+                "找不到编辑器 KeyMouse.FlowEditor.exe，它应当在相同目录下");
         }
 
+        // todo：未知作用的 UseShellExecute
         var startInfo = new ProcessStartInfo(editor) { UseShellExecute = false };
         startInfo.ArgumentList.Add(path);
         Process.Start(startInfo);
@@ -38,27 +38,29 @@ internal static class FlowEditorCommand
 
     private static string? ResolveEditor()
     {
-        var candidates = new List<string>();
+        string candidates ;
         string here = AppContext.BaseDirectory;
-        candidates.Add(Path.Combine(here, "KeyMouse.FlowEditor.exe"));
+        candidates = Path.Combine(here, "edit\\KeyMouse.FlowEditor.exe");
 
-        // A development checkout: walk up looking for the editor's build output.
-        var directory = new DirectoryInfo(here);
-        for (int i = 0; i < 6 && directory is not null; i++, directory = directory.Parent)
-        {
-            foreach (string configuration in (string[])["Release", "Debug"])
-            {
-                candidates.Add(Path.Combine(directory.FullName, "editor", "KeyMouse.FlowEditor", "bin",
-                    configuration, "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
-            }
-        }
-        candidates.Add(Path.Combine(Environment.CurrentDirectory, "editor", "KeyMouse.FlowEditor", "bin",
-            "Release", "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
+        // // A development checkout: walk up looking for the editor's build output.
+        // var directory = new DirectoryInfo(here);
+        // for (int i = 0; i < 6 && directory is not null; i++, directory = directory.Parent)
+        // {
+        //     foreach (string configuration in (string[])["Release", "Debug"])
+        //     {
+        //         candidates.Add(Path.Combine(directory.FullName, "editor", "KeyMouse.FlowEditor", "bin",
+        //             configuration, "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
+        //     }
+        // }
+        // candidates.Add(Path.Combine(Environment.CurrentDirectory, "editor", "KeyMouse.FlowEditor", "bin",
+        //     "Release", "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
+        // foreach (string candidate in candidates)
+        // {
+        //     if (File.Exists(candidate)) return candidate;
+        // }
 
-        foreach (string candidate in candidates)
-        {
-            if (File.Exists(candidate)) return candidate;
-        }
-        return null;
+        // 不要自己遍历，浪费时间，约定好 KeyMouse.FlowEditor.exe 和 KeyMouse.exe 在同一目录下就行了
+        if (File.Exists(candidates)) return candidates;
+        else return null;
     }
 }

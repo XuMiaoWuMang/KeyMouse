@@ -109,13 +109,15 @@ internal static class KeyMouseBridge
     /// finish, and the terminal event. Returns the exit code (7 = cancelled by the client).
     /// </summary>
     internal static async Task<int> RunFlowAsync(
-        RunnerClient client, string flowPath, bool dryRun,
+        RunnerClient client, string flowPath, bool dryRun, string? evidenceFor,
         Action<RunnerEvent> onEvent, CancellationToken cancellation)
     {
         RunnerEvent finished = await client.SendAsync("run", new RunnerParameters
         {
             Flow = flowPath,
+            EvidenceFor = evidenceFor,
             DryRun = dryRun,
+            Shots = !dryRun,   // 试运行不发输入、不改屏幕，没有可留的证据；真实运行才截图
             Echo = true,
         }, onEvent, cancellation);
 

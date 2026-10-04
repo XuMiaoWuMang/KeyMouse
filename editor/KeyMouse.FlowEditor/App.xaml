@@ -9,7 +9,39 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- The look: Fluent cards on Mica, with the type badge using the accent colour. -->
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#5D5D5D" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#A8A8A8" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <!--
+              这个编辑器的规矩（改之前先读这四条）：
+
+              1. 字体只有四级：面板标题 / 分区标题 / 字段标签与说明 / 正文与输入值。
+                 等宽字体只用于机器内容（JSON、运行日志）。
+              2. 间距只有四档：4（标签到控件）· 8（组内）· 12（字段之间）· 16（分区与面板内边距）。
+              3. 圆角只有两档：控件 6 · 面板 8；强调色只有一个（系统强调色），只给主操作与选中态。
+                 **自绘面零投影**（The No-Shadow Rule）：深度是 1px 描边的职责，不是阴影的职责；
+                 选中一行靠"整行换面色 + 徽标翻强调 + 系统焦点框"三件事说，没有一件是投影。
+              4. **没有浮层**。这个界面里没有一处浮层可以不压东西（右上压参数区、右下压日志、左下压步骤列表），
+                 所以消息一律落在版面里：基础设施状态进工具栏与运行输出面板、校验错误进字段下方、运行结果进结论条。
+            -->
+
+            <!-- 密度基准：长时段使用的工具，整窗字号比 Fluent 默认（14）紧一档。
+                 控件文字走主题资源，TextBlock 走下面这条隐式样式；具名样式（面板标题/分区标题/标签）各自覆盖。 -->
+            <x:Double x:Key="ControlContentThemeFontSize">13</x:Double>
+            <!-- 占位符是给人读的提示，必须达到正文对比度（WinUI 默认那种浅灰只有约 3.3:1），
+                 而且要跟随主题——写死一个深灰在深色主题下等于看不清。 -->
+            <Style TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13" />
+            </Style>
+
+            <!-- 面板：整个界面里只有两种表面，卡片与页面。 -->
+
             <Style x:Key="CardBorder" TargetType="Border">
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -17,12 +49,37 @@
                 <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Padding" Value="16" />
             </Style>
-            <Style x:Key="SectionLabel" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
-                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Setter Property="Margin" Value="0,0,0,6" />
+
+            <!-- 字体层级 -->
+            <Style x:Key="PaneTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
-            <Style x:Key="FieldBox" TargetType="TextBox">
-                <Setter Property="Margin" Value="0,0,0,10" />
+            <Style x:Key="SectionHeader" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+            <Style x:Key="FieldCaption" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+            <Style x:Key="MonoText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
+            <!-- 控件 -->
+            <Style x:Key="ToolButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="10,6" />
+            </Style>
+            <Style x:Key="PaletteButton" TargetType="Button">
+                <Setter Property="Padding" Value="10,6,12,6" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="{ThemeResource ControlFillColorSecondaryBrush}" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

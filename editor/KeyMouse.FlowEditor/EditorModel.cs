@@ -55,7 +55,11 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public void Renumber()
     {
-        for (int i = 0; i < Steps.Count; i++) Steps[i].Number = i + 1;
+        for (int i = 0; i < Steps.Count; i++)
+        {
+            Steps[i].Number = i + 1;
+            Steps[i].Refresh();   // 行号是 OneWay 绑定：不逐个通知，插一步之后后面的行号就会重号（实测 1,2,3,3）
+        }
         PropertyChanged?.Invoke(this, Everything);
     }
 
@@ -80,6 +84,23 @@ public sealed class EditorModel : INotifyPropertyChanged
         _dirty = false;
         _savedJson = Serialize();
         Renumber();
+        Notify();
+    }
+
+    /// <summary>
+    /// 把每一步按契约检查一遍，返回有问题的字段总数。保存与运行之前先跑它：错误必须落到
+    /// 具体字段上（检查器就地显示），而不是等加载器回一句"第 N 步需要某某"。
+    /// </summary>
+    internal int Validate() => Steps.Sum(step => step.Validate());
+    /// <summary>有没有未保存的改动。工具在丢掉别人的东西之前应该先问一句。</summary>
+
+    /// <summary>新建：清空步骤与文件路径，回到空状态。</summary>
+    internal void Reset()
+    {
+        Steps.Clear();
+        _documentPath = null;
+        _dirty = false;
+        _savedJson = Serialize();
         Notify();
     }
 

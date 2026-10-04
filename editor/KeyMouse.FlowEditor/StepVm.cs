@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace KeyMouse.FlowEditor;
@@ -19,7 +21,6 @@ namespace KeyMouse.FlowEditor;
 /// </summary>
 public sealed class StepVm : INotifyPropertyChanged
 {
-    private static readonly PropertyChangedEventArgs Everything = new(string.Empty);
 
     internal StepVm(FlowStep step, EditorModel owner)
     {
@@ -27,19 +28,39 @@ public sealed class StepVm : INotifyPropertyChanged
         Owner = owner;
     }
 
-    internal FlowStep Step { get; }
+    internal FlowStep Step { get; private set; }
     internal EditorModel Owner { get; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void Changed()
     {
-        PropertyChanged?.Invoke(this, Everything);
+        Refresh();
         Owner.MarkDirty();
     }
 
     /// <summary>Lets the document refresh a row without pretending it changed.</summary>
-    internal void Refresh() => PropertyChanged?.Invoke(this, Everything);
+    /// <summary>
+    /// 通知界面上这一行需要重画。
+    ///
+    /// 注意：不能用"属性名为空 = 全部刷新"那个约定。`x:Bind` 是编译期绑定，它按名字精确匹配，
+    /// 发一个空名字它**收不到**（实测：运行结果标记一直不出现）。所以这里逐个名字发。
+    /// </summary>
+    private static readonly string[] RowProperties =
+    [
+        nameof(Number), nameof(Summary), nameof(RunGlyph), nameof(RunVisibility), nameof(RunDetail),
+        nameof(ShotVisibility), nameof(ShotImage), nameof(BadgeBrush), nameof(BadgeInk),
+    ];
+
+    internal void RefreshBadge() => Refresh();
+
+    internal void Refresh()
+    {
+        foreach (string name in RowProperties)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+    }
 
     private void Edit<T>(T current, T value, Action<T> write)
     {
@@ -49,6 +70,150 @@ public sealed class StepVm : INotifyPropertyChanged
     }
 
     private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
+    /// <summary>这一行是不是当前选中的那一步（窗口在选中变化时设置）。</summary>
+    public bool IsSelected { get; private set; }
+
+    internal void SetSelected(bool selected)
+    {
+        if (IsSelected == selected) return;
+        IsSelected = selected;
+        Refresh();
+    }
+
+    /// <summary>
+    /// 类型徽标的面色：**只有当前选中的那一行**用强调色。
+    /// 强调色的意义是"这里可以动"；铺在每一行上就变成了装饰，选中态也失去对比。
+    /// </summary>
+    public Brush BadgeBrush => IsSelected
+        ? (Brush)Application.Current.Resources["AccentFillColorSecondaryBrush"]
+        : (Brush)Application.Current.Resources["ControlFillColorSecondaryBrush"];
+    public Brush BadgeInk => IsSelected
+        ? (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"]
+        : (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+
+    // ---------------------------------------------------------------- 运行证据（每一步留下的截图）
+
+    private BitmapImage? _runShot;
+    private string? _runShotPath;
+
+    /// <summary>
+    /// 这一步的截图：优先显示**这次运行**留下的证据；没有就退回流程文件里录制时的那张。
+    /// 两者都是真实文件，界面不合成、不占位。
+    /// </summary>
+    public BitmapImage? ShotImage => _runShot ?? Ui.Thumbnail(Step.Shot, Owner.DocumentPath);
+    public Visibility ShotVisibility => Ui.Show(ShotImage is not null);
+    public string? ShotPath => _runShotPath ?? Step.Shot;
+
+    internal void SetShot(string path)
+    {
+        _runShotPath = path;
+        _runShot = Ui.Thumbnail(path, Owner.DocumentPath);
+        Refresh();
+    }
+
+    internal void ClearShot()
+    {
+        _runShotPath = null;
+        _runShot = null;
+        Refresh();
+    }
+
+    // ---------------------------------------------------------------- 运行结果（每行原位显示）
+
+    /// <summary>这一行上一次跑成什么样。数据来自 Runner 的逐步事件，不是猜的。</summary>
+    private string _runState = "";
+    private long _runMs;
+
+    /// <summary>整行左侧那枚标记：跑过才有，且只表达真实结果，不做装饰。</summary>
+    public string RunGlyph => _runState switch
+    {
+        "ok" => "\uE73E",
+        "failed" => "\uEA39",
+        "skipped" => "\uE738",
+        "running" => "\uE768",
+        _ => "",
+    };
+
+    public Visibility RunVisibility => Ui.Show(_runState.Length > 0);
+
+    /// <summary>耗时只在真的跑过之后显示。</summary>
+    public string RunDetail => _runState switch
+    {
+        "running" => "运行中",
+        "skipped" => "已跳过",
+        "ok" => $"{_runMs} ms",
+        "failed" => $"失败 · {_runMs} ms",
+        _ => "",
+    };
+
+    internal void MarkRunning()
+    {
+        _runState = "running";
+        _runMs = 0;
+        Refresh();
+    }
+
+    internal void MarkResult(int exitCode, long durationMs)
+    {
+        // 只如实反映 Runner 报的退出码：0 = 成功，其余 = 失败。哪些退出码可以重试、
+        // "跳过"是什么意思，都由 Runner 的日志说明，这一行不替它解释。
+        _runState = exitCode == 0 ? "ok" : "failed";
+        _runMs = durationMs;
+        Refresh();
+    }
+
+    // ---------------------------------------------------------------- 就地校验（错误显示在字段下方）
+
+    private readonly Dictionary<string, string> _issues = new(StringComparer.Ordinal);
+
+    public bool HasIssues => _issues.Count > 0;
+
+    /// <summary>某个参数的错误文字；没有就是空。检查器把它显示在该字段下方（规则 4.6）。</summary>
+    internal string IssueFor(string path) => _issues.TryGetValue(path, out string? message) ? message : "";
+
+    /// <summary>
+    /// 在交给加载器之前先按**同一份契约**检查一遍，这样错误能落到具体字段上，而不是等一句
+    /// "第 3 步的 click-text 需要 region"。契约仍是唯一权威，这里只是把同一条规则提前、就地讲。
+    /// </summary>
+    internal int Validate()
+    {
+        _issues.Clear();
+        if (FlowSchema.TryGetStep(Step.Type, out FlowStepContract contract))
+        {
+            foreach (FlowField field in contract.Own.Where(f => f.Required))
+            {
+                if (!FlowSchema.HasValue(Step, field.Name))
+                {
+                    _issues[field.Name] = $"这一项是必填的：{field.LabelZh}";
+                }
+            }
+
+            // 嵌套结构里的必填项同样要查：区域少了 y、点少了 x，加载器会用默认值悄悄跑过去，
+            // 但那是"没填"，不该由程序替用户决定。
+            foreach (FlowField shape in contract.All)
+            {
+                IReadOnlyList<FlowField> inner = FlowSchema.ShapeFields(shape.Kind);
+                if (inner.Count == 0 || !FlowSchema.HasValue(Step, shape.Name)) continue;
+                foreach (FlowField required in inner.Where(f => f.Required && f.Kind != "const"))
+                {
+                    if (!FlowSchema.HasValue(Step, $"{shape.Name}.{required.Name}"))
+                    {
+                        _issues[$"{shape.Name}.{required.Name}"] = $"这一项是必填的：{required.LabelZh}";
+                    }
+                }
+            }
+
+            if (contract.OneOf.Count > 0 && !contract.OneOf.Any(name => FlowSchema.HasValue(Step, name)))
+            {
+                string labels = string.Join(" 或 ", contract.OneOf.Select(name =>
+                    contract.Own.FirstOrDefault(f => f.Name == name)?.LabelZh is { Length: > 0 } label ? label : name));
+                foreach (string name in contract.OneOf) _issues[name] = $"至少要给一个：{labels}";
+            }
+        }
+
+        Refresh();
+        return _issues.Count;
+    }
 
     // ---------------------------------------------------------------- display
 
@@ -57,355 +222,120 @@ public sealed class StepVm : INotifyPropertyChanged
     public string Glyph => StepCatalog.GlyphOf(Step.Type);
     public string Summary => StepCatalog.Summarize(Step);
     public string Json => JsonSerializer.Serialize(Step, FlowDocument.Json);
-    public BitmapImage? ShotImage => Ui.Thumbnail(Step.Shot, Owner.DocumentPath);
-    public Visibility ShotVisibility => Ui.Show(ShotImage is not null);
-
-    // ---------------------------------------------------------------- which fields matter
+    // ---------------------------------------------------------------- 契约驱动的字段读写
 
     /// <summary>
-    /// Which fields this step gets, straight from the format's own table. The hide/show decisions used
-    /// to be hand-written here and had drifted: `click-text` (find the text and click it) showed only a
-    /// target and a note, so none of its real parameters could be edited, and `read-text` had the same
-    /// hole. Asking <see cref="FlowStepSchema"/> means a type can no longer have fields the inspector
-    /// does not know about.
+    /// Reading and writing a step's parameters **by their contract name** (点分路径，如 `region.x`、
+    /// `when.text`）。这里没有任何"哪种步骤有哪些字段"的判断：界面问契约，契约说什么就渲染什么，
+    /// 于是格式里有的参数不会在界面上缺席，加参数也只需要改契约一个文件。
     /// </summary>
-    private StepFields Fields => FlowStepSchema.For(Step.Type);
+    internal IReadOnlyList<FlowField> Fields => FlowSchema.FieldsFor(Step.Type);
 
-    private Visibility Show(StepFields field) => Ui.Show((Fields & field) != 0);
+    private JsonObject Snapshot() =>
+        JsonNode.Parse(JsonSerializer.Serialize(Step, FlowDocument.Json)) as JsonObject ?? new JsonObject();
 
-    public Visibility TargetVisibility => Show(StepFields.Target);
-    public Visibility PointVisibility => Show(StepFields.Point);
-    public Visibility RegionVisibility => Show(StepFields.Region);
-    public Visibility ButtonVisibility => Show(StepFields.Button);
-    public Visibility DeltaVisibility => Show(StepFields.Delta);
-    public Visibility TextVisibility => Show(StepFields.Text);
-    public Visibility ComboVisibility => Show(StepFields.Combo);
-    public Visibility MsVisibility => Show(StepFields.Ms);
-    public Visibility DurationVisibility => Show(StepFields.Duration);
-    public Visibility TimeoutVisibility => Show(StepFields.Timeout);
-    public Visibility MatchVisibility => Show(StepFields.Match);
-    public Visibility DragEndsVisibility => Show(StepFields.DragEnds);
-    public Visibility NoteVisibility => Show(StepFields.Note);
-
-    // ---------------------------------------------------------------- target window
-
-    public string TargetProcess
+    private JsonNode? Read(string path)
     {
-        get => Step.Target?.Process ?? "";
-        set => Edit(Step.Target?.Process ?? "", value, v => (Step.Target ??= new FlowTarget()).Process = Blank(v));
+        JsonNode? node = Snapshot();
+        foreach (string part in path.Split('.')) node = node?[part];
+        return node;
     }
 
-    public string TargetClass
+    internal string? GetText(string path) => Read(path) switch
     {
-        get => Step.Target?.Class ?? "";
-        set => Edit(Step.Target?.Class ?? "", value, v => (Step.Target ??= new FlowTarget()).Class = Blank(v));
-    }
-
-    public string TargetTitle
-    {
-        get => Step.Target?.Title ?? "";
-        set => Edit(Step.Target?.Title ?? "", value, v => (Step.Target ??= new FlowTarget()).Title = Blank(v));
-    }
-
-    // ---------------------------------------------------------------- coordinates
-
-    /// <summary>0 = 客户区相对（推荐），1 = 绝对屏幕坐标。</summary>
-    public int SpaceIndex
-    {
-        get => Step.At?.Space == FlowSpace.Screen ? 1 : 0;
-        set => Edit(SpaceIndex, value, v => (Step.At ??= new FlowPoint()).Space = v == 1 ? FlowSpace.Screen : FlowSpace.Client);
-    }
-
-    public double X
-    {
-        get => Step.At?.X ?? 0;
-        set => Edit(Step.At?.X ?? 0, value, v => (Step.At ??= new FlowPoint()).X = (int)v);
-    }
-
-    public double Y
-    {
-        get => Step.At?.Y ?? 0;
-        set => Edit(Step.At?.Y ?? 0, value, v => (Step.At ??= new FlowPoint()).Y = (int)v);
-    }
-
-    public double FromX
-    {
-        get => Step.From?.X ?? 0;
-        set => Edit(Step.From?.X ?? 0, value, v => (Step.From ??= new FlowPoint()).X = (int)v);
-    }
-
-    public double FromY
-    {
-        get => Step.From?.Y ?? 0;
-        set => Edit(Step.From?.Y ?? 0, value, v => (Step.From ??= new FlowPoint()).Y = (int)v);
-    }
-
-    public double ToX
-    {
-        get => Step.To?.X ?? 0;
-        set => Edit(Step.To?.X ?? 0, value, v => (Step.To ??= new FlowPoint()).X = (int)v);
-    }
-
-    public double ToY
-    {
-        get => Step.To?.Y ?? 0;
-        set => Edit(Step.To?.Y ?? 0, value, v => (Step.To ??= new FlowPoint()).Y = (int)v);
-    }
-
-    public double RegionX
-    {
-        get => Step.Region?.X ?? 0;
-        set => Edit(Step.Region?.X ?? 0, value, v => (Step.Region ??= new FlowRegion()).X = (int)v);
-    }
-
-    public double RegionY
-    {
-        get => Step.Region?.Y ?? 0;
-        set => Edit(Step.Region?.Y ?? 0, value, v => (Step.Region ??= new FlowRegion()).Y = (int)v);
-    }
-
-    public double RegionWidth
-    {
-        get => Step.Region?.Width ?? 0;
-        set => Edit(Step.Region?.Width ?? 0, value, v => (Step.Region ??= new FlowRegion()).Width = (int)v);
-    }
-
-    public double RegionHeight
-    {
-        get => Step.Region?.Height ?? 0;
-        set => Edit(Step.Region?.Height ?? 0, value, v => (Step.Region ??= new FlowRegion()).Height = (int)v);
-    }
-
-    // ---------------------------------------------------------------- per-type fields
-
-    /// <summary>0 = 左键，1 = 右键，2 = 中键。</summary>
-    public int ButtonIndex
-    {
-        get => (Step.Button ?? "left") switch { "right" => 1, "middle" => 2, _ => 0 };
-        set => Edit(ButtonIndex, value, v => Step.Button = v switch { 1 => "right", 2 => "middle", _ => "left" });
-    }
-
-    public double Delta
-    {
-        get => Step.Delta ?? 0;
-        set => Edit(Step.Delta ?? 0, value, v => Step.Delta = (int)v);
-    }
-
-    /// <summary>
-    /// The same field means different things per type, and a mislabelled box is a trap: "要输入的文字"
-    /// over the box you fill in for "find the text and click it" reads like it should be typed.
-    /// </summary>
-    public string TextLabel => Step.Type switch
-    {
-        "type" => "要输入的文字",
-        "wait-text" => "要等的文字",
-        "click-text" => "要找的文字",
-        "read-text" => "只取匹配到的文字（可留空 = 整块）",
-        "key" => "要按的键（单个键名，配合组合键时留空）",
-        _ => "文字",
+        JsonValue value when value.TryGetValue(out string? text) => text,
+        JsonValue value => value.ToString(),
+        _ => null,
     };
 
-    public string Text
-    {
-        get => Step.Text ?? "";
-        set => Edit(Step.Text ?? "", value, v => Step.Text = v);
-    }
+    internal bool GetBool(string path) => Read(path) is JsonValue value && value.TryGetValue(out bool flag) && flag;
 
-    public string Combo
-    {
-        get => Step.Combo ?? "";
-        set => Edit(Step.Combo ?? "", value, v => Step.Combo = Blank(v));
-    }
-
-    public double Ms
-    {
-        get => Step.Ms ?? 0;
-        set => Edit(Step.Ms ?? 0, value, v => Step.Ms = (int)v);
-    }
-
-    public double DurationMs
-    {
-        get => Step.DurationMs ?? 400;
-        set => Edit(Step.DurationMs ?? 400, value, v => Step.DurationMs = (int)v);
-    }
-
-    public double TimeoutMs
-    {
-        get => Step.TimeoutMs ?? 5000;
-        set => Edit(Step.TimeoutMs ?? 5000, value, v => Step.TimeoutMs = (int)v);
-    }
-
-    public double IntervalMs
-    {
-        get => Step.IntervalMs ?? (Step.Type == "type" ? 15 : 250);
-        set => Edit(Step.IntervalMs ?? (Step.Type == "type" ? 15 : 250), value, v => Step.IntervalMs = (int)v);
-    }
-
-    /// <summary>0 = contains，1 = exact，2 = fuzzy。</summary>
-    public int MatchIndex
-    {
-        get => (Step.Match ?? TextPredicate.Contains) switch
+    internal FlowPoint? GetPoint(string path) => Read(path) is JsonObject point
+        ? new FlowPoint
         {
-            TextPredicate.Exact => 1,
-            TextPredicate.Fuzzy => 2,
-            _ => 0,
-        };
-        set => Edit(MatchIndex, value, v => Step.Match =
-            v switch { 1 => TextPredicate.Exact, 2 => TextPredicate.Fuzzy, _ => TextPredicate.Contains });
-    }
+            Space = point["space"]?.ToString() == FlowSpace.Screen ? FlowSpace.Screen : FlowSpace.Client,
+            X = int.TryParse(point["x"]?.ToString(), out int x) ? x : 0,
+            Y = int.TryParse(point["y"]?.ToString(), out int y) ? y : 0,
+        }
+        : null;
 
-    public double MaxErrors
+    internal FlowRegion? GetRegion(string path) => Read(path) is JsonObject region
+        ? new FlowRegion
+        {
+            Space = FlowSpace.Client,
+            X = int.TryParse(region["x"]?.ToString(), out int x) ? x : 0,
+            Y = int.TryParse(region["y"]?.ToString(), out int y) ? y : 0,
+            Width = int.TryParse(region["width"]?.ToString(), out int w) ? w : 0,
+            Height = int.TryParse(region["height"]?.ToString(), out int h) ? h : 0,
+        }
+        : null;
+
+    internal void SetText(string path, string? value) =>
+        Write(path, string.IsNullOrEmpty(value) ? null : JsonValue.Create(value));
+
+    internal void SetBool(string path, bool value) => Write(path, JsonValue.Create(value));
+
+    internal void SetNumber(string path, int? value) =>
+        Write(path, value is int number ? JsonValue.Create(number) : null);
+
+    internal void SetPoint(string path, FlowPoint point) => Write(path, new JsonObject
     {
-        get => Step.MaxErrors ?? 1;
-        set => Edit(Step.MaxErrors ?? 1, value, v => Step.MaxErrors = (int)v);
-    }
+        ["space"] = point.Space == FlowSpace.Screen ? "screen" : "client",
+        ["x"] = point.X,
+        ["y"] = point.Y,
+    });
 
-    public double Confirm
+    internal void SetRegion(string path, FlowRegion region) => Write(path, new JsonObject
     {
-        get => Step.Confirm ?? 2;
-        set => Edit(Step.Confirm ?? 2, value, v => Step.Confirm = (int)v);
-    }
-
-    /// <summary>`repeat`: how many times. `foreach`: the list variable. `read-text`: where the value
-    /// goes. The children of a group are edited in the JSON preview for now - they are preserved on
-    /// save either way, because the view model wraps whole step objects.</summary>
-    public Visibility GroupVisibility => Ui.Show(Step.Type is "repeat" or "foreach");
-    public Visibility CallVisibility => Ui.Show(Step.Type == "call");
-
-    /// <summary>`call`: the subflow file, relative to this one. `vars` and `export` are edited in the
-    /// JSON card - a table widget for them would be more UI than the feature needs right now.</summary>
-    public string Flow
-    {
-        get => Step.Flow ?? "";
-        set => Edit(Step.Flow ?? "", value, v => Step.Flow = Blank(v));
-    }
-
-    public Visibility IntoVisibility => Ui.Show(Step.Type is "read-text");
-    public Visibility TimesVisibility => Ui.Show(Step.Type is "repeat");
-    public Visibility InVisibility => Ui.Show(Step.Type is "foreach");
-
-    public double Times
-    {
-        get => Step.Times ?? 0;
-        set => Edit(Step.Times ?? 0, value, v => Step.Times = (int)v);
-    }
-
-    public string In
-    {
-        get => Step.In ?? "";
-        set => Edit(Step.In ?? "", value, v => Step.In = Blank(v));
-    }
-
-    public string Into
-    {
-        get => Step.Into ?? "";
-        set => Edit(Step.Into ?? "", value, v => Step.Into = Blank(v));
-    }
-
-    /// <summary>How many child steps a group carries, for the inspector's one-line summary.</summary>
-    public string ChildrenLabel => Step.Steps is { Count: > 0 } children
-        ? $"{children.Count} 个子步骤（在「这一步的 JSON」里编辑）"
-        : "没有子步骤";
-
-    // ---------------------------------------------------------------- when（前提条件）
+        ["space"] = "client",
+        ["x"] = region.X,
+        ["y"] = region.Y,
+        ["width"] = region.Width,
+        ["height"] = region.Height,
+    });
 
     /// <summary>
-    /// A step's precondition, editable here for the same reason every other field is: a feature the UI
-    /// cannot express is a feature the UI does not have. Nothing is created until the first edit, so a
-    /// step without a `when` stays without one.
+    /// Writes one parameter and rebuilds the step from the JSON, so the model stays the single source of
+    /// truth: the row summary, the JSON card and the saved file all follow from it.
     /// </summary>
-    public Visibility WhenVisibility => Show(StepFields.When);
-
-    private FlowCondition EnsureWhen()
+    private void Write(string path, JsonNode? value)
     {
-        Step.When ??= new FlowCondition
+        JsonObject root = Snapshot();
+        string[] parts = path.Split('.');
+        JsonObject cursor = root;
+        for (int i = 0; i < parts.Length - 1; i++)
         {
-            Region = new FlowRegion { Space = FlowSpace.Client, Width = 400, Height = 32 },
-            Match = TextPredicate.Contains,
-            MaxErrors = 1,
-            TimeoutMs = 2000,
-            IntervalMs = 250,
-            Confirm = 2,
-            Else = "skip",
-        };
-        return Step.When;
-    }
-
-    public string WhenText
-    {
-        get => Step.When?.Text ?? "";
-        set => Edit(Step.When?.Text ?? "", value, v => EnsureWhen().Text = Blank(v));
-    }
-
-    public int WhenMatchIndex
-    {
-        get => Array.IndexOf(TextPredicate.Modes, Step.When?.Match ?? TextPredicate.Contains) is var i && i >= 0 ? i : 0;
-        set => Edit(MatchIndex, value, v => EnsureWhen().Match = TextPredicate.Modes[Math.Clamp(v, 0, TextPredicate.Modes.Length - 1)]);
-    }
-
-    public double WhenMaxErrors
-    {
-        get => Step.When?.MaxErrors ?? 1;
-        set => Edit(Step.When?.MaxErrors ?? 1, value, v => EnsureWhen().MaxErrors = (int)v);
-    }
-
-    public double WhenTimeoutMs
-    {
-        get => Step.When?.TimeoutMs ?? 2000;
-        set => Edit(Step.When?.TimeoutMs ?? 2000, value, v => EnsureWhen().TimeoutMs = (int)v);
-    }
-
-    public bool WhenElseIsFail
-    {
-        get => Step.When?.Else == "fail";
-        set => Edit(Step.When?.Else == "fail", value, v => EnsureWhen().Else = v ? "fail" : "skip");
-    }
-
-    public string WhenProcess
-    {
-        get => Step.When?.Target?.Process ?? "";
-        set => Edit(Step.When?.Target?.Process ?? "", value, v =>
-        {
-            if (string.IsNullOrEmpty(v) && Step.When?.Target is { } existing && string.IsNullOrEmpty(existing.Class))
+            if (cursor[parts[i]] is not JsonObject next)
             {
-                EnsureWhen().Target = null;   // 留空就是"用本步骤的目标"，不要留下空壳
-                return;
+                next = new JsonObject();
+                cursor[parts[i]] = next;
             }
-            EnsureWhen().Target = new FlowTarget { Process = Blank(v), Class = Step.When?.Target?.Class };
-        });
+            cursor = next;
+        }
+        if (value is null) cursor.Remove(parts[^1]); else cursor[parts[^1]] = value;
+        PruneEmpty(root);
+
+        string before = JsonSerializer.Serialize(Step, FlowDocument.Json);
+        string after = root.ToJsonString();
+        if (after == before) return;
+
+        Step = JsonSerializer.Deserialize<FlowStep>(after, FlowDocument.Json)!;
+        Changed();
     }
 
-    public double WhenRegionX
+    /// <summary>
+    /// 空对象不写进文件：在 `when` 里点了一下又清空，不该留下一个什么都不含的前提（加载器会把它
+    /// 当作"没有前提"，但文件里也不该多这么一层壳）。
+    /// </summary>
+    private static void PruneEmpty(JsonObject root)
     {
-        get => Step.When?.Region?.X ?? 0;
-        set => Edit(Step.When?.Region?.X ?? 0, value, v => EnsureWhen().Region!.X = (int)v);
-    }
-
-    public double WhenRegionY
-    {
-        get => Step.When?.Region?.Y ?? 0;
-        set => Edit(Step.When?.Region?.Y ?? 0, value, v => EnsureWhen().Region!.Y = (int)v);
-    }
-
-    public double WhenRegionWidth
-    {
-        get => Step.When?.Region?.Width ?? 400;
-        set => Edit(Step.When?.Region?.Width ?? 400, value, v => EnsureWhen().Region!.Width = (int)v);
-    }
-
-    public double WhenRegionHeight
-    {
-        get => Step.When?.Region?.Height ?? 32;
-        set => Edit(Step.When?.Region?.Height ?? 32, value, v => EnsureWhen().Region!.Height = (int)v);
-    }
-
-    public string WhenLabel => Step.When is null
-        ? "还没有前提：这一步每次都会执行。填上文字就会添加一个前提。"
-        : $"前提：读到「{Step.When.Text}」才执行，否则 {(Step.When.Else == "fail" ? "失败（退出码 3）" : "跳过")}";
-
-    public string Note
-    {
-        get => Step.Note ?? "";
-        set => Edit(Step.Note ?? "", value, v => Step.Note = Blank(v));
+        foreach (string name in root.Select(pair => pair.Key).ToList())
+        {
+            if (root[name] is JsonObject nested)
+            {
+                PruneEmpty(nested);
+                if (!nested.Any()) root.Remove(name);
+            }
+        }
     }
 }

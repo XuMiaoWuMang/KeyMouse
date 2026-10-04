@@ -545,6 +545,14 @@ KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一�
 
 
 
+
+关于 `when` 的两个细节：
+
+- **`when` 里 `text` 是空的，就等于没有前提**（那一步总是执行）。编辑器点一下 `when` 的其它输入框就会造出这种半成品，
+  它不该让整个文件作废——这一栏自己的说明就是"留空 = 总是执行"。
+- 前提在**这一步开始前只读一次**：读到就执行，读不到就跳过（或按 `else: fail` 退出码 `3`）。它和 `click-text`/`wait-text`
+  自己"要找/要等的文字"不是一回事：那个是这一步会一直等到超时的。
+
 ### 子流程（call）
 
 ```json
@@ -559,6 +567,16 @@ KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一�
 - **加载时就查**：文件不存在、`flow` 缺失、调用成环（a → b → a）、嵌套超过 8 层，都是退出码 `2` 并指出是第几步。
 - 一次 `call` 的步骤会**内联**进这次运行：日志与事件里的编号是"第几步"（按实际要跑的步数），不是文件里的行号。
 
+### 参数契约（哪些必须、哪些可选）
+
+每种步骤的参数、必须性与取值范围，由 `src/KeyMouse.Core/flow.schema.json` 规定，那份文件也是编辑器渲染界面的依据：
+
+```powershell
+KeyMouse schema                # 打印整份契约
+KeyMouse schema click-text     # 只看一种步骤：必须 / 可选 / 取值 / 范围
+```
+
+细节与前端渲染约定见 [`interface.md`](interface.md)。
 ### 变量与循环
 
 ```json

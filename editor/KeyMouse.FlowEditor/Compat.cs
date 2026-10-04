@@ -137,16 +137,24 @@ internal static class StepCatalog
             "key" => step.Combo is { Length: > 0 } combo ? $"按 {combo}{target}" : $"按 {step.Text}{target}",
             "sleep" => $"等 {step.Ms ?? 0} ms",
             "wait-window" => $"等窗口 {step.Target?.Process ?? step.Target?.Class ?? "?"}（上限 {step.TimeoutMs ?? 5000} ms）",
-            "wait-text" => $"等「{Clip(step.Text)}」（{step.Match ?? TextPredicate.Contains}，" +
+            "wait-text" => $"等「{Clip(step.Text)}」（{Zh("wait-text", "match", step.Match ?? TextPredicate.Contains)}，" +
                            $"容错 {step.MaxErrors ?? 1}，区域 {step.Region?.Width}x{step.Region?.Height}，" +
                            $"上限 {step.TimeoutMs ?? 5000} ms）",
-            "click-text" => $"找「{Clip(step.Text)}」并点它（{step.Match ?? TextPredicate.Contains}，容错 {step.MaxErrors ?? 1}）",
+            "click-text" => $"找「{Clip(step.Text)}」并点它（{Zh("click-text", "match", step.Match ?? TextPredicate.Contains)}，容错 {step.MaxErrors ?? 1}）",
             "read-text" => $"读一块区域 → 变量 {step.Into}",
             "repeat" => $"重复 {(step.Times ?? 0)} 次（{step.Steps?.Count ?? 0} 步）",
             "foreach" => $"遍历 {step.In}（{step.Steps?.Count ?? 0} 步）",
             "call" => $"调用子流程 {step.Flow}" + (step.Vars is { Count: > 0 } vars ? $"（传 {vars.Count} 个变量）" : "") + (step.Export is { Length: > 0 } export ? $"，导出 {string.Join("/", export)}" : ""),
             _ => step.Type,
         };
+    }
+
+    /// <summary>枚举值的中文标签只从契约来（flow.schema.json 的 valueLabels）；取不到才回落到机器值。</summary>
+    private static string Zh(string type, string field, string value)
+    {
+        if (!FlowSchema.TryGetStep(type, out FlowStepContract contract)) return value;
+        FlowField? definition = contract.All.FirstOrDefault(f => f.Name == field);
+        return definition is not null && definition.ValueLabels.TryGetValue(value, out string? label) ? label : value;
     }
 
     private static string Clip(string? text)
@@ -170,4 +178,5 @@ internal static class Ui
         string full = Path.GetFullPath(Path.Combine(baseDirectory, relative.Replace('/', Path.DirectorySeparatorChar)));
         return File.Exists(full) ? new BitmapImage(new Uri(full)) : null;
     }
+
 }
