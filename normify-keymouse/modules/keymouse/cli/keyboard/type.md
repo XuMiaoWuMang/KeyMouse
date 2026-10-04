@@ -11,9 +11,9 @@ description:
   en: >
       key type <text> [--interval ms] types character by character through Unicode injection, so it is layout- and IME-independent; the default 15 ms per character plus a drain grace keeps the last character from being lost.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:11:56.196Z"
-fingerprint: 7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:22:17.410Z"
+fingerprint: c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc
 source:
   - path: "src/KeyMouse.Core/Commands.cs"
     line: 414

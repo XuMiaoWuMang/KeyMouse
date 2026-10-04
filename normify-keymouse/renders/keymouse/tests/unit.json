@@ -1,17 +1,22 @@
 {
   "schema_version": 1,
   "id": "keymouse.tests.unit",
-  "updated_at": "2026-10-03T12:49:08.193Z",
+  "updated_at": "2026-10-04T14:24:04.361Z",
   "mode": "layers",
+  "reading": {
+    "zh": "一个领域一个文件，都跑在同一套 harness 上。最后一组是特例：它测的不是行为，而是契约本身——只要两侧里有一侧与 runner-protocol.schema.json 不一致，它立刻变红。",
+    "en": "One file per area, all driven by the same harness. The last one is the odd case: it does not test behaviour but the contract itself, so the moment either side drifts from runner-protocol.schema.json it goes red."
+  },
   "order": [
     "keymouse.tests.unit.harness",
     "keymouse.tests.unit.parsing",
-    "keymouse.tests.unit.region",
     "keymouse.tests.unit.flow",
+    "keymouse.tests.unit.region",
     "keymouse.tests.unit.window",
     "keymouse.tests.unit.runner",
     "keymouse.tests.unit.locator",
     "keymouse.tests.unit.loops",
-    "keymouse.tests.unit.calls"
+    "keymouse.tests.unit.calls",
+    "keymouse.tests.unit.protocol"
   ]
 }

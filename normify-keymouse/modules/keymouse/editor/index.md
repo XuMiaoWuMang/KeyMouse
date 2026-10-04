@@ -11,8 +11,8 @@ description:
   en: >
       An unpackaged, self-contained WinUI 3 app (editor/KeyMouse.FlowEditor) that does the one thing the command line cannot: editing a flow. It links the keymouse-flow schema verbatim and asks the command line itself for region picking and replay, so "does run accept what the editor wrote" is not a matter of discipline. Self-contained is required here: only the CBS runtime exists, and the unpackaged bootstrapper finds nothing (0x80670016).
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.047Z"
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.931Z"
 fingerprint: 55033d25fce13c9d5c3b44610d32254427cbc7105f8b075656fa39d74ca6dbdc
 source:
   - path: "editor/KeyMouse.FlowEditor/KeyMouse.FlowEditor.csproj"

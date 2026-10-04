@@ -6,14 +6,14 @@ tags: [runner]
 name: {zh: "作业与派发", en: "Jobs and dispatch"}
 description:
   zh: >
-      请求分发（run/record/validate/pick-region/ocr/控制/状态）、作业注册表与 `Execution.Control` 的实现：作业自己就是那个接缝，于是暂停、取消、逐步事件都发生在能力层的执行路径上。日志流用的是把 Console.Out 接到事件汇上——诚实标注：这只有在作业串行时才成立，把 Core 与 Console 解耦是下一步。
+      请求分发（run/record/validate/pick-region/ocr/控制/状态）、作业注册表与 Execution.Control 的实现：作业自己就是那个接缝，于是暂停、取消、逐步事件都发生在能力层的执行路径上。两条硬规矩：队列槽先拿、可能失败的事都在 try 里——校验曾经在拿槽之前，一抛异常作业就永远停在 queued，客户端只能干等；现在失败也一定回 error + finished。作业同时是运行证据的持有者：每步结束顺手留一张截图，并记下是谁在问。
       
   en: >
-      Request dispatch (run/record/validate/pick-region/ocr/control/status), the job registry, and the implementation of `Execution.Control`: the job *is* the seam, so pausing, cancelling and per-step events happen on the capability layer execution path. The log stream works by wiring Console.Out to the event sink - honest note: that only holds because jobs are serialised, and decoupling Core from Console is the next step.
+      Request dispatch (run, record, validate, pick-region, ocr, control, status), the job registry and Execution.Control: the job is the seam for pausing, cancelling and per-step events. The queue slot is taken first and everything that can fail sits inside the try - validation used to run before the slot, so one throw left a job queued forever and its client waiting; a failure now always answers error plus finished. The job also owns run evidence and records which client asked.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.517Z"
-fingerprint: c6e16f99d7a79b0fb4e78d7f4e1ace595af81bd22299b254ee89e15b2ddfe900
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.931Z"
+fingerprint: 7d3f8ccb0f610fdb7878c125cffb62fd28b7807b2638deb038dfd5b666ff551f
 source:
   - path: "src/KeyMouse.Runner/RunnerHost.cs"
   - path: "src/KeyMouse.Runner/RunnerJob.cs"
@@ -45,6 +45,24 @@ apis:
       en: >
           The pause gate and the cancel point (throws CommandFailure(7)).
           
+  - protocol: rpc
+    path: "RunnerJob.StepFinished"
+    description:
+      zh: >
+          一步跑完：发事件，并顺手留一张证据截图。
+          
+      en: >
+          A step finished: emits the event and leaves a screenshot as evidence.
+          
+  - protocol: rpc
+    path: "RunnerJob.Info"
+    description:
+      zh: >
+          list/status 用的作业信息：状态、退出码、耗时与是谁在问。
+          
+      en: >
+          Job info for list/status: state, exit code, timing and who asked.
+          
 deps:
   - kind: call
     to: keymouse.cli.main
@@ -54,4 +72,9 @@ deps:
     to: keymouse.execution
     to_api: "rpc:Execution.Control"
     label: {zh: "装上执行接缝", en: "Installs the execution seam"}
+  - kind: call
+    to: keymouse.flow.evidence
+    from_api: "rpc:RunnerJob.StepFinished"
+    to_api: "rpc:RunShots.Capture"
+    label: {zh: "留一张证据", en: "Leaves evidence"}
 ---

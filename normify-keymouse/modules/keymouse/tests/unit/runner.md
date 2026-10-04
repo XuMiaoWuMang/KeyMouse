@@ -11,9 +11,9 @@ description:
   en: >
       The half that needs no desktop: request/event shapes, an unknown method answering with exit code 2, validate reporting the step count, a dry run reporting every step with the log stream coming back, a real (not dry) run cancelled ending in exit code 7, and a round trip over a real named pipe (private pipe name, never the engine the user has open).
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.046Z"
-fingerprint: 3b6849977e17b378a42ed222fb2f82a9aba5b483929cb6cecc6ab9002a502a0b
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.936Z"
+fingerprint: 3b63bf8c918b423ba40f999ba59b52affdbc6ecb2dd9a89cfa8276d5c46f88e0
 source:
   - path: "tests/KeyMouse.Tests/RunnerTests.cs"
 apis:

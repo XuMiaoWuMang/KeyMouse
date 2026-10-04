@@ -11,9 +11,9 @@ description:
   en: >
       `keymouse-flow` v1: what recording writes and what a human edits. Deliberately not a second execution semantic - every step compiles into a command a human would type, so selectors, the focus gate, exit codes and `--dry-run` / `--report` / `--retry` mean the same thing as when typed by hand; only steps without a command-line equivalent (sleep, wait-window) are handled by the runner itself.
       
-revision: 96c306061d63c034a01c2369e4abc295251e2f35
-updated_at: "2026-10-03T13:37:44.313Z"
-fingerprint: 16453d4f8d002642655def878b25ffa8df81923b5720e4a1bbe706f0c676e05a
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.928Z"
+fingerprint: 9f534bc527720dab0894ce5de30cf1927daa780e2432c34519d9474e3e688f4c
 source:
   - path: "src/KeyMouse.Core/FlowModel.cs"
   - path: "src/KeyMouse.Core/FlowRunner.cs"

@@ -9,20 +9,20 @@
         "repository": "https://github.com/XuMiaoWuMang/KeyMouse"
       }
     ],
-    "compiled_at": "2026-10-03T14:07:11.422Z",
+    "compiled_at": "2026-10-04T14:24:40.129Z",
     "stats": {
       "tree_count": 1,
-      "module_count": 170,
-      "leaf_count": 140,
-      "api_count": 256,
-      "dep_count": 194,
+      "module_count": 183,
+      "leaf_count": 152,
+      "api_count": 296,
+      "dep_count": 215,
       "cross_tree_dep_count": 0,
       "max_depth": 6,
-      "layout_count": 30,
+      "layout_count": 31,
       "planned_count": 0,
       "deprecated_count": 0,
       "policy_rule_count": 2,
-      "change_count": 18,
+      "change_count": 21,
       "open_change_count": 0
     }
   },
@@ -72,9 +72,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 169,
+        "descendant_count": 182,
         "own_api_count": 0,
-        "inherited_api_count": 256,
+        "inherited_api_count": 296,
         "dep_out": 2,
         "dep_in": 0
       }
@@ -224,9 +224,9 @@
           "path": "KeyMouse.sln"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.046Z",
-      "fingerprint": "57c917f3f41ff03bd3ef99bfd18a67b3e71d3a6475a54a96e1e11a923e5df4d4",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.937Z",
+      "fingerprint": "85470066ff626b95a1cd0034d465ad392c8d675fc608e59c7f00cfc3144daa6b",
       "apis": [
         {
           "protocol": "file",
@@ -516,9 +516,9 @@
           "end_line": 658
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.046Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.932Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "deps": [
         {
           "kind": "call",
@@ -569,7 +569,7 @@
       "aggregate": {
         "descendant_count": 26,
         "own_api_count": 0,
-        "inherited_api_count": 41,
+        "inherited_api_count": 42,
         "dep_out": 5,
         "dep_in": 1
       }
@@ -678,9 +678,9 @@
           "end_line": 656
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:44.310Z",
-      "fingerprint": "76d50b8e49ed3d7a4bc46bb2652373a2bac9af4793c9742a6c6ef703b35ca71c",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.408Z",
+      "fingerprint": "5ff843e4e0e24763246ccbb91045642ebab4e56a43ef6c19b86f2ac2dbb023ab",
       "apis": [
         {
           "protocol": "rpc",
@@ -732,9 +732,9 @@
           "path": "src/KeyMouse.Cli/FlowEditorCommand.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.046Z",
-      "fingerprint": "df5e3927e12b6e5f13dc51371d927d1a737a674d2da50153b18902f760f91254",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.933Z",
+      "fingerprint": "233349297782e8222f440c69c66b04a5f4b364f938edc9e43a73b7804b813605",
       "apis": [
         {
           "protocol": "rpc",
@@ -826,9 +826,9 @@
           "end_line": 650
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.195Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.408Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -881,9 +881,9 @@
           "end_line": 430
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.195Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.409Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "deps": [
         {
           "kind": "call",
@@ -945,9 +945,9 @@
           "end_line": 413
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.195Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.409Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1004,9 +1004,9 @@
           "end_line": 399
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.195Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.409Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1072,9 +1072,9 @@
           "end_line": 379
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.196Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.409Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1132,9 +1132,9 @@
           "end_line": 430
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.196Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.410Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1181,8 +1181,8 @@
         "en": "Main entry & group dispatch"
       },
       "description": {
-        "zh": "Main 的全部工作：把 CommandFailure 与参数异常映射成退出码（2 = 用法），按首个参数选择命令组并转发剩余参数，空参数时打印帮助。\n",
-        "en": "Everything Main does: map CommandFailure and argument errors onto exit codes (2 = usage), pick a command group by the first argument and forward the rest, print help when nothing is given.\n"
+        "zh": "Main 的全部工作：把 CommandFailure 与参数异常映射成退出码（2 = 用法），按首个参数选择命令组并转发剩余参数，空参数时打印帮助。命令组里有一处值得记下来：schema 打印流程格式的契约本身（不带参数打全部，带一个类型就只看那一种）——前端照着它渲染，人也可以直接读。\n",
+        "en": "Everything Main does: map CommandFailure and argument errors onto exit codes (2 = usage), pick a command group by the first argument and forward the rest, print help when nothing is given. One group is worth noting: schema prints the flow format contract itself (all of it, or one step type) - the front end renders from it and a human can read it.\n"
       },
       "source": [
         {
@@ -1191,9 +1191,9 @@
           "end_line": 63
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.046Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.933Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1221,6 +1221,15 @@
             "en": "Prints the version.\n"
           },
           "key": "rpc:keymouse --version"
+        },
+        {
+          "protocol": "rpc",
+          "path": "keymouse schema",
+          "description": {
+            "zh": "打印流程格式契约（全部，或只看一种类型）。\n",
+            "en": "Prints the flow format contract (all of it, or one step type).\n"
+          },
+          "key": "rpc:keymouse schema"
         }
       ],
       "deps": [
@@ -1276,13 +1285,24 @@
             "en": "Dispatch the region group"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.schema",
+          "from_api": "rpc:keymouse schema",
+          "to_api": "rpc:FlowSchema.Steps",
+          "label": {
+            "zh": "打印契约",
+            "en": "Prints the contract"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 3,
+        "own_api_count": 4,
         "inherited_api_count": 0,
-        "dep_out": 5,
+        "dep_out": 6,
         "dep_in": 5
       }
     },
@@ -1310,9 +1330,9 @@
           "end_line": 341
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.410Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "deps": [
         {
           "kind": "call",
@@ -1365,9 +1385,9 @@
           "end_line": 260
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.196Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.410Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1451,9 +1471,9 @@
           "end_line": 341
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.196Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.410Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1534,9 +1554,9 @@
           "end_line": 349
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.196Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.411Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1609,9 +1629,9 @@
           "end_line": 209
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.411Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1686,9 +1706,9 @@
           "end_line": 219
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.411Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1745,9 +1765,9 @@
           "end_line": 188
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.411Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1804,9 +1824,9 @@
           "end_line": 290
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.411Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1873,9 +1893,9 @@
           "end_line": 604
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.412Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -1994,9 +2014,9 @@
           "end_line": 545
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.198Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.412Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "deps": [
         {
           "kind": "call",
@@ -2041,9 +2061,9 @@
           "end_line": 545
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.197Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.412Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -2112,9 +2132,9 @@
           "end_line": 496
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.198Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.412Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -2179,9 +2199,9 @@
           "end_line": 464
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.198Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.412Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -2247,9 +2267,9 @@
           "end_line": 160
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:11:56.198Z",
-      "fingerprint": "7f2ba5c7c2569f29daf25ca2416e5988b42986f24461e2467265c7fae3dc41e9",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:22:17.413Z",
+      "fingerprint": "c2466d777f9e13ef4b2681d5d98fa1383d4339672611d90ef8fad5764cbbc7fc",
       "apis": [
         {
           "protocol": "rpc",
@@ -2518,13 +2538,13 @@
           "path": "samples/notepad-demo.txt"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:01:01.912Z",
-      "fingerprint": "962167f08e8b8ed2a06b361017dadf99135c9b19330cce91ec3bd3e8c27fb73f",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.934Z",
+      "fingerprint": "30498139f0fa893a1dc458560d8dad4c91cac4845b41604ca10c71e8f9ef4ae5",
       "aggregate": {
-        "descendant_count": 5,
+        "descendant_count": 7,
         "own_api_count": 0,
-        "inherited_api_count": 5,
+        "inherited_api_count": 7,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -2553,9 +2573,9 @@
           "path": "docs/design.md"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:46.182Z",
-      "fingerprint": "96e868d4ef435e9fdbfeaa6ba385f0457250b188f46bd513dbc69b39e371e386",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.934Z",
+      "fingerprint": "217ea09e9f7f0f132c7eda3049db303f9c79b5fd981d4b163ca0cb6be04e3370",
       "apis": [
         {
           "protocol": "file",
@@ -2597,9 +2617,9 @@
           "path": "docs/development.md"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:52.638Z",
-      "fingerprint": "2c84a2aca9d184df293b655c1b12ac9c1ff63a4155416f5bf7f96cd9870c1dbc",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.934Z",
+      "fingerprint": "368855533b0129f2dbd79d38f4b1a1adf780259d8ce8afde4d8a6910be78d1f2",
       "apis": [
         {
           "protocol": "file",
@@ -2616,6 +2636,73 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.docs.interface": {
+      "uid": "7a1f100c",
+      "id": "keymouse.docs.interface",
+      "parent": "keymouse.docs",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "docs",
+        "contract"
+      ],
+      "name": {
+        "zh": "接口文档",
+        "en": "Interface document"
+      },
+      "description": {
+        "zh": "JSON 参数契约：每个入口里哪些字段必须、哪些可选，以及 WinUI 编辑器该怎么用。规矩只有一条——前端只依据契约渲染，加载器只依据契约校验，两边都不许自己另写一套\"哪种步骤有哪些字段\"（当初正是这么脱节的：`click-text` 在界面上只剩目标与备注）。另附一张常驻 Runner 的 IPC 方法表摘要，规范全文指向 runner-protocol.md。\n",
+        "en": "The JSON parameter contract: which fields are required and which are optional for every entry point, and how the WinUI editor uses them. One rule: the front end renders from the contract and the loader validates from it - neither writes a private table of 'which step has which fields' (that is how click-text once lost its region, text, match and timeout in the UI). It also carries a short table of the Runner's IPC methods, with runner-protocol.md as the norm.\n"
+      },
+      "source": [
+        {
+          "path": "docs/interface.md"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.928Z",
+      "fingerprint": "bc3d8185229644b2135c23a7b13457b509c94f9247517ae01c2c71b3c340ba5b",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "docs/interface.md",
+          "description": {
+            "zh": "每个入口里哪些 JSON 字段必须、哪些可选。\n",
+            "en": "Which JSON fields are required and which are optional, for every entry point.\n"
+          },
+          "key": "file:docs/interface.md"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.schema",
+          "to_api": "rpc:FlowSchema.Steps",
+          "label": {
+            "zh": "规矩来自契约",
+            "en": "Rules from the contract"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.protocol.methods",
+          "to_api": "rpc:keymouse-runner 请求",
+          "label": {
+            "zh": "IPC 方法表摘要",
+            "en": "IPC summary"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 2,
         "dep_in": 0
       }
     },
@@ -2685,9 +2772,9 @@
           "path": "docs/reference.md"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.972Z",
-      "fingerprint": "9de4b3d0e8e8e566a3a3c858b3f2965f210898dc364c56ecfc0deed2df90c866",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.934Z",
+      "fingerprint": "a085f5532eac689aef25c7bc0b01284f1e01748752c20ce7dc70304c1c300536",
       "apis": [
         {
           "protocol": "file",
@@ -2704,6 +2791,63 @@
         "own_api_count": 1,
         "inherited_api_count": 0,
         "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.docs.runner-protocol": {
+      "uid": "7a1f100d",
+      "id": "keymouse.docs.runner-protocol",
+      "parent": "keymouse.docs",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "docs",
+        "protocol"
+      ],
+      "name": {
+        "zh": "协议规范文档",
+        "en": "Protocol document"
+      },
+      "description": {
+        "zh": "机器可读契约旁边那份规范文档：谁跟谁说话、不可协商的传输、请求/事件模型、方法表（12）、事件表（6）、16 个字段的参数袋、与 CLI 退出码同源的错误码、一致性检查结果，以及 2026-10-04 收口的两条缺口的留档（hello 现在与别的方法同一套规则；client/version 真的用起来了）。\n",
+        "en": "The normative document beside the machine-readable contract: who talks to whom, the transport that is not negotiable, the request/event model, the method table (12), the event table (6), the 16-field parameter bag, the error codes shared with the CLI exit codes, the consistency-check results, and the archive of the two gaps closed on 2026-10-04 (hello now follows the same rules; client/version are really used).\n"
+      },
+      "source": [
+        {
+          "path": "docs/runner-protocol.md"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.928Z",
+      "fingerprint": "ab8b9709c660cca96bfe0114a4c41bbf7c70642d72968693a72a61eefe9512dc",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "docs/runner-protocol.md",
+          "description": {
+            "zh": "管道协议的规范文档：传输、方法、事件、参数、错误码。\n",
+            "en": "The normative document for the pipe protocol: transport, methods, events, parameters, error codes.\n"
+          },
+          "key": "file:docs/runner-protocol.md"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.protocol.contract",
+          "to_api": "file:src/KeyMouse.Runner/runner-protocol.schema.json",
+          "label": {
+            "zh": "写的是那份契约",
+            "en": "Documents the contract"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 1,
         "dep_in": 0
       }
     },
@@ -2775,14 +2919,84 @@
           "path": "editor/KeyMouse.FlowEditor/KeyMouse.FlowEditor.csproj"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.047Z",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.931Z",
       "fingerprint": "55033d25fce13c9d5c3b44610d32254427cbc7105f8b075656fa39d74ca6dbdc",
       "aggregate": {
-        "descendant_count": 3,
+        "descendant_count": 8,
         "own_api_count": 0,
-        "inherited_api_count": 9,
+        "inherited_api_count": 23,
         "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.editor.app": {
+      "uid": "7a1f100b",
+      "id": "keymouse.editor.app",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "theme",
+        "crash"
+      ],
+      "name": {
+        "zh": "应用、设计令牌与崩溃兜底",
+        "en": "App, tokens and crash guard"
+      },
+      "description": {
+        "zh": "应用对象与它装上的那套长相：App.xaml 是设计令牌（字体四级、圆角两档、卡片/面板/工具按钮样式）与四条改之前先读的规矩，其中有\"没有浮层\"与\"自绘面零投影\"；App.xaml.cs 负责开窗、命令行给了一个流程文件就直接打开它，并把所有未处理异常写进 %LOCALAPPDATA%\\KeyMouse\\editor-crash.log 且 Handled = true——否则一个抛异常的点击就只是把进程弄死，什么线索都不留。\n",
+        "en": "The application object and the look it installs: App.xaml carries the design tokens (four type levels, two radii, card/panel/tool-button styles) and the four rules a change must respect, including 'no overlays' and 'no shadows'. App.xaml.cs opens the window, opens a flow straight away when one is on the command line, and catches every unhandled exception into %LOCALAPPDATA%\\KeyMouse\\editor-crash.log with Handled = true - otherwise a click that throws simply kills the process and leaves no clue.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/App.xaml"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.927Z",
+      "fingerprint": "2ff45217eac3f18e590dd118c1cf0ea2a711052cfa0b68d3f89d878875c041d1",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "editor/KeyMouse.FlowEditor/App.xaml",
+          "description": {
+            "zh": "这套设计系统的令牌：字体四级、圆角两档、卡片与工具按钮样式。\n",
+            "en": "The design tokens: four type levels, two radii, card and tool-button styles.\n"
+          },
+          "key": "file:editor/KeyMouse.FlowEditor/App.xaml"
+        },
+        {
+          "protocol": "rpc",
+          "path": "App.OnUnhandled",
+          "description": {
+            "zh": "把每个未处理异常写进 editor-crash.log，并让进程活下来。\n",
+            "en": "Writes every unhandled exception to editor-crash.log and keeps the process alive.\n"
+          },
+          "key": "rpc:App.OnUnhandled"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.editor.shell",
+          "to_api": "rpc:MainWindow.OpenFile",
+          "label": {
+            "zh": "开窗",
+            "en": "Opens the window"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 1,
         "dep_in": 0
       }
     },
@@ -2809,9 +3023,9 @@
           "path": "editor/KeyMouse.FlowEditor/KeyMouseBridge.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.047Z",
-      "fingerprint": "dcd1c57df3f0ab957e6aacf3455041ace8ab7950e776109fed68dfc2d533437d",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.932Z",
+      "fingerprint": "b9de63ee41e9235369be6fa4d4179622621a54f00b8d236c77259b9c69e44069",
       "apis": [
         {
           "protocol": "file",
@@ -2870,6 +3084,149 @@
         "dep_in": 1
       }
     },
+    "keymouse.editor.inspector": {
+      "uid": "7a1f1007",
+      "id": "keymouse.editor.inspector",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "ui",
+        "contract"
+      ],
+      "name": {
+        "zh": "契约驱动的参数界面",
+        "en": "Contract-driven inspector"
+      },
+      "description": {
+        "zh": "参数面板完全由流程契约渲染：契约里的 kind 决定用哪种控件（text/multiline/int/bool/enum/point/region/target/when/steps/vars/stringList），必填、条件必填、范围与枚举中文标签也全来自同一份文件。默认值写进输入框里，解释收进一个小信息标记，校验错误写在出错字段的下方——不用一个会消失的弹窗打发人。\n",
+        "en": "The parameter panel, rendered from the flow contract: the contract's kind decides the control (text, multiline, int, bool, enum, point, region, target, when, steps, vars, stringList), and required, conditionally-required, ranges and Chinese enum labels all come from the same file. Defaults live in the field itself, explanations sit behind a small info mark, and a validation error is written under the field that caused it instead of in a popup that disappears.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/InspectorBuilder.cs"
+        },
+        {
+          "path": "editor/KeyMouse.FlowEditor/InspectorFields.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.926Z",
+      "fingerprint": "a15e0bb4af2787607795ad0cbf94add7566d80f37a6ea47b32b541afb55f0dbb",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "InspectorBuilder.Build",
+          "description": {
+            "zh": "为选中的一步搭出整张参数卡。\n",
+            "en": "Builds the whole parameter card for the selected step.\n"
+          },
+          "key": "rpc:InspectorBuilder.Build"
+        },
+        {
+          "protocol": "rpc",
+          "path": "InspectorFields.ValueLabel",
+          "description": {
+            "zh": "枚举值的中文标签：机器值不变，人看到中文。\n",
+            "en": "Value labels: an enum's machine value vs the Chinese a human reads.\n"
+          },
+          "key": "rpc:InspectorFields.ValueLabel"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.flow.schema",
+          "to_api": "rpc:FlowSchema.FieldsFor",
+          "label": {
+            "zh": "问契约要字段",
+            "en": "Asks the contract"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.editor.steps",
+          "to_api": "rpc:StepVm.Edit",
+          "label": {
+            "zh": "写回选中的一步",
+            "en": "Writes into the step"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 1
+      }
+    },
+    "keymouse.editor.settings": {
+      "uid": "7a1f100a",
+      "id": "keymouse.editor.settings",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "settings"
+      ],
+      "name": {
+        "zh": "编辑器设置",
+        "en": "Editor settings"
+      },
+      "description": {
+        "zh": "编辑器自己的小状态：最近打开过哪些流程。空状态如果只说\"还没有步骤\"，对第一次打开的人是没用的——工具的空状态应该回答\"从哪儿开始\"，而\"上次在改哪个文件\"通常就是答案。存在应用数据目录里，跟流程文件无关，删掉它只会丢这份列表；读坏了也不拦启动，当作没有设置。\n",
+        "en": "The editor's own small state: which flows were opened recently. An empty state saying only 'no steps yet' is useless to a first-time user - a tool's empty state should answer 'where do I start', and 'the file I was editing' usually is the answer. Kept next to the app data, unrelated to the flow files; deleting it only loses that list, and a settings file that will not parse never blocks startup.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/EditorSettings.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.927Z",
+      "fingerprint": "f32a9893ffa7bc5767abb765ac6076c15b19d9fd638ef73b480a3a3dfba1db8b",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "EditorSettings.Load",
+          "description": {
+            "zh": "读设置；文件坏了就当作没有设置。\n",
+            "en": "Loads the settings; a broken file is treated as no settings at all.\n"
+          },
+          "key": "rpc:EditorSettings.Load"
+        },
+        {
+          "protocol": "rpc",
+          "path": "EditorSettings.Remember",
+          "description": {
+            "zh": "把一个路径提到最近列表的最前（最多 5 条）。\n",
+            "en": "Moves a path to the front of the recent list (at most 5).\n"
+          },
+          "key": "rpc:EditorSettings.Remember"
+        },
+        {
+          "protocol": "file",
+          "path": "%LOCALAPPDATA%\\KeyMouse\\editor.json",
+          "description": {
+            "zh": "设置文件：%LOCALAPPDATA%\\KeyMouse\\editor.json。\n",
+            "en": "The settings file: %LOCALAPPDATA%\\KeyMouse\\editor.json.\n"
+          },
+          "key": "file:%LOCALAPPDATA%\\KeyMouse\\editor.json"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
     "keymouse.editor.shell": {
       "uid": "7a1f0d11",
       "id": "keymouse.editor.shell",
@@ -2886,8 +3243,8 @@
         "en": "Shell and interactions"
       },
       "description": {
-        "zh": "编辑器的窗口外壳：工具栏（打开/保存/试运行/播放/暂停/停止）、步骤列表、检查器、JSON 预览、运行输出面板与信息条。快捷键：Ctrl+O 打开、Ctrl+S 保存、**F5 播放**；命令行带上一个流程文件即可直接打开它（`KeyMouse flow edit x.json` 也走这条）。\n",
-        "en": "The editor window shell: toolbar (open, save, dry run, play, pause, stop), step list, inspector, JSON preview, run output panel and info bar. Shortcuts: Ctrl+O open, Ctrl+S save, F5 play; a flow file on the command line opens straight away (so does KeyMouse flow edit x.json).\n"
+        "zh": "编辑器的窗口外壳：工具栏（常用步骤一排 + 「更多」、试运行 / 播放 F5 / 暂停 / 停止、文件与取区域收进「⋯」）、可拖的三栏（步骤列表 / 分隔条 / 参数检查器）与下方的运行输出面板（结论条 + 日志，没有输出时高度为零）。消息一律落在版面里，没有浮层；最小窗口 1360x960（程序化改尺寸也夹紧）；启动时焦点有意指定（有文档给步骤列表，没有就给「新建流程」）。步骤行的运行结果来自 Runner 报告的退出码与耗时，不来自界面猜测。\n",
+        "en": "The window shell: a toolbar (common step types plus More, dry run / play F5 / pause / stop, file and pick-region in the overflow), three draggable panes and the run output panel below (conclusion bar plus log, zero height when empty). Messages land inside the layout - there is no overlay; the minimum window is 1360x960 even against a programmatic resize. A step row's result comes from the Runner's exit code and timing.\n"
       },
       "source": [
         {
@@ -2895,14 +3252,11 @@
         },
         {
           "path": "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"
-        },
-        {
-          "path": "editor/KeyMouse.FlowEditor/App.xaml.cs"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:46.182Z",
-      "fingerprint": "319beac10b0dc04a80ced5fed389341035601cc446b9b9672210a0d537b583b8",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.931Z",
+      "fingerprint": "eda52fae1201ded53b11691c19ff802fce452b575e05a62ba010f194334b4b97",
       "apis": [
         {
           "protocol": "rpc",
@@ -2921,6 +3275,24 @@
             "en": "Dry run/play: hand a copy to run and stream its output into the log.\n"
           },
           "key": "rpc:MainWindow.RunAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "MainWindow.UpdateStates",
+          "description": {
+            "zh": "一处决定什么可见：栏位、按钮与两个空状态。\n",
+            "en": "One place decides what is visible: panes, buttons and both empty states.\n"
+          },
+          "key": "rpc:MainWindow.UpdateStates"
+        },
+        {
+          "protocol": "rpc",
+          "path": "MainWindow.AddStep",
+          "description": {
+            "zh": "在选中那一步之后插入一步，并选中它。\n",
+            "en": "Inserts a step after the selected one and selects it.\n"
+          },
+          "key": "rpc:MainWindow.AddStep"
         }
       ],
       "deps": [
@@ -2943,13 +3315,80 @@
             "en": "Load a flow"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.editor.inspector",
+          "from_api": "rpc:MainWindow.UpdateStates",
+          "to_api": "rpc:InspectorBuilder.Build",
+          "label": {
+            "zh": "重建参数卡",
+            "en": "Rebuilds the form"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 2,
+        "own_api_count": 4,
         "inherited_api_count": 0,
-        "dep_out": 2,
+        "dep_out": 3,
+        "dep_in": 2
+      }
+    },
+    "keymouse.editor.splitter": {
+      "uid": "7a1f1008",
+      "id": "keymouse.editor.splitter",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "ui"
+      ],
+      "name": {
+        "zh": "可拖分隔条",
+        "en": "Draggable splitter"
+      },
+      "description": {
+        "zh": "可拖的分隔条：8px 的命中区里画一条 2px 的线（1px 落在小数像素上会被摊薄成看不见）。悬停时显示调整光标并把线变成强调色，拖动时整条变成半透明强调色。三栏的边界与输出面板的上下高度都靠它，MinTarget/MaxTarget 防止把面板拖没。它派生自 Button——没有模板的 ContentControl 不参与命中测试（实测：拖拽永远落到别的控件上）。\n",
+        "en": "The draggable divider: an 8px hit area drawing a 2px line (a 1px line lands on a fractional pixel and washes out). Hovering shows the resize cursor and turns the line to the accent colour; dragging turns the whole strip into translucent accent. It resizes the three panes and the output panel's height, with MinTarget/MaxTarget so a pane cannot be dragged away. It derives from Button because a ContentControl with no template does not take part in hit testing.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/Splitter.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.927Z",
+      "fingerprint": "f9ec40843419f068495c09203d190a3ca0cc492cfa9094b35a9eca2ccb0ce521",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Splitter.Target",
+          "description": {
+            "zh": "8px 命中区里那条 2px 线，拖动它改分栏比例。\n",
+            "en": "The 8px hit area holding the 2px line, dragged to resize a pane.\n"
+          },
+          "key": "rpc:Splitter.Target"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.editor.shell",
+          "label": {
+            "zh": "切开三栏",
+            "en": "Splits the three panes"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 1,
+        "inherited_api_count": 0,
+        "dep_out": 1,
         "dep_in": 0
       }
     },
@@ -2968,8 +3407,8 @@
         "en": "Step view model and catalogue"
       },
       "description": {
-        "zh": "列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。**显示哪些字段由 `FlowStepSchema` 决定**（不再手写条件），标签按类型说人话（\"要找的文字\"不是\"要输入的文字\"），分组/子流程/`read-text`/`when` 都有字段——`when` 是后来补的：以前界面里根本没有它。保存时会**用加载器自检一遍**：编辑器能造出格式会拒绝的东西（半填的 `when` 最容易），这件事该在按下保存的一秒内知道，而不是跑到一半才知道。\n",
-        "en": "The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first. Which fields appear comes from FlowStepSchema rather than hand-written conditions, labels speak per type, and groups, subflows, read-text and when have fields. A save is read back through the loader, so a half-filled when costs a second instead of a failed run.\n"
+        "zh": "列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。显示哪些字段由契约（FlowSchema）决定，标签按类型说人话，when 也是契约的一部分。保存时用加载器自检一遍：编辑器能造出格式会拒绝的东西（半填的 when 最容易），这件事该在按下保存的一秒内知道。行号与选中态是逐行通知的——x:Bind 默认一次性，不逐个发就不重画（实测：中间插一步后重号 1,2,3,3）。\n",
+        "en": "The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, and one edit refreshes the summary, the JSON preview and the visible fields. Which fields appear comes from the contract (FlowSchema). A save is read back through the loader, so a half-filled when costs a second instead of a failed run. Row number and selected state notify per row, because x:Bind is one-time by default.\n"
       },
       "source": [
         {
@@ -2982,9 +3421,9 @@
           "path": "editor/KeyMouse.FlowEditor/Compat.cs"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:46.181Z",
-      "fingerprint": "dc1553bbee28cf70dee23c7f93f11af81dff0c2dac7d40082d7627427b98429d",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.932Z",
+      "fingerprint": "3e487fadf8de240d4a1106d5746957ccd8f516db6adfd93da123f7e3d3cbe558",
       "apis": [
         {
           "protocol": "rpc",
@@ -3015,12 +3454,30 @@
         },
         {
           "protocol": "rpc",
+          "path": "EditorModel.Renumber",
+          "description": {
+            "zh": "重排行号并逐行通知——一次性绑定不会自己重画。\n",
+            "en": "Renumbers the rows and refreshes each one (one-time bindings do not repaint themselves).\n"
+          },
+          "key": "rpc:EditorModel.Renumber"
+        },
+        {
+          "protocol": "rpc",
           "path": "StepVm.Edit",
           "description": {
             "zh": "值没变就什么都不做的写入守卫。\n",
             "en": "The write guard that ignores a no-op value.\n"
           },
           "key": "rpc:StepVm.Edit"
+        },
+        {
+          "protocol": "rpc",
+          "path": "StepVm.BadgeBrush",
+          "description": {
+            "zh": "类型徽标的面色：只有选中那一行是强调色。\n",
+            "en": "The badge brush: the accent face only on the selected row.\n"
+          },
+          "key": "rpc:StepVm.BadgeBrush"
         }
       ],
       "deps": [
@@ -3043,14 +3500,91 @@
             "en": "And for writing back"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.schema",
+          "from_api": "rpc:StepVm.BadgeBrush",
+          "to_api": "rpc:FlowSchema.FieldsFor",
+          "label": {
+            "zh": "字段由它给",
+            "en": "Fields come from it"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 4,
+        "own_api_count": 6,
         "inherited_api_count": 0,
-        "dep_out": 2,
-        "dep_in": 1
+        "dep_out": 3,
+        "dep_in": 2
+      }
+    },
+    "keymouse.editor.surfaces": {
+      "uid": "7a1f1009",
+      "id": "keymouse.editor.surfaces",
+      "parent": "keymouse.editor",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "editor",
+        "ui"
+      ],
+      "name": {
+        "zh": "空状态与步骤选择面",
+        "en": "Empty state and step picker"
+      },
+      "description": {
+        "zh": "两处都是**回答用户的问题**，而不是把组件摆开：空状态回答\"从哪儿开始\"（最近打开的那个文件通常就是答案），添加步骤的面回答\"这一步要哪个类型\"（按用途分组，每组一句话说明它干什么）。文案来自契约里每种步骤自己的摘要，不在这里另编一份。\n",
+        "en": "The two places that are organised as answers rather than as component dumps: the empty state answers 'where do I start' (the most recent file usually is the answer) and the add-step surface answers 'which type do I need' (grouped by purpose, each group with one line saying what it does). Wording comes from the contract - each step type's own summary - so nothing is written twice here.\n"
+      },
+      "source": [
+        {
+          "path": "editor/KeyMouse.FlowEditor/Surfaces.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.927Z",
+      "fingerprint": "c13989c35bbe86378e44476049e6093f37ab311ef63a32a4a1596340bef9ae7b",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "Surfaces.FillRecent",
+          "description": {
+            "zh": "填起始面的最近打开列表，并决定那一块显不显示。\n",
+            "en": "Fills the start page's recent list and shows or hides that block.\n"
+          },
+          "key": "rpc:Surfaces.FillRecent"
+        },
+        {
+          "protocol": "rpc",
+          "path": "Surfaces.Groups",
+          "description": {
+            "zh": "步骤按用途分组：窗口 / 输入 / 看屏幕 / 流程。\n",
+            "en": "The step types grouped by purpose: window, input, screen, flow.\n"
+          },
+          "key": "rpc:Surfaces.Groups"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.schema",
+          "to_api": "rpc:FlowSchema.TryGetStep",
+          "label": {
+            "zh": "摘要文案来自契约",
+            "en": "Summaries come from it"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 1,
+        "dep_in": 0
       }
     },
     "keymouse.execution": {
@@ -3134,15 +3668,92 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:44.313Z",
-      "fingerprint": "16453d4f8d002642655def878b25ffa8df81923b5720e4a1bbe706f0c676e05a",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.928Z",
+      "fingerprint": "9f534bc527720dab0894ce5de30cf1927daa780e2432c34519d9474e3e688f4c",
       "aggregate": {
-        "descendant_count": 5,
+        "descendant_count": 6,
         "own_api_count": 0,
-        "inherited_api_count": 16,
+        "inherited_api_count": 23,
         "dep_out": 0,
         "dep_in": 0
+      }
+    },
+    "keymouse.flow.evidence": {
+      "uid": "7a1f100e",
+      "id": "keymouse.flow.evidence",
+      "parent": "keymouse.flow",
+      "tree": "keymouse",
+      "depth": 3,
+      "tags": [
+        "flow",
+        "evidence",
+        "shots"
+      ],
+      "name": {
+        "zh": "运行证据截图",
+        "en": "Run evidence shots"
+      },
+      "description": {
+        "zh": "每一步\"当时看到的东西\"存成 PNG，落在流程文件旁边的 <流程>.shots/ 里。必须由引擎抓：证据的价值全在\"它真的是那一步看到的\"，界面不合成、不占位，抓不到就返回 null（宁可这一步没有截图，也不给一张假的）。命名 0001-<类型>.png，每次运行覆盖同一组，所以行上看到的一定是最近一次运行的样子，目录也不会无限长大。\n",
+        "en": "Per-step PNGs of what the step actually saw, written next to the flow file in <flow>.shots/. The engine must capture them: evidence is only worth something if it is genuinely what that step saw, so the UI neither composites nor substitutes - a failed capture returns null rather than a fake. Names are 0001-<type>.png and each run overwrites the same set, so a row always shows the latest run and the directory cannot grow forever.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Core/RunShots.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.925Z",
+      "fingerprint": "46b4a00258f2b2640477914a7343d548b56c6cabcf48139beadb3d1bb2cdfdf9",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "RunShots.Capture",
+          "description": {
+            "zh": "给一步留一张证据；拿不到就返回 null。\n",
+            "en": "Captures evidence for one step; returns null when it cannot.\n"
+          },
+          "key": "rpc:RunShots.Capture"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunShots.DirectoryOf",
+          "description": {
+            "zh": "证据目录：与用户那份流程同名，后缀 .shots。\n",
+            "en": "The evidence directory: the flow's name plus .shots.\n"
+          },
+          "key": "rpc:RunShots.DirectoryOf"
+        },
+        {
+          "protocol": "file",
+          "path": "<流程>.shots/0001-<类型>.png",
+          "description": {
+            "zh": "每一步一张 PNG，每次运行覆盖同一组。\n",
+            "en": "One PNG per step, overwritten by each run.\n"
+          },
+          "key": "file:<流程>.shots/0001-<类型>.png"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "dataflow",
+          "to": "keymouse.native.capture",
+          "from_api": "rpc:RunShots.Capture",
+          "to_api": "rpc:NativeCapture.TryCapture",
+          "label": {
+            "zh": "取一张屏幕",
+            "en": "Capture the screen"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 1,
+        "dep_in": 2
       }
     },
     "keymouse.flow.model": {
@@ -3160,8 +3771,8 @@
         "en": "Document and compiler"
       },
       "description": {
-        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 `call` 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、`{{占位符}}` 必须在作用域里、`read-text` 的 into 与 `call` 的 export 对后续步骤可见、子流程必须存在且不成环）。另负责按帧解析。`allowRestore` 是**同意**开关：默认关，还原别人的最小化窗口要明说。\n",
-        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, loops, variables and calls (region/text/match rules, the times cap, a foreach list that must exist, a group that cannot carry a when, placeholders in scope, a read-text into and a call export later steps may use, and a subflow without cycles). Placeholders resolve against a frame; allowRestore carries the consent to bring a minimized window back.\n"
+        "zh": "流程的读写与校验：格式名/版本/步骤类型在加载时就拒绝不认识的东西；条件、前置条件、循环、变量与 call 同样在加载时校验（region/text/match 规则、times 上限、foreach 的列表必须存在、分组不能带 when、占位符必须在作用域里、into 与 export 对后续步骤可见、子流程必须存在且不成环）。字段必填由契约（FlowSchema）判定；when 里字段全空等于没有前提，不该因此作废。allowRestore 是同意开关：默认关，还原别人的最小化窗口要明说。\n",
+        "en": "Reading, writing and validating a flow: format, version and step types are rejected at load time, and so are conditions, loops, variables and calls (region/text/match rules, the times cap, foreach lists, groups without when, placeholders in scope, into/export visibility, subflow cycles). Required fields come from the contract (FlowSchema), an all-empty when means no precondition, and allowRestore carries the consent to bring a minimized window back.\n"
       },
       "source": [
         {
@@ -3171,9 +3782,9 @@
           "path": "src/KeyMouse.Core/TextPredicate.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.970Z",
-      "fingerprint": "6d745f8021564c393850fb425fa2a4459d4fd25098adef60f24030999f435719",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.929Z",
+      "fingerprint": "5955e9ecd0e3cc23f5f4d39909cd12cb391ccb4631e8617ef8114b35197c339a",
       "apis": [
         {
           "protocol": "rpc",
@@ -3231,13 +3842,24 @@
             "en": "Validate mode at load"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.schema",
+          "from_api": "rpc:FlowDocument.Load",
+          "to_api": "rpc:FlowSchema.TryGetStep",
+          "label": {
+            "zh": "必填由它判定",
+            "en": "Required fields from it"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
         "own_api_count": 5,
         "inherited_api_count": 0,
-        "dep_out": 1,
+        "dep_out": 2,
         "dep_in": 9
       }
     },
@@ -3430,9 +4052,9 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.971Z",
-      "fingerprint": "57a3c71696d205ab8bcbbc4370f0e072b8c1fc5d13f68c0b68c26008afa8218e",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.929Z",
+      "fingerprint": "e556e9ac89ec074dbb9cfa7c693edea6d8600a7d9359172b06415af522ff8c16",
       "apis": [
         {
           "protocol": "rpc",
@@ -3520,7 +4142,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 6,
-        "dep_in": 5
+        "dep_in": 6
       }
     },
     "keymouse.flow.schema": {
@@ -3531,41 +4153,81 @@
       "depth": 3,
       "tags": [
         "flow",
-        "core"
+        "core",
+        "contract"
       ],
       "name": {
-        "zh": "步骤字段表",
-        "en": "Step field schema"
+        "zh": "流程格式契约",
+        "en": "Flow format contract"
       },
       "description": {
-        "zh": "哪种步骤用哪些字段——一张只有格式自己维护的表。检查器不再手写\"显示什么\"的条件：编辑器问它，于是加类型或加字段时改的是同一处，界面不会悄悄漏掉参数（曾经漏过：`click-text` 在界面上只剩目标与备注，区域、文字、匹配、上限、按钮全部藏着）。一个单元测试遍历 `KnownTypes`，拒绝任何没有声明的类型，并钉住 `click-text`/`read-text`/`wait-text` 必须带区域、文字、匹配、上限这些字段。\n",
-        "en": "Which step type uses which fields - one table the format itself maintains. The inspector no longer hand-writes hide/show conditions: it asks this table, so a type or a field changes in one place and the UI cannot silently lose parameters (it did: click-text showed only a target and a note while its region, text, match mode, timeout and button stayed hidden). A unit test walks KnownTypes and refuses a type without an entry.\n"
+        "zh": "流程格式的接口契约：一个 JSON 文件（随程序集嵌入）说清每种步骤有哪些字段、哪些必填、范围与枚举的中文标签，FlowSchema 只负责读它。加载器与编辑器都问同一份：界面里不再有第二张\"显示什么\"的表。验证由测试盯着——每个类型必须有条目、每个字段必须有中文标签、kind 必须是界面真渲染得出的那些，反过来契约也不许发明加载器不认识的类型。\n",
+        "en": "The flow format's interface contract: one JSON file (embedded in the assembly) declaring every step type's fields, which are required, their ranges and the Chinese labels for enum values; FlowSchema only reads it. Loader and editor ask the same file, so the UI holds no second table of what to show. Tests enforce it: every type has an entry, every field has a label and a kind the editor can render, and the contract may not invent types the loader rejects.\n"
       },
       "source": [
         {
-          "path": "src/KeyMouse.Core/FlowStepSchema.cs"
+          "path": "src/KeyMouse.Core/flow.schema.json"
+        },
+        {
+          "path": "src/KeyMouse.Core/FlowSchema.cs"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:46.180Z",
-      "fingerprint": "bb5056a358f7c4ac4b6eaae616d1bd0bfc72b1e85d9f1916dbeb7deac6ce251f",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.929Z",
+      "fingerprint": "7405a24a848226ca93e6b347413a4bf10bc5ae6044a2040a96f52ddedee7db08",
       "apis": [
         {
-          "protocol": "rpc",
-          "path": "FlowStepSchema.For",
+          "protocol": "file",
+          "path": "src/KeyMouse.Core/flow.schema.json",
           "description": {
-            "zh": "某个步骤类型用到哪些字段（位标志）。\n",
-            "en": "Which fields a step type uses (a flag set).\n"
+            "zh": "契约本体（机器可读的那份，随程序集嵌入）。\n",
+            "en": "The contract itself (the machine-readable one, embedded in the assembly).\n"
           },
-          "key": "rpc:FlowStepSchema.For"
+          "key": "file:src/KeyMouse.Core/flow.schema.json"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowSchema.Steps",
+          "description": {
+            "zh": "按步骤类型索引的契约表：字段、必填、范围、枚举中文标签。\n",
+            "en": "Entries by step type: fields, required, ranges, Chinese enum labels.\n"
+          },
+          "key": "rpc:FlowSchema.Steps"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowSchema.TryGetStep",
+          "description": {
+            "zh": "某个步骤类型的契约（不认识就 false）。\n",
+            "en": "The contract of one step type (false when the type is unknown).\n"
+          },
+          "key": "rpc:FlowSchema.TryGetStep"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowSchema.ShapeFields",
+          "description": {
+            "zh": "形状（region / point / target / when 等）内部的字段。\n",
+            "en": "The inner fields of a shape such as region, point, target or when.\n"
+          },
+          "key": "rpc:FlowSchema.ShapeFields"
+        },
+        {
+          "protocol": "rpc",
+          "path": "FlowSchema.FieldsFor",
+          "description": {
+            "zh": "某个步骤类型要渲染的字段，按阅读顺序。\n",
+            "en": "The fields to render for a step type, in reading order.\n"
+          },
+          "key": "rpc:FlowSchema.FieldsFor"
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 1,
+        "own_api_count": 5,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 0
+        "dep_in": 7
       }
     },
     "keymouse.input": {
@@ -4276,7 +4938,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 4
+        "dep_in": 5
       }
     },
     "keymouse.native.dwm": {
@@ -5634,9 +6296,9 @@
           "path": "src/KeyMouse.Core/FlowRunner.cs"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:44.315Z",
-      "fingerprint": "0f0885519e1a92b477c11f7ebec1434e3b2d029c47e76448b38bfde77bb4d9a4",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.938Z",
+      "fingerprint": "ebe8ea69481c02897b871c629e8b5b3dacdb50a6e1ee86640f8a31d3bd0eab77",
       "aggregate": {
         "descendant_count": 1,
         "own_api_count": 0,
@@ -5784,13 +6446,13 @@
           "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:08.813Z",
-      "fingerprint": "fca6f48e8527e11ffe1e4c9eca2cad82e17aeb512a43aeeaddda01588594b1ee",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.930Z",
+      "fingerprint": "175bb2fe1b96f9812d652604f089d679c6da8f774ff2aab88189760d8fa1918d",
       "aggregate": {
-        "descendant_count": 3,
+        "descendant_count": 7,
         "own_api_count": 0,
-        "inherited_api_count": 8,
+        "inherited_api_count": 22,
         "dep_out": 0,
         "dep_in": 0
       }
@@ -5809,8 +6471,8 @@
         "en": "Jobs and dispatch"
       },
       "description": {
-        "zh": "请求分发（run/record/validate/pick-region/ocr/控制/状态）、作业注册表与 `Execution.Control` 的实现：作业自己就是那个接缝，于是暂停、取消、逐步事件都发生在能力层的执行路径上。日志流用的是把 Console.Out 接到事件汇上——诚实标注：这只有在作业串行时才成立，把 Core 与 Console 解耦是下一步。\n",
-        "en": "Request dispatch (run/record/validate/pick-region/ocr/control/status), the job registry, and the implementation of `Execution.Control`: the job *is* the seam, so pausing, cancelling and per-step events happen on the capability layer execution path. The log stream works by wiring Console.Out to the event sink - honest note: that only holds because jobs are serialised, and decoupling Core from Console is the next step.\n"
+        "zh": "请求分发（run/record/validate/pick-region/ocr/控制/状态）、作业注册表与 Execution.Control 的实现：作业自己就是那个接缝，于是暂停、取消、逐步事件都发生在能力层的执行路径上。两条硬规矩：队列槽先拿、可能失败的事都在 try 里——校验曾经在拿槽之前，一抛异常作业就永远停在 queued，客户端只能干等；现在失败也一定回 error + finished。作业同时是运行证据的持有者：每步结束顺手留一张截图，并记下是谁在问。\n",
+        "en": "Request dispatch (run, record, validate, pick-region, ocr, control, status), the job registry and Execution.Control: the job is the seam for pausing, cancelling and per-step events. The queue slot is taken first and everything that can fail sits inside the try - validation used to run before the slot, so one throw left a job queued forever and its client waiting; a failure now always answers error plus finished. The job also owns run evidence and records which client asked.\n"
       },
       "source": [
         {
@@ -5820,9 +6482,9 @@
           "path": "src/KeyMouse.Runner/RunnerJob.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.517Z",
-      "fingerprint": "c6e16f99d7a79b0fb4e78d7f4e1ace595af81bd22299b254ee89e15b2ddfe900",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.931Z",
+      "fingerprint": "7d3f8ccb0f610fdb7878c125cffb62fd28b7807b2638deb038dfd5b666ff551f",
       "apis": [
         {
           "protocol": "rpc",
@@ -5850,6 +6512,24 @@
             "en": "The pause gate and the cancel point (throws CommandFailure(7)).\n"
           },
           "key": "rpc:RunnerJob.BetweenSteps"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerJob.StepFinished",
+          "description": {
+            "zh": "一步跑完：发事件，并顺手留一张证据截图。\n",
+            "en": "A step finished: emits the event and leaves a screenshot as evidence.\n"
+          },
+          "key": "rpc:RunnerJob.StepFinished"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerJob.Info",
+          "description": {
+            "zh": "list/status 用的作业信息：状态、退出码、耗时与是谁在问。\n",
+            "en": "Job info for list/status: state, exit code, timing and who asked.\n"
+          },
+          "key": "rpc:RunnerJob.Info"
         }
       ],
       "deps": [
@@ -5872,14 +6552,25 @@
             "en": "Installs the execution seam"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.evidence",
+          "from_api": "rpc:RunnerJob.StepFinished",
+          "to_api": "rpc:RunShots.Capture",
+          "label": {
+            "zh": "留一张证据",
+            "en": "Leaves evidence"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 3,
+        "own_api_count": 5,
         "inherited_api_count": 0,
-        "dep_out": 2,
-        "dep_in": 2
+        "dep_out": 3,
+        "dep_in": 3
       }
     },
     "keymouse.runner.pipe": {
@@ -5897,8 +6588,8 @@
         "en": "Pipe server and client"
       },
       "description": {
-        "zh": "服务端把每个请求丢进自己的任务（否则长流程期间收不到 cancel），写入加锁串行化；客户端一条连接、一个后台泵，按请求 id 路由事件，`ConnectOrStartAsync` 在没有服务时把 `serve` 拉起来。编辑器用的就是它。\n",
-        "en": "The server hands every request to its own task (or a long flow would block its own cancel) and serialises writes behind a lock; the client keeps one connection with a background pump that routes events by request id, and ConnectOrStartAsync starts `serve` when nothing is listening. The editor uses exactly this.\n"
+        "zh": "服务端把每个请求丢进自己的任务（否则长流程期间收不到 cancel），写入加锁串行化，连上就先发一条 id=0 的问候（是问候，不是应答）；客户端一条连接、一个后台泵，按请求 id 路由事件，并在每个请求上自报家门（client / version）。ConnectOrStartAsync 在没有服务时把 serve 拉起来，并且必须把子进程的输出读干——只重定向不读，缓冲区写满会把 serve 卡死，它连命名管道都建不出来（实测）；读干之后还能把最后几行遗言带给用户。\n",
+        "en": "The server gives every request its own task (or a long flow blocks its own cancel), serialises writes and greets a fresh connection with an id=0 hello - a greeting, not a reply; the client keeps one connection, routes events by request id and declares client/version on every request. Starting serve must drain the child's output: redirect without reading and the buffer fills, blocking serve before it can create the pipe (measured); draining also brings its last words to the user.\n"
       },
       "source": [
         {
@@ -5908,9 +6599,9 @@
           "path": "src/KeyMouse.Runner/RunnerClient.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.045Z",
-      "fingerprint": "38308e3ab07cd66aa8bdf0f2244133cceaef77b7dee0967f76ce73eb21011696",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.931Z",
+      "fingerprint": "d4a1087243e5c41b4b506b8abd1c0ed424c2e1aad1de64cda4d7e9e1f86b4879",
       "apis": [
         {
           "protocol": "rpc",
@@ -5934,17 +6625,48 @@
           "protocol": "rpc",
           "path": "RunnerClient.ConnectOrStartAsync",
           "description": {
-            "zh": "没人在听就启动一个 Runner。\n",
-            "en": "Starts a Runner when nobody is listening.\n"
+            "zh": "没人在听就启动一个 Runner，并把它的输出读干。\n",
+            "en": "Starts a Runner when nobody is listening, draining its output.\n"
           },
           "key": "rpc:RunnerClient.ConnectOrStartAsync"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerClient.LastStartFailure",
+          "description": {
+            "zh": "上一次启动失败的原因，带给用户（成功时为 null）。\n",
+            "en": "Why the last start failed, carried to the user (null when it worked).\n"
+          },
+          "key": "rpc:RunnerClient.LastStartFailure"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerClient.ClientName",
+          "description": {
+            "zh": "谁在问：入口程序集名，盖在每个请求上。\n",
+            "en": "Who is asking: the entry assembly's name, stamped on every request.\n"
+          },
+          "key": "rpc:RunnerClient.ClientName"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.runner.protocol.version",
+          "from_api": "rpc:RunnerClient.SendAsync",
+          "to_api": "rpc:RunnerProtocol.AcceptsVersion",
+          "label": {
+            "zh": "自报家门与版本",
+            "en": "Declares who and version"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
-        "own_api_count": 3,
+        "own_api_count": 5,
         "inherited_api_count": 0,
-        "dep_out": 0,
+        "dep_out": 1,
         "dep_in": 2
       }
     },
@@ -5963,17 +6685,186 @@
         "en": "Pipe protocol"
       },
       "description": {
-        "zh": "一行一个 JSON 对象：请求是 `method` + `params`，事件是 `kind`（hello | log | step | finished | result | error）。选命名管道而不是端口：按用户隔离（`keymouse-runner-<用户名>`）、无依赖、任何语言十行能接、人能直接读。请求并发处理，作业串行执行——否则客户端在长流程期间连 cancel 都发不进来。\n",
-        "en": "One JSON object per line: a request is `method` plus `params`, an event is a `kind` (hello | log | step | finished | result | error). A named pipe rather than a port: per-user isolation (keymouse-runner-<user>), no dependency, ten lines in any language, and a human can read the traffic. Requests are handled concurrently while jobs run one at a time - otherwise a client could not even send cancel during a long flow.\n"
+        "zh": "一行一个 JSON 对象，UTF-8，走命名管道：请求是 {id, method, params}，事件是 {kind, id, ...}。刻意无聊——任何语言十行能接、人能直接读，没有端口也没有序列化框架。四块：契约文件（唯一真相）、版本协商（先对版本再谈方法）、方法表（12 个方法各自的参数、流式事件与终结事件）、事件表（6 种 kind，以及那条不是应答的问候）。\n",
+        "en": "One JSON object per line, UTF-8, over a named pipe: a request is {id, method, params}, an event is {kind, id, ...}. Deliberately boring - ten lines in any language, readable by a human, no ports, no serialization framework. Four parts: the contract file (single source of truth), version negotiation, the method table (12 methods, each with a terminal event) and the event table (6 kinds plus the greeting that is not a reply).\n"
       },
       "source": [
         {
           "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.044Z",
-      "fingerprint": "cd5effed268b21e575132d97dcdd66949c10d77cd02a31e5275dfa2b9a3fb7f7",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.930Z",
+      "fingerprint": "57e2a9866514486ce02dab49e76e8c9be7b4760bb588773d44e29f49204d41b8",
+      "aggregate": {
+        "descendant_count": 4,
+        "own_api_count": 0,
+        "inherited_api_count": 12,
+        "dep_out": 0,
+        "dep_in": 0
+      }
+    },
+    "keymouse.runner.protocol.contract": {
+      "uid": "7a1f100f",
+      "id": "keymouse.runner.protocol.contract",
+      "parent": "keymouse.runner.protocol",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "runner",
+        "protocol",
+        "contract"
+      ],
+      "name": {
+        "zh": "协议契约文件",
+        "en": "Protocol contract file"
+      },
+      "description": {
+        "zh": "协议的规范本体：12 个方法与各自的终结事件、6 种事件与字段、16 个参数、错误码（与 CLI 退出码同源）、不变量、连接后的问候、result 里的具名形状，以及 knownGaps。knownGaps 现在必须是空的：发现差异先写进去、再把那条差异的行为钉进测试，缺口要么被修掉要么被写下来。改协议的顺序是固定的：先改这里 → 再改两侧 → 跑 `--only protocol`（测试读它，反过来不成立）。\n",
+        "en": "The normative artifact: 12 methods with their terminal events, 6 event kinds and fields, 16 parameters, error codes (same set as the CLI exit codes), invariants, the connect-time greeting, result shapes, and knownGaps. knownGaps must stay empty: a difference is written down and pinned by a test - a gap is either fixed or recorded. Change order is fixed: this file, then both sides, then --only protocol (the test reads this file, never the other way round).\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/runner-protocol.schema.json"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.925Z",
+      "fingerprint": "11bf030bb413ad49f19ea68677c16efa8e7092848da0bfc6bccf564fa5280e42",
+      "apis": [
+        {
+          "protocol": "file",
+          "path": "src/KeyMouse.Runner/runner-protocol.schema.json",
+          "description": {
+            "zh": "契约本体（机器可读的那份）。\n",
+            "en": "The contract itself (the machine-readable one).\n"
+          },
+          "key": "file:src/KeyMouse.Runner/runner-protocol.schema.json"
+        },
+        {
+          "protocol": "rpc",
+          "path": "knownGaps",
+          "description": {
+            "zh": "已知差异清单：必须为空，测试盯着它。\n",
+            "en": "The known-gaps list: must be empty, and a test watches it.\n"
+          },
+          "key": "rpc:knownGaps"
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 0,
+        "dep_in": 2
+      }
+    },
+    "keymouse.runner.protocol.events": {
+      "uid": "7a1f1005",
+      "id": "keymouse.runner.protocol.events",
+      "parent": "keymouse.runner.protocol",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "runner",
+        "protocol",
+        "events"
+      ],
+      "name": {
+        "zh": "事件表与问候",
+        "en": "Event table and greeting"
+      },
+      "description": {
+        "zh": "6 种 kind：hello | log | step | finished | result | error。log 是能力层打到 stdout/stderr 的每一行；step 带 index/total/state/type/shot/exitCode/durationMs，其中 shot 是这一步留下的证据截图路径（先执行后截图，所以它是这一步做完之后的屏幕，抓不到就是 null，绝不编一个）；finished 是执行类方法的终结事件；result 是一问一答的终结事件；error 面向用户、必须是中文。还有一条容易被误用的：连上管道后服务端主动发一条 id 固定为 0 的 hello 问候——它是问候，不是任何请求的应答，客户端不得 await 它。\n",
+        "en": "Six kinds: hello | log | step | finished | result | error. log is every line the capability layer prints; step carries index/total/state/type/shot/exitCode/durationMs where shot is the evidence screenshot that step left (captured after it ran; a failed capture is null, never fabricated); finished and result terminate executing and question-answer methods; error is user-facing and Chinese. The connect-time hello has a fixed id of 0: a greeting, not a reply - do not await it.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.926Z",
+      "fingerprint": "57e2a9866514486ce02dab49e76e8c9be7b4760bb588773d44e29f49204d41b8",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "keymouse-runner 事件",
+          "description": {
+            "zh": "{kind, id, ...}：hello | log | step | finished | result | error。\n",
+            "en": "Event {kind, id, ...}: hello | log | step | finished | result | error.\n"
+          },
+          "key": "rpc:keymouse-runner 事件"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerEvent.Step",
+          "description": {
+            "zh": "一步的开始与结束；结束时带上证据截图路径。\n",
+            "en": "A step starting and finishing; the finishing event carries the evidence screenshot path.\n"
+          },
+          "key": "rpc:RunnerEvent.Step"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerEvent.Hello",
+          "description": {
+            "zh": "连接后的问候：id 固定 0，不是应答。\n",
+            "en": "The connect-time greeting: fixed id 0, not a reply.\n"
+          },
+          "key": "rpc:RunnerEvent.Hello"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "event",
+          "to": "keymouse.flow.evidence",
+          "from_api": "rpc:RunnerEvent.Step",
+          "label": {
+            "zh": "这一步的证据截图",
+            "en": "Evidence shot of that step"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 3,
+        "inherited_api_count": 0,
+        "dep_out": 1,
+        "dep_in": 0
+      }
+    },
+    "keymouse.runner.protocol.methods": {
+      "uid": "7a1f1004",
+      "id": "keymouse.runner.protocol.methods",
+      "parent": "keymouse.runner.protocol",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "runner",
+        "protocol",
+        "methods"
+      ],
+      "name": {
+        "zh": "方法表与派发",
+        "en": "Method table and dispatch"
+      },
+      "description": {
+        "zh": "12 个方法，每一个都以终结事件收场（result / finished / error）——这条不变量是从一次真实缺口里长出来的：hello 曾经不回显请求 id、也不发终结事件，`await hello` 会永远不返回。现在 hello 与别的方法同一套规则：回显 id、以 result{version, protocol} 终结。执行类方法先流式回 log 与 step，再以 finished（带退出码）或 error 收尾；不认识的方法必须回 error(code=2)，message 里列出的可用方法由 RunnerProtocol.Methods 生成，与契约同源。\n",
+        "en": "Twelve methods, each ending in a terminal event (result / finished / error) - an invariant that grew from a real gap: hello used to not echo the request id and to send no terminal event, so awaiting it never returned. Executing methods stream log and step, then finish with finished or error; an unknown method answers error(code=2) listing the available methods, generated from RunnerProtocol.Methods so it cannot drift.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
+        },
+        {
+          "path": "src/KeyMouse.Runner/RunnerHost.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.926Z",
+      "fingerprint": "2027cf018ce3e9c73d08e1d3799ce905591950edad60e12dcd6c4cb024722bf4",
       "apis": [
         {
           "protocol": "rpc",
@@ -5986,12 +6877,116 @@
         },
         {
           "protocol": "rpc",
-          "path": "keymouse-runner 事件",
+          "path": "RunnerProtocol.Methods",
           "description": {
-            "zh": "{kind, id, ...}：hello | log | step | finished | result | error。\n",
-            "en": "Event {kind, id, ...}: hello | log | step | finished | result | error.\n"
+            "zh": "方法清单的唯一来源：服务端那句\"不认识这个方法\"由它生成，测试拿它与契约对账。\n",
+            "en": "The single source of the method list: the unknown-method message comes from it, a test reconciles it with the contract.\n"
           },
-          "key": "rpc:keymouse-runner 事件"
+          "key": "rpc:RunnerProtocol.Methods"
+        },
+        {
+          "protocol": "rpc",
+          "path": "hello",
+          "description": {
+            "zh": "回显请求 id，以 result{version, protocol} 终结。\n",
+            "en": "Echoes the request id and terminates with result{version, protocol}.\n"
+          },
+          "key": "rpc:hello"
+        },
+        {
+          "protocol": "rpc",
+          "path": "run / record",
+          "description": {
+            "zh": "执行类方法：流式回 log 与 step，终结 finished 或 error。\n",
+            "en": "Executing methods: stream log and step, terminate with finished or error.\n"
+          },
+          "key": "rpc:run / record"
+        },
+        {
+          "protocol": "rpc",
+          "path": "cancel / pause / resume",
+          "description": {
+            "zh": "控制正在跑的作业；target 缺省时取请求 id 自身。\n",
+            "en": "Control a running job; target defaults to the request's own id.\n"
+          },
+          "key": "rpc:cancel / pause / resume"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "call",
+          "to": "keymouse.runner.host",
+          "from_api": "rpc:keymouse-runner 请求",
+          "label": {
+            "zh": "按方法名派发",
+            "en": "Dispatch by method name"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "call",
+          "to": "keymouse.flow.runner",
+          "from_api": "rpc:run / record",
+          "label": {
+            "zh": "执行走能力层",
+            "en": "Through the capability layer"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 5,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 2
+      }
+    },
+    "keymouse.runner.protocol.version": {
+      "uid": "7a1f1003",
+      "id": "keymouse.runner.protocol.version",
+      "parent": "keymouse.runner.protocol",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "runner",
+        "protocol",
+        "version"
+      ],
+      "name": {
+        "zh": "版本协商",
+        "en": "Version negotiation"
+      },
+      "description": {
+        "zh": "契约版本只有一处定义（RunnerProtocol.ContractVersion，测试拿它与 schema 的 version 对账）。客户端在每个请求上自报家门：client 说明谁在问（取入口程序集名，服务端记进作业，list/status 看得到），version 说明说的是哪版协议。服务端先对版本再谈方法：主版本不合就回 error(code=2) 并停止处理，而不是拿旧字段跑出看不懂的结果；没带 version 视为不说、放行，所以脚本随手发一行也能用。\n",
+        "en": "The contract version has one definition (RunnerProtocol.ContractVersion, reconciled with the schema version by a test). Every request declares itself: client says who is asking (entry assembly name; the server records it on the job so list/status show it), version says which protocol it speaks. The server agrees on the version before methods: a different major answers error(code=2) and stops; an absent version passes, so a hand-written script line still works.\n"
+      },
+      "source": [
+        {
+          "path": "src/KeyMouse.Runner/RunnerProtocol.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.926Z",
+      "fingerprint": "57e2a9866514486ce02dab49e76e8c9be7b4760bb588773d44e29f49204d41b8",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "RunnerProtocol.ContractVersion",
+          "description": {
+            "zh": "契约版本（与 schema 的 version 相等，由测试强制）。\n",
+            "en": "The contract version (equal to the schema version, enforced by a test).\n"
+          },
+          "key": "rpc:RunnerProtocol.ContractVersion"
+        },
+        {
+          "protocol": "rpc",
+          "path": "RunnerProtocol.AcceptsVersion",
+          "description": {
+            "zh": "客户端报的版本能不能用：没报放行，主版本不合挡下。\n",
+            "en": "Whether the client's declared version is usable: absent passes, a different major is refused.\n"
+          },
+          "key": "rpc:RunnerProtocol.AcceptsVersion"
         }
       ],
       "aggregate": {
@@ -5999,7 +6994,7 @@
         "own_api_count": 2,
         "inherited_api_count": 0,
         "dep_out": 0,
-        "dep_in": 0
+        "dep_in": 1
       }
     },
     "keymouse.script": {
@@ -7863,13 +8858,13 @@
           "path": "tests/check-docs.ps1"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:44.320Z",
-      "fingerprint": "51cfbc1fb112f024ddf0d6b1ad029f4dcb24ab60e2a281d3bff2c44f077e0825",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.936Z",
+      "fingerprint": "87d03ce298b6a6b5f161ddc85d4f81f123be2c4391382e3971816ddd14e606b3",
       "aggregate": {
-        "descendant_count": 36,
+        "descendant_count": 37,
         "own_api_count": 0,
-        "inherited_api_count": 35,
+        "inherited_api_count": 37,
         "dep_out": 0,
         "dep_in": 1
       }
@@ -8083,17 +9078,17 @@
         "en": "Desktop smoke"
       },
       "description": {
-        "zh": "冒烟运行器：`-Only 模块[,…]` 只跑指定模块（平时用这个）、`-List` 列出来、不给参数就是全部（= 总测试的一部分）。它负责载入 common、按顺序 dot-source 选中的模块、最后收尾（停靶子、还原剪贴板）并给出通过/失败计数。\n",
-        "en": "The smoke runner: `-Only module[,...]` runs just those (the everyday case), `-List` lists them, and no arguments runs everything (part of the full test). It loads common, dot-sources the selected modules in order, then tears down (stops the target, restores the clipboard) and reports the pass/fail counts.\n"
+        "zh": "冒烟运行器：`-Only 模块[,…]` 只跑指定模块（平时用这个）、`-List` 列出来、不给参数就是全部（= 总测试的一部分）。它负责载入 common、按顺序 dot-source 选中的模块、最后收尾。收尾**只收自己起的东西**（靶子、剪贴板）：以前它会杀掉所有 KeyMouse 进程，那等于把用户编辑器起的常驻 Runner 也杀了——既粗鲁，又会让下一次冒烟以假失败收场。\n",
+        "en": "The smoke runner: -Only module[,...] runs just those (the everyday case), -List lists them, and no arguments runs everything (part of the full test). It loads common, dot-sources the selected modules in order, then tears down. Teardown only touches what it started (the target, the clipboard): it used to kill every KeyMouse process, which meant killing the resident Runner the user editor had started - rude, and a way to make the next smoke run fail for no real reason.\n"
       },
       "source": [
         {
           "path": "tests/smoke.ps1"
         }
       ],
-      "revision": "96c306061d63c034a01c2369e4abc295251e2f35",
-      "updated_at": "2026-10-03T13:37:48.971Z",
-      "fingerprint": "c6772acfadbfb4c3bd3677f01b4d8d533c438dbd640477df4e8ca98b9ae756e2",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:23:38.097Z",
+      "fingerprint": "70bf6c42c4d4b72ce1bee77d04454adcd8261ff0030847cadee057958865cb62",
       "aggregate": {
         "descendant_count": 13,
         "own_api_count": 0,
@@ -8307,9 +9302,9 @@
           "path": "tests/smoke/common.ps1"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:07:10.617Z",
-      "fingerprint": "4775ec2400933c62bcb5c0177b9131fc34e3f9256f3aa5aa24b97c77dabf5035",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:23:38.097Z",
+      "fingerprint": "d6e346a5b8723702f7d6daf705388979468e9fdb5539eb8b43fdae8a607b9f9a",
       "apis": [
         {
           "protocol": "rpc",
@@ -8706,9 +9701,9 @@
           "path": "tests/smoke/region.ps1"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:07:10.616Z",
-      "fingerprint": "8e71b9dcc0014508c6ea0775f3c4fe83c86466d05548f0291f3d3257e2d2946f",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:23:38.098Z",
+      "fingerprint": "e680102105cc56d0516a137ae768bda550975da8a5bcbebeeeb6dc387ad827b1",
       "apis": [
         {
           "protocol": "rpc",
@@ -8834,17 +9829,17 @@
         "en": "Resident Runner smoke"
       },
       "description": {
-        "zh": "把架构本身当作被测对象：起 `serve`、用 CLI 当客户端问状态（版本与管道名）、让常驻 Runner 执行一个流程并逐步看到事件、作业表里出现它的退出码、最后 `runner stop` 让它退出。\n",
-        "en": "The architecture itself under test: start serve, ask it for status from the CLI (version and pipe name), have the resident Runner execute a flow and watch each step reported, see the finished job and its exit code in the job table, then stop it.\n"
+        "zh": "常驻 Runner 冒烟：用 CLI 当客户端问状态（版本与管道名）、让常驻 Runner 执行一个流程并逐步看到事件、作业表里出现退出码、最后停掉它。**前提是这条管道上没有别的 Runner**：编辑器自己就会起一个，抢管道既会造成假失败，也会在收尾时把用户的 Runner 停掉。所以模块先检查，发现别人在听就明确说明并退回（剩下的模块照跑）。\n",
+        "en": "The resident Runner under test: ask it for status from the CLI (version and pipe name), have it execute a flow and watch each step, see the finished job with its exit code, then stop it. The precondition is that no other Runner owns this pipe - the editor starts one, and fighting over it both causes false failures and stops the user runner at teardown. So the module checks first and, finding one, says so plainly and steps aside.\n"
       },
       "source": [
         {
           "path": "tests/smoke/serve.ps1"
         }
       ],
-      "revision": "bc06440df10935e9e8479ecad7b52098b48df7fd",
-      "updated_at": "2026-10-03T12:19:12.568Z",
-      "fingerprint": "ed41d53007d720d04e378da261d777526dbeb45c6684385d6beeb88738b99d95",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:23:38.098Z",
+      "fingerprint": "962091f68db4a862c363b527f3137b0f611266b4f322774a5c648255e5fda709",
       "apis": [
         {
           "protocol": "rpc",
@@ -8944,9 +9939,9 @@
           "path": "tests/KeyMouse.Tests/TestEntry.cs"
         }
       ],
-      "revision": "1ebae14ff2430b597cc4a1695a71ddf788879db1",
-      "updated_at": "2026-10-03T12:49:24.518Z",
-      "fingerprint": "55af18d63fbba8856290532a52e2424e9e5dd7888cf7f1f62422d19357e6cd72",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.936Z",
+      "fingerprint": "0168577b261f3b7403b7337a878d378c025913d7cf6bf777b769e0ed11672511",
       "deps": [
         {
           "kind": "call",
@@ -8961,9 +9956,9 @@
         }
       ],
       "aggregate": {
-        "descendant_count": 17,
+        "descendant_count": 18,
         "own_api_count": 0,
-        "inherited_api_count": 18,
+        "inherited_api_count": 20,
         "dep_out": 1,
         "dep_in": 0
       }
@@ -9050,17 +10045,17 @@
         "en": "Flow, predicate and recorder unit tests"
       },
       "description": {
-        "zh": "不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及\"退出码 6 可重试\"这条文档承诺。真正的钩子、OCR 与回放由 smoke 覆盖。\n",
-        "en": "The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule (including a string past the stack buffer), the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit 6 is retryable. The hooks, the OCR and the replay live in smoke.\n"
+        "zh": "不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及退出码 6 可重试这条文档承诺。契约那一组：每个类型必须有条目、每个字段必须有中文标签且 kind 是界面真能渲染的、契约不许发明加载器不认识的类型，空 when 等于没有前提。\n",
+        "en": "The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule, trajectory thinning and drag detection, virtual keys mapping back to names, and the contract group (every type has an entry, every field has a label and a renderable kind, no invented types, an empty when means no precondition).\n"
       },
       "source": [
         {
           "path": "tests/KeyMouse.Tests/FlowTests.cs"
         }
       ],
-      "revision": "eee5c2b2dedd9f702beb19d6a8286d336b3db1a3",
-      "updated_at": "2026-10-03T14:00:46.182Z",
-      "fingerprint": "e2b7d660e8c1526b5765587dfad138dac818dab5c8fe0eb0ac2b8b6d543c7c44",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.936Z",
+      "fingerprint": "967a3e00d9c0f9279a9572e24e28e7c1466377dabac4a6b5c83f31eed4a9b026",
       "apis": [
         {
           "protocol": "rpc",
@@ -9102,13 +10097,23 @@
             "en": "The thinning rule"
           },
           "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.flow.schema",
+          "to_api": "rpc:FlowSchema.Steps",
+          "label": {
+            "zh": "被测的契约",
+            "en": "The contract under test"
+          },
+          "cross_tree": false
         }
       ],
       "aggregate": {
         "descendant_count": 0,
         "own_api_count": 1,
         "inherited_api_count": 0,
-        "dep_out": 3,
+        "dep_out": 4,
         "dep_in": 0
       }
     },
@@ -9821,6 +10826,83 @@
         "dep_in": 0
       }
     },
+    "keymouse.tests.unit.protocol": {
+      "uid": "7a1f1006",
+      "id": "keymouse.tests.unit.protocol",
+      "parent": "keymouse.tests.unit",
+      "tree": "keymouse",
+      "depth": 4,
+      "tags": [
+        "tests",
+        "protocol",
+        "contract"
+      ],
+      "name": {
+        "zh": "协议一致性检查",
+        "en": "Protocol consistency tests"
+      },
+      "description": {
+        "zh": "前后端通信契约的一致性检查：契约方法 = 后端实现的方法、前端调用的方法 ⊆ 契约、事件种类 ⊆ 契约、每个请求都声明了终结事件、终结事件只有 result/finished/error、参数袋两侧一致、事件字段都有定义、问候不是应答且连上就发、client/version 两侧真的在用；再加实机行为断言：hello 回 result 且回显 id、版本不合被挡下、作业记下是谁在问。\n",
+        "en": "Contract consistency check between client and server: contract methods = implemented methods, front-end calls are a subset, event kinds are declared, every request declares a terminal event, only result/finished/error terminate, the parameter bag matches, event fields are defined, the greeting is no reply but is sent on connect, client/version are used - plus live behaviour: hello returns result with the echoed id, a bad version is refused, a job records the client.\n"
+      },
+      "source": [
+        {
+          "path": "tests/KeyMouse.Tests/RunnerProtocolTests.cs"
+        }
+      ],
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.928Z",
+      "fingerprint": "f3e18b7f23b64403e0c8001160147370bf2eb2e5e4a7a921a03e1ac43c2fe98a",
+      "apis": [
+        {
+          "protocol": "rpc",
+          "path": "RunnerProtocolTests.Run",
+          "description": {
+            "zh": "跑完整套契约检查：27 条断言。\n",
+            "en": "Runs the whole contract check: 27 assertions.\n"
+          },
+          "key": "rpc:RunnerProtocolTests.Run"
+        },
+        {
+          "protocol": "rpc",
+          "path": "--only protocol",
+          "description": {
+            "zh": "只跑这一组（改协议时用）。\n",
+            "en": "Runs only this group (fast during protocol work).\n"
+          },
+          "key": "rpc:--only protocol"
+        }
+      ],
+      "deps": [
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.protocol.contract",
+          "to_api": "rpc:knownGaps",
+          "label": {
+            "zh": "读契约",
+            "en": "Reads the contract"
+          },
+          "cross_tree": false
+        },
+        {
+          "kind": "reference",
+          "to": "keymouse.runner.protocol.methods",
+          "to_api": "rpc:RunnerProtocol.Methods",
+          "label": {
+            "zh": "对账方法表",
+            "en": "Checks the method table"
+          },
+          "cross_tree": false
+        }
+      ],
+      "aggregate": {
+        "descendant_count": 0,
+        "own_api_count": 2,
+        "inherited_api_count": 0,
+        "dep_out": 2,
+        "dep_in": 0
+      }
+    },
     "keymouse.tests.unit.region": {
       "uid": "7a1f0c40",
       "id": "keymouse.tests.unit.region",
@@ -9902,9 +10984,9 @@
           "path": "tests/KeyMouse.Tests/RunnerTests.cs"
         }
       ],
-      "revision": "6347fbfbc3d7af8839f5dcc9c35501ce2484bdef",
-      "updated_at": "2026-10-03T11:13:17.046Z",
-      "fingerprint": "3b6849977e17b378a42ed222fb2f82a9aba5b483929cb6cecc6ab9002a502a0b",
+      "revision": "ef3cf740e80bd62dd7540df6ee4c526380163233",
+      "updated_at": "2026-10-04T14:24:35.936Z",
+      "fingerprint": "3b63bf8c918b423ba40f999ba59b52affdbc6ecb2dd9a89cfa8276d5c46f88e0",
       "apis": [
         {
           "protocol": "rpc",
@@ -10950,17 +12032,25 @@
     }
   },
   "api_index": {
+    "file:%LOCALAPPDATA%\\KeyMouse\\editor.json": "keymouse.editor.settings",
     "file:<报告>.json": "keymouse.script.report",
     "file:<脚本>.txt": "keymouse.script.read",
+    "file:<流程>.shots/0001-<类型>.png": "keymouse.flow.evidence",
     "file:docs/design.md": "keymouse.docs.design",
     "file:docs/development.md": "keymouse.docs.development",
+    "file:docs/interface.md": "keymouse.docs.interface",
     "file:docs/reference.md": "keymouse.docs.reference",
+    "file:docs/runner-protocol.md": "keymouse.docs.runner-protocol",
+    "file:editor/KeyMouse.FlowEditor/App.xaml": "keymouse.editor.app",
     "file:KeyMouse.exe": "keymouse.editor.bridge",
     "file:README.md": "keymouse.docs.readme",
     "file:samples/notepad-demo.txt": "keymouse.docs.sample",
     "file:src/KeyMouse.Cli/KeyMouse.Cli.csproj": "keymouse.build.projects",
+    "file:src/KeyMouse.Core/flow.schema.json": "keymouse.flow.schema",
     "file:src/KeyMouse.Core/KeyMouse.Core.csproj": "keymouse.build.projects",
     "file:src/KeyMouse.Runner/KeyMouse.Runner.csproj": "keymouse.build.projects",
+    "file:src/KeyMouse.Runner/runner-protocol.schema.json": "keymouse.runner.protocol.contract",
+    "rpc:--only protocol": "keymouse.tests.unit.protocol",
     "rpc:.\\build.ps1": "keymouse.build.publish",
     "rpc:.\\build.ps1 -SelfContained": "keymouse.build.publish",
     "rpc:.\\verify.ps1": "keymouse.build.verify",
@@ -10984,6 +12074,8 @@
     "rpc:找字与前置条件断言组": "keymouse.tests.smoke.act",
     "rpc:子流程断言组": "keymouse.tests.unit.calls",
     "rpc:子流程冒烟断言组": "keymouse.tests.smoke.calls",
+    "rpc:App.OnUnhandled": "keymouse.editor.app",
+    "rpc:cancel / pause / resume": "keymouse.runner.protocol.methods",
     "rpc:Check": "keymouse.tests.smoke.common",
     "rpc:ci.yml (push)": "keymouse.build.ci",
     "rpc:CommandFailure": "keymouse.cli.failure",
@@ -10996,7 +12088,10 @@
     "rpc:dwmapi!DwmGetWindowAttribute": "keymouse.native.dwm",
     "rpc:EditorModel.Load": "keymouse.editor.steps",
     "rpc:EditorModel.MarkDirty": "keymouse.editor.steps",
+    "rpc:EditorModel.Renumber": "keymouse.editor.steps",
     "rpc:EditorModel.Save": "keymouse.editor.steps",
+    "rpc:EditorSettings.Load": "keymouse.editor.settings",
+    "rpc:EditorSettings.Remember": "keymouse.editor.settings",
     "rpc:Execution.Control": "keymouse.execution",
     "rpc:ExecutionMode.DryRun": "keymouse.script.execution-mode",
     "rpc:ExecutionMode.NoteInjected": "keymouse.script.execution-mode",
@@ -11012,7 +12107,10 @@
     "rpc:FlowPlan.StepCount": "keymouse.flow.plan",
     "rpc:FlowRunner.LooksLikeJson": "keymouse.flow.runner",
     "rpc:FlowRunner.Run": "keymouse.flow.runner",
-    "rpc:FlowStepSchema.For": "keymouse.flow.schema",
+    "rpc:FlowSchema.FieldsFor": "keymouse.flow.schema",
+    "rpc:FlowSchema.ShapeFields": "keymouse.flow.schema",
+    "rpc:FlowSchema.Steps": "keymouse.flow.schema",
+    "rpc:FlowSchema.TryGetStep": "keymouse.flow.schema",
     "rpc:FocusTarget": "keymouse.cli.window.targeting",
     "rpc:GlobalOptions / CommandOptions / KeyNames 用例": "keymouse.tests.unit.parsing.options",
     "rpc:GlobalOptions.ToSelector": "keymouse.cli.options",
@@ -11020,7 +12118,10 @@
     "rpc:Harness.Equal": "keymouse.tests.unit.harness",
     "rpc:Harness.Sequence": "keymouse.tests.unit.harness",
     "rpc:Harness.Throws": "keymouse.tests.unit.harness",
+    "rpc:hello": "keymouse.runner.protocol.methods",
     "rpc:IExecutionControl.BetweenSteps": "keymouse.execution",
+    "rpc:InspectorBuilder.Build": "keymouse.editor.inspector",
+    "rpc:InspectorFields.ValueLabel": "keymouse.editor.inspector",
     "rpc:IntArg": "keymouse.cli.int-arg",
     "rpc:IntOr": "keymouse.cli.int-arg",
     "rpc:kernel32!GetConsoleOutputCP": "keymouse.console.encoding",
@@ -11042,17 +12143,21 @@
     "rpc:KeyMouse run <脚本>": "keymouse.script.run.prepare",
     "rpc:keymouse runner run": "keymouse.cli.runner",
     "rpc:keymouse runner status": "keymouse.cli.runner",
+    "rpc:keymouse schema": "keymouse.cli.main",
     "rpc:keymouse serve": "keymouse.cli.entry",
-    "rpc:keymouse-runner 请求": "keymouse.runner.protocol",
-    "rpc:keymouse-runner 事件": "keymouse.runner.protocol",
+    "rpc:keymouse-runner 请求": "keymouse.runner.protocol.methods",
+    "rpc:keymouse-runner 事件": "keymouse.runner.protocol.events",
     "rpc:KeyMouse.Fail": "keymouse.cli.failure",
     "rpc:KeyMouse.SmokeTarget.exe": "keymouse.tests.smoke-target",
     "rpc:KeyMouseBridge.PickRegionAsync": "keymouse.editor.bridge",
     "rpc:KeyMouseBridge.RunFlowAsync": "keymouse.editor.bridge",
+    "rpc:knownGaps": "keymouse.runner.protocol.contract",
     "rpc:LoopPlan": "keymouse.script.loop.analyze",
     "rpc:Loops 用例": "keymouse.tests.unit.parsing.invariants.loops",
+    "rpc:MainWindow.AddStep": "keymouse.editor.shell",
     "rpc:MainWindow.OpenFile": "keymouse.editor.shell",
     "rpc:MainWindow.RunAsync": "keymouse.editor.shell",
+    "rpc:MainWindow.UpdateStates": "keymouse.editor.shell",
     "rpc:mouse click": "keymouse.cli.mouse.button",
     "rpc:mouse dblclick": "keymouse.cli.mouse.button",
     "rpc:mouse down": "keymouse.cli.mouse.button",
@@ -11116,13 +12221,26 @@
     "rpc:release.yml (v* tag)": "keymouse.build.release",
     "rpc:repeat <次数> as <名字>": "keymouse.script.loop.repeat",
     "rpc:RequirePointBelongsToTarget": "keymouse.cli.mouse.geometry",
+    "rpc:run / record": "keymouse.runner.protocol.methods",
     "rpc:Runner 协议与作业控制断言组": "keymouse.tests.unit.runner",
+    "rpc:RunnerClient.ClientName": "keymouse.runner.pipe",
     "rpc:RunnerClient.ConnectOrStartAsync": "keymouse.runner.pipe",
+    "rpc:RunnerClient.LastStartFailure": "keymouse.runner.pipe",
     "rpc:RunnerClient.SendAsync": "keymouse.runner.pipe",
+    "rpc:RunnerEvent.Hello": "keymouse.runner.protocol.events",
+    "rpc:RunnerEvent.Step": "keymouse.runner.protocol.events",
     "rpc:RunnerHost.HandleAsync": "keymouse.runner.host",
     "rpc:RunnerHost.Run": "keymouse.runner.host",
     "rpc:RunnerJob.BetweenSteps": "keymouse.runner.host",
+    "rpc:RunnerJob.Info": "keymouse.runner.host",
+    "rpc:RunnerJob.StepFinished": "keymouse.runner.host",
+    "rpc:RunnerProtocol.AcceptsVersion": "keymouse.runner.protocol.version",
+    "rpc:RunnerProtocol.ContractVersion": "keymouse.runner.protocol.version",
+    "rpc:RunnerProtocol.Methods": "keymouse.runner.protocol.methods",
+    "rpc:RunnerProtocolTests.Run": "keymouse.tests.unit.protocol",
     "rpc:RunOptions / RetryAndVariables 用例": "keymouse.tests.unit.parsing.script",
+    "rpc:RunShots.Capture": "keymouse.flow.evidence",
+    "rpc:RunShots.DirectoryOf": "keymouse.flow.evidence",
     "rpc:ScriptOptions": "keymouse.script.model",
     "rpc:ScriptReport": "keymouse.script.model",
     "rpc:ScriptRunner.AnalyzeLoops": "keymouse.script.loop.analyze",
@@ -11145,7 +12263,11 @@
     "rpc:ScriptRunner.WaitUntil": "keymouse.script.wait.until",
     "rpc:ScriptRunner.WriteReport": "keymouse.script.report",
     "rpc:SingleProcessExecution 用例": "keymouse.tests.unit.parsing.singleproc",
+    "rpc:Splitter.Target": "keymouse.editor.splitter",
+    "rpc:StepVm.BadgeBrush": "keymouse.editor.steps",
     "rpc:StepVm.Edit": "keymouse.editor.steps",
+    "rpc:Surfaces.FillRecent": "keymouse.editor.surfaces",
+    "rpc:Surfaces.Groups": "keymouse.editor.surfaces",
     "rpc:TargetInheritance 用例": "keymouse.tests.unit.parsing.invariants.inheritance",
     "rpc:TextLocator.Find": "keymouse.probe.locate",
     "rpc:TextLocator.Union": "keymouse.probe.locate",
@@ -11511,6 +12633,18 @@
     },
     {
       "from": "keymouse.cli.main",
+      "from_api": "rpc:keymouse schema",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.Steps",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "打印契约",
+        "en": "Prints the contract"
+      }
+    },
+    {
+      "from": "keymouse.cli.main",
       "to": "keymouse.pick.placement",
       "to_api": "rpc:RegionCommand.Run",
       "kind": "call",
@@ -11773,6 +12907,50 @@
       }
     },
     {
+      "from": "keymouse.docs.interface",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.Steps",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "规矩来自契约",
+        "en": "Rules from the contract"
+      }
+    },
+    {
+      "from": "keymouse.docs.interface",
+      "to": "keymouse.runner.protocol.methods",
+      "to_api": "rpc:keymouse-runner 请求",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "IPC 方法表摘要",
+        "en": "IPC summary"
+      }
+    },
+    {
+      "from": "keymouse.docs.runner-protocol",
+      "to": "keymouse.runner.protocol.contract",
+      "to_api": "file:src/KeyMouse.Runner/runner-protocol.schema.json",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "写的是那份契约",
+        "en": "Documents the contract"
+      }
+    },
+    {
+      "from": "keymouse.editor.app",
+      "to": "keymouse.editor.shell",
+      "to_api": "rpc:MainWindow.OpenFile",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "开窗",
+        "en": "Opens the window"
+      }
+    },
+    {
       "from": "keymouse.editor.bridge",
       "to": "keymouse.flow.runner",
       "to_api": "rpc:FlowRunner.Run",
@@ -11794,6 +12972,28 @@
       }
     },
     {
+      "from": "keymouse.editor.inspector",
+      "to": "keymouse.editor.steps",
+      "to_api": "rpc:StepVm.Edit",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "写回选中的一步",
+        "en": "Writes into the step"
+      }
+    },
+    {
+      "from": "keymouse.editor.inspector",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.FieldsFor",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "问契约要字段",
+        "en": "Asks the contract"
+      }
+    },
+    {
       "from": "keymouse.editor.shell",
       "to": "keymouse.editor.bridge",
       "to_api": "rpc:KeyMouseBridge.RunFlowAsync",
@@ -11806,6 +13006,18 @@
     },
     {
       "from": "keymouse.editor.shell",
+      "from_api": "rpc:MainWindow.UpdateStates",
+      "to": "keymouse.editor.inspector",
+      "to_api": "rpc:InspectorBuilder.Build",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "重建参数卡",
+        "en": "Rebuilds the form"
+      }
+    },
+    {
+      "from": "keymouse.editor.shell",
       "to": "keymouse.editor.steps",
       "to_api": "rpc:EditorModel.Load",
       "kind": "call",
@@ -11813,6 +13025,16 @@
       "label": {
         "zh": "读流程",
         "en": "Load a flow"
+      }
+    },
+    {
+      "from": "keymouse.editor.splitter",
+      "to": "keymouse.editor.shell",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "切开三栏",
+        "en": "Splits the three panes"
       }
     },
     {
@@ -11838,6 +13060,41 @@
       }
     },
     {
+      "from": "keymouse.editor.steps",
+      "from_api": "rpc:StepVm.BadgeBrush",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.FieldsFor",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "字段由它给",
+        "en": "Fields come from it"
+      }
+    },
+    {
+      "from": "keymouse.editor.surfaces",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.TryGetStep",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "摘要文案来自契约",
+        "en": "Summaries come from it"
+      }
+    },
+    {
+      "from": "keymouse.flow.evidence",
+      "from_api": "rpc:RunShots.Capture",
+      "to": "keymouse.native.capture",
+      "to_api": "rpc:NativeCapture.TryCapture",
+      "kind": "dataflow",
+      "cross_tree": false,
+      "label": {
+        "zh": "取一张屏幕",
+        "en": "Capture the screen"
+      }
+    },
+    {
       "from": "keymouse.flow.model",
       "to": "keymouse.flow.predicate",
       "to_api": "rpc:TextPredicate.IsKnownMode",
@@ -11846,6 +13103,18 @@
       "label": {
         "zh": "加载时校验匹配方式",
         "en": "Validate mode at load"
+      }
+    },
+    {
+      "from": "keymouse.flow.model",
+      "from_api": "rpc:FlowDocument.Load",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.TryGetStep",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "必填由它判定",
+        "en": "Required fields from it"
       }
     },
     {
@@ -12257,6 +13526,63 @@
       "label": {
         "zh": "装上执行接缝",
         "en": "Installs the execution seam"
+      }
+    },
+    {
+      "from": "keymouse.runner.host",
+      "from_api": "rpc:RunnerJob.StepFinished",
+      "to": "keymouse.flow.evidence",
+      "to_api": "rpc:RunShots.Capture",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "留一张证据",
+        "en": "Leaves evidence"
+      }
+    },
+    {
+      "from": "keymouse.runner.pipe",
+      "from_api": "rpc:RunnerClient.SendAsync",
+      "to": "keymouse.runner.protocol.version",
+      "to_api": "rpc:RunnerProtocol.AcceptsVersion",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "自报家门与版本",
+        "en": "Declares who and version"
+      }
+    },
+    {
+      "from": "keymouse.runner.protocol.events",
+      "from_api": "rpc:RunnerEvent.Step",
+      "to": "keymouse.flow.evidence",
+      "kind": "event",
+      "cross_tree": false,
+      "label": {
+        "zh": "这一步的证据截图",
+        "en": "Evidence shot of that step"
+      }
+    },
+    {
+      "from": "keymouse.runner.protocol.methods",
+      "from_api": "rpc:run / record",
+      "to": "keymouse.flow.runner",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "执行走能力层",
+        "en": "Through the capability layer"
+      }
+    },
+    {
+      "from": "keymouse.runner.protocol.methods",
+      "from_api": "rpc:keymouse-runner 请求",
+      "to": "keymouse.runner.host",
+      "kind": "call",
+      "cross_tree": false,
+      "label": {
+        "zh": "按方法名派发",
+        "en": "Dispatch by method name"
       }
     },
     {
@@ -12926,6 +14252,17 @@
     },
     {
       "from": "keymouse.tests.unit.flow",
+      "to": "keymouse.flow.schema",
+      "to_api": "rpc:FlowSchema.Steps",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "被测的契约",
+        "en": "The contract under test"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.flow",
       "to": "keymouse.record.session",
       "to_api": "rpc:Recorder.ThinTrajectoryIndices",
       "kind": "reference",
@@ -13075,6 +14412,28 @@
       "label": {
         "zh": "被测对象",
         "en": "Subject"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.protocol",
+      "to": "keymouse.runner.protocol.contract",
+      "to_api": "rpc:knownGaps",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "读契约",
+        "en": "Reads the contract"
+      }
+    },
+    {
+      "from": "keymouse.tests.unit.protocol",
+      "to": "keymouse.runner.protocol.methods",
+      "to_api": "rpc:RunnerProtocol.Methods",
+      "kind": "reference",
+      "cross_tree": false,
+      "label": {
+        "zh": "对账方法表",
+        "en": "Checks the method table"
       }
     },
     {
@@ -13506,14 +14865,16 @@
     "keymouse.cli": {
       "schema_version": 1,
       "id": "keymouse.cli",
-      "updated_at": "2026-10-03T11:13:03.979Z",
+      "updated_at": "2026-10-04T14:24:13.297Z",
       "mode": "layers",
       "reading": {
-        "zh": "先是入口的三条路由（serve / runner / flow edit / 其余交给能力层），然后是全局选项与帮助，最后是各组命令自己的一层。",
-        "en": "First the entry with its three routes (serve / runner / flow edit / everything else to the capability layer), then the global options and help, then one layer per command group."
+        "zh": "先是入口与它的几条路由（serve / runner / flow edit / schema，其余交给能力层），然后是全局选项、参数处理与失败映射，最后是各组命令自己的一层。",
+        "en": "First the entry with its routes (serve / runner / flow edit / schema / everything else to the capability layer), then the global options, argument handling and the failure mapping, then one layer per command group."
       },
       "order": [
         "keymouse.cli.main",
+        "keymouse.cli.entry",
+        "keymouse.cli.flow",
         "keymouse.cli.options",
         "keymouse.cli.int-arg",
         "keymouse.cli.failure",
@@ -13521,7 +14882,6 @@
         "keymouse.cli.mouse",
         "keymouse.cli.keyboard",
         "keymouse.cli.window",
-        "keymouse.cli.entry",
         "keymouse.cli.runner"
       ]
     },
@@ -13620,17 +14980,19 @@
     "keymouse.docs": {
       "schema_version": 1,
       "id": "keymouse.docs",
-      "updated_at": "2026-10-02T17:36:06.012Z",
+      "updated_at": "2026-10-04T14:23:58.725Z",
       "mode": "groups",
       "reading": {
-        "zh": "阅读顺序：先概览，再按需下钻到命令参考 / 设计取舍 / 开发与发布流程，最后是可直接跑的示例脚本。",
-        "en": "Read the overview first, then drill into the reference, the design rationale or the process; the sample script is the runnable version of all of it."
+        "zh": "先读概览，再读接口契约与命令参考，然后是按需下钻的设计取舍与开发流程；协议文档是管道那层的规范，示例脚本是可跑的版本。",
+        "en": "Read the overview first, then the parameter contract and the command reference, then the design rationale and the process; the protocol document is the norm for the pipe, and the sample script is the runnable version of everything above."
       },
       "order": [
         "keymouse.docs.readme",
+        "keymouse.docs.interface",
         "keymouse.docs.reference",
         "keymouse.docs.design",
         "keymouse.docs.development",
+        "keymouse.docs.runner-protocol",
         "keymouse.docs.sample"
       ],
       "groups": [
@@ -13642,9 +15004,20 @@
           },
           "children": [
             "keymouse.docs.readme",
-            "keymouse.docs.reference",
+            "keymouse.docs.interface",
+            "keymouse.docs.reference"
+          ]
+        },
+        {
+          "id": "inner",
+          "title": {
+            "zh": "内部how",
+            "en": "Inside"
+          },
+          "children": [
             "keymouse.docs.design",
-            "keymouse.docs.development"
+            "keymouse.docs.development",
+            "keymouse.docs.runner-protocol"
           ]
         },
         {
@@ -13662,29 +15035,39 @@
     "keymouse.editor": {
       "schema_version": 1,
       "id": "keymouse.editor",
-      "updated_at": "2026-10-03T11:12:10.655Z",
+      "updated_at": "2026-10-04T14:23:57.164Z",
       "mode": "layers",
       "reading": {
-        "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型；取区域与回放都通过桥接走常驻 Runner（命名管道），编辑器自己不认识流程格式细节、也不重做选区与回放，schema 直接引用能力层。",
-        "en": "The shell lays out the step list and the inspector, edits go into the view model, and both region picking and replay go through the bridge to the resident Runner over the named pipe: the editor re-does neither picking nor replay, and the schema comes straight from the capability layer."
+        "zh": "应用起窗，外壳摆好三栏；编辑由步骤视图模型与契约驱动的参数界面完成；取区域与回放都通过桥接走常驻 Runner（命名管道）。编辑器自己不认识流程格式细节，也不重做选区与回放——字段与文案都来自契约。",
+        "en": "App starts the window, the shell lays out three panes, the step view model and the contract-driven inspector do the editing, and both region picking and replay go through the bridge to the resident Runner over the named pipe. The editor re-implements neither picking nor replay; the schema (and the messages) come from the capability layer."
       },
       "order": [
+        "keymouse.editor.app",
         "keymouse.editor.shell",
         "keymouse.editor.steps",
-        "keymouse.editor.bridge"
+        "keymouse.editor.inspector",
+        "keymouse.editor.splitter",
+        "keymouse.editor.surfaces",
+        "keymouse.editor.bridge",
+        "keymouse.editor.settings"
       ]
     },
     "keymouse.flow": {
       "schema_version": 1,
       "id": "keymouse.flow",
-      "updated_at": "2026-10-03T14:00:33.535Z",
+      "updated_at": "2026-10-04T14:24:01.149Z",
       "mode": "layers",
+      "reading": {
+        "zh": "从左到右：契约声明字段 → 文档模型按它读写与校验 → 计划把它编译成真正要跑的序列 → 执行器一步步跑 → 谓词回答“那段文字出现了吗” → 证据把每一步看到的东西留下来。",
+        "en": "Left to right: the contract declares the fields, the model reads and validates a file against it, the plan compiles it into what will actually run, the runner executes step by step, the predicate answers 'is that text on screen yet', and evidence keeps what each step saw."
+      },
       "order": [
+        "keymouse.flow.schema",
         "keymouse.flow.model",
+        "keymouse.flow.plan",
         "keymouse.flow.runner",
         "keymouse.flow.predicate",
-        "keymouse.flow.plan",
-        "keymouse.flow.schema"
+        "keymouse.flow.evidence"
       ]
     },
     "keymouse.input": {
@@ -13878,6 +15261,46 @@
         "keymouse.runner.protocol",
         "keymouse.runner.host",
         "keymouse.runner.pipe"
+      ]
+    },
+    "keymouse.runner.protocol": {
+      "schema_version": 1,
+      "id": "keymouse.runner.protocol",
+      "updated_at": "2026-10-04T14:24:05.964Z",
+      "mode": "groups",
+      "reading": {
+        "zh": "先从契约文件看起（唯一真相），再看两边怎么对版本，然后是 12 个方法与 6 种事件。改协议的顺序是固定的：先改契约 → 再改两侧 → 跑 --only protocol。",
+        "en": "Start at the contract file (the single source of truth), then how a client and server agree on a version, then the 12 methods and the 6 events. Change order is fixed: this file first, then both sides, then --only protocol."
+      },
+      "order": [
+        "keymouse.runner.protocol.contract",
+        "keymouse.runner.protocol.version",
+        "keymouse.runner.protocol.methods",
+        "keymouse.runner.protocol.events"
+      ],
+      "groups": [
+        {
+          "id": "rules",
+          "title": {
+            "zh": "规矩",
+            "en": "The rules"
+          },
+          "children": [
+            "keymouse.runner.protocol.contract",
+            "keymouse.runner.protocol.version"
+          ]
+        },
+        {
+          "id": "surface",
+          "title": {
+            "zh": "对外的面",
+            "en": "The surface"
+          },
+          "children": [
+            "keymouse.runner.protocol.methods",
+            "keymouse.runner.protocol.events"
+          ]
+        }
       ]
     },
     "keymouse.script": {
@@ -14117,18 +15540,23 @@
     "keymouse.tests.unit": {
       "schema_version": 1,
       "id": "keymouse.tests.unit",
-      "updated_at": "2026-10-03T12:49:08.193Z",
+      "updated_at": "2026-10-04T14:24:04.361Z",
       "mode": "layers",
+      "reading": {
+        "zh": "一个领域一个文件，都跑在同一套 harness 上。最后一组是特例：它测的不是行为，而是契约本身——只要两侧里有一侧与 runner-protocol.schema.json 不一致，它立刻变红。",
+        "en": "One file per area, all driven by the same harness. The last one is the odd case: it does not test behaviour but the contract itself, so the moment either side drifts from runner-protocol.schema.json it goes red."
+      },
       "order": [
         "keymouse.tests.unit.harness",
         "keymouse.tests.unit.parsing",
-        "keymouse.tests.unit.region",
         "keymouse.tests.unit.flow",
+        "keymouse.tests.unit.region",
         "keymouse.tests.unit.window",
         "keymouse.tests.unit.runner",
         "keymouse.tests.unit.locator",
         "keymouse.tests.unit.loops",
-        "keymouse.tests.unit.calls"
+        "keymouse.tests.unit.calls",
+        "keymouse.tests.unit.protocol"
       ]
     },
     "keymouse.tests.unit.parsing": {
@@ -14387,6 +15815,15 @@
       "updated_at": "2026-10-03T08:15:52.673Z"
     },
     {
+      "id": "2026-10-03-jobs-must-end",
+      "status": "verified",
+      "title": {
+        "zh": "作业一定会结束；空 when 等于没有前提",
+        "en": "Every job ends; an empty when means no precondition"
+      },
+      "updated_at": "2026-10-03T14:22:51.819Z"
+    },
+    {
       "id": "2026-10-03-loops-and-variables",
       "status": "verified",
       "title": {
@@ -14450,6 +15887,15 @@
       "updated_at": "2026-10-03T09:42:11.343Z"
     },
     {
+      "id": "2026-10-03-smoke-isolation",
+      "status": "verified",
+      "title": {
+        "zh": "冒烟不再抢管道、也不杀别人的 Runner",
+        "en": "Smoke stops fighting over the pipe and killing the user runner"
+      },
+      "updated_at": "2026-10-03T14:27:20.907Z"
+    },
+    {
       "id": "2026-10-03-smoke-waits",
       "status": "verified",
       "title": {
@@ -14502,6 +15948,15 @@
         "en": "WinUI 3 graphical flow editor"
       },
       "updated_at": "2026-10-03T10:33:33.276Z"
+    },
+    {
+      "id": "2026-10-04-rework-back-in-tree",
+      "status": "verified",
+      "title": {
+        "en": "Structure regeneration: protocol gaps closed, contract-driven inspector, editor rework back in tree",
+        "zh": "结构库再生成：协议收口、契约驱动检查器、编辑器回移与点击修复"
+      },
+      "updated_at": "2026-10-04T14:24:39.943Z"
     }
   ]
 }

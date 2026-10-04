@@ -1,15 +1,20 @@
 {
   "schema_version": 1,
   "id": "keymouse.editor",
-  "updated_at": "2026-10-03T11:12:10.655Z",
+  "updated_at": "2026-10-04T14:23:57.164Z",
   "mode": "layers",
   "reading": {
-    "zh": "外壳把步骤列表与检查器摆好，一切编辑写进视图模型；取区域与回放都通过桥接走常驻 Runner（命名管道），编辑器自己不认识流程格式细节、也不重做选区与回放，schema 直接引用能力层。",
-    "en": "The shell lays out the step list and the inspector, edits go into the view model, and both region picking and replay go through the bridge to the resident Runner over the named pipe: the editor re-does neither picking nor replay, and the schema comes straight from the capability layer."
+    "zh": "应用起窗，外壳摆好三栏；编辑由步骤视图模型与契约驱动的参数界面完成；取区域与回放都通过桥接走常驻 Runner（命名管道）。编辑器自己不认识流程格式细节，也不重做选区与回放——字段与文案都来自契约。",
+    "en": "App starts the window, the shell lays out three panes, the step view model and the contract-driven inspector do the editing, and both region picking and replay go through the bridge to the resident Runner over the named pipe. The editor re-implements neither picking nor replay; the schema (and the messages) come from the capability layer."
   },
   "order": [
+    "keymouse.editor.app",
     "keymouse.editor.shell",
     "keymouse.editor.steps",
-    "keymouse.editor.bridge"
+    "keymouse.editor.inspector",
+    "keymouse.editor.splitter",
+    "keymouse.editor.surfaces",
+    "keymouse.editor.bridge",
+    "keymouse.editor.settings"
   ]
 }

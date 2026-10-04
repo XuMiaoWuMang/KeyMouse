@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "keymouse.runner.protocol",
+  "updated_at": "2026-10-04T14:24:05.964Z",
+  "mode": "groups",
+  "reading": {
+    "zh": "先从契约文件看起（唯一真相），再看两边怎么对版本，然后是 12 个方法与 6 种事件。改协议的顺序是固定的：先改契约 → 再改两侧 → 跑 --only protocol。",
+    "en": "Start at the contract file (the single source of truth), then how a client and server agree on a version, then the 12 methods and the 6 events. Change order is fixed: this file first, then both sides, then --only protocol."
+  },
+  "order": [
+    "keymouse.runner.protocol.contract",
+    "keymouse.runner.protocol.version",
+    "keymouse.runner.protocol.methods",
+    "keymouse.runner.protocol.events"
+  ],
+  "groups": [
+    {
+      "id": "rules",
+      "title": {
+        "zh": "规矩",
+        "en": "The rules"
+      },
+      "children": [
+        "keymouse.runner.protocol.contract",
+        "keymouse.runner.protocol.version"
+      ]
+    },
+    {
+      "id": "surface",
+      "title": {
+        "zh": "对外的面",
+        "en": "The surface"
+      },
+      "children": [
+        "keymouse.runner.protocol.methods",
+        "keymouse.runner.protocol.events"
+      ]
+    }
+  ]
+}

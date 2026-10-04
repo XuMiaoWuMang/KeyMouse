@@ -11,9 +11,9 @@ description:
   en: >
       The unit-test entry and its module table: --only module[,...] runs just those, --list lists them, and no arguments runs everything (the full test once a feature is settled). Nine modules (parsing, windows, probe, locator, region, flow, loops, calls, runner) each live in one file and do not drag the others along.
       
-revision: 1ebae14ff2430b597cc4a1695a71ddf788879db1
-updated_at: "2026-10-03T12:49:24.518Z"
-fingerprint: 55af18d63fbba8856290532a52e2424e9e5dd7888cf7f1f62422d19357e6cd72
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.936Z"
+fingerprint: 0168577b261f3b7403b7337a878d378c025913d7cf6bf777b769e0ed11672511
 source:
   - path: "tests/KeyMouse.Tests/TestEntry.cs"
 deps:

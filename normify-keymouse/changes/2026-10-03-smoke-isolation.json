@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-smoke-isolation",
+  "title": {
+    "zh": "冒烟不再抢管道、也不杀别人的 Runner",
+    "en": "Smoke stops fighting over the pipe and killing the user runner"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "两条真问题：① 冒烟运行器的收尾会 `Get-Process KeyMouse | Stop-Process`，而编辑器自己就起了一个常驻 Runner——测试结束把它杀掉既粗鲁、又会让下一次冒烟以假失败收场；② serve 模块假定管道是空的，别人在听时它既会失败，收尾的 `runner stop` 还会把**别人的** Runner 停掉。修法：收尾只收自己起的东西（靶子与剪贴板）；serve 模块先检查管道，发现已有 Runner 就明确说明并退回（其余模块照跑），并且只在自己那个 serve 还活着时才 `runner stop`。实测：故意先起一个别人的 Runner 再跑该模块，它报出前提不满足并跳过，而那个 Runner 依然活着。",
+    "en": "Two real problems: the smoke runner teardown killed every KeyMouse process, including the resident Runner the editor had started - rude, and a way to make the next smoke run fail for no reason; and the serve module assumed an empty pipe, so with another Runner listening it failed and its own runner stop would take down the other one. The fix: teardown only touches what it started (the target and the clipboard); the serve module checks the pipe first, states the precondition plainly and steps aside, and only stops a runner it started itself. Measured: with a foreign Runner deliberately started, the module reports the unmet precondition, skips, and that Runner is still alive afterwards."
+  },
+  "modules": {
+    "modify": [
+      "keymouse.tests.smoke",
+      "keymouse.tests.smoke.serve"
+    ]
+  },
+  "acceptance": [
+    "冒烟收尾不再杀所有 KeyMouse 进程（只收靶子与剪贴板）",
+    "已有别的 Runner 时，serve 模块明确说明并跳过；那个 Runner 依然活着",
+    "没有别的 Runner 时，serve 模块 8 项全过",
+    "全量冒烟与 verify.ps1 全绿"
+  ],
+  "note": "冒烟只收自己起的东西；serve 模块遇到别人的 Runner 就说明并跳过。",
+  "revision": {
+    "before": null,
+    "after": "ef3cf740e80bd62dd7540df6ee4c526380163233"
+  },
+  "created_at": "2026-10-03T14:27:15.399Z",
+  "updated_at": "2026-10-03T14:27:20.907Z",
+  "closed_at": "2026-10-03T14:27:20.907Z"
+}

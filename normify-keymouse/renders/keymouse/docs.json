@@ -1,17 +1,19 @@
 {
   "schema_version": 1,
   "id": "keymouse.docs",
-  "updated_at": "2026-10-02T17:36:06.012Z",
+  "updated_at": "2026-10-04T14:23:58.725Z",
   "mode": "groups",
   "reading": {
-    "zh": "阅读顺序：先概览，再按需下钻到命令参考 / 设计取舍 / 开发与发布流程，最后是可直接跑的示例脚本。",
-    "en": "Read the overview first, then drill into the reference, the design rationale or the process; the sample script is the runnable version of all of it."
+    "zh": "先读概览，再读接口契约与命令参考，然后是按需下钻的设计取舍与开发流程；协议文档是管道那层的规范，示例脚本是可跑的版本。",
+    "en": "Read the overview first, then the parameter contract and the command reference, then the design rationale and the process; the protocol document is the norm for the pipe, and the sample script is the runnable version of everything above."
   },
   "order": [
     "keymouse.docs.readme",
+    "keymouse.docs.interface",
     "keymouse.docs.reference",
     "keymouse.docs.design",
     "keymouse.docs.development",
+    "keymouse.docs.runner-protocol",
     "keymouse.docs.sample"
   ],
   "groups": [
@@ -23,9 +25,20 @@
       },
       "children": [
         "keymouse.docs.readme",
-        "keymouse.docs.reference",
+        "keymouse.docs.interface",
+        "keymouse.docs.reference"
+      ]
+    },
+    {
+      "id": "inner",
+      "title": {
+        "zh": "内部how",
+        "en": "Inside"
+      },
+      "children": [
         "keymouse.docs.design",
-        "keymouse.docs.development"
+        "keymouse.docs.development",
+        "keymouse.docs.runner-protocol"
       ]
     },
     {

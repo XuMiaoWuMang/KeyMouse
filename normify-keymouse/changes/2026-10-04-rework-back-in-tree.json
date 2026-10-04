@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-04-rework-back-in-tree",
+  "title": {
+    "en": "Structure regeneration: protocol gaps closed, contract-driven inspector, editor rework back in tree",
+    "zh": "结构库再生成：协议收口、契约驱动检查器、编辑器回移与点击修复"
+  },
+  "status": "verified",
+  "intent": {
+    "en": "The structure DB was generated against the pre-rollback tree; today's code changes (protocol closure, flow contract, run evidence shots, editor rework port, step-list click fix) left it drifted: validate reported 48 errors. This change performs the incremental regeneration: rebuild affected modules deep-to-shallow, add modules for new files, sync layouts, and close at 0 errors.",
+    "zh": "结构库是在回退前的树上生成的，今天的代码变动（运行期协议收口、flow 契约驱动、运行证据截图、编辑器改造回移、步骤列表点击修复）让它整体漂移：validate 报了 48 error。本次按 normify_sync 的计划做增量再生成：深到浅重读受影响模块、为新增文件补模块、同步渲染数据，最后 0 error 收尾。"
+  },
+  "modules": {
+    "create": [
+      "keymouse.flow.evidence",
+      "keymouse.runner.protocol.contract",
+      "keymouse.runner.protocol.methods",
+      "keymouse.runner.protocol.events",
+      "keymouse.runner.protocol.version",
+      "keymouse.editor.inspector",
+      "keymouse.editor.splitter",
+      "keymouse.editor.surfaces",
+      "keymouse.editor.settings",
+      "keymouse.editor.app",
+      "keymouse.docs.interface",
+      "keymouse.docs.runner-protocol",
+      "keymouse.tests.unit.protocol"
+    ],
+    "modify": [
+      "keymouse.flow",
+      "keymouse.flow.schema",
+      "keymouse.flow.model",
+      "keymouse.flow.runner",
+      "keymouse.runner",
+      "keymouse.runner.protocol",
+      "keymouse.runner.host",
+      "keymouse.runner.pipe",
+      "keymouse.editor",
+      "keymouse.editor.shell",
+      "keymouse.editor.steps",
+      "keymouse.editor.bridge",
+      "keymouse.cli",
+      "keymouse.cli.flow",
+      "keymouse.cli.main",
+      "keymouse.docs",
+      "keymouse.docs.design",
+      "keymouse.docs.development",
+      "keymouse.docs.reference",
+      "keymouse.tests",
+      "keymouse.tests.unit",
+      "keymouse.tests.unit.flow",
+      "keymouse.tests.unit.runner",
+      "keymouse.build.projects",
+      "keymouse.record"
+    ]
+  },
+  "acceptance": [
+    "normify_validate 与 normify_build 都是 0 error",
+    "受影响的模块逐个重读源码后更新 description/apis/source，并用 normify_module_refresh 重算 fingerprint（不手填）",
+    "新增文件都有对应模块：flow.schema.json、FlowSchema.cs、RunShots.cs、runner-protocol.schema.json、RunnerProtocolTests.cs，以及编辑器新增的 InspectorBuilder/InspectorFields/Splitter/Surfaces/EditorSettings/App",
+    "keymouse.flow.schema 不再指向已删除的 FlowStepSchema.cs（改为契约文件 + FlowSchema.cs）",
+    "所有容器层的渲染数据与新的子模块同步（order/groups/reading 覆盖新增项）",
+    "协议语义在结构数据里有据可查：hello 回 result、greeting 不是应答、client/version 协商、evidenceFor/shot"
+  ],
+  "note": "按 normify_sync 的计划做增量再生成：45 个受影响模块逐个重读源码后更新，为 13 个新文件建了模块（flow 契约与读取器、运行证据、协议契约/版本/方法/事件四块、编辑器的应用/参数界面/分隔条/起始面/设置、两份新文档、协议一致性测试），13 层渲染数据同步，删掉的 FlowStepSchema.cs 已从 keymouse.flow.schema 的 source 与 API 里移除。",
+  "revision": {
+    "before": null,
+    "after": "ef3cf740e80bd62dd7540df6ee4c526380163233"
+  },
+  "created_at": "2026-10-04T14:18:44.622Z",
+  "updated_at": "2026-10-04T14:24:39.943Z",
+  "closed_at": "2026-10-04T14:24:39.943Z"
+}

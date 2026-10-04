@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "2026-10-03-jobs-must-end",
+  "title": {
+    "zh": "作业一定会结束；空 when 等于没有前提",
+    "en": "Every job ends; an empty when means no precondition"
+  },
+  "status": "verified",
+  "intent": {
+    "zh": "用户报的两件事同一个根：① 作业在**拿到队列槽之前**做校验，一抛异常就永远停在 `queued`（实测 #5/#7 卡死，#6 因为合法所以照跑，看起来像跳队）→ 客户端永远等不到结论，编辑器停在\"运行中\"、\"停止\"没有出路；② 编辑器里点一下 `when` 的其它输入框就会造出\"有对象、没文字\"的前提，而加载器把空文字的 `when` 当成格式错误 → 保存失败。修法：先拿槽再校验，整段准备+校验+派发放进作业自己的失败路径（任何异常都变成 error + finished，状态落 failed，槽在 finally 释放）；编辑器\"停止\"发完取消最多等 4 秒，然后本地撒手并说明；空文字 `when` 在加载时按\"没有前提\"处理（那一栏自己的说明就是\"留空 = 总是执行\"）。回归测试钉住：加载不过去的流程必须 failed 且有解释、不留 queued、后面的合法流程照跑。",
+    "en": "Both complaints share one root. A job validated its flow before taking the queue slot, so a validation throw left it in queued for good (measured: #5 and #7 stuck while #6, a valid flow, ran - which looked like queue jumping); the client then waited forever, so the editor sat in running and Stop had no way out. And touching any when box in the editor creates a precondition with no text, which the loader treated as a format error, so saving failed. The fix: take the slot first, put preparation, validation and dispatch inside the job own failure path (any throw becomes error plus finished, state failed, slot released in finally); Stop sends cancel, waits at most four seconds, then lets go locally and says so; and an empty-text when is read as no precondition at all, which is what its own label promised."
+  },
+  "modules": {
+    "modify": [
+      "keymouse.runner.host",
+      "keymouse.flow.model",
+      "keymouse.editor.shell",
+      "keymouse.editor.steps",
+      "keymouse.tests.unit.runner",
+      "keymouse.tests.unit.flow",
+      "keymouse.docs.reference",
+      "keymouse.docs.design",
+      "keymouse.docs.development"
+    ]
+  },
+  "acceptance": [
+    "加载不过去的流程：作业落 failed、带解释、不留 queued；随后合法流程照跑（实测：坏流程退出码 2，紧接着的好流程退出码 0）",
+    "任何异常都产生 error + finished 两个事件，队列槽在 finally 释放",
+    "编辑器\"停止\"发完取消最多等 4 秒然后本地撒手，界面一定恢复",
+    "空文字 when 在加载时按\"没有前提\"处理（不再让保存失败）",
+    "单测 flow,runner 114 项全过；总测试全绿"
+  ],
+  "note": "先拿队列槽再校验；任何异常都结束作业；停止加本地兜底；空 when 视为没有前提。",
+  "revision": {
+    "before": null,
+    "after": "ef3cf740e80bd62dd7540df6ee4c526380163233"
+  },
+  "created_at": "2026-10-03T14:22:44.360Z",
+  "updated_at": "2026-10-03T14:22:51.819Z",
+  "closed_at": "2026-10-03T14:22:51.819Z"
+}

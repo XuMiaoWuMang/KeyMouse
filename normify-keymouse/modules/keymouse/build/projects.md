@@ -11,9 +11,9 @@ description:
   en: >
       Three projects = three layers: Core (capability layer, library), Runner (resident engine, library) and Cli (entry point, still producing dist\KeyMouse.exe), with the editor as a separate WinUI project referencing the first two. Core opens its internals to the product other assemblies and the tests via InternalsVisibleTo; that item makes `dotnet sln add` refuse the project, so it is stripped for the moment the project is added.
       
-revision: 6347fbfbc3d7af8839f5dcc9c35501ce2484bdef
-updated_at: "2026-10-03T11:13:17.046Z"
-fingerprint: 57c917f3f41ff03bd3ef99bfd18a67b3e71d3a6475a54a96e1e11a923e5df4d4
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.937Z"
+fingerprint: 85470066ff626b95a1cd0034d465ad392c8d675fc608e59c7f00cfc3144daa6b
 source:
   - path: "src/KeyMouse.Core/KeyMouse.Core.csproj"
   - path: "src/KeyMouse.Runner/KeyMouse.Runner.csproj"

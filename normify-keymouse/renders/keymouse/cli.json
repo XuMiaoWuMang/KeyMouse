@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
   "id": "keymouse.cli",
-  "updated_at": "2026-10-03T11:13:03.979Z",
+  "updated_at": "2026-10-04T14:24:13.297Z",
   "mode": "layers",
   "reading": {
-    "zh": "先是入口的三条路由（serve / runner / flow edit / 其余交给能力层），然后是全局选项与帮助，最后是各组命令自己的一层。",
-    "en": "First the entry with its three routes (serve / runner / flow edit / everything else to the capability layer), then the global options and help, then one layer per command group."
+    "zh": "先是入口与它的几条路由（serve / runner / flow edit / schema，其余交给能力层），然后是全局选项、参数处理与失败映射，最后是各组命令自己的一层。",
+    "en": "First the entry with its routes (serve / runner / flow edit / schema / everything else to the capability layer), then the global options, argument handling and the failure mapping, then one layer per command group."
   },
   "order": [
     "keymouse.cli.main",
+    "keymouse.cli.entry",
+    "keymouse.cli.flow",
     "keymouse.cli.options",
     "keymouse.cli.int-arg",
     "keymouse.cli.failure",
@@ -16,7 +18,6 @@
     "keymouse.cli.mouse",
     "keymouse.cli.keyboard",
     "keymouse.cli.window",
-    "keymouse.cli.entry",
     "keymouse.cli.runner"
   ]
 }

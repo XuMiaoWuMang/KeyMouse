@@ -1,13 +1,18 @@
 {
   "schema_version": 1,
   "id": "keymouse.flow",
-  "updated_at": "2026-10-03T14:00:33.535Z",
+  "updated_at": "2026-10-04T14:24:01.149Z",
   "mode": "layers",
+  "reading": {
+    "zh": "从左到右：契约声明字段 → 文档模型按它读写与校验 → 计划把它编译成真正要跑的序列 → 执行器一步步跑 → 谓词回答“那段文字出现了吗” → 证据把每一步看到的东西留下来。",
+    "en": "Left to right: the contract declares the fields, the model reads and validates a file against it, the plan compiles it into what will actually run, the runner executes step by step, the predicate answers 'is that text on screen yet', and evidence keeps what each step saw."
+  },
   "order": [
+    "keymouse.flow.schema",
     "keymouse.flow.model",
+    "keymouse.flow.plan",
     "keymouse.flow.runner",
     "keymouse.flow.predicate",
-    "keymouse.flow.plan",
-    "keymouse.flow.schema"
+    "keymouse.flow.evidence"
   ]
 }

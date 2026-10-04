@@ -6,14 +6,14 @@ tags: [editor, ui]
 name: {zh: "步骤视图模型与目录", en: "Step view model and catalogue"}
 description:
   zh: >
-      列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。**显示哪些字段由 `FlowStepSchema` 决定**（不再手写条件），标签按类型说人话（"要找的文字"不是"要输入的文字"），分组/子流程/`read-text`/`when` 都有字段——`when` 是后来补的：以前界面里根本没有它。保存时会**用加载器自检一遍**：编辑器能造出格式会拒绝的东西（半填的 `when` 最容易），这件事该在按下保存的一秒内知道，而不是跑到一半才知道。
+      列表与检查器背后的可编辑模型（StepVm / EditorModel）：每个字段直接读写共享 schema 的步骤对象，一次改动刷新摘要、JSON 预览与可见字段，每个 setter 先比一次值。显示哪些字段由契约（FlowSchema）决定，标签按类型说人话，when 也是契约的一部分。保存时用加载器自检一遍：编辑器能造出格式会拒绝的东西（半填的 when 最容易），这件事该在按下保存的一秒内知道。行号与选中态是逐行通知的——x:Bind 默认一次性，不逐个发就不重画（实测：中间插一步后重号 1,2,3,3）。
       
   en: >
-      The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, one edit refreshes the summary, the JSON preview and the visible fields, and every setter compares first. Which fields appear comes from FlowStepSchema rather than hand-written conditions, labels speak per type, and groups, subflows, read-text and when have fields. A save is read back through the loader, so a half-filled when costs a second instead of a failed run.
+      The editable model behind the list and the inspector (StepVm and EditorModel): every field reads and writes the shared schema step, and one edit refreshes the summary, the JSON preview and the visible fields. Which fields appear comes from the contract (FlowSchema). A save is read back through the loader, so a half-filled when costs a second instead of a failed run. Row number and selected state notify per row, because x:Bind is one-time by default.
       
-revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
-updated_at: "2026-10-03T14:00:46.181Z"
-fingerprint: dc1553bbee28cf70dee23c7f93f11af81dff0c2dac7d40082d7627427b98429d
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.932Z"
+fingerprint: 3e487fadf8de240d4a1106d5746957ccd8f516db6adfd93da123f7e3d3cbe558
 source:
   - path: "editor/KeyMouse.FlowEditor/StepVm.cs"
   - path: "editor/KeyMouse.FlowEditor/EditorModel.cs"
@@ -47,6 +47,15 @@ apis:
           Decides "unsaved" by comparing content.
           
   - protocol: rpc
+    path: "EditorModel.Renumber"
+    description:
+      zh: >
+          重排行号并逐行通知——一次性绑定不会自己重画。
+          
+      en: >
+          Renumbers the rows and refreshes each one (one-time bindings do not repaint themselves).
+          
+  - protocol: rpc
     path: "StepVm.Edit"
     description:
       zh: >
@@ -54,6 +63,15 @@ apis:
           
       en: >
           The write guard that ignores a no-op value.
+          
+  - protocol: rpc
+    path: "StepVm.BadgeBrush"
+    description:
+      zh: >
+          类型徽标的面色：只有选中那一行是强调色。
+          
+      en: >
+          The badge brush: the accent face only on the selected row.
           
 deps:
   - kind: reference
@@ -64,4 +82,9 @@ deps:
     to: keymouse.flow.model
     to_api: "rpc:FlowDocument.Save"
     label: {zh: "写回也是它", en: "And for writing back"}
+  - kind: call
+    to: keymouse.flow.schema
+    from_api: "rpc:StepVm.BadgeBrush"
+    to_api: "rpc:FlowSchema.FieldsFor"
+    label: {zh: "字段由它给", en: "Fields come from it"}
 ---

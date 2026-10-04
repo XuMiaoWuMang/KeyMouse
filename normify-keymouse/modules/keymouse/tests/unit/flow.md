@@ -6,14 +6,14 @@ tags: [test, unit]
 name: {zh: "流程编译、谓词与录制规则单测", en: "Flow, predicate and recorder unit tests"}
 description:
   zh: >
-      不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及"退出码 6 可重试"这条文档承诺。真正的钩子、OCR 与回放由 smoke 覆盖。
+      不需要桌面的那一半：每种步骤编译出的 argv、加载时对未知类型/外来格式/未来版本/条件缺字段的拒绝、谓词三种模式与去空白规则（含超过栈缓冲区的长串）、轨迹抽稀与拖拽判定的边界、虚拟键反查名字，以及退出码 6 可重试这条文档承诺。契约那一组：每个类型必须有条目、每个字段必须有中文标签且 kind 是界面真能渲染的、契约不许发明加载器不认识的类型，空 when 等于没有前提。
       
   en: >
-      The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule (including a string past the stack buffer), the boundaries of trajectory thinning and drag detection, virtual keys mapping back to names, and the documented promise that exit 6 is retryable. The hooks, the OCR and the replay live in smoke.
+      The half that needs no desktop: the argv each step compiles to, the loader rejecting unknown types, foreign formats, future versions and incomplete conditions, the three predicate modes and the whitespace rule, trajectory thinning and drag detection, virtual keys mapping back to names, and the contract group (every type has an entry, every field has a label and a renderable kind, no invented types, an empty when means no precondition).
       
-revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
-updated_at: "2026-10-03T14:00:46.182Z"
-fingerprint: e2b7d660e8c1526b5765587dfad138dac818dab5c8fe0eb0ac2b8b6d543c7c44
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.936Z"
+fingerprint: 967a3e00d9c0f9279a9572e24e28e7c1466377dabac4a6b5c83f31eed4a9b026
 source:
   - path: "tests/KeyMouse.Tests/FlowTests.cs"
 apis:
@@ -39,4 +39,8 @@ deps:
     to: keymouse.record.session
     to_api: "rpc:Recorder.ThinTrajectoryIndices"
     label: {zh: "被测的抽稀规则", en: "The thinning rule"}
+  - kind: reference
+    to: keymouse.flow.schema
+    to_api: "rpc:FlowSchema.Steps"
+    label: {zh: "被测的契约", en: "The contract under test"}
 ---

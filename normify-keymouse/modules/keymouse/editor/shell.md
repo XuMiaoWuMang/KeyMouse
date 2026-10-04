@@ -6,18 +6,17 @@ tags: [editor, winui, ui]
 name: {zh: "窗口外壳与交互", en: "Shell and interactions"}
 description:
   zh: >
-      编辑器的窗口外壳：工具栏（打开/保存/试运行/播放/暂停/停止）、步骤列表、检查器、JSON 预览、运行输出面板与信息条。快捷键：Ctrl+O 打开、Ctrl+S 保存、**F5 播放**；命令行带上一个流程文件即可直接打开它（`KeyMouse flow edit x.json` 也走这条）。
+      编辑器的窗口外壳：工具栏（常用步骤一排 + 「更多」、试运行 / 播放 F5 / 暂停 / 停止、文件与取区域收进「⋯」）、可拖的三栏（步骤列表 / 分隔条 / 参数检查器）与下方的运行输出面板（结论条 + 日志，没有输出时高度为零）。消息一律落在版面里，没有浮层；最小窗口 1360x960（程序化改尺寸也夹紧）；启动时焦点有意指定（有文档给步骤列表，没有就给「新建流程」）。步骤行的运行结果来自 Runner 报告的退出码与耗时，不来自界面猜测。
       
   en: >
-      The editor window shell: toolbar (open, save, dry run, play, pause, stop), step list, inspector, JSON preview, run output panel and info bar. Shortcuts: Ctrl+O open, Ctrl+S save, F5 play; a flow file on the command line opens straight away (so does KeyMouse flow edit x.json).
+      The window shell: a toolbar (common step types plus More, dry run / play F5 / pause / stop, file and pick-region in the overflow), three draggable panes and the run output panel below (conclusion bar plus log, zero height when empty). Messages land inside the layout - there is no overlay; the minimum window is 1360x960 even against a programmatic resize. A step row's result comes from the Runner's exit code and timing.
       
-revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
-updated_at: "2026-10-03T14:00:46.182Z"
-fingerprint: 319beac10b0dc04a80ced5fed389341035601cc446b9b9672210a0d537b583b8
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.931Z"
+fingerprint: eda52fae1201ded53b11691c19ff802fce452b575e05a62ba010f194334b4b97
 source:
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml"
   - path: "editor/KeyMouse.FlowEditor/MainWindow.xaml.cs"
-  - path: "editor/KeyMouse.FlowEditor/App.xaml.cs"
 apis:
   - protocol: rpc
     path: "MainWindow.OpenFile"
@@ -37,6 +36,24 @@ apis:
       en: >
           Dry run/play: hand a copy to run and stream its output into the log.
           
+  - protocol: rpc
+    path: "MainWindow.UpdateStates"
+    description:
+      zh: >
+          一处决定什么可见：栏位、按钮与两个空状态。
+          
+      en: >
+          One place decides what is visible: panes, buttons and both empty states.
+          
+  - protocol: rpc
+    path: "MainWindow.AddStep"
+    description:
+      zh: >
+          在选中那一步之后插入一步，并选中它。
+          
+      en: >
+          Inserts a step after the selected one and selects it.
+          
 deps:
   - kind: call
     to: keymouse.editor.bridge
@@ -46,4 +63,9 @@ deps:
     to: keymouse.editor.steps
     to_api: "rpc:EditorModel.Load"
     label: {zh: "读流程", en: "Load a flow"}
+  - kind: call
+    to: keymouse.editor.inspector
+    from_api: "rpc:MainWindow.UpdateStates"
+    to_api: "rpc:InspectorBuilder.Build"
+    label: {zh: "重建参数卡", en: "Rebuilds the form"}
 ---

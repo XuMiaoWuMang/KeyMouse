@@ -11,9 +11,9 @@ description:
   en: >
       What every module shares: Check, $Exe/$target, the host encoding self-check, clipboard saving, starting the smoke target, and Wait-ForWindow - wait until a window exists (optionally plus a moment to arm) instead of sleeping a fixed time. A fixed sleep is worst exactly where startup depends on how fast the foreground is won: once focus attached the thread input queue first, 1500ms went from reliable to occasionally early.
       
-revision: eee5c2b2dedd9f702beb19d6a8286d336b3db1a3
-updated_at: "2026-10-03T14:07:10.617Z"
-fingerprint: 4775ec2400933c62bcb5c0177b9131fc34e3f9256f3aa5aa24b97c77dabf5035
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:23:38.097Z"
+fingerprint: d6e346a5b8723702f7d6daf705388979468e9fdb5539eb8b43fdae8a607b9f9a
 source:
   - path: "tests/smoke/common.ps1"
 apis:

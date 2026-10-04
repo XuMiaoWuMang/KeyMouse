@@ -11,9 +11,9 @@ description:
   en: >
       Runs a flow: loops expanded and subflows inlined first, then each step resolves its variables against its frame and is compiled for the same dispatch; stopping at the first failure or honouring --keep-going, retrying the retryable codes. Between steps it passes the execution seam, numbers steps by what really runs, and all text conditions share one polling loop. The document allowRestore travels with the compiled command line.
       
-revision: 96c306061d63c034a01c2369e4abc295251e2f35
-updated_at: "2026-10-03T13:37:48.971Z"
-fingerprint: 57a3c71696d205ab8bcbbc4370f0e072b8c1fc5d13f68c0b68c26008afa8218e
+revision: ef3cf740e80bd62dd7540df6ee4c526380163233
+updated_at: "2026-10-04T14:24:35.929Z"
+fingerprint: e556e9ac89ec074dbb9cfa7c693edea6d8600a7d9359172b06415af522ff8c16
 source:
   - path: "src/KeyMouse.Core/FlowRunner.cs"
 apis:
