@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -48,6 +49,9 @@ internal sealed class RunnerClient : IDisposable
 
     internal int NextId() => Interlocked.Increment(ref _nextId);
 
+    /// <summary>谁在用这个连接（编辑器进程、测试进程……）。服务端把它记在作业上，排查时知道是谁让它跑的。</summary>
+    internal static string ClientName { get; } = Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown";
+
     /// <summary>
     /// Sends one request and waits for its terminal event (`finished`, `result` or `error`).
     /// <paramref name="onEvent"/> sees every event of that request as it arrives, which is how the
@@ -58,6 +62,13 @@ internal sealed class RunnerClient : IDisposable
         CancellationToken cancellation = default)
     {
         int id = NextId();
+
+        // 每个请求都自报家门与协议版本：契约里的 client / version 就是给这件事用的，
+        // 服务端据此把作业记到某个人头上，并在版本不合时当场拒绝，而不是跑出看不懂的结果。
+        parameters ??= new RunnerParameters();
+        parameters.Client ??= ClientName;
+        parameters.Version ??= RunnerProtocol.ContractVersion;
+
         var completion = new TaskCompletionSource<RunnerEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_gate)
         {
@@ -151,20 +162,41 @@ internal sealed class RunnerClient : IDisposable
     {
         if (await ConnectAsync() is { } existing) return existing;
 
+        // 起子进程时**必须**把它的输出读干：只重定向不读，缓冲区写满会把 serve 卡死
+        // （它连命名管道都建不出来，客户端于是永远连不上）；完全不重定向，又会在失败时
+        // 丢掉它的遗言——用户看到的就是那句没法行动的"连不上"。两个都要。
         var startInfo = new System.Diagnostics.ProcessStartInfo(toolPath)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
+            // 在 CLI 自己的目录里启动：继承编辑器的 bin 目录时，serve 可能找不到它需要的东西
+            // （数据目录、语言模型等）而立刻退出——那正是"启动了 serve 但连不上"的另一种成因。
+            WorkingDirectory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(toolPath)) ?? Environment.CurrentDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
         startInfo.ArgumentList.Add("serve");
+
+        var words = new List<string>();
+        void Remember(object _, System.Diagnostics.DataReceivedEventArgs e)
+        {
+            if (e.Data is not { Length: > 0 } line) return;
+            lock (words) { if (words.Count < 6) words.Add(line.Trim()); }
+        }
+
+        System.Diagnostics.Process? child;
         try
         {
-            System.Diagnostics.Process.Start(startInfo);
+            child = System.Diagnostics.Process.Start(startInfo);
+            if (child is null) { LastStartFailure = "启动 serve 失败：系统没有返回进程"; return null; }
+            child.OutputDataReceived += Remember;
+            child.ErrorDataReceived += Remember;
+            child.BeginOutputReadLine();
+            child.BeginErrorReadLine();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            LastStartFailure = $"启动 serve 失败：{ex.Message}";
             return null;
         }
 
@@ -172,8 +204,32 @@ internal sealed class RunnerClient : IDisposable
         while (Environment.TickCount64 < deadline)
         {
             await Task.Delay(150);
-            if (await ConnectAsync(300) is { } client) return client;
+            if (await ConnectAsync(300) is { } client)
+            {
+                LastStartFailure = null;
+                return client;
+            }
+
+            if (child.HasExited)
+            {
+                await Task.Delay(150);   // 让最后几行输出落进 words
+                lock (words)
+                {
+                    LastStartFailure = $"serve 起来就退了（退出码 {child.ExitCode}）"
+                        + (words.Count > 0 ? "：" + string.Join(" / ", words) : "，而且没有留下任何输出");
+                }
+                return null;
+            }
+        }
+
+        lock (words)
+        {
+            LastStartFailure = $"serve 在 {waitMs} ms 内没有让管道可连"
+                + (words.Count > 0 ? "，它说：" + string.Join(" / ", words) : "，也没有留下任何输出");
         }
         return null;
     }
+
+    /// <summary>上一次启动 serve 失败的原因（编辑器显示给用户；成功时清空）。</summary>
+    internal static string? LastStartFailure { get; private set; }
 }

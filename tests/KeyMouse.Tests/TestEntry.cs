@@ -21,6 +21,7 @@ internal static class TestEntry
         ("loops", "循环、变量与展平", LoopTests.Run),
         ("calls", "子流程：内联、作用域与导出", CallTests.Run),
         ("runner", "常驻 Runner 协议与作业控制", RunnerTests.Run),
+        ("protocol", "前后端通信契约：方法、事件、参数与终结规则", RunnerProtocolTests.Run),
     ];
 
     private static int Main(string[] args)

@@ -1,3 +1,5 @@
+using System.IO.Pipes;
+using System.Text;
 using System.Text.Json;
 using KeyMouse;
 using KeyMouse.Runner;
@@ -23,7 +25,11 @@ internal static class RunnerTests
             status[^1].Value?.GetProperty("pipeline").GetString()?.StartsWith("keymouse-runner-") == true);
 
         var hello = Run(host, new RunnerRequest { Id = 2, Method = "hello" });
-        Harness.Equal("hello answers with hello", "hello", hello[^1].Kind);
+        Harness.Equal("hello answers with a result", "result", hello[^1].Kind);
+        Harness.Equal("...echoing the request id", 2, hello[^1].Id);
+        Harness.Check("...carrying the runner version and the protocol version",
+            hello[^1].Value?.GetProperty("version").GetString() == Commands.Version &&
+            hello[^1].Value?.GetProperty("protocol").GetString() == RunnerProtocol.ContractVersion);
 
         var unknown = Run(host, new RunnerRequest { Id = 3, Method = "teleport" });
         Harness.Equal("an unknown method is an error, not a crash", "error", unknown[^1].Kind);
@@ -35,7 +41,50 @@ internal static class RunnerTests
             Method = "run",
             Params = new RunnerParameters { Flow = Path.Combine(Path.GetTempPath(), "no-such-flow.json") },
         });
-        Harness.Equal("running a flow that does not exist is an error", "error", missing[^1].Kind);
+        Harness.Check("running a flow that does not exist reports the error, then ends the job",
+            missing.Any(e => e.Kind == "error" && e.Code == 2) &&
+            missing[^1].Kind == "finished" && missing[^1].ExitCode == 2,
+            string.Join(" / ", missing.Select(e => $"{e.Kind}:{e.Code}-{e.ExitCode}")));
+        Harness.Check("...and the job does not stay queued for good",
+            host.Jobs.All(j => j.State != "queued"),
+            string.Join(" / ", host.Jobs.Select(j => $"{j.Job}:{j.State}")));
+
+        Harness.Group("runner: a flow that will not load still ends its job");
+
+        string unloadable = Path.Combine(Path.GetTempPath(), $"keymouse-unloadable-{Environment.ProcessId}.json");
+        string healthy = Path.Combine(Path.GetTempPath(), $"keymouse-healthy-{Environment.ProcessId}.json");
+        try
+        {
+            File.WriteAllText(unloadable, """{"format":"keymouse-flow","version":1,"steps":[{"type":"teleport"}]}""");
+            List<RunnerEvent> broken = Run(host, new RunnerRequest
+            {
+                Id = 90,
+                Method = "run",
+                Params = new RunnerParameters { Flow = unloadable },
+            });
+            Harness.Equal("the client is told it failed", "finished", broken[^1].Kind);
+            Harness.Equal("...with the loader's exit code", 2, broken[^1].ExitCode);
+            Harness.Check("...and the failure was explained", broken.Any(e => e.Kind == "error"), "no error event");
+            Harness.Check("...and the job is not left queued (measured once: two jobs stuck that way, and a client that could never end its run)",
+                host.Jobs.All(j => j.State != "queued"), string.Join(", ", host.Jobs.Select(j => $"{j.Job}:{j.State}")));
+
+            File.WriteAllText(healthy, """{"format":"keymouse-flow","version":1,"steps":[{"type":"sleep","ms":30}]}""");
+            List<RunnerEvent> after = Run(host, new RunnerRequest
+            {
+                Id = 91,
+                Method = "run",
+                Params = new RunnerParameters { Flow = healthy, Echo = false },
+            });
+            Harness.Equal("...so the next run still works", "finished", after[^1].Kind);
+            Harness.Equal("...with its own exit code", 0, after[^1].ExitCode);
+        }
+        finally
+        {
+            foreach (string path in new[] { unloadable, healthy })
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+        }
 
         Harness.Group("runner: validate, run and cancel");
 
@@ -137,6 +186,19 @@ internal static class RunnerTests
                     RunnerEvent bad = client.SendAsync("nonsense").GetAwaiter().GetResult();
                     Harness.Equal("an unknown method comes back as an error", "error", bad.Kind);
                 }
+            }
+
+            // 问候（contract 里的 greeting）是契约里的一条：连上就先收到 hello(id=0)，不用先问什么。
+            using (var raw = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+            {
+                raw.Connect(2000);
+                using var reader = new StreamReader(raw, new UTF8Encoding(false));
+                var read = Task.Run(() => reader.ReadLine());
+                string? first = read.Wait(TimeSpan.FromSeconds(5)) ? read.Result : null;
+                RunnerEvent? greeting = first is null ? null : JsonSerializer.Deserialize<RunnerEvent>(first, RunnerProtocol.Json);
+                Harness.Check("a fresh connection is greeted before it asks anything",
+                    greeting is { Kind: "hello", Id: 0 } && greeting.Message == Commands.Version,
+                    $"{greeting?.Kind}#{greeting?.Id} {greeting?.Message}");
             }
         }
         finally

@@ -1,0 +1,135 @@
+{
+  "format": "keymouse-runner-protocol",
+  "version": 1,
+  "status": "normative",
+  "about": "编辑器（前端）与常驻 Runner（后端）之间的唯一通信契约。任何一侧改动都必须先改这里，再由 tests/KeyMouse.Tests/RunnerProtocolTests.cs 强制两侧一致。",
+
+  "transport": {
+    "kind": "named-pipe",
+    "pipeName": "keymouse-runner-{user}",
+    "testPipeName": "keymouse-runner-test-{user}-{tag}",
+    "encoding": "utf-8",
+    "framing": "json-lines",
+    "framingNote": "一行一个 JSON 对象，行内不允许换行；空行忽略。",
+    "json": {
+      "naming": "camelCase",
+      "readCaseInsensitive": true,
+      "omitNullOnWrite": true,
+      "unnamedFieldsAreIgnored": true
+    },
+    "direction": "duplex",
+    "model": "request/event",
+    "modelNote": "客户端发一个请求；服务端用同一个 id 回若干事件。执行类方法先流式回事件，最后回一个终结事件。"
+  },
+
+  "invariants": [
+    "每个事件都带回请求的 id；客户端按 id 分派（唯一例外：连接后主动发的那条 hello 问候，id 固定 0，它不是应答，见 greeting）。",
+    "每个请求都有终结事件：requests 里任何一项的 terminal 都不得为空。",
+    "客户端可以在任何请求里声明 client / version；version 与顶层 version 不合时，服务端必须回 error(code=2) 并停止处理，不得当作没看见继续跑。",
+    "终结事件只有三种：result、finished、error。收到其中任意一个即认为该请求结束。",
+    "result 用于一问一答的方法；finished 用于执行类方法（run / record）。",
+    "error 的 code 与 CLI 退出码同一套语义（见 errorCodes）。",
+    "服务端不认识的方法必须回 error(code=2)，不得静默丢弃。",
+    "服务端不认识的事件字段必须忽略，不得因为多了字段而失败。",
+    "参数是一个扁平袋：每个方法只读它声明的那几个字段，其余字段忽略。"
+  ],
+
+  "requests": [
+    {
+      "method": "hello",
+      "params": [],
+      "terminal": ["result"],
+      "resultFields": ["version", "protocol"],
+      "note": "问一句\"你是谁\"：回显请求 id，回 result{version, protocol}。连接后服务端还会主动发一条 id=0 的 hello 问候，那不是应答，两者不要混（见 greeting）。"
+    },
+    { "method": "status", "params": [], "terminal": ["result"], "resultFields": ["version", "jobs", "pipeline"] },
+    { "method": "list", "params": [], "terminal": ["result"], "resultFields": ["[]RunnerJobInfo"] },
+    { "method": "shutdown", "params": [], "terminal": ["result"], "resultFields": ["stopping"], "note": "先回 result 再停服务，保证客户端不会吊死。" },
+    {
+      "method": "run",
+      "params": ["flow", "dryRun", "echo", "keepGoing", "delayMs", "retry", "shots", "evidenceFor"],
+      "streams": ["log", "step"],
+      "terminal": ["finished", "error"],
+      "required": ["flow"],
+      "note": "跑一条流程。flow 必须存在，否则 error(code=2)。shots 为真时引擎逐步留证据（先执行、后截图），证据落在 evidenceFor（缺省用 flow）旁边的 <流程>.shots/ 里。"
+    },
+    {
+      "method": "record",
+      "params": ["out", "durationMs", "shots"],
+      "streams": ["log", "step"],
+      "terminal": ["finished", "error"],
+      "note": "录制操作序列。shot 参数与 run 同义。"
+    },
+    { "method": "validate", "params": ["flow"], "terminal": ["result", "error"], "required": ["flow"], "resultFields": ["ok", "steps", "issues"] },
+    { "method": "pick-region", "params": [], "terminal": ["result", "error"], "resultFields": ["region 的形状由取区域命令决定"] },
+    { "method": "ocr", "params": ["process", "class", "region"], "terminal": ["result", "error"], "note": "region 必须是长度 4 的数组 [x,y,w,h]；长度不对视为未给。" },
+    { "method": "cancel", "params": ["target"], "terminal": ["result", "error"], "resultFields": ["job", "state"], "note": "target 缺省时用请求 id 自身作目标（一次 run 的 id 就等于它的作业号）。" },
+    { "method": "pause", "params": ["target"], "terminal": ["result", "error"], "resultFields": ["job", "state"] },
+    { "method": "resume", "params": ["target"], "terminal": ["result", "error"], "resultFields": ["job", "state"] }
+  ],
+
+  "events": {
+    "hello": { "fields": ["kind", "id", "message"], "note": "连接后的问候（见 greeting），不是任何请求的应答，id 固定 0。" },
+    "log": { "fields": ["kind", "id", "job", "line"], "note": "能力层往 stdout/stderr 打的每一行都会变成一条 log。" },
+    "step": { "fields": ["kind", "id", "job", "index", "total", "state", "type", "shot", "exitCode", "durationMs"], "note": "state 取值见 stepStates；index 从 1 开始。shot 是这一步留下的证据截图路径（引擎抓不到就是 null，绝不编一个）" },
+    "finished": { "fields": ["kind", "id", "job", "exitCode", "durationMs"], "note": "执行类方法的终结事件；exitCode 与 CLI 退出码同一套。" },
+    "result": { "fields": ["kind", "id", "value"], "note": "一问一答方法的终结事件；value 的形状由具体方法决定。" },
+    "error": { "fields": ["kind", "id", "code", "message"], "note": "终结事件；message 面向用户，必须是中文。" }
+  },
+
+  "stepStates": ["running", "finished", "failed", "skipped"],
+
+  "jobStates": ["queued", "running", "finished", "failed", "cancelled", "paused"],
+
+  "parameters": {
+    "flow": { "type": "string", "note": "流程文件路径" },
+    "out": { "type": "string", "note": "record 的输出文件" },
+    "dryRun": { "type": "boolean", "note": "只走一遍不真的发输入" },
+    "echo": { "type": "boolean", "default": true, "note": "run 是否回显每一步" },
+    "keepGoing": { "type": "boolean", "note": "出错继续" },
+    "delayMs": { "type": "integer", "note": "步骤间固定延时" },
+    "retry": { "type": "integer", "note": "失败重试次数" },
+    "durationMs": { "type": "integer", "note": "record 的录制时长" },
+    "shots": { "type": "boolean", "note": "是否留下步骤截图。run：引擎逐步留证据，缺省 false（只有显式 true 才留）；record：缺省 true（只有显式 false 才加 --no-shots）" },
+    "evidenceFor": { "type": "string", "note": "证据目录以哪个流程文件为准（编辑器跑的是内存快照，但证据要落在用户那份流程旁边）；缺省时用 flow 自己" },
+    "process": { "type": "string", "note": "目标进程名" },
+    "class": { "type": "string", "note": "目标窗口类名" },
+    "region": { "type": "array", "items": "integer", "length": 4, "note": "[x,y,w,h]" },
+    "target": { "type": "integer", "note": "控制类方法的作业号；缺省时取请求 id" },
+    "client": { "type": "string", "note": "客户端标识（谁在问）；服务端记在作业上，list / status 看得到" },
+    "version": { "type": "string", "note": "客户端说的协议版本；与顶层 version 不合时服务端回 error(code=2)。缺省视为不说，不做检查" }
+  },
+
+  "universalParams": {
+    "fields": ["client", "version"],
+    "note": "这两个字段不挑方法：任何请求都可以带（RunnerClient 无条件带上），用来认人和认版本。其余参数才由各方法声明。"
+  },
+
+  "shapes": {
+    "RunnerJobInfo": ["job", "id", "method", "client", "state", "detail", "startedAt", "finishedAt", "exitCode"],
+    "note": "result.value 里出现的具名形状；字段名与两侧类型一一对应。"
+  },
+
+  "greeting": {
+    "kind": "hello",
+    "id": 0,
+    "fields": ["kind", "id", "message"],
+    "note": "连接建立后服务端主动发一条，message 是 Runner 版本号。它不是任何请求的应答：客户端不得 await 它，也不得把它算进某个请求的事件流。要问版本用 requests.hello（回 result）。"
+  },
+
+  "errorCodes": {
+    "0": "成功",
+    "1": "运行期错误（含 Runner 停止、无法解析的返回）",
+    "2": "用法或请求不合法（未知方法、缺必填参数、文件不存在）",
+    "3": "没有匹配 / 超时 / 没有这个作业 / 取区域被取消",
+    "4": "目标不可用",
+    "5": "焦点未确认",
+    "6": "读不出来（OCR 无结果）",
+    "7": "被取消"
+  },
+
+  "knownGaps": {
+    "note": "空 = 契约、后端、前端三者此刻一致。发现差异必须先写在这里，并在 RunnerProtocolTests 里把那条差异的行为钉住：缺口要么被修掉，要么被写下来，不许悄悄存在。",
+    "items": []
+  }
+}

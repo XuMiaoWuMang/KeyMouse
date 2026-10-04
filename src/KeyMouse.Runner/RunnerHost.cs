@@ -34,10 +34,25 @@ internal sealed class RunnerHost
     /// <summary>Handles one request and writes whatever it produces through <paramref name="emit"/>.</summary>
     internal async Task HandleAsync(RunnerRequest request, Action<RunnerEvent> emit)
     {
+        // 版本先对，再谈方法：一个说别的版本号的客户端，它的方法名和参数含义都不可信。
+        if (!RunnerProtocol.AcceptsVersion(request.Params?.Version))
+        {
+            emit(RunnerEvent.Error(
+                request.Id, 2,
+                $"客户端说的是协议版本 {request.Params!.Version}，本 Runner 说的是 {RunnerProtocol.ContractVersion}；两边对齐版本后才能继续"));
+            return;
+        }
+
         switch (request.Method)
         {
             case "hello":
-                emit(RunnerEvent.Hello(Version));
+                // 与别的方法同一套规则：回显请求 id，以 result 终结。
+                // 连接后那条 id=0 的问候是另一回事，见契约的 greeting。
+                emit(RunnerEvent.Result(request.Id, Serialize(new
+                {
+                    version = Version,
+                    protocol = RunnerProtocol.ContractVersion,
+                })));
                 return;
 
             case "list":
@@ -82,7 +97,8 @@ internal sealed class RunnerHost
                 return;
 
             default:
-                emit(RunnerEvent.Error(request.Id, 2, $"Runner 不认识 '{request.Method}'（可用：hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown）"));
+                // 方法清单只从 RunnerProtocol.Methods 来：改了协议而忘了同步，测试会先红。
+                emit(RunnerEvent.Error(request.Id, 2, $"Runner 不认识 '{request.Method}'（可用：{string.Join(" | ", RunnerProtocol.Methods)}）"));
                 return;
         }
     }
@@ -96,44 +112,47 @@ internal sealed class RunnerHost
     private async Task ExecuteAsync(RunnerRequest request, Action<RunnerEvent> emit)
     {
         RunnerParameters p = request.Params ?? new RunnerParameters();
-        var job = new RunnerJob(Interlocked.Increment(ref _nextJob), request.Id, request.Method, emit);
+        var job = new RunnerJob(Interlocked.Increment(ref _nextJob), request.Id, request.Method, emit) { Client = p.Client };
         lock (_gate) _jobs.Add(job);
 
-        if (request.Method == "run")
-        {
-            if (string.IsNullOrWhiteSpace(p.Flow) || !File.Exists(p.Flow))
-            {
-                job.State = "failed";
-                emit(RunnerEvent.Error(request.Id, 2, $"没有这个流程文件：{p.Flow}"));
-                return;
-            }
-            // The plan, not the file: a `repeat`/`foreach` runs its body more than once, and progress
-            // in the UI should count what will actually run.
-            FlowDocument document = FlowDocument.Load(p.Flow, null);
-            job.Total = FlowPlan.Build(document, Path.GetFullPath(p.Flow!)).StepCount;
-        }
-
-        var arguments = new List<string> { request.Method };
-        if (request.Method == "run")
-        {
-            arguments.Add(p.Flow!);
-            if (p.DryRun == true) arguments.Add("--dry-run");
-            if (p.Echo != false) arguments.Add("--echo"); // a client wants to see what happened
-            if (p.KeepGoing == true) arguments.Add("--keep-going");
-            if (p.DelayMs is int delay and > 0) arguments.AddRange(["--delay", delay.ToString()]);
-            if (p.Retry is int retry and > 0) arguments.AddRange(["--retry", retry.ToString()]);
-        }
-        else
-        {
-            if (!string.IsNullOrWhiteSpace(p.Out)) arguments.AddRange(["--out", p.Out!]);
-            if (p.DurationMs is int duration and > 0) arguments.AddRange(["--duration", duration.ToString()]);
-            if (p.Shots == false) arguments.Add("--no-shots");
-        }
-
+        // The queue slot comes first, and everything that can fail sits inside this try: a flow that
+        // will not load is the ordinary case, not an exotic one. It used to throw before the slot was
+        // taken and outside every handler, which left the job sitting in "queued" for good - measured
+        // on this machine: two jobs stuck that way and a client whose run could never end.
         await _oneAtATime.WaitAsync();
         TextWriter? previousOut = null, previousError = null;
         try
         {
+            var arguments = new List<string> { request.Method };
+            if (request.Method == "run")
+            {
+                if (string.IsNullOrWhiteSpace(p.Flow) || !File.Exists(p.Flow))
+                    throw new CommandFailure(2, $"没有这个流程文件：{p.Flow}");
+
+                // The plan, not the file: a `repeat`/`foreach` runs its body more than once, and
+                // progress in the UI should count what will actually run.
+                FlowDocument document = FlowDocument.Load(p.Flow, null);
+                var plan = FlowPlan.Build(document, Path.GetFullPath(p.Flow!));
+                job.Total = plan.StepCount;
+                job.FlowPath = Path.GetFullPath(p.Flow!);
+                job.AllowRestore = document.AllowRestore;
+                job.Shots = p.Shots ?? false;
+                job.EvidenceFor = p.EvidenceFor;
+                job.Steps = plan.Items.Where(item => item.Step is not null).Select(item => item.Step!).ToList();
+                arguments.Add(p.Flow!);
+                if (p.DryRun == true) arguments.Add("--dry-run");
+                if (p.Echo != false) arguments.Add("--echo"); // a client wants to see what happened
+                if (p.KeepGoing == true) arguments.Add("--keep-going");
+                if (p.DelayMs is int delay and > 0) arguments.AddRange(["--delay", delay.ToString()]);
+                if (p.Retry is int retry and > 0) arguments.AddRange(["--retry", retry.ToString()]);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(p.Out)) arguments.AddRange(["--out", p.Out!]);
+                if (p.DurationMs is int duration and > 0) arguments.AddRange(["--duration", duration.ToString()]);
+                if (p.Shots == false) arguments.Add("--no-shots");
+            }
+
             job.State = "running";
             Execution.Control = job;
 
@@ -157,6 +176,15 @@ internal sealed class RunnerHost
             job.ExitCode = exitCode;
             job.State = job.Cancelled ? "cancelled" : exitCode == 0 ? "finished" : "failed";
             emit(RunnerEvent.Finished(request.Id, job.Job, exitCode, Environment.TickCount64 - job.StartedAt));
+        }
+        catch (Exception ex)
+        {
+            // Whatever else goes wrong, the client hears about it and the job does not stay queued.
+            int code = ex is CommandFailure failure ? failure.Code : 1;
+            job.ExitCode = code;
+            job.State = "failed";
+            emit(RunnerEvent.Error(request.Id, code, ex.Message));
+            emit(RunnerEvent.Finished(request.Id, job.Job, code, Environment.TickCount64 - job.StartedAt));
         }
         finally
         {

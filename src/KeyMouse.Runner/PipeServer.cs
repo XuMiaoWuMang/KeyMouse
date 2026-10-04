@@ -77,6 +77,8 @@ internal sealed class PipeServer
 
         try
         {
+            // 契约里的 greeting：连上就报一句自己是谁。它不是任何请求的应答（id 固定 0），
+            // 客户端不得 await 它——要问版本请发 requests.hello，那条回 result。
             Emit(RunnerEvent.Hello(_host.Version));
             while (!stop.IsCancellationRequested)
             {

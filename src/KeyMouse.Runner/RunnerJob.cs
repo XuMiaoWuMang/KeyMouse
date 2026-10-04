@@ -26,6 +26,24 @@ internal sealed class RunnerJob : IExecutionControl
     internal int RequestId { get; }
     internal string Method { get; }
 
+    /// <summary>提出这个作业的客户端（请求里的 client），只作展示与排查用。</summary>
+    internal string? Client { get; init; }
+
+    /// <summary>这条流程的文件路径（截图证据要落在它旁边）。</summary>
+    internal string? FlowPath { get; set; }
+
+    /// <summary>证据目录以哪个文件为准（用户那份流程）。</summary>
+    internal string? EvidenceFor { get; set; }
+
+    /// <summary>这次运行要不要逐步留截图。</summary>
+    internal bool Shots { get; set; }
+
+    /// <summary>恢复最小化窗口是否被允许（与执行器用的是同一个判断）。</summary>
+    internal bool AllowRestore { get; set; }
+
+    /// <summary>按执行序号排列的步骤，用来给每一步找到它的目标区域。</summary>
+    internal IReadOnlyList<FlowStep> Steps { get; set; } = [];
+
     /// <summary>queued | running | paused | finished | failed | cancelled.</summary>
     internal string State { get; set; } = "queued";
 
@@ -59,8 +77,19 @@ internal sealed class RunnerJob : IExecutionControl
     public void StepStarted(int index, string type) =>
         Emit(RunnerEvent.Step(RequestId, Job, index, Total, "started", type));
 
+    /// <summary>
+    /// 一步跑完。顺手留一张证据：**先执行、后截图**，所以行上看到的是这一步做完之后的屏幕，
+    /// 而不是它动手之前的。
+    /// </summary>
     public void StepFinished(int index, int exitCode, long durationMs) =>
-        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "finished", "", exitCode, durationMs));
+        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "finished", "", exitCode, durationMs, ShotFor(index)));
+
+    private string? ShotFor(int index)
+    {
+        if (!Shots || FlowPath is null) return null;
+        if (index - 1 < 0 || index - 1 >= Steps.Count) return null;
+        return RunShots.Capture(Steps[index - 1], FlowPath, EvidenceFor, index, AllowRestore);
+    }
 
     // ------------------------------------------------------------------ control
 
@@ -90,6 +119,7 @@ internal sealed class RunnerJob : IExecutionControl
         Job = Job,
         Id = RequestId,
         Method = Method,
+        Client = Client,
         State = State,
         Detail = Detail,
         StartedAt = StartedAt,
