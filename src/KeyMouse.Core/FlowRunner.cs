@@ -452,7 +452,8 @@ internal static class FlowRunner
 
     internal sealed record PollResult(bool Found, TextMatch? Match, int ExitCode, string Detail, string LastText);
 
-    private static WindowSelector SelectorOf(FlowTarget? target) => new()
+    /// <summary>把流程里的目标变成窗口选择器。全项目只此一份（截图证据也用它）。</summary>
+    internal static WindowSelector SelectorOf(FlowTarget? target) => new()
     {
         ProcessName = string.IsNullOrWhiteSpace(target?.Process) ? null : target!.Process,
         ClassName = string.IsNullOrWhiteSpace(target?.Class) ? null : target!.Class,

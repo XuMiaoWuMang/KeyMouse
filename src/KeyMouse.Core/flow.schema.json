@@ -1,0 +1,253 @@
+{
+  "$comment": "KeyMouse 流程格式的接口契约。这里是唯一权威：哪些参数必须、哪些可选、取值范围、以及前端该用什么控件渲染。加载器（校验）与编辑器（渲染）都以这份为准，任何一方都不许自己另写一套规则。改契约 = 改这个文件。",
+  "format": "keymouse-flow",
+  "version": 1,
+  "kinds": {
+    "const": "固定值（文档里必须等于 value）",
+    "text": "单行文本",
+    "multiline": "多行文本",
+    "int": "整数（min/max 与 default 见字段）",
+    "bool": "布尔（勾选框）",
+    "enum": "枚举（下拉框，取值见 values）",
+    "point": "一个点 {space, x, y}",
+    "region": "一块矩形 {space, x, y, width, height}",
+    "target": "窗口选择器 {process?, class?, title?}",
+    "steps": "子步骤数组（分组步骤专用）",
+    "vars": "变量表 {名字: 值}，值可含 {{占位符}}",
+    "stringList": "字符串数组"
+  },
+  "document": {
+    "fields": [
+      {
+        "name": "format", "kind": "const", "value": "keymouse-flow", "required": true,
+        "label": { "zh": "格式名", "en": "format" },
+        "help": { "zh": "必须是 keymouse-flow。", "en": "Must be keymouse-flow." }
+      },
+      {
+        "name": "version", "kind": "int", "required": true, "min": 1, "max": 1, "default": 1,
+        "label": { "zh": "格式版本", "en": "version" },
+        "help": { "zh": "目前只认 1。", "en": "Only version 1 exists today." }
+      },
+      {
+        "name": "allowRestore", "kind": "bool", "required": false, "default": false,
+        "label": { "zh": "允许还原最小化窗口", "en": "allow restore" },
+        "help": {
+          "zh": "默认关。目标窗口最小化时，只有这里（或命令行 --allow-restore）说了允许，KeyMouse 才会把它还原。",
+          "en": "Off by default. When the target is minimized, KeyMouse restores it only if this (or --allow-restore on the command line) says so."
+        }
+      },
+      {
+        "name": "variables", "kind": "vars", "required": false,
+        "label": { "zh": "文档变量", "en": "variables" },
+        "help": {
+          "zh": "值是字符串，或字符串数组（给 foreach 遍历）。步骤里用 {{名字}} 引用；命令行 --set 名字=值 可覆盖。",
+          "en": "Values are strings, or arrays of strings for foreach. Steps reference them as {{name}}; --set name=value overrides."
+        }
+      },
+      {
+        "name": "recordedAt", "kind": "text", "required": false,
+        "label": { "zh": "录制时间", "en": "recorded at" },
+        "help": { "zh": "录制产生的流程会写上它，只给人看。", "en": "Written by the recorder; for humans only." }
+      },
+      {
+        "name": "steps", "kind": "steps", "required": true,
+        "label": { "zh": "步骤", "en": "steps" },
+        "help": { "zh": "至少一步。", "en": "At least one step." }
+      }
+    ]
+  },
+  "common": [
+    {
+      "name": "note", "kind": "text", "required": false,
+      "label": { "zh": "备注（只给人看）", "en": "note" },
+      "help": { "zh": "不参与执行，日志里会原样显示。", "en": "Not executed; shown in the log." }
+    },
+    {
+      "name": "when", "kind": "when", "required": false,
+      "label": { "zh": "前提条件", "en": "when" },
+      "help": {
+        "zh": "不是必须的。留空 = 这一步每次都执行；填上文字才有前提——前提在开始前只读一次，读到才执行这一步（读不到按 else 跳过或失败）。和 click-text/wait-text 自己「要找/要等的文字」不是一回事：那个是这一步会一直等到超时的。",
+        "en": "Optional. Empty means the step always runs; with text it becomes a precondition, read once before the step (else decides skip or fail). It is not the same as the text a click-text or wait-text step waits for."
+      }
+    },
+    {
+      "name": "shot", "kind": "text", "required": false,
+      "label": { "zh": "截图路径", "en": "shot" },
+      "help": { "zh": "录制留下的证据图路径。", "en": "Evidence image written by the recorder." }
+    }
+  ],
+  "shapes": {
+    "target": {
+      "comment": "至少要有 process 或 class 之一；title 只给人看，不参与匹配。",
+      "fields": [
+        { "name": "process", "kind": "text", "required": false, "label": { "zh": "进程名", "en": "process" } },
+        { "name": "class", "kind": "text", "required": false, "label": { "zh": "窗口类名", "en": "class" } },
+        { "name": "title", "kind": "text", "required": false, "label": { "zh": "标题（只给人看）", "en": "title" } }
+      ]
+    },
+    "point": {
+      "fields": [
+        { "name": "space", "kind": "enum", "required": true, "values": ["client", "screen"], "default": "client", "label": { "zh": "坐标空间", "en": "space" } },
+        { "name": "x", "kind": "int", "required": true, "label": { "zh": "X", "en": "x" } },
+        { "name": "y", "kind": "int", "required": true, "label": { "zh": "Y", "en": "y" } }
+      ],
+      "comment": "space=client（客户区相对，推荐）时必须给 target，否则坐标无从换算。"
+    },
+    "region": {
+      "fields": [
+        { "name": "space", "kind": "const", "value": "client", "required": true, "label": { "zh": "坐标空间（固定客户区）", "en": "space" }, "help": { "zh": "区域只支持客户区坐标：屏幕坐标会因为窗口移动而失效。", "en": "Regions are client-relative only: screen coordinates break when the window moves." } },
+        { "name": "x", "kind": "int", "required": true, "label": { "zh": "X", "en": "x" } },
+        { "name": "y", "kind": "int", "required": true, "label": { "zh": "Y", "en": "y" } },
+        { "name": "width", "kind": "int", "required": true, "min": 1, "label": { "zh": "宽", "en": "width" } },
+        { "name": "height", "kind": "int", "required": true, "min": 1, "label": { "zh": "高", "en": "height" } }
+      ],
+      "comment": "只支持客户区坐标：屏幕坐标会因为窗口移动而失效。高度要盖住整行文字，否则字被切掉会读错（实测）。"
+    },
+    "when": {
+      "fields": [
+        { "name": "text", "kind": "text", "required": true, "label": { "zh": "读到这段文字才执行", "en": "text to see" } },
+        { "name": "region", "kind": "region", "required": true, "label": { "zh": "读的区域", "en": "region" } },
+        { "name": "target", "kind": "target", "required": false, "label": { "zh": "读哪个窗口", "en": "target" }, "help": { "zh": "留空 = 用本步骤的目标。", "en": "Empty means this step's target." } },
+        { "name": "match", "kind": "enum", "required": false, "values": ["contains", "exact", "fuzzy"], "default": "contains", "valueLabels": { "contains": { "zh": "包含即可", "en": "contains" }, "exact": { "zh": "必须完全一致", "en": "exact" }, "fuzzy": { "zh": "容错匹配", "en": "fuzzy" } }, "label": { "zh": "匹配方式", "en": "match" } },
+        { "name": "maxErrors", "kind": "int", "required": false, "min": 0, "max": 20, "default": 1, "label": { "zh": "容错字符数", "en": "max errors" } },
+        { "name": "timeoutMs", "kind": "int", "required": false, "min": 0, "max": 600000, "default": 2000, "label": { "zh": "最多等（毫秒）", "en": "timeout ms" } },
+        { "name": "intervalMs", "kind": "int", "required": false, "min": 20, "max": 5000, "default": 250, "label": { "zh": "每轮间隔（毫秒）", "en": "interval ms" } },
+        { "name": "confirm", "kind": "int", "required": false, "min": 1, "max": 10, "default": 2, "label": { "zh": "连续确认次数", "en": "confirm" }, "help": { "zh": "连续几次读到同样的内容才算数。", "en": "How many identical reads in a row count as seen." } },
+        { "name": "else", "kind": "enum", "required": false, "values": ["skip", "fail"], "default": "skip", "label": { "zh": "读不到怎么办", "en": "else" }, "help": { "zh": "skip = 跳过这一步；fail = 退出码 3。", "en": "skip the step, or fail with exit code 3." } }
+      ],
+      "comment": "一个 when 只有在 text 非空时才算前提；text 为空时整个 when 被忽略（等于没有前提）。"
+    }
+  },
+  "steps": {
+    "focus": {
+      "summary": { "zh": "把目标窗口切到前台", "en": "Bring the target window to the front" },
+      "fields": [
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "click": {
+      "summary": { "zh": "在某个位置点一下", "en": "Click at a position" },
+      "fields": [
+        { "name": "at", "kind": "point", "required": true, "label": { "zh": "点的位置", "en": "at" } },
+        { "name": "button", "kind": "enum", "required": false, "values": ["left", "right", "middle"], "default": "left", "valueLabels": { "left": { "zh": "左键", "en": "left" }, "right": { "zh": "右键", "en": "right" }, "middle": { "zh": "中键", "en": "middle" } }, "label": { "zh": "鼠标键", "en": "button" } },
+        { "name": "target", "kind": "target", "required": false, "requiredWhen": "at.space=client", "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "drag": {
+      "summary": { "zh": "从一处拖到另一处", "en": "Drag from one place to another" },
+      "fields": [
+        { "name": "from", "kind": "point", "required": true, "fixedSpace": "client", "label": { "zh": "起点", "en": "from" } },
+        { "name": "to", "kind": "point", "required": true, "fixedSpace": "client", "label": { "zh": "终点", "en": "to" } },
+        { "name": "durationMs", "kind": "int", "required": false, "min": 0, "max": 60000, "default": 400, "label": { "zh": "拖多久（毫秒）", "en": "duration ms" } },
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "目标窗口", "en": "target" }, "help": { "zh": "拖拽只支持客户区坐标，所以必须给窗口。", "en": "Drag is client-relative only, so the window is required." } }
+      ]
+    },
+    "move": {
+      "summary": { "zh": "把鼠标移到某个位置（不点）", "en": "Move the pointer without clicking" },
+      "fields": [
+        { "name": "at", "kind": "point", "required": true, "label": { "zh": "位置", "en": "at" } },
+        { "name": "target", "kind": "target", "required": false, "requiredWhen": "at.space=client", "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "wheel": {
+      "summary": { "zh": "滚轮", "en": "Scroll the wheel" },
+      "fields": [
+        { "name": "delta", "kind": "int", "required": false, "default": 120, "label": { "zh": "滚动量（正数向上）", "en": "delta" } },
+        { "name": "at", "kind": "point", "required": false, "label": { "zh": "在哪里滚（留空 = 当前位置）", "en": "at" } },
+        { "name": "target", "kind": "target", "required": false, "requiredWhen": "at.space=client", "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "type": {
+      "summary": { "zh": "输入一段文字", "en": "Type text" },
+      "fields": [
+        { "name": "text", "kind": "multiline", "required": false, "default": "", "label": { "zh": "要输入的文字", "en": "text" } },
+        { "name": "intervalMs", "kind": "int", "required": false, "min": 0, "max": 1000, "label": { "zh": "每字符间隔（毫秒）", "en": "interval ms" } },
+        { "name": "target", "kind": "target", "required": false, "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "key": {
+      "summary": { "zh": "按一个键或一组组合键", "en": "Press a key or a combination" },
+      "oneOf": ["combo", "text"],
+      "fields": [
+        { "name": "combo", "kind": "text", "required": false, "label": { "zh": "组合键", "en": "combo" }, "help": { "zh": "如 ctrl+shift+s。与「单个键」二者给一个。", "en": "e.g. ctrl+shift+s; give this or the single key." } },
+        { "name": "text", "kind": "text", "required": false, "label": { "zh": "单个键名", "en": "key" }, "help": { "zh": "如 enter / f5 / a。", "en": "e.g. enter, f5, a." } },
+        { "name": "count", "kind": "int", "required": false, "min": 1, "max": 100, "default": 1, "label": { "zh": "按几次", "en": "count" } },
+        { "name": "target", "kind": "target", "required": false, "label": { "zh": "目标窗口", "en": "target" } }
+      ]
+    },
+    "sleep": {
+      "summary": { "zh": "等一会儿", "en": "Wait" },
+      "fields": [
+        { "name": "ms", "kind": "int", "required": false, "min": 0, "max": 3600000, "default": 0, "label": { "zh": "等多少毫秒", "en": "ms" } }
+      ]
+    },
+    "wait-window": {
+      "summary": { "zh": "等某个窗口可用", "en": "Wait for a usable window" },
+      "fields": [
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "等哪个窗口", "en": "target" } },
+        { "name": "timeoutMs", "kind": "int", "required": false, "min": 0, "max": 600000, "default": 5000, "label": { "zh": "最多等（毫秒）", "en": "timeout ms" } },
+        { "name": "intervalMs", "kind": "int", "required": false, "min": 20, "max": 5000, "default": 200, "label": { "zh": "每轮间隔（毫秒）", "en": "interval ms" } }
+      ]
+    },
+    "wait-text": {
+      "summary": { "zh": "等某段文字出现", "en": "Wait for text to appear" },
+      "fields": [
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "目标窗口", "en": "target" } },
+        { "name": "region", "kind": "region", "required": true, "label": { "zh": "读的区域", "en": "region" } },
+        { "name": "text", "kind": "text", "required": true, "label": { "zh": "要等的文字", "en": "text" } },
+        { "name": "match", "kind": "enum", "required": false, "values": ["contains", "exact", "fuzzy"], "default": "contains", "valueLabels": { "contains": { "zh": "包含即可", "en": "contains" }, "exact": { "zh": "必须完全一致", "en": "exact" }, "fuzzy": { "zh": "容错匹配", "en": "fuzzy" } }, "label": { "zh": "匹配方式", "en": "match" } },
+        { "name": "maxErrors", "kind": "int", "required": false, "min": 0, "max": 20, "default": 1, "label": { "zh": "容错字符数", "en": "max errors" } },
+        { "name": "timeoutMs", "kind": "int", "required": false, "min": 0, "max": 600000, "default": 5000, "label": { "zh": "最多等（毫秒）", "en": "timeout ms" } },
+        { "name": "intervalMs", "kind": "int", "required": false, "min": 20, "max": 5000, "default": 250, "label": { "zh": "每轮间隔（毫秒）", "en": "interval ms" } },
+        { "name": "confirm", "kind": "int", "required": false, "min": 1, "max": 10, "default": 2, "label": { "zh": "连续确认次数", "en": "confirm" } }
+      ]
+    },
+    "click-text": {
+      "summary": { "zh": "找字并点击它", "en": "Find the text and click it" },
+      "fields": [
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "目标窗口", "en": "target" } },
+        { "name": "region", "kind": "region", "required": true, "label": { "zh": "在哪里找", "en": "region" } },
+        { "name": "text", "kind": "text", "required": true, "label": { "zh": "要找的文字", "en": "text" } },
+        { "name": "match", "kind": "enum", "required": false, "values": ["contains", "exact", "fuzzy"], "default": "contains", "valueLabels": { "contains": { "zh": "包含即可", "en": "contains" }, "exact": { "zh": "必须完全一致", "en": "exact" }, "fuzzy": { "zh": "容错匹配", "en": "fuzzy" } }, "label": { "zh": "匹配方式", "en": "match" } },
+        { "name": "maxErrors", "kind": "int", "required": false, "min": 0, "max": 20, "default": 1, "label": { "zh": "容错字符数", "en": "max errors" } },
+        { "name": "timeoutMs", "kind": "int", "required": false, "min": 0, "max": 600000, "default": 5000, "label": { "zh": "最多等（毫秒）", "en": "timeout ms" } },
+        { "name": "intervalMs", "kind": "int", "required": false, "min": 20, "max": 5000, "default": 250, "label": { "zh": "每轮间隔（毫秒）", "en": "interval ms" } },
+        { "name": "confirm", "kind": "int", "required": false, "min": 1, "max": 10, "default": 2, "label": { "zh": "连续确认次数", "en": "confirm" } },
+        { "name": "button", "kind": "enum", "required": false, "values": ["left", "right", "middle"], "default": "left", "valueLabels": { "left": { "zh": "左键", "en": "left" }, "right": { "zh": "右键", "en": "right" }, "middle": { "zh": "中键", "en": "middle" } }, "label": { "zh": "鼠标键", "en": "button" } }
+      ]
+    },
+    "read-text": {
+      "summary": { "zh": "读进变量", "en": "Read a region into a variable" },
+      "fields": [
+        { "name": "target", "kind": "target", "required": true, "label": { "zh": "目标窗口", "en": "target" } },
+        { "name": "region", "kind": "region", "required": true, "label": { "zh": "读的区域", "en": "region" } },
+        { "name": "into", "kind": "text", "required": true, "label": { "zh": "存进哪个变量", "en": "into" }, "help": { "zh": "后面的步骤用 {{名字}} 引用。", "en": "Later steps use {{name}}." } },
+        { "name": "text", "kind": "text", "required": false, "label": { "zh": "只取匹配到的文字（留空 = 整块）", "en": "text" } },
+        { "name": "match", "kind": "enum", "required": false, "values": ["contains", "exact", "fuzzy"], "default": "contains", "valueLabels": { "contains": { "zh": "包含即可", "en": "contains" }, "exact": { "zh": "必须完全一致", "en": "exact" }, "fuzzy": { "zh": "容错匹配", "en": "fuzzy" } }, "label": { "zh": "匹配方式", "en": "match" } },
+        { "name": "maxErrors", "kind": "int", "required": false, "min": 0, "max": 20, "default": 1, "label": { "zh": "容错字符数", "en": "max errors" } }
+      ]
+    },
+    "repeat": {
+      "summary": { "zh": "重复 N 次", "en": "Repeat N times" },
+      "fields": [
+        { "name": "times", "kind": "int", "required": true, "min": 0, "max": 10000, "label": { "zh": "重复次数", "en": "times" } },
+        { "name": "steps", "kind": "steps", "required": true, "label": { "zh": "重复哪些步骤", "en": "steps" }, "help": { "zh": "循环体里可用 {{index}}（0 起）。", "en": "Inside the body {{index}} is available (0-based)." } }
+      ]
+    },
+    "foreach": {
+      "summary": { "zh": "遍历列表", "en": "Walk a list" },
+      "fields": [
+        { "name": "in", "kind": "text", "required": true, "label": { "zh": "遍历哪个列表变量", "en": "in" }, "help": { "zh": "必须是文档 variables 里的数组。", "en": "Must name an array in the document variables." } },
+        { "name": "steps", "kind": "steps", "required": true, "label": { "zh": "每一项做什么", "en": "steps" }, "help": { "zh": "循环体里可用 {{item}} 与 {{index}}。", "en": "Inside the body {{item}} and {{index}} are available." } }
+      ]
+    },
+    "call": {
+      "summary": { "zh": "调用子流程", "en": "Call a subflow" },
+      "fields": [
+        { "name": "flow", "kind": "text", "required": true, "label": { "zh": "子流程文件（相对本文件）", "en": "flow" } },
+        { "name": "vars", "kind": "vars", "required": false, "label": { "zh": "传进去的变量", "en": "vars" }, "help": { "zh": "值可以引用调用者的变量，如 {{item}}。", "en": "Values may use the caller's variables, e.g. {{item}}." } },
+        { "name": "export", "kind": "stringList", "required": false, "label": { "zh": "交回来的变量", "en": "export" }, "help": { "zh": "子流程跑完后，这些名字的值回到调用者；没列出的留在子流程里。", "en": "After the call these names land in the caller; everything else stays inside." } }
+      ]
+    }
+  }
+}

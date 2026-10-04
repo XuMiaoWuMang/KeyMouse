@@ -6,6 +6,37 @@ internal static class Commands
 {
     internal const string Version = "2.1.0";
 
+    /// <summary>打印流程格式的接口契约（前端照着它渲染；`schema 类型` 只看一种）。</summary>
+    private static int Schema(string[] rest)
+    {
+        if (rest.Length == 0)
+        {
+            Console.WriteLine(FlowSchema.Json);
+            return 0;
+        }
+
+        string type = rest[0];
+        if (!FlowSchema.TryGetStep(type, out FlowStepContract contract))
+        {
+            Console.WriteLine($"不认识的步骤类型 '{type}'（可用：{string.Join(" | ", FlowSchema.Steps.Keys)}）");
+            return 2;
+        }
+
+        Console.WriteLine($"{type}：{contract.SummaryZh}");
+        foreach (FlowField field in contract.All)
+        {
+            string mark = field.Required ? "必须" : field.RequiredWhen is { } when ? $"条件必须（{when}）" : "可选";
+            string latin = field.Values.Length > 0 ? $"  取值：{string.Join(" | ", field.Values)}" : field.Kind == "int" && (field.Min is not null || field.Max is not null) ? $"  范围：{field.Min} .. {field.Max}" : "";
+            Console.WriteLine($"  {field.Name,-14} {mark,-22} {field.LabelZh}{latin}");
+        }
+
+        if (contract.OneOf.Count > 0)
+        {
+            Console.WriteLine($"  以上 {string.Join(" / ", contract.OneOf)} 至少给一个。");
+        }
+        return 0;
+    }
+
     /// <summary>
     /// STA because the region picker is a WinForms window: an interactive desktop selection needs
     /// a single-threaded apartment, and everything else here is unaffected by the choice.
@@ -29,6 +60,9 @@ internal static class Commands
                 case "-v" or "--version" or "version":
                     Console.WriteLine($"KeyMouse {Version}");
                     return 0;
+                case "schema":
+                    // The contract itself, for a frontend that would rather read it than be told about it.
+                    return Schema(rest[1..]);
                 case "mouse":
                     return Mouse(rest[1..], global);
                 case "key" or "keyboard":

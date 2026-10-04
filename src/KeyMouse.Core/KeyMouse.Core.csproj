@@ -17,6 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 流程格式的接口契约：加载器与编辑器共用的唯一权威，随程序集一起分发。 -->
+    <EmbeddedResource Include="flow.schema.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- One product, three layers: the CLI and the resident Runner are the two entry points into this
          same capability layer, and the tests and the editor reach into it too. -->
     <InternalsVisibleTo Include="KeyMouse" />

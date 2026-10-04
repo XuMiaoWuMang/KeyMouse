@@ -196,6 +196,14 @@ internal sealed class FlowDocument
         if (document is null) throw new CommandFailure(2, $"流程 '{path}' 是空的");
         if (!string.Equals(document.Format, FormatName, StringComparison.Ordinal))
             throw new CommandFailure(2, $"'{path}' 的 format 是 '{document.Format}'，期望 '{FormatName}'");
+        // A `when` with no text is not a broken precondition, it is the absence of one - the field's own
+        // label says "leave it empty and the step always runs". The editor can produce that state by
+        // touching any other `when` box, so refusing it would punish the user for our UI's shape.
+        foreach (FlowStep step in AllSteps(document.Steps))
+        {
+            if (step.When is { } condition && string.IsNullOrWhiteSpace(condition.Text)) step.When = null;
+        }
+
         if (document.Version is < 1 or > CurrentVersion)
             throw new CommandFailure(2, $"'{path}' 的 version 是 {document.Version}，这个版本只认 1");
 
@@ -296,6 +304,7 @@ internal sealed class FlowDocument
                         $"第 {i + 1} 步的 foreach 遍历 '{step.In}'，但文档 variables 里没有这个列表");
             }
 
+            CheckRequired(step, $"第 {i + 1} 步");
             CheckPlaceholders(step, scope, $"第 {i + 1} 步");
 
             // A read-text defines a variable for the steps after it, so the check above can stay a
@@ -352,6 +361,7 @@ internal sealed class FlowDocument
             if (step.Type == "foreach" && string.IsNullOrEmpty(step.In))
                 throw new CommandFailure(2, $"{where}的 foreach 需要 in（遍历哪个列表变量）");
 
+            CheckRequired(step, where);
             CheckPlaceholders(step, scope, where);
             if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
 
@@ -474,6 +484,39 @@ internal sealed class FlowDocument
         return copy;
 
         string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, frame);
+    }
+
+    /// <summary>
+    /// What the contract says must be there. The hand-written checks above give the better message for
+    /// the cases they know; this one is the safety net that makes "required" mean one thing only - the
+    /// same document the editor renders its controls from.
+    /// </summary>
+    private static void CheckRequired(FlowStep step, string where)
+    {
+        if (!FlowSchema.TryGetStep(step.Type, out FlowStepContract contract)) return;
+
+        foreach (FlowField field in contract.Own.Where(f => f.Required))
+        {
+            if (!FlowSchema.HasValue(step, field.Name))
+                throw new CommandFailure(2, $"{where}的 {step.Type} 需要 {field.Name}（{field.LabelZh}）");
+        }
+
+        if (contract.OneOf.Count > 0 && !contract.OneOf.Any(name => FlowSchema.HasValue(step, name)))
+        {
+            string labels = string.Join(" 或 ", contract.OneOf.Select(name =>
+                contract.Own.FirstOrDefault(f => f.Name == name)?.LabelZh is { Length: > 0 } label ? label : name));
+            throw new CommandFailure(2, $"{where}的 {step.Type} 需要 {labels} 之一");
+        }
+    }
+
+    /// <summary>Every step in the file, groups included (used where a whole-file rule applies).</summary>
+    private static IEnumerable<FlowStep> AllSteps(List<FlowStep> steps)
+    {
+        foreach (FlowStep step in steps)
+        {
+            yield return step;
+            foreach (FlowStep child in AllSteps(step.Steps ?? [])) yield return child;
+        }
     }
 
     internal void Save(string path)

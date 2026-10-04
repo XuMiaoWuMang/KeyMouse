@@ -108,27 +108,84 @@ internal static class FlowTests
         Harness.Throws<CommandFailure>("wait steps are the runner's business, not the compiler's",
             () => FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }));
 
-        Harness.Group("flow: every step type declares the fields it uses");
+        Harness.Group("flow: an empty when is the absence of a precondition");
+
+        string emptyWhen = Path.Combine(Path.GetTempPath(), $"keymouse-empty-when-{Environment.ProcessId}.json");
+        try
+        {
+            // 这就是在编辑器里点一下 when 的其它输入框之后文件的样子：前提的对象在，文字是空的。
+            // 它不该让文件作废——"留空 = 总是执行"本来就是那一栏自己的说明。
+            File.WriteAllText(emptyWhen, """
+                {"format":"keymouse-flow","version":1,"steps":[
+                  {"type":"sleep","ms":1,"when":{"region":{"space":"client","x":0,"y":0,"width":10,"height":10},"else":"fail"}}]}
+                """);
+            FlowDocument relaxed = FlowDocument.Load(emptyWhen);
+            Harness.Equal("...still loads", 1, relaxed.Steps.Count);
+            Harness.Check("...with the half-filled precondition dropped", relaxed.Steps[0].When is null);
+            Harness.Equal("...so the step always runs", "sleep", relaxed.Steps[0].Type);
+        }
+        finally
+        {
+            if (File.Exists(emptyWhen)) File.Delete(emptyWhen);
+        }
+        Harness.Group("flow: the contract is the single source of truth");
 
         foreach (string type in FlowDocument.KnownTypes)
         {
-            Harness.Check($"'{type}' declares its fields", FlowStepSchema.For(type) != StepFields.None, type);
+            Harness.Check($"'{type}' has a contract entry", FlowSchema.TryGetStep(type, out _), type);
+        }
+        Harness.Check("...and the contract does not invent types",
+            FlowSchema.Steps.Keys.All(FlowDocument.KnownTypes.Contains), string.Join(", ", FlowSchema.Steps.Keys));
+
+        // 契约里出现的每一种字段，前端都必须有办法渲染；否则就是"格式里有、界面上没有"。
+        string[] renderable = ["const", "text", "multiline", "int", "bool", "enum", "point", "region", "target", "when", "steps", "vars", "stringList"];
+        foreach ((string type, FlowStepContract contract) in FlowSchema.Steps)
+        {
+            Harness.Check($"'{type}' declares at least one field", contract.Own.Count > 0, type);
+            foreach (FlowField field in contract.Own)
+            {
+                Harness.Check($"'{type}.{field.Name}' has a label", field.LabelZh.Length > 0, field.Name);
+                Harness.Check($"'{type}.{field.Name}' uses a kind the editor renders",
+                    renderable.Contains(field.Kind), field.Kind);
+            }
         }
 
-        // 这三个正是"界面里改不了参数"出过问题的类型：检查器问的就是这张表。
-        Harness.Check("click-text (find the text and click it) carries region, text, match, timeout and button",
-            Has("click-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Timeout | StepFields.Button));
-        Harness.Check("read-text carries region, text, match and into",
-            Has("read-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Into));
-        Harness.Check("wait-text carries region, text, match and timeout",
-            Has("wait-text", StepFields.Region | StepFields.Text | StepFields.Match | StepFields.Timeout));
-        Harness.Check("call carries the subflow field only", Has("call", StepFields.Call) && Has("call", StepFields.Note));
-        Harness.Check("sleep is just a duration (and a precondition)",
-            FlowStepSchema.For("sleep") == (StepFields.Ms | StepFields.When));
-        Harness.Check("an unknown type still gets target, precondition and note",
-            FlowStepSchema.For("something-new") == (StepFields.Target | StepFields.When | StepFields.Note));
+        Harness.Check("click-text needs target, region and text",
+            Required("click-text", "target") && Required("click-text", "region") && Required("click-text", "text"));
+        Harness.Check("...while its tuning knobs are optional",
+            !Required("click-text", "match") && !Required("click-text", "button") && !Required("click-text", "timeoutMs"));
+        Harness.Check("read-text needs into", Required("read-text", "into"));
+        Harness.Check("drag needs both ends and a window",
+            Required("drag", "from") && Required("drag", "to") && Required("drag", "target"));
+        Harness.Check("a key is either a combo or a single key", FlowSchema.Steps["key"].OneOf.Count == 2);
+        Harness.Check("a repeat needs a count and a body",
+            Required("repeat", "times") && Required("repeat", "steps"));
+        Harness.Check("a call needs a flow", Required("call", "flow"));
+        Harness.Check("...and exports are optional", !Required("call", "export"));
+        Harness.Check("the document itself needs format, version and steps",
+            FlowSchema.DocumentFields.Count(f => f.Required) == 3);
+        Harness.Check("...and everything a step may carry beyond its own fields is optional",
+            FlowSchema.CommonFields.All(f => !f.Required));
+        Harness.Check("nested shapes are declared where the format nests",
+            FlowSchema.ShapeFields("target").Count > 0 && FlowSchema.ShapeFields("region").Count == 5 &&
+            FlowSchema.ShapeFields("point").Count == 3 && FlowSchema.ShapeFields("when").Count > 0);
 
-        static bool Has(string type, StepFields fields) => (FlowStepSchema.For(type) & fields) == fields;
+        // 契约说必须的东西，加载器就得拒绝：`drag` 少了端点以前是跑到编译时才炸的。
+        string dragPath = Path.Combine(Path.GetTempPath(), $"keymouse-drag-required-{Environment.ProcessId}.json");
+        try
+        {
+            File.WriteAllText(dragPath,
+                """{"format":"keymouse-flow","version":1,"steps":[{"type":"drag","target":{"process":"p"}}]}""");
+            Harness.Throws<CommandFailure>("a drag without from/to is refused when the file loads",
+                () => FlowDocument.Load(dragPath));
+        }
+        finally
+        {
+            if (File.Exists(dragPath)) File.Delete(dragPath);
+        }
+
+        static bool Required(string type, string field) =>
+            FlowSchema.Steps[type].Own.Any(f => f.Name == field && f.Required);
         Harness.Group("flow: restoring a minimized window is opt-in");
 
         string restorePath = Path.Combine(Path.GetTempPath(), $"keymouse-restore-test-{Environment.ProcessId}.json");
