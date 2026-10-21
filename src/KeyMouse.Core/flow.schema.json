@@ -109,7 +109,7 @@
       "kind": "text",
       "required": false,
       "label": {
-        "zh": "备注（只给人看）",
+        "zh": "备注",
         "en": "note"
       },
       "help": {
@@ -171,7 +171,7 @@
           "kind": "text",
           "required": false,
           "label": {
-            "zh": "标题（只给人看）",
+            "zh": "标题",
             "en": "title"
           }
         }
