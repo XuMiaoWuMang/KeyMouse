@@ -147,6 +147,7 @@
                         <!-- 脊柱：一条 1px 的线，从第一颗珠穿到最后一颗；它是"顺序"本身，不是装饰。 -->
                         <Border Width="1" Margin="15,18,0,18" HorizontalAlignment="Left" VerticalAlignment="Stretch"
                                 Background="{ThemeResource KpRuleBrush}" />
+                        <!-- 说明：行内列宽 31、珠 11、连线 1，中心都在 15.5；这里宽 1 左边距 15 也在 15.5。三者同一条像素列。 -->
 
                         <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Rows, Mode=OneWay}" KeyDown="OnStepListKeyDown"
                                   ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"
@@ -180,7 +181,9 @@
                                           Background="{x:Bind RowBrush, Mode=OneWay}"
                                           Opacity="{x:Bind RowOpacity, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="30" />
+                                            <!-- 31 是奇数：珠子（11）与连线（1）都能居中在 15.5 这个整数半边上，
+                                                 和背景脊线的 1px 完全重合——不会再出现半像素错位。 -->
+                                            <ColumnDefinition Width="31" />
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
@@ -193,14 +196,14 @@
                                         <!-- 脊柱：珠的上下各一段连线。只有这一条线——子步骤不另起分支线。
                                              选中的行把这两段加粗成朱砂，结点之间的连接因此看得见。 -->
                                         <Grid Grid.Column="0">
-                                            <Border Width="2" Height="19" HorizontalAlignment="Center" VerticalAlignment="Top"
+                                            <Border Width="1" Height="19" HorizontalAlignment="Center" VerticalAlignment="Top"
                                                     Background="{x:Bind ConnectorBrush, Mode=OneWay}"
                                                     Visibility="{x:Bind ConnectorVisibility, Mode=OneWay}" />
-                                            <Border Width="2" Height="19" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                            <Border Width="1" Height="19" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                                     Background="{x:Bind ConnectorBrush, Mode=OneWay}"
                                                     Visibility="{x:Bind ConnectorVisibility, Mode=OneWay}" />
-                                            <Border Width="{x:Bind BeadSize, Mode=OneWay}" Height="{x:Bind BeadSize, Mode=OneWay}"
-                                                    CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            <Border Width="11" Height="11" CornerRadius="6" HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
                                                     Background="{x:Bind BeadBrush, Mode=OneWay}"
                                                     BorderBrush="{x:Bind BeadRingBrush, Mode=OneWay}" BorderThickness="2" />
                                         </Grid>

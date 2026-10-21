@@ -116,8 +116,12 @@ public sealed class StepVm : INotifyPropertyChanged
         ? (Brush)Application.Current.Resources["KpSignalBrush"]
         : (Brush)Application.Current.Resources["KpCardBrush"];
 
-    /// <summary>选中的珠大一号：一屏只有一颗，它是"当前在这儿"，不是装饰。</summary>
-    public double BeadSize => IsSelected ? 13 : 9;
+    /// <summary>
+    /// 珠的直径**恒定**。选中不靠变大表达——尺寸一跳，珠子就不再落在同一条线上，
+    /// 深色态看起来就是"歪的"（实测反馈）。选中只改颜色。
+    /// 11 是奇数：它和 1px 的连线能同时居中在同一个整数边界上。
+    /// </summary>
+    public const double BeadSize = 11;
 
     public Brush BeadRingBrush => IsSelected
         ? (Brush)Application.Current.Resources["KpCardBrush"]
