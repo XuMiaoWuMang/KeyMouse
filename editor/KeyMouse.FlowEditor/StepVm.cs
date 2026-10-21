@@ -464,7 +464,11 @@ public sealed class StepVm : INotifyPropertyChanged
         string after = root.ToJsonString();
         if (after == before) return;
 
+        // 反序列化会造一个**新对象**。把它接上之前，必须让文档里那条引用也换过去——
+        // 否则子步骤的编辑只活在界面上（实测：改了 2.1 的文字，跑起来还是旧文字）。
+        FlowStep previous = Step;
         Step = JsonSerializer.Deserialize<FlowStep>(after, FlowDocument.Json)!;
+        Owner.Rebind(previous, Step, this);
         Changed();
     }
 

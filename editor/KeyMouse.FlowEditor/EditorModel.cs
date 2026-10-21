@@ -159,6 +159,29 @@ public sealed class EditorModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, Everything);
     }
 
+    /// <summary>
+    /// 编辑一步之后，把文档里指向旧节点的那条引用换成新节点。
+    ///
+    /// <see cref="StepVm.Write"/> 是"按契约写回 JSON 再重建对象"，所以每一步编辑都会产生一个新的
+    /// FlowStep。顶层步骤的引用就在 VM 上（BuildDocument 直接用它），**但子步骤的引用挂在父分组的
+    /// Steps 列表里**——不换过去，子步骤怎么改都进不了文件（实测：改 2.1 的文字，跑起来仍是旧文字）。
+    /// </summary>
+    internal void Rebind(FlowStep oldNode, FlowStep newNode, StepVm vm)
+    {
+        _byNode.Remove(oldNode);
+        _byNode[newNode] = vm;   // 身份不变：同一个 VM，只换了底下那个节点
+
+        foreach (StepVm top in Steps)
+        {
+            if (ReferenceEquals(top.Step, oldNode)) return;   // 顶层：VM 自己就是权威引用
+            if (top.Step.Steps is not { } children) continue;
+            int index = children.IndexOf(oldNode);
+            if (index < 0) continue;
+            children[index] = newNode;
+            return;
+        }
+    }
+
     /// <summary>点一下父行：展开或收起它的子项。只有一个子项时不响应（它本来就是展开的）。</summary>
     public StepVm Toggle(StepVm head)
     {

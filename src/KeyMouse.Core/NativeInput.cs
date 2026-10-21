@@ -259,8 +259,12 @@ internal static class NativeInput
             // 多行文本会被压成一行（实测）。\t 同理，但它会改变焦点，不替用户决定。
             if (c == '\n')
             {
+                // 按下和抬起之间必须留一点时间：连发的 down/up 会被目标吞掉，
+                // 实测 Notepad（RichEdit）四个换行只收到两个，两段文字挤在一行。
                 Key(VkReturn, extended: false, up: false);
+                Thread.Sleep(15);
                 Key(VkReturn, extended: false, up: true);
+                Thread.Sleep(30);   // 抬起之后也要留时间：紧接着的字符会把这次换行挤掉
             }
             else
             {

@@ -34,6 +34,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         HorizontalSplitter.Target = LogRow;
         VerticalSplitter.Track(Root);
         HorizontalSplitter.Track(Root);
+        Root.SizeChanged += (_, _) => ClampPanes();
 
         Title = "KeyMouse 流程编辑器";
         ExtendsContentIntoTitleBar = true;
@@ -197,6 +198,33 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 点父行 = 展开 / 收起它的子项。用 Tapped 而不是 SelectionChanged：
     /// 键盘上下键换行也会改选中，那不该顺带开合。
     /// </summary>
+    /// <summary>
+    /// 两栏各自的可用区间。右栏再宽也不能把账本挤到看不见内容——拖到头就停住，
+    /// 而不是继续变宽、把左边的行裁掉（实测反馈）。
+    /// </summary>
+    private void ClampPanes()
+    {
+        const double LedgerMin = 420;    // 一行摘要 + 缩进还读得下去的最小宽度
+        const double LedgerMinAbsolute = 320;
+        const double InspectorMin = 380;
+
+        double card = Math.Max(LedgerMin + InspectorMin, Root.ActualWidth - 32);
+
+        // 右栏的天花板：留够账本；窗口很窄时退让到绝对下限，但绝不让它压没。
+        VerticalSplitter.MinTarget = InspectorMin;
+        VerticalSplitter.MaxTarget = Math.Max(InspectorMin, card - 8 - LedgerMin);
+
+        // 已经是像素宽度时顺手夹一次：窗口变小后旧的宽度可能已经过分。
+        if (InspectorColumn.Width.IsAbsolute && InspectorColumn.Width.Value > VerticalSplitter.MaxTarget)
+        {
+            InspectorColumn.Width = new GridLength(VerticalSplitter.MaxTarget);
+        }
+
+        HorizontalSplitter.MinTarget = 0;
+        HorizontalSplitter.MaxTarget = Math.Max(160, Root.ActualHeight * 0.55);
+        _ = LedgerMinAbsolute;
+    }
+
     /// <summary>
     /// 把账本列按自身尺寸裁死。WinUI 的 Grid 不裁剪子元素，列表里任何落在右缘的绘制
     /// （展开的滚动条、悬停底、拖影）都会漏到分隔线那条缝里——实测在缝上看到过一块米色。
