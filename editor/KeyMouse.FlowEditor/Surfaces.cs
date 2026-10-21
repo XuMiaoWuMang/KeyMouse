@@ -128,31 +128,20 @@ internal sealed partial class Surfaces
                             Style = (Style)Application.Current.Resources["PaneTitle"],
                         },
                         content,
+                        new TextBlock
+                        {
+                            Text = "可以连着加，点面板外面关闭",
+                            Style = (Style)Application.Current.Resources["FieldCaption"],
+                        },
                     },
                 },
                 MaxHeight = 470,
             },
         };
 
-        foreach (UIElement row in Flatten(content))
-        {
-            if (row is Button button) button.Click += (_, _) => flyout.Hide();
-        }
-
+        // 面板**不**在选中后关闭：一次要加好几步是常态，每加一步都得重新打开太碎。
+        // 关闭只留给"点面板外面"——那本来就是 Flyout 的内建行为。
         flyout.ShowAt(anchor);
-    }
-
-    /// <summary>把面板里的按钮都找出来（行是深一层放进分组的）。</summary>
-    private static IEnumerable<UIElement> Flatten(Panel panel)
-    {
-        foreach (UIElement child in panel.Children)
-        {
-            yield return child;
-            if (child is Panel nested)
-            {
-                foreach (UIElement inner in Flatten(nested)) yield return inner;
-            }
-        }
     }
 
     private UIElement Row(string type, Action<string> add)
