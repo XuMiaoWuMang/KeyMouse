@@ -162,9 +162,9 @@
                                     <MenuFlyoutItem Text="下移" Click="OnMoveDown" />
                                 </MenuFlyout>
                             </ListView.ContextFlyout>
-                            <ListView.KeyboardAccelerators>
-                                <KeyboardAccelerator Key="Delete" />
-                            </ListView.KeyboardAccelerators>
+                            <!-- 不要在这里挂 KeyboardAccelerator Key="Delete"：WinUI 会为它生成一个
+                                 系统提示气泡（中文系统显示为"删除"），鼠标悬停时莫名其妙地冒出来。
+                                 删除键已经由 OnStepListKeyDown 处理，不需要加速器。 -->
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />

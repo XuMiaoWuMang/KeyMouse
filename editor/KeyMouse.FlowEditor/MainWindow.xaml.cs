@@ -50,11 +50,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         _settings = EditorSettings.Load();
         _surfaces = new Surfaces(this);
-        StepList.KeyboardAccelerators[0].Invoked += (_, e) =>
-        {
-            DeleteSelected();
-            e.Handled = true;
-        };
+        // 删除键由 OnStepListKeyDown 处理。这里曾经挂着 ListView 的 KeyboardAccelerator，
+        // 但那会给列表生成一个"删除"提示气泡（WinUI 为加速器自动加 tooltip），已经去掉了。
         AppWindow.Closing += OnClosing;
 
         // 最小尺寸必须在**任何**缩放路径上都成立：PreferredMinimum* 只约束用户拖动，
