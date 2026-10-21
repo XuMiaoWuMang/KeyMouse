@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "km: run KeyMouse",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "km: build CLI (fast)",
+      "program": "${workspaceFolder}/src/KeyMouse.Cli/bin/Release/net10.0-windows/KeyMouse.exe",
+      "args": [
+        "${input:kmArgs}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    },
+    {
+      "name": "km: debug unit tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "km: test (no rebuild)",
+      "program": "${workspaceFolder}/tests/KeyMouse.Tests/bin/Release/net10.0-windows/KeyMouse.Tests.exe",
+      "args": [
+        "--only",
+        "${input:module}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

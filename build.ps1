@@ -16,13 +16,19 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $root 'dist'
 
-dotnet publish (Join-Path $root 'src\KeyMouse.Cli\KeyMouse.Cli.csproj') `
-    -c $Configuration `
-    -r $RuntimeIdentifier `
-    --self-contained:$($SelfContained.IsPresent.ToString().ToLowerInvariant()) `
-    -p:PublishSingleFile=true `
-    --nologo `
-    -o $out
+$args = @(
+    'publish', (Join-Path $root 'src\KeyMouse.Cli\KeyMouse.Cli.csproj'),
+    '-c', $Configuration,
+    '-r', $RuntimeIdentifier,
+    ('--self-contained:' + $SelfContained.IsPresent.ToString().ToLowerInvariant()),
+    '-p:PublishSingleFile=true',
+    '--nologo',
+    '-o', $out
+)
+# 与 .github/workflows/release.yml 对齐：自包含产物压缩，否则本地包会比发布包大一圈。
+if ($SelfContained) { $args += '-p:EnableCompressionInSingleFile=true' }
+
+dotnet @args
 
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE" }
 

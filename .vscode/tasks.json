@@ -1,0 +1,161 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "km: build CLI (fast)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "b"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msbuild"
+    },
+    {
+      "label": "km: build all (+ editor)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "ba"
+      ],
+      "problemMatcher": "$msbuild"
+    },
+    {
+      "label": "km: test (all)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "t"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "km: test (pick module)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "t",
+        "${input:module}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "km: test (no rebuild)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "t",
+        "-n"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "km: watch (build + test on save)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "w"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "km: smoke (needs unlocked desktop)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "s"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "km: verify (4 gates)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "v"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "km: dist (single file)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "d"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "km: docs links",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/km.ps1",
+        "docs"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "module",
+      "type": "pickString",
+      "description": "测试模块",
+      "options": [
+        "parsing",
+        "windows",
+        "probe",
+        "locator",
+        "region",
+        "flow",
+        "loops",
+        "calls",
+        "runner",
+        "protocol"
+      ]
+    },
+    {
+      "id": "kmArgs",
+      "type": "promptString",
+      "description": "传给 KeyMouse 的参数",
+      "default": "--help"
+    }
+  ]
+}

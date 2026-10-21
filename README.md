@@ -91,6 +91,9 @@ cd D:\Data\KeyMouse
 ## 开发
 
 ```powershell
+.\km b                                                                      # 日常：只编译 CLI（~1.5s，不碰编辑器）
+.\km t                                                                      # 日常：全部单元测试（~1s）
+.\km                                                                        # 不带参数：列出全部短命令
 dotnet build KeyMouse.sln -c Release                                          # 构建
 dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj    # 单元测试，不需要桌面
 pwsh tests\check-docs.ps1                                                     # 文档链接检查

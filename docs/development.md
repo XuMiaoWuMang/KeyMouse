@@ -2,6 +2,29 @@
 
 命令与选项见 [reference.md](reference.md)，设计取舍见 [design.md](design.md)。
 
+## 日常：一条命令（km）
+
+`km.ps1` 是日常入口：**默认只做该做的那件事** —— 编辑器不参与就不编译它。不带参数运行 ` .\km ` 会打印下面这张表。
+
+| 命令 | 做什么 | 大概耗时 |
+| --- | --- | --- |
+| `.\km b` | 只编译 CLI（含 Core / Runner） | ~1.5s |
+| `.\km t` | 全部单元测试（跑已编译的 exe，不经 MSBuild） | ~1s |
+| `.\km t parsing` | 只跑改到的模块，逗号分隔可写多个 | ~1s |
+| `.\km t -n flow` | 不重新编译，直接跑 | ~0.2s |
+| `.\km w` | 监视 `src/` 与 `tests/`，改了就跟一次「编译 + 单元测试」 | 每轮 ~3s |
+| `.\km r key type hi` | 运行刚编译出来的 KeyMouse，参数原样转发 | ~0.1s |
+| `.\km d` / `.\km d -s` | 打包单文件到 `dist\KeyMouse.exe`（`-s` = 自包含 + 压缩） | ~5s / ~30s |
+| `.\km ba` / `.\km e` | 整个解决方案 / 只有编辑器 | ~16s / ~13s |
+| `.\km s` / `.\km v` / `.\km docs` | 桌面冒烟 / 四道关卡 / 文档链接 | — |
+| `.\km clean` | 清掉 bin / obj / dist | — |
+
+**为什么默认不 build 整个解决方案**：WinUI 编辑器的 XAML 编译占掉 13s，而只改 Core 时 CLI 重建是 1.7s。
+整个解决方案只在 CI 与 `verify.ps1` 里跑。
+
+VS Code 里对应的任务在 `.vscode/tasks.json`（`Ctrl+Shift+B` = 只编译 CLI，`km: watch` 是后台监视），
+`.vscode/launch.json` 提供「运行 KeyMouse」与「调试单元测试」两个启动配置。
+
 ## 四道关卡
 
 | 关卡 | 命令 | 需要桌面 | CI 会跑 |
