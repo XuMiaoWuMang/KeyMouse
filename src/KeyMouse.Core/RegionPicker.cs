@@ -343,7 +343,12 @@ internal static class RegionPicker
             g.DrawString(text, _labelFont, foreground, x + 6, y + 3);
         }
 
-        /// <summary>点模式下的十字线：一条竖线一条横线，交点是即将取到的那个像素。</summary>
+        /// <summary>
+        /// 点模式下的十字线：一条竖线一条横线，交点是即将取到的那个像素。
+        ///
+        /// 标签写的是**会被存下来的那组数字**（目标窗口内的坐标），不是屏幕坐标。
+        /// 以前这里报屏幕坐标，而流程文件里存的是窗口内坐标——同一个点两套数字，看起来就像"取错了"（实测反馈）。
+        /// </summary>
         private void DrawCrosshair(Graphics g)
         {
             Point screen = PointToScreen(_current);
@@ -355,8 +360,39 @@ internal static class RegionPicker
             using var dot = new SolidBrush(Color.FromArgb(0, 120, 215));
             g.FillRectangle(dot, _current.X - 1, _current.Y - 1, 3, 3);
 
-            string where = _hover is null ? "" : $"  {_hover.Title}";
-            DrawLabel(g, new Rectangle(_current.X, _current.Y, 1, 1), $"{screen.X}, {screen.Y}{where}");
+            string label;
+            if (_hover is null)
+            {
+                label = $"屏幕 {screen.X}, {screen.Y}　（这个点下面没有窗口）";
+            }
+            else if (InWindow(_hover, _current, client: true) is { } client)
+            {
+                label = $"窗口内 {client.X}, {client.Y}　·　{_hover.Title}";
+            }
+            else if (InWindow(_hover, _current, client: false) is { } window)
+            {
+                label = $"窗口内 {window.X}, {window.Y}（含边框）　·　{_hover.Title}";
+            }
+            else
+            {
+                label = $"屏幕 {screen.X}, {screen.Y}　（不在「{_hover.Title}」里）";
+            }
+
+            DrawLabel(g, new Rectangle(_current.X, _current.Y, 1, 1), label);
+        }
+
+        /// <summary>把本地坐标换算成该窗口的客户区/窗口坐标；不在里面就是 null。</summary>
+        private Point? InWindow(WindowInfo window, Point local, bool client)
+        {
+            Rectangle area = client ? ClientRectLocal(window) : WindowRectLocal(window);
+            if (!area.Contains(local)) return null;
+            return new Point(local.X - area.X, local.Y - area.Y);
+        }
+
+        private Rectangle WindowRectLocal(WindowInfo window)
+        {
+            var rect = window.Rect;
+            return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
 
         private void DrawHint(Graphics g)

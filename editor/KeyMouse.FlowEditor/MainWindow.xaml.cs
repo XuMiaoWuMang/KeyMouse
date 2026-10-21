@@ -739,7 +739,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             Show(isRegion ? "取区域" : "取点",
                 isRegion
                     ? $"记下 {picked.Width}x{picked.Height} @ {picked.X},{picked.Y}，窗口 {picked.Process ?? picked.Class ?? "（无）"}"
-                    : $"记下点 {picked.X},{picked.Y}，窗口 {picked.Process ?? picked.Class ?? "（无）"}",
+                    : $"记下点 {picked.X},{picked.Y}（{(picked.Space == "screen" ? "屏幕" : "窗口内")}坐标），窗口 {picked.Process ?? picked.Class ?? "（无）"}",
                 InfoBarSeverity.Success);
         }
         catch (Exception ex)
