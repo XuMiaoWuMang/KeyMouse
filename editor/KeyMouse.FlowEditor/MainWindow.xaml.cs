@@ -282,9 +282,6 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         };
         Log($"# {mark}  {title}");
         if (message is { Length: > 0 }) Log($"         {message}");
-        _logShown = true;
-        LogRow.Height = new GridLength(Math.Min(200, Root.ActualHeight * 0.3));
-        NotifyOutput();
     }
 
 
@@ -292,11 +289,20 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         LogBox.Text += line + Environment.NewLine;
         LogBox.SelectionStart = LogBox.Text.Length;
-        if (_logShown) return;
+        OpenLog();
+    }
 
-        // 第一行输出到了才让输出面板出现并让出高度：空面板不占地方。
+    /// <summary>
+    /// 只在面板**从无到有**的时候给一个默认高度。
+    ///
+    /// 以前这里只要有输出就重置一次高度，于是把输出拉到最大之后，下一条日志一到面板就缩回默认大小
+    /// ——看起来像"到顶就回档"（实测反馈）。用户调过的尺寸不该被日志行数决定。
+    /// </summary>
+    private void OpenLog()
+    {
+        if (_logShown) return;
         _logShown = true;
-        LogRow.Height = new GridLength(Math.Min(200, Root.ActualHeight * 0.3));   // 有输出才占地方，且不超过窗口三成
+        LogRow.Height = new GridLength(Math.Clamp(Root.ActualHeight * 0.3, 140, 260));
         NotifyOutput();
     }
 
@@ -459,12 +465,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     public Visibility OutputChipVisibility => Ui.Show(!_logShown);
 
     /// <summary>把输出面板叫回来（默认高度：窗口高度的三成，夹在 140–260 之间）。</summary>
-    private void OnShowOutput(object sender, RoutedEventArgs e)
-    {
-        _logShown = true;
-        LogRow.Height = new GridLength(Math.Clamp(Root.ActualHeight * 0.3, 140, 260));
-        NotifyOutput();
-    }
+    private void OnShowOutput(object sender, RoutedEventArgs e) => OpenLog();
 
     public Visibility LogSplitterVisibility => Ui.Show(_logShown);
 
@@ -643,11 +644,17 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         FillPalette();
     }
 
-    /// <summary>日志区高度上限：200px 与窗口高度三成取小。</summary>
+    /// <summary>
+    /// 窗口变小以后，日志区如果还占着原来的高度就会把编辑区挤没——这时只**往下压到上限**，
+    /// 不去"恢复默认高度"：用户自己拉出来的尺寸，只有在真的放不下时才动它。
+    /// </summary>
     private void CapLogHeight(double windowHeight)
     {
         if (!_logShown || windowHeight <= 0) return;
-        LogRow.Height = new GridLength(Math.Min(200, windowHeight * 0.3));
+
+        double cap = Math.Clamp(windowHeight * 0.55, 160, 640);
+        if (!LogRow.Height.IsAbsolute || LogRow.Height.Value <= cap) return;
+        LogRow.Height = new GridLength(cap);
     }
 
     /// <summary>夹紧到最小尺寸。两位对手的最低标准：任何尺寸下不出现半个字、动作一屏可达。</summary>
