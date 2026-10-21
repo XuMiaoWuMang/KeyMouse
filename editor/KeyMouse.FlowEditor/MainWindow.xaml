@@ -279,8 +279,7 @@
                     <local:Splitter Grid.Column="1" x:Name="VerticalSplitter" Target="{x:Bind InspectorColumn}" Edge="Left"
                                     Direction="Horizontal" Invert="True" MinTarget="320" MaxTarget="820"
                                     Width="8" Height="Auto" VerticalAlignment="Stretch"
-                                    MinWidth="8" MinHeight="0" BorderThickness="1,0,0,0"
-                                    BorderBrush="{ThemeResource KpRuleBrush}"
+                                    MinWidth="8" MinHeight="0"
                                     Visibility="{x:Bind HasSelection, Mode=OneWay}" />
 
                     <!-- 规格表：左栏是字段名，右栏是值。 -->
@@ -390,11 +389,13 @@
                                 Visibility="Collapsed" Padding="10,4" />
                     </Grid>
 
-                    <TextBox x:Name="LogBox" Grid.Row="2" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                    <!-- 日志换行显示，不横向滚动：一行太长时横向拉来拉去看日志是最糟的阅读方式。 -->
+                    <TextBox x:Name="LogBox" Grid.Row="2" IsReadOnly="True" AcceptsReturn="True"
+                             TextWrapping="Wrap" IsTextPredictionEnabled="False"
                              FontFamily="{StaticResource KpMonoFont}" FontSize="11" Padding="8"
                              Background="{ThemeResource KpFieldBrush}" BorderBrush="{ThemeResource KpRuleBrush}"
                              BorderThickness="1" CornerRadius="4"
-                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Visible" />
                 </Grid>
             </Border>

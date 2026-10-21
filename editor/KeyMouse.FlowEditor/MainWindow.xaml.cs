@@ -32,6 +32,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         FillPalette();
         VerticalSplitter.Target = InspectorColumn;
         HorizontalSplitter.Target = LogRow;
+        VerticalSplitter.Track(Root);
+        HorizontalSplitter.Track(Root);
 
         Title = "KeyMouse 流程编辑器";
         ExtendsContentIntoTitleBar = true;
