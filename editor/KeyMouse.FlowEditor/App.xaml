@@ -274,6 +274,69 @@
                 </Setter>
             </Style>
 
+            <!--
+              开关：轨道 + 一颗珠子。系统 ToggleSwitch 的开态走框架自己的强调色（蓝），
+              应用级改不动，所以自绘：未选是墨三档的圈，选中是朱砂轨道 + 反色珠。
+            -->
+            <Style x:Key="KpSwitch" TargetType="ToggleButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="FontFamily" Value="{StaticResource KpTextFont}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent">
+                                <Border x:Name="Track" Width="34" Height="18" CornerRadius="9"
+                                        Background="{ThemeResource KpFieldBrush}"
+                                        BorderBrush="{ThemeResource KpInk3Brush}" BorderThickness="1">
+                                    <Ellipse x:Name="Knob" Width="12" Height="12" Margin="2,0,0,0"
+                                             HorizontalAlignment="Left" VerticalAlignment="Center"
+                                             Fill="{ThemeResource KpInk3Brush}" />
+                                </Border>
+                                <ContentPresenter VerticalAlignment="Center" />
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Unchecked" />
+                                        <VisualState x:Name="Indeterminate" />
+                                        <VisualState x:Name="Checked">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Knob"
+                                                                               Storyboard.TargetProperty="HorizontalAlignment">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="Right" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Knob"
+                                                                               Storyboard.TargetProperty="Margin">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="0,0,2,0" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Knob"
+                                                                               Storyboard.TargetProperty="Fill">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource KpOnSignalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Track"
+                                                                               Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource KpSignalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Track"
+                                                                               Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource KpSignalBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver" />
+                                        <VisualState x:Name="Pressed" />
+                                        <VisualState x:Name="Disabled" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </StackPanel>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- 安静按钮：纸上的一个框。用于对话框的取消、次要动作。 -->
             <Style x:Key="KpQuietButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />

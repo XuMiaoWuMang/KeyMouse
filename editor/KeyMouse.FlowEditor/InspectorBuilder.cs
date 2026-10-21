@@ -1,6 +1,7 @@
 using KeyMouse;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 
 namespace KeyMouse.FlowEditor;
@@ -60,15 +61,21 @@ internal sealed class InspectorBuilder
         if (!contract.All.Any(f => f.Name == "when")) return;
 
         var panel = new StackPanel { Spacing = 12 };
-        var toggle = new ToggleSwitch
+
+        // 自绘开关：系统的 ToggleSwitch 开态是框架强调色，压不动，而这个界面上不借它。
+        var toggleLabel = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+        var toggle = new ToggleButton
         {
-            OnContent = "满足才执行",
-            OffContent = "每次都执行",
-            IsOn = _step.GetText("when.text") is { Length: > 0 },
+            Style = (Style)Application.Current.Resources["KpSwitch"],
+            IsChecked = _step.GetText("when.text") is { Length: > 0 },
+            Content = toggleLabel,
         };
+        void SyncToggleText() =>
+            toggleLabel.Text = toggle.IsChecked == true ? "满足才执行" : "每次都执行";
+        SyncToggleText();
         panel.Children.Add(toggle);
 
-        var body = new StackPanel { Spacing = 12, Visibility = Ui.Show(toggle.IsOn) };
+        var body = new StackPanel { Spacing = 12, Visibility = Ui.Show(toggle.IsChecked == true) };
         panel.Children.Add(body);
 
         var text = new TextBox { PlaceholderText = "读到这段文字才执行，例如：登录成功" };
@@ -77,17 +84,55 @@ internal sealed class InspectorBuilder
         body.Children.Add(Label("读到什么才算满足", text,
             "在开始这一步之前先读一次；读到就执行，读不到就按下面的设置跳过或失败。", required: true));
 
-        body.Children.Add(new Expander
-        {
-            Header = "前提要读的窗口与区域（默认就是这一步的）",
-            IsExpanded = false,
-            Content = Advanced(),
-        });
+        // 进阶分区：标题按钮 + 可收起的块。不用 Expander——它会再画一张卡片，而这里只有纸和线。
+        var advancedBody = new StackPanel { Spacing = 12, Visibility = Visibility.Collapsed };
+        advancedBody.Children.Add(Advanced());
 
-        toggle.Toggled += (_, _) =>
+        var chevron = new FontIcon
         {
-            body.Visibility = Ui.Show(toggle.IsOn);
-            if (toggle.IsOn) return;
+            Glyph = "\uE70D",
+            FontSize = 10,
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = (Brush)Application.Current.Resources["KpInk3Brush"],
+        };
+        var advancedHead = new Button
+        {
+            Style = (Style)Application.Current.Resources["ToolButton"],
+            Padding = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+        };
+        var headGrid = new Grid { ColumnSpacing = 8 };
+        headGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        headGrid.Children.Add(new TextBlock
+        {
+            Text = "前提要读的窗口与区域（默认就是这一步的）",
+            Style = (Style)Application.Current.Resources["FieldLabel"],
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        Grid.SetColumn(chevron, 1);
+        headGrid.Children.Add(chevron);
+        advancedHead.Content = headGrid;
+        advancedHead.Click += (_, _) =>
+        {
+            bool open = advancedBody.Visibility != Visibility.Visible;
+            advancedBody.Visibility = Ui.Show(open);
+            chevron.Glyph = open ? "\uE70E" : "\uE70D";
+        };
+
+        body.Children.Add(advancedHead);
+        body.Children.Add(advancedBody);
+
+        toggle.Checked += (_, _) =>
+        {
+            SyncToggleText();
+            body.Visibility = Visibility.Visible;
+        };
+        toggle.Unchecked += (_, _) =>
+        {
+            SyncToggleText();
+            body.Visibility = Visibility.Collapsed;
             _step.SetText("when.text", null);   // 关掉 = 没有前提，不留半成品
             text.Text = "";
         };
