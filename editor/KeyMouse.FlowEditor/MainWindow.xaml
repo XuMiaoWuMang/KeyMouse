@@ -175,72 +175,78 @@
                             </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="local:StepVm">
-                                    <Grid Height="38" ColumnSpacing="8" Padding="{x:Bind RowPadding, Mode=OneWay}"
+                                    <Grid Height="38" ColumnSpacing="8" Padding="0,0,14,0"
                                           Background="{x:Bind RowBrush, Mode=OneWay}"
                                           Opacity="{x:Bind RowOpacity, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="30" />
                                             <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
                                         <!-- 正在执行：行首 2px 朱砂细条。一屏只有一条，它的位置就是"现在到哪儿了"。 -->
                                         <Border Width="2" HorizontalAlignment="Left" VerticalAlignment="Stretch"
-                                                Margin="-22,0,0,0" Background="{ThemeResource KpSignalBrush}"
+                                                Background="{ThemeResource KpSignalBrush}"
                                                 Visibility="{x:Bind ActivityVisibility, Mode=OneWay}" />
 
-                                        <!-- 分支脊柱：子步骤落在自己那条线上，珠子照样把线咬断。 -->
-                                        <Border Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                                                Background="{ThemeResource KpRuleBrush}"
-                                                Visibility="{x:Bind BranchVisibility, Mode=OneWay}" />
-                                        <!-- 肘：组内第一行从主脊柱连到分支，只有第一行需要。 -->
-                                        <Border Width="22" Height="1" Margin="-7,0,0,0" HorizontalAlignment="Left"
-                                                VerticalAlignment="Top" Background="{ThemeResource KpRuleBrush}"
-                                                Visibility="{x:Bind ElbowVisibility, Mode=OneWay}" />
-                                        <Border Width="{x:Bind BeadSize, Mode=OneWay}" Height="{x:Bind BeadSize, Mode=OneWay}"
-                                                CornerRadius="6" HorizontalAlignment="Center"
-                                                VerticalAlignment="Center" Background="{x:Bind BeadBrush, Mode=OneWay}"
-                                                BorderBrush="{x:Bind BeadRingBrush, Mode=OneWay}" BorderThickness="2" />
+                                        <!-- 脊柱：珠的上下各一段连线。只有这一条线——子步骤不另起分支线。
+                                             选中的行把这两段加粗成朱砂，结点之间的连接因此看得见。 -->
+                                        <Grid Grid.Column="0">
+                                            <Border Width="2" Height="19" HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                    Background="{x:Bind ConnectorBrush, Mode=OneWay}"
+                                                    Visibility="{x:Bind ConnectorVisibility, Mode=OneWay}" />
+                                            <Border Width="2" Height="19" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                    Background="{x:Bind ConnectorBrush, Mode=OneWay}"
+                                                    Visibility="{x:Bind ConnectorVisibility, Mode=OneWay}" />
+                                            <Border Width="{x:Bind BeadSize, Mode=OneWay}" Height="{x:Bind BeadSize, Mode=OneWay}"
+                                                    CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Background="{x:Bind BeadBrush, Mode=OneWay}"
+                                                    BorderBrush="{x:Bind BeadRingBrush, Mode=OneWay}" BorderThickness="2" />
+                                        </Grid>
                                         <TextBlock Grid.Column="1" Text="{x:Bind Number, Mode=OneWay}"
                                                    Style="{StaticResource LedgerNumber}"
                                                    Foreground="{x:Bind NumberBrush, Mode=OneWay}" />
-                                        <Border Grid.Column="2" Width="24" Height="24" CornerRadius="4"
-                                                Background="{x:Bind BadgeBrush, Mode=OneWay}">
-                                            <FontIcon Glyph="{x:Bind Glyph}" FontSize="11"
-                                                      Foreground="{x:Bind BadgeInk, Mode=OneWay}" />
-                                        </Border>
-                                        <StackPanel Grid.Column="3" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind TypeName}" Style="{StaticResource SectionHeader}"
-                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{x:Bind Summary, Mode=OneWay}"
-                                                       FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                                       Foreground="{ThemeResource KpInk3Brush}" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8"
-                                                    VerticalAlignment="Center" Margin="0,0,8,0">
-                                            <!-- 子流程预览：这一行来自哪个文件。 -->
-                                            <TextBlock Text="{x:Bind PreviewTag, Mode=OneWay}" VerticalAlignment="Center"
-                                                       Visibility="{x:Bind PreviewTagVisibility, Mode=OneWay}"
-                                                       FontFamily="{StaticResource KpMonoFont}" FontSize="10"
-                                                       Foreground="{ThemeResource KpInk3Brush}" />
-                                            <!-- 分组行说它带了几步；跑过之后这里换成运行结果。 -->
-                                            <TextBlock Text="{x:Bind ChildCount, Mode=OneWay}"
-                                                       Visibility="{x:Bind ChildCountVisibility, Mode=OneWay}"
-                                                       VerticalAlignment="Center" FontFamily="{StaticResource KpMonoFont}"
-                                                       FontSize="11" Foreground="{ThemeResource KpInk3Brush}" />
-                                            <StackPanel Orientation="Horizontal" Spacing="6"
-                                                        Visibility="{x:Bind RunVisibility, Mode=OneWay}">
-                                                <FontIcon Glyph="{x:Bind RunGlyph, Mode=OneWay}" FontSize="11" />
-                                                <TextBlock Text="{x:Bind RunDetail, Mode=OneWay}" VerticalAlignment="Center"
-                                                           FontFamily="{StaticResource KpMonoFont}" FontSize="11"
+
+                                        <!-- 内容：子步骤只缩进这里，珠与编号始终落在同一条竖线上。 -->
+                                        <Grid Grid.Column="2" ColumnSpacing="10" Margin="{x:Bind IndentMargin, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="24" Height="24" CornerRadius="4"
+                                                    Background="{x:Bind BadgeBrush, Mode=OneWay}">
+                                                <FontIcon Glyph="{x:Bind Glyph}" FontSize="11"
+                                                          Foreground="{x:Bind BadgeInk, Mode=OneWay}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{x:Bind TypeName}" Style="{StaticResource SectionHeader}"
+                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{x:Bind Summary, Mode=OneWay}"
+                                                           FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                                            Foreground="{ThemeResource KpInk3Brush}" />
                                             </StackPanel>
-                                        </StackPanel>
-
-                                        <Border Grid.Column="2" Grid.ColumnSpan="3" VerticalAlignment="Bottom" Height="1"
-                                                Background="{ThemeResource KpRuleBrush}" />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <TextBlock Text="{x:Bind PreviewTag, Mode=OneWay}" VerticalAlignment="Center"
+                                                           Visibility="{x:Bind PreviewTagVisibility, Mode=OneWay}"
+                                                           FontFamily="{StaticResource KpMonoFont}" FontSize="10"
+                                                           Foreground="{ThemeResource KpInk3Brush}" />
+                                                <TextBlock Text="{x:Bind ChildCount, Mode=OneWay}"
+                                                           Visibility="{x:Bind ChildCountVisibility, Mode=OneWay}"
+                                                           VerticalAlignment="Center" FontFamily="{StaticResource KpMonoFont}"
+                                                           FontSize="11" Foreground="{ThemeResource KpInk3Brush}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                                            Visibility="{x:Bind RunVisibility, Mode=OneWay}">
+                                                    <FontIcon Glyph="{x:Bind RunGlyph, Mode=OneWay}" FontSize="11" />
+                                                    <TextBlock Text="{x:Bind RunDetail, Mode=OneWay}" VerticalAlignment="Center"
+                                                               FontFamily="{StaticResource KpMonoFont}" FontSize="11"
+                                                               Foreground="{ThemeResource KpInk3Brush}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Border Grid.ColumnSpan="3" VerticalAlignment="Bottom" Height="1"
+                                                    Background="{ThemeResource KpRuleBrush}" />
+                                        </Grid>
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -254,9 +260,12 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- 1px 常显，正好落在列边界：行底的色带与它对齐。8px 热区压在这条线两侧。 -->
                     <local:Splitter Grid.Column="1" x:Name="VerticalSplitter" Target="{x:Bind InspectorColumn}" Edge="Left"
                                     Direction="Horizontal" Invert="True" MinTarget="320" MaxTarget="820"
-                                    MinWidth="8" MinHeight="0" Visibility="{x:Bind HasSelection, Mode=OneWay}" />
+                                    MinWidth="8" MinHeight="0" BorderThickness="1,0,0,0"
+                                    BorderBrush="{ThemeResource KpRuleBrush}"
+                                    Visibility="{x:Bind HasSelection, Mode=OneWay}" />
 
                     <!-- 规格表：左栏是字段名，右栏是值。 -->
                     <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Visible" VerticalScrollMode="Auto">

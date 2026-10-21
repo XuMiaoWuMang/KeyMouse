@@ -44,7 +44,7 @@ internal sealed class InspectorBuilder
     private void AddSection(IReadOnlyList<FlowField> fields, bool markRequired)
     {
         if (fields.Count == 0) return;
-        var panel = new StackPanel { Spacing = 16 };   // 分区之间
+        var panel = new StackPanel { Spacing = 12 };   // 字段之间（分区之间由 InspectorHost 的 16 决定）
         foreach (FlowField field in fields)
         {
             panel.Children.Add(Field(field, field.Name, markRequired && field.Required));
@@ -62,20 +62,19 @@ internal sealed class InspectorBuilder
 
         var panel = new StackPanel { Spacing = 12 };
 
-        // 自绘开关：系统的 ToggleSwitch 开态是框架强调色，压不动，而这个界面上不借它。
-        var toggleLabel = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
-        var toggle = new ToggleButton
-        {
-            Style = (Style)Application.Current.Resources["KpSwitch"],
-            IsChecked = _step.GetText("when.text") is { Length: > 0 },
-            Content = toggleLabel,
-        };
-        void SyncToggleText() =>
-            toggleLabel.Text = toggle.IsChecked == true ? "满足才执行" : "每次都执行";
-        SyncToggleText();
-        panel.Children.Add(toggle);
-
-        var body = new StackPanel { Spacing = 12, Visibility = Ui.Show(toggle.IsChecked == true) };
+        // 自绘开关（见 InspectorFields.Switch）：点下去同一帧换色，不经过任何状态机。
+        bool whenOn = _step.GetText("when.text") is { Length: > 0 };
+        var body = new StackPanel { Spacing = 12, Visibility = Ui.Show(whenOn) };
+        panel.Children.Add(InspectorFields.Switch(
+            whenOn,
+            on =>
+            {
+                body.Visibility = Ui.Show(on);
+                if (on) return;
+                _step.SetText("when.text", null);   // 关掉 = 没有前提，不留半成品
+                if (body.Children.Count > 1 && body.Children[0] is TextBox empty) empty.Text = "";
+            },
+            on => on ? "满足才执行" : "每次都执行"));
         panel.Children.Add(body);
 
         var text = new TextBox { PlaceholderText = "读到这段文字才执行，例如：登录成功" };
@@ -124,18 +123,7 @@ internal sealed class InspectorBuilder
         body.Children.Add(advancedHead);
         body.Children.Add(advancedBody);
 
-        toggle.Checked += (_, _) =>
-        {
-            SyncToggleText();
-            body.Visibility = Visibility.Visible;
-        };
-        toggle.Unchecked += (_, _) =>
-        {
-            SyncToggleText();
-            body.Visibility = Visibility.Collapsed;
-            _step.SetText("when.text", null);   // 关掉 = 没有前提，不留半成品
-            text.Text = "";
-        };
+
 
         _host.Children.Add(Section("只在满足条件时执行", required: false, panel));
     }
@@ -273,11 +261,30 @@ internal sealed class InspectorBuilder
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(108) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        var gutter = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 4, 0, 0) };
+        // 标签、ⓘ、「必填」全部在**同一行**：分成两行时，带 ⓘ 的字段会把控件往下推，
+        // 于是同一列字段的输入框参差不齐——而对齐规律是这张表单唯一的排版语言。
+        var gutter = new Grid
+        {
+            Width = 108,
+            ColumnSpacing = 4,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 7, 0, 0),   // 与输入框首行文字齐平
+        };
+        gutter.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        gutter.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        gutter.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var marks = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, HorizontalAlignment = HorizontalAlignment.Right };
+        // 标签用 * 列：名字长的时候在栏内折行，而不是被裁掉半截。
+        gutter.Children.Add(new TextBlock
+        {
+            Text = label,
+            Style = (Style)Application.Current.Resources["FieldLabel"],
+            TextAlignment = TextAlignment.Right,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
 
-        var head = new Grid { ColumnSpacing = 4 };
         if (help is { Length: > 0 })
         {
             var info = new FontIcon
@@ -288,35 +295,28 @@ internal sealed class InspectorBuilder
                 Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
             };
             ToolTipService.SetToolTip(info, help);
-            marks.Children.Add(info);
+            Grid.SetColumn(info, 1);
+            gutter.Children.Add(info);
         }
 
         if (required)
         {
-            marks.Children.Add(new TextBlock
+            var mark = new TextBlock
             {
                 Text = "必填",
                 Style = (Style)Application.Current.Resources["RequiredMark"],
                 VerticalAlignment = VerticalAlignment.Center,
-            });
+            };
+            Grid.SetColumn(mark, 2);
+            gutter.Children.Add(mark);
         }
-
-        head.Children.Add(new TextBlock
-        {
-            Text = label,
-            Style = (Style)Application.Current.Resources["FieldLabel"],
-            TextAlignment = TextAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-        });
-
-        gutter.Children.Add(head);
-        if (marks.Children.Count > 0) gutter.Children.Add(marks);
 
         row.Children.Add(gutter);
         Grid.SetColumn(control as FrameworkElement, 1);
         row.Children.Add(control);
 
-        var panel = new StackPanel { Spacing = 12 };
+        // 字段块本身只留 4：错误紧贴控件。字段之间由所在分区的 12 决定——只有一个来源。
+        var panel = new StackPanel { Spacing = 4 };
         panel.Children.Add(row);
         return panel;
     }

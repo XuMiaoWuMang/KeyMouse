@@ -49,7 +49,7 @@ public sealed class StepVm : INotifyPropertyChanged
     private static readonly string[] RowProperties =
     [
         nameof(Number), nameof(Summary), nameof(RunGlyph), nameof(RunVisibility), nameof(RunDetail),
-        nameof(RowPadding), nameof(BranchVisibility), nameof(ElbowVisibility), nameof(ChildCount), nameof(ChildCountVisibility),
+        nameof(IndentMargin), nameof(ConnectorBrush), nameof(ConnectorVisibility), nameof(ChildCount), nameof(ChildCountVisibility),
         nameof(ShotVisibility), nameof(ShotImage), nameof(BadgeBrush), nameof(BadgeInk),
         nameof(BeadBrush), nameof(BeadRingBrush), nameof(RowBrush), nameof(BeadSize),
         nameof(ActivityVisibility), nameof(NumberBrush),
@@ -276,13 +276,19 @@ public sealed class StepVm : INotifyPropertyChanged
 
     public bool IsChild => Depth > 0;
 
-    /// <summary>子步骤整体右移，让"它属于上面那个组"不用解释。</summary>
-    public Thickness RowPadding => new(Depth * 22, 0, 14, 0);
+    /// <summary>
+    /// 子步骤只缩进**内容**，不缩进珠与编号：整份流程共用一条脊柱，
+    /// 珠子永远落在那条线上——分支线是衍生出来的第二根线，不该有。
+    /// </summary>
+    public Thickness IndentMargin => new(Depth * 22, 0, 0, 0);
 
-    public Visibility BranchVisibility => Ui.Show(IsChild);
+    /// <summary>选中的那一行，把珠上下两段连线加粗成朱砂：结点之间的连接因此看得见。</summary>
+    public Brush ConnectorBrush => (Brush)Application.Current.Resources["KpSignalBrush"];
 
-    /// <summary>组内第一行画一段横线，把分支接回主脊柱——只有第一行需要这个"肘"。</summary>
-    public Visibility ElbowVisibility => Ui.Show(IsChild && FirstInGroup);
+    public Visibility ConnectorVisibility => Ui.Show(IsSelected);
+
+    /// <summary>组内第一行：内容缩进的第一行，界面不必再画"肘"（脊柱只有一条）。</summary>
+    internal bool IsFirstInGroup => IsChild && FirstInGroup;
 
     /// <summary>
     /// 分组：只有 repeat / foreach 带子步骤（call 引用另一个文件，它的步骤以只读预览出现）。

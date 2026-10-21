@@ -2,6 +2,7 @@ using KeyMouse;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 
 namespace KeyMouse.FlowEditor;
 
@@ -26,14 +27,16 @@ internal sealed partial class InspectorFields
 
     internal UIElement TextArea(FlowField field, string path)
     {
+        // 先把 AcceptsReturn 打开，再赋 Text：赋值时它还是单行框的话，WinUI 会把换行直接吃掉
+        // （实测：多行文本切走再切回来只剩第一行）。
         var box = new TextBox
         {
-            Text = _step.GetText(path) ?? "",
             PlaceholderText = Placeholder(field),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 84,
         };
+        box.Text = _step.GetText(path) ?? "";
         box.TextChanged += (_, _) => _step.SetText(path, box.Text);
         return box;
     }
@@ -126,31 +129,67 @@ internal sealed partial class InspectorFields
     }
 
     /// <summary>开关也用自绘的那一颗：系统的 ToggleSwitch 开态是框架强调色。</summary>
-    internal UIElement Toggle(FlowField field, string path)
+    internal UIElement Toggle(FlowField field, string path) =>
+        Switch(
+            _step.GetBool(path),
+            on => _step.SetBool(path, on),
+            on => on ? "是" : "否");
+
+    /// <summary>
+    /// 一颗开关。**不用 ControlTemplate + VisualState**：实测那种写法点一次变色、点回来不变——
+    /// ObjectAnimation 是保持的，"关"状态里漏写一个属性，那个属性就永远留着上一次的值。
+    /// 这里是直接改属性：点下去，颜色、珠子、标签同一帧一起换，没有状态机可以不同步。
+    /// </summary>
+    internal static UIElement Switch(bool initial, Action<bool> changed, Func<bool, string> label)
     {
-        var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
-        var toggle = new Microsoft.UI.Xaml.Controls.Primitives.ToggleButton
+        var track = new Border
         {
-            Style = (Style)Application.Current.Resources["KpSwitch"],
-            IsChecked = _step.GetBool(path),
-            Content = label,
+            Width = 34,
+            Height = 18,
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+        };
+        var knob = new Ellipse { Width = 12, Height = 12, VerticalAlignment = VerticalAlignment.Center };
+
+        var host = new Grid { Width = 34, Height = 18 };
+        host.Children.Add(track);
+        host.Children.Add(knob);
+
+        var caption = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+        var root = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 10,
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+        };
+        root.Children.Add(host);
+        root.Children.Add(caption);
+
+        bool on = initial;
+
+        void Paint()
+        {
+            track.Background = Brush(on ? "KpSignalBrush" : "KpFieldBrush");
+            track.BorderBrush = Brush(on ? "KpSignalBrush" : "KpInk3Brush");
+            knob.Fill = Brush(on ? "KpOnSignalBrush" : "KpInk3Brush");
+            knob.HorizontalAlignment = on ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            knob.Margin = on ? new Thickness(0, 0, 2, 0) : new Thickness(2, 0, 0, 0);
+            caption.Text = label(on);
+        }
+
+        root.Tapped += (_, e) =>
+        {
+            on = !on;
+            Paint();
+            changed(on);
+            e.Handled = true;
         };
 
-        void Sync() => label.Text = toggle.IsChecked == true ? "是" : "否";
-        Sync();
-
-        toggle.Checked += (_, _) =>
-        {
-            Sync();
-            _step.SetBool(path, true);
-        };
-        toggle.Unchecked += (_, _) =>
-        {
-            Sync();
-            _step.SetBool(path, false);
-        };
-        return toggle;
+        Paint();
+        return root;
     }
+
+    private static Brush Brush(string key) => (Brush)Application.Current.Resources[key];
 
     /// <summary>选项少就摆一排（省一次点击，一眼看全），多了才用下拉框。</summary>
     internal UIElement Choices(FlowField field, string path)
