@@ -150,6 +150,7 @@
 
                         <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Rows, Mode=OneWay}" KeyDown="OnStepListKeyDown"
                                   ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollMode="Auto"
                                   SelectionMode="Single" SelectionChanged="OnStepSelected"
                                   ItemContainerTransitions="{x:Null}" Padding="0,16,0,8" Background="Transparent">
                             <ListView.ContextFlyout>
@@ -220,11 +221,12 @@
                                                           Foreground="{x:Bind BadgeInk, Mode=OneWay}" />
                                             </Border>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <!-- MaxLines=1：内容和摘要都不许换行；换行会把 38px 的行撑破、盖住下一行。 -->
                                                 <TextBlock Text="{x:Bind TypeName}" Style="{StaticResource SectionHeader}"
-                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxLines="1" />
                                                 <TextBlock Text="{x:Bind Summary, Mode=OneWay}"
                                                            FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{ThemeResource KpInk3Brush}" />
+                                                           MaxLines="1" Foreground="{ThemeResource KpInk3Brush}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                                         VerticalAlignment="Center" Margin="0,0,8,0">

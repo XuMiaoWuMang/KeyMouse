@@ -337,7 +337,14 @@ public sealed class StepVm : INotifyPropertyChanged
     /// <summary>折叠行（连续鼠标移动的头一行）用一句话代替原摘要：起点 → 终点，跑了多少次。</summary>
     internal string? SummaryOverride { get; set; }
 
-    public string Summary => SummaryOverride ?? StepCatalog.Summarize(Step);
+    /// <summary>
+    /// 一行摘要。多行内容不塞进这一行——它会把行撑破、盖住下一行（实测），
+    /// 所以只留一句"点击查看详细…"：要看清就去右边的框里看。
+    /// </summary>
+    public string Summary => SummaryOverride ?? OneLine(StepCatalog.Summarize(Step));
+
+    private static string OneLine(string text) =>
+        text.Contains('\n') || text.Contains('\r') ? "点击查看详细…" : text;
 
     /// <summary>这一行折叠了几步（连续 move 的头一行才有）。</summary>
     internal int RunCount { get; set; }
