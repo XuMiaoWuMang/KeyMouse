@@ -245,12 +245,28 @@ internal static class NativeInput
         for (int i = keys.Count - 1; i >= 0; i--) Key(keys[i].Vk, keys[i].Ext, true);
     }
 
+    private const ushort VkReturn = 0x0D;
+
     /// <summary>Types text through KEYEVENTF_UNICODE - layout and IME independent.</summary>
     public static void TypeText(string text, int intervalMs)
     {
-        foreach (char c in text)
+        for (int i = 0; i < text.Length; i++)
         {
-            Send(Unicode(c, false), Unicode(c, true));
+            char c = text[i];
+            if (c == '\r') continue;   // \r\n 只算一个换行
+
+            // 换行必须按 Enter：Unicode 键事件把 0x0A 当成一个普通字符，目标程序收不到换行，
+            // 多行文本会被压成一行（实测）。\t 同理，但它会改变焦点，不替用户决定。
+            if (c == '\n')
+            {
+                Key(VkReturn, extended: false, up: false);
+                Key(VkReturn, extended: false, up: true);
+            }
+            else
+            {
+                Send(Unicode(c, false), Unicode(c, true));
+            }
+
             if (intervalMs > 0) Thread.Sleep(intervalMs);
         }
 
