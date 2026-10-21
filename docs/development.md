@@ -129,7 +129,7 @@ pwsh .\verify.ps1 -SkipSmoke   # 只跑不需要桌面的部分
 测试和代码一样按模块分。**改哪个模块就跑哪个模块；功能确定没问题了，再一次总测试。**
 
 ```powershell
-# 单元测试（不需要桌面）：8 个模块，各一个文件
+# 单元测试（不需要桌面）：11 个模块，各一个文件
 dotnet run -c Release --project tests\KeyMouse.Tests -- --list            # 看有哪些（现有 9 个）
 dotnet run -c Release --project tests\KeyMouse.Tests -- --only loops     # 只跑该模块
 dotnet run -c Release --project tests\KeyMouse.Tests                     # 全部
