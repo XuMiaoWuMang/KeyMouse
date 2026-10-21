@@ -375,6 +375,19 @@
                 <Setter Property="MaxWidth" Value="380" />
             </Style>
 
+            <!--
+                弹出面板（Flyout）的壳。和上面的 KpFlyoutPresenter 是两套 type：
+                MenuFlyoutPresenter 只吃菜单，普通 Flyout 的壳是 FlyoutPresenter，套错了会在运行时抛
+                "Cannot apply a Style with TargetType ... to an object of type ..."。
+            -->
+            <Style x:Key="KpPopoverPresenter" TargetType="FlyoutPresenter">
+                <Setter Property="Background" Value="{ThemeResource KpCardBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource KpRuleBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="14,12" />
+            </Style>
+
             <Style TargetType="ToolTip">
                 <Setter Property="Background" Value="{ThemeResource KpCardBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource KpRuleBrush}" />

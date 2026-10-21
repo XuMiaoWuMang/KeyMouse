@@ -74,7 +74,7 @@ internal sealed partial class Surfaces
     /// 选择步骤的面板：按用途分四组，每项一行（图标 + 名字 + 契约给的一句话）。
     /// 不做下拉里一长串平铺，也不给每项加状态点（那是 AI 味装饰）。
     /// </summary>
-    internal async Task PickStepAsync(XamlRoot root, Action<string> add)
+    internal void PickStep(FrameworkElement anchor, Action<string> add)
     {
         var content = new StackPanel { Spacing = 16, Width = 440 };
         foreach ((string title, string[] types) in Groups)
@@ -108,26 +108,51 @@ internal sealed partial class Surfaces
             content.Children.Add(group);
         }
 
-        var dialog = new ContentDialog
+        // 用 Flyout 而不是 ContentDialog：弹出面板该"点外面就关"，而对话框天生是模态的，
+        // 点外面没有任何反应（实测反馈）。Flyout 的轻点关闭是内建行为，Esc 也认。
+        var flyout = new Flyout
         {
-            XamlRoot = root,
-            Title = new TextBlock
+            Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            FlyoutPresenterStyle = (Style)Application.Current.Resources["KpPopoverPresenter"],
+            Content = new ScrollViewer
             {
-                Text = "加一步",
-                Style = (Style)Application.Current.Resources["PaneTitle"],
+                Content = new StackPanel
+                {
+                    Spacing = 16,
+                    Width = 440,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = "加一步",
+                            Style = (Style)Application.Current.Resources["PaneTitle"],
+                        },
+                        content,
+                    },
+                },
+                MaxHeight = 470,
             },
-            Content = new ScrollViewer { Content = content, MaxHeight = 460 },
-            CloseButtonText = "取消",
-            // 系统的"默认按钮"会被画成强调色（蓝），且盖过 CloseButtonStyle。这里不设默认按钮。
-            DefaultButton = ContentDialogButton.None,
-            // 对话框的默认按钮会被系统画成强调色（蓝）。这个世界里不借它。
-            CloseButtonStyle = (Style)Application.Current.Resources["KpQuietButton"],
-            Background = (Brush)Application.Current.Resources["KpCardBrush"],
-            BorderBrush = (Brush)Application.Current.Resources["KpRuleBrush"],
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
         };
-        await dialog.ShowAsync();
+
+        foreach (UIElement row in Flatten(content))
+        {
+            if (row is Button button) button.Click += (_, _) => flyout.Hide();
+        }
+
+        flyout.ShowAt(anchor);
+    }
+
+    /// <summary>把面板里的按钮都找出来（行是深一层放进分组的）。</summary>
+    private static IEnumerable<UIElement> Flatten(Panel panel)
+    {
+        foreach (UIElement child in panel.Children)
+        {
+            yield return child;
+            if (child is Panel nested)
+            {
+                foreach (UIElement inner in Flatten(nested)) yield return inner;
+            }
+        }
     }
 
     private UIElement Row(string type, Action<string> add)

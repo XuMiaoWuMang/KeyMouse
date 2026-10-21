@@ -545,13 +545,12 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>async void 里抛出的异常会直接吞掉（界面上什么都看不到）。这里显式接住并说出来。</summary>
-    private async void OnMoreSteps(object sender, RoutedEventArgs e)
+    private void OnMoreSteps(object sender, RoutedEventArgs e)
     {
         try
         {
             if (_surfaces is null) _surfaces = new Surfaces(this);
-            await _surfaces.PickStepAsync(Root.XamlRoot, AddStep);
+            _surfaces.PickStep(MoreStepsButton, AddStep);
         }
         catch (Exception ex)
         {

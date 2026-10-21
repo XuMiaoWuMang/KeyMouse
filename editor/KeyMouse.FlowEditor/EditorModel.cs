@@ -403,12 +403,16 @@ public sealed class EditorModel : INotifyPropertyChanged
         {
             int at = nested.IndexOf(anchor.Step);
             nested.Insert(at < 0 ? nested.Count : at + 1, fresh.Step);
+            // 加完必须让这个组开着：只有一个子项时它是"默认摊开"的，加到第二个就会被收起，
+            // 新加的行立刻消失、之后的"添加"也不再落在这个组里（实测反馈）。
+            anchor.Group.IsExpanded = true;
         }
         else if (anchor.IsGroup)
         {
             // 选中分组行再点一个动作 = 往这个组里加第一步。空组也能因此被填上。
             anchor.Step.Steps ??= [];
             anchor.Step.Steps.Add(fresh.Step);
+            anchor.IsExpanded = true;
         }
         else
         {
