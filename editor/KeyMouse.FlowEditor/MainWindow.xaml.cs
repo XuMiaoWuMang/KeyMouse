@@ -191,6 +191,19 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, Everything);
     }
 
+    /// <summary>
+    /// 点父行 = 展开 / 收起它的子项。用 Tapped 而不是 SelectionChanged：
+    /// 键盘上下键换行也会改选中，那不该顺带开合。
+    /// </summary>
+    private void OnRowTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not StepVm row) return;
+        if (row.ChildTotal <= 1) return;
+
+        Model.Toggle(row);
+        StepList.SelectedItem = row;   // 重建显示行之后把选中还给这一行
+    }
+
     private void OnStepSelected(object sender, SelectionChangedEventArgs e)
     {
         SelectedStep = StepList.SelectedItem as StepVm;

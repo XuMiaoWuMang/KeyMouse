@@ -54,6 +54,7 @@ public sealed class StepVm : INotifyPropertyChanged
         nameof(BeadBrush), nameof(BeadRingBrush), nameof(RowBrush), nameof(BeadSize),
         nameof(ActivityVisibility), nameof(NumberBrush),
         nameof(PreviewTag), nameof(RowOpacity), nameof(PreviewNote), nameof(PreviewNoteVisibility),
+        nameof(ToggleVisibility), nameof(Chevron),
     ];
 
     internal void RefreshBadge() => Refresh();
@@ -327,6 +328,19 @@ public sealed class StepVm : INotifyPropertyChanged
 
     /// <summary>call 行右侧显示被调用流程里有几步（预览加载成功才有）。</summary>
     internal int PreviewCount { get; set; }
+
+    /// <summary>
+    /// 这一行带几个子项（分组步骤 / 子流程预览 / 折叠起来的连续移动）。由 EditorModel 算好写进来。
+    /// 少于 2 个子项的一律直接摊开——为一行折腾一次点击不值得。
+    /// </summary>
+    internal int ChildTotal { get; set; }
+
+    /// <summary>展开状态只在界面里存在，不写进流程文件。</summary>
+    internal bool IsExpanded { get; set; }
+
+    public Visibility ToggleVisibility => Ui.Show(ChildTotal > 1);
+
+    public string Chevron => IsExpanded ? "\uE70E" : "\uE70D";
 
     /// <summary>分组行在右侧说它带了几步；空组要说"空组"——否则没法把第一步放进去。</summary>
     public string ChildCount => Step.Steps is { Count: > 0 } children

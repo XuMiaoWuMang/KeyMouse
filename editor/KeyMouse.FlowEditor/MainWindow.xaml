@@ -177,7 +177,7 @@
                             </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="local:StepVm">
-                                    <Grid Height="38" ColumnSpacing="8" Padding="0,0,14,0"
+                                    <Grid Height="38" ColumnSpacing="8" Padding="0,0,14,0" Tapped="OnRowTapped"
                                           Background="{x:Bind RowBrush, Mode=OneWay}"
                                           Opacity="{x:Bind RowOpacity, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
@@ -237,6 +237,11 @@
                                                            Visibility="{x:Bind PreviewTagVisibility, Mode=OneWay}"
                                                            FontFamily="{StaticResource KpMonoFont}" FontSize="10"
                                                            Foreground="{ThemeResource KpInk3Brush}" />
+                                                <!-- 有多于一个子项时给个开合标记：点父行一次展开，再点一次收起。 -->
+                                                <FontIcon Glyph="{x:Bind Chevron, Mode=OneWay}" FontSize="10"
+                                                          VerticalAlignment="Center"
+                                                          Visibility="{x:Bind ToggleVisibility, Mode=OneWay}"
+                                                          Foreground="{ThemeResource KpInk3Brush}" />
                                                 <TextBlock Text="{x:Bind ChildCount, Mode=OneWay}"
                                                            Visibility="{x:Bind ChildCountVisibility, Mode=OneWay}"
                                                            VerticalAlignment="Center" FontFamily="{StaticResource KpMonoFont}"

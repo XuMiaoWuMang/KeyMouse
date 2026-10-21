@@ -101,6 +101,7 @@ public sealed class EditorModel : INotifyPropertyChanged
             {
                 top.Depth = 0;
                 top.RunCount = runs[i].Count;
+                top.ChildTotal = runs[i].Count - 1;   // 头一行自己就是第一下移动
                 top.SummaryOverride = MoveRunSummary(i, runs[i].Count);
                 Rows.Add(top);
                 continue;
@@ -109,9 +110,11 @@ public sealed class EditorModel : INotifyPropertyChanged
             if (runs[i].Head >= 0)
             {
                 // 折叠组里的后续步骤：保留顶层身份（增删移仍按 Steps 走），只改显示层。
+                // 收起时它们不出现在 Rows 里。
                 top.Depth = 1;
                 top.Number = $"{displayNo[runs[i].Head]}.{runs[i].Offset}";
-                Rows.Add(top);
+                StepVm head = Steps[runs[i].Head];
+                if (head.IsExpanded || head.ChildTotal <= 1) Rows.Add(top);   // 只有一个子项的直接摊开
                 continue;
             }
 
@@ -124,7 +127,9 @@ public sealed class EditorModel : INotifyPropertyChanged
                 // 只展开一层——嵌套调用的完整树会把账本变成翻页器。
                 List<FlowStep>? preview = Preview(flow);
                 top.PreviewCount = preview?.Count ?? 0;
-                for (int j = 0; j < top.PreviewCount; j++)
+                top.ChildTotal = top.PreviewCount;
+                bool showPreview = top.IsExpanded || top.ChildTotal <= 1;
+                for (int j = 0; j < top.PreviewCount && showPreview; j++)
                 {
                     StepVm child = PreviewVm(preview![j], Path.GetFileName(flow));
                     child.Number = $"{displayNo[i]}.{j + 1}";
@@ -136,7 +141,9 @@ public sealed class EditorModel : INotifyPropertyChanged
             }
 
             if (top.Step.Steps is not { Count: > 0 } children) continue;
-            for (int j = 0; j < children.Count; j++)
+            top.ChildTotal = children.Count;
+            bool showChildren = top.IsExpanded || top.ChildTotal <= 1;   // 只有一个子项的直接摊开
+            for (int j = 0; j < children.Count && showChildren; j++)
             {
                 StepVm child = VmFor(children[j]);
                 child.Number = $"{displayNo[i]}.{j + 1}";
@@ -150,6 +157,15 @@ public sealed class EditorModel : INotifyPropertyChanged
         // 行号与缩进都是 OneWay 绑定：不逐个通知，插一步之后后面的行就会重号（实测 1,2,3,3）
         foreach (var row in Rows) row.Refresh();
         PropertyChanged?.Invoke(this, Everything);
+    }
+
+    /// <summary>点一下父行：展开或收起它的子项。只有一个子项时不响应（它本来就是展开的）。</summary>
+    public StepVm Toggle(StepVm head)
+    {
+        if (head.ChildTotal <= 1) return head;
+        head.IsExpanded = !head.IsExpanded;
+        Renumber();
+        return head;
     }
 
     /// <summary>
