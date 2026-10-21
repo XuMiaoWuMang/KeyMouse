@@ -77,6 +77,23 @@ public sealed class EditorModel : INotifyPropertyChanged
             top.Group = null;
             Rows.Add(top);
 
+            if (top.Step.Type == "call" && top.Step.Flow is { Length: > 0 } flow)
+            {
+                // 被调用流程的步骤以**只读预览**接在 call 行下面：读流程的人不必来回切文件。
+                // 只展开一层——嵌套调用的完整树会把账本变成翻页器。
+                List<FlowStep>? preview = Preview(flow);
+                top.PreviewCount = preview?.Count ?? 0;
+                for (int j = 0; j < top.PreviewCount; j++)
+                {
+                    StepVm child = PreviewVm(preview![j], Path.GetFileName(flow));
+                    child.Number = $"{i + 1}.{j + 1}";
+                    child.Depth = 1;
+                    child.Group = top;
+                    child.FirstInGroup = j == 0;
+                    Rows.Add(child);
+                }
+            }
+
             if (top.Step.Steps is not { Count: > 0 } children) continue;
             for (int j = 0; j < children.Count; j++)
             {
@@ -107,6 +124,54 @@ public sealed class EditorModel : INotifyPropertyChanged
             if (ReferenceEquals(vm.Step, node)) return vm;
         }
         return VmFor(node) is { } cached && _byNode.ContainsKey(node) ? cached : null;
+    }
+
+    private readonly Dictionary<FlowStep, StepVm> _previewVms = [];
+    private readonly Dictionary<string, (DateTime Stamp, List<FlowStep>? Steps)> _previewCache = [];
+
+    /// <summary>
+    /// 读一个子流程文件，只为**预览**它的步骤（相对调用它的文档解析路径）。
+    /// 缓存按文件时间戳失效；读不出来就返回 null——坏掉的子流程不该拦住父流程的编辑。
+    /// </summary>
+    private List<FlowStep>? Preview(string flow)
+    {
+        string? baseDir = _documentPath is { Length: > 0 } ? Path.GetDirectoryName(_documentPath) : null;
+        if (baseDir is null) return null;
+
+        string full = Path.GetFullPath(Path.Combine(baseDir, flow));
+        DateTime stamp = File.Exists(full) ? File.GetLastWriteTimeUtc(full) : default;
+        if (_previewCache.TryGetValue(full, out (DateTime Stamp, List<FlowStep>? Steps) hit) && hit.Stamp == stamp) return hit.Steps;
+
+        List<FlowStep>? steps = null;
+        if (File.Exists(full))
+        {
+            try
+            {
+                steps = FlowDocument.Load(full).Steps;
+            }
+            catch (CommandFailure)
+            {
+                steps = null;   // 子流程本身不合法：只在它自己的文件里报，不在这里造第二个错误源
+            }
+            catch (Exception)
+            {
+                steps = null;
+            }
+        }
+
+        _previewCache[full] = (stamp, steps);
+        return steps;
+    }
+
+    private StepVm PreviewVm(FlowStep step, string source)
+    {
+        if (!_previewVms.TryGetValue(step, out StepVm? vm))
+        {
+            vm = new StepVm(step, this);
+            _previewVms[step] = vm;
+        }
+        vm.MarkPreview(source);
+        return vm;
     }
 
     private StepVm VmFor(FlowStep node)
@@ -146,7 +211,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// 把每一步按契约检查一遍，返回有问题的字段总数。保存与运行之前先跑它：错误必须落到
     /// 具体字段上（检查器就地显示），而不是等加载器回一句"第 N 步需要某某"。
     /// </summary>
-    internal int Validate() => Rows.Sum(step => step.Validate());
+    internal int Validate() => Rows.Where(row => !row.IsPreview).Sum(step => step.Validate());
     /// <summary>有没有未保存的改动。工具在丢掉别人的东西之前应该先问一句。</summary>
 
     /// <summary>新建：清空步骤与文件路径，回到空状态。</summary>
@@ -207,6 +272,9 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// </summary>
     public StepVm Add(string type, StepVm? anchor)
     {
+        // 锚点在子流程预览里：往它所属的 call 行之后加，绝不改另一个文件。
+        if (anchor is { IsPreview: true }) anchor = anchor.Group;
+
         var fresh = new StepVm(StepCatalog.Create(type), this);
         if (anchor is null) Steps.Add(fresh);
         else if (anchor.Group?.Step.Steps is { } nested)
@@ -233,6 +301,7 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public void Remove(StepVm step)
     {
+        if (step.IsPreview) return;   // 只读预览行
         if (step.Group?.Step.Steps is { } nested)
         {
             if (!nested.Remove(step.Step)) return;
@@ -246,6 +315,7 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public void Duplicate(StepVm step)
     {
+        if (step.IsPreview) return;
         StepVm copy = StepVmFactory.Copy(step, this);
         if (step.Group?.Step.Steps is { } nested)
         {
@@ -266,6 +336,7 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public void Move(StepVm step, int offset)
     {
+        if (step.IsPreview) return;
         if (step.Group?.Step.Steps is { } nested)
         {
             int from = nested.IndexOf(step.Step);

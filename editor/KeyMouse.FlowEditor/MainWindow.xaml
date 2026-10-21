@@ -176,7 +176,8 @@
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="local:StepVm">
                                     <Grid Height="38" ColumnSpacing="8" Padding="{x:Bind RowPadding, Mode=OneWay}"
-                                          Background="{x:Bind RowBrush, Mode=OneWay}">
+                                          Background="{x:Bind RowBrush, Mode=OneWay}"
+                                          Opacity="{x:Bind RowOpacity, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="30" />
                                             <ColumnDefinition Width="Auto" />
@@ -219,6 +220,11 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8"
                                                     VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <!-- 子流程预览：这一行来自哪个文件。 -->
+                                            <TextBlock Text="{x:Bind PreviewTag, Mode=OneWay}" VerticalAlignment="Center"
+                                                       Visibility="{x:Bind PreviewTagVisibility, Mode=OneWay}"
+                                                       FontFamily="{StaticResource KpMonoFont}" FontSize="10"
+                                                       Foreground="{ThemeResource KpInk3Brush}" />
                                             <!-- 分组行说它带了几步；跑过之后这里换成运行结果。 -->
                                             <TextBlock Text="{x:Bind ChildCount, Mode=OneWay}"
                                                        Visibility="{x:Bind ChildCountVisibility, Mode=OneWay}"

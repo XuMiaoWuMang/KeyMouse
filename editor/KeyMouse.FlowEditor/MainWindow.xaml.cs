@@ -591,6 +591,20 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         InspectorHost.Children.Clear();
         if (SelectedStep is not { } step) return;
+
+        // 子流程预览行是只读的：这里不渲染契约字段（那会让人以为改了会生效），
+        // 只说清楚它来自哪个文件、该去哪儿改。
+        if (step.IsPreview)
+        {
+            InspectorHost.Children.Add(new TextBlock
+            {
+                Text = step.PreviewNote,
+                Style = (Style)Application.Current.Resources["FieldCaption"],
+                TextWrapping = TextWrapping.Wrap,
+            });
+            return;
+        }
+
         new InspectorBuilder(InspectorHost, step, path => PickInto(step, path, isRegion: false), path => PickInto(step, path, isRegion: true)).Build();
     }
 

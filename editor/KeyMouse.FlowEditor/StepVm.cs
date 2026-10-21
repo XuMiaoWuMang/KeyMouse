@@ -53,6 +53,7 @@ public sealed class StepVm : INotifyPropertyChanged
         nameof(ShotVisibility), nameof(ShotImage), nameof(BadgeBrush), nameof(BadgeInk),
         nameof(BeadBrush), nameof(BeadRingBrush), nameof(RowBrush), nameof(BeadSize),
         nameof(ActivityVisibility), nameof(NumberBrush),
+        nameof(PreviewTag), nameof(RowOpacity), nameof(PreviewNote), nameof(PreviewNoteVisibility),
     ];
 
     internal void RefreshBadge() => Refresh();
@@ -284,14 +285,43 @@ public sealed class StepVm : INotifyPropertyChanged
     public Visibility ElbowVisibility => Ui.Show(IsChild && FirstInGroup);
 
     /// <summary>
-    /// 分组：只有 repeat / foreach 带子步骤（call 是引用另一个文件，不在这一行里内联）。
+    /// 分组：只有 repeat / foreach 带子步骤（call 引用另一个文件，它的步骤以只读预览出现）。
     /// 这个判断只用于"能不能往里加一步"和显示计数，不参与渲染哪些字段（那是契约的事）。
     /// </summary>
     public bool IsGroup => Step.Type is "repeat" or "foreach";
 
+    /// <summary>子流程预览行：来自另一个文件，整行只读。</summary>
+    public bool IsPreview { get; private set; }
+
+    private string? _previewSource;
+
+    internal void MarkPreview(string source)
+    {
+        IsPreview = true;
+        _previewSource = source;
+    }
+
+    /// <summary>预览行右侧那行小字：这份步骤来自哪个文件。</summary>
+    public string PreviewTag => IsPreview ? _previewSource ?? "" : "";
+
+    public Visibility PreviewTagVisibility => Ui.Show(PreviewTag.Length > 0);
+
+    /// <summary>预览行整行压暗——它不是这一份文档，改不动。</summary>
+    public double RowOpacity => IsPreview ? 0.62 : 1.0;
+
+    public string PreviewNote => IsPreview
+        ? $"这一步来自子流程 {_previewSource}。它在这里只读——要改它，打开那个文件。"
+        : "";
+
+    public Visibility PreviewNoteVisibility => Ui.Show(IsPreview);
+
+    /// <summary>call 行右侧显示被调用流程里有几步（预览加载成功才有）。</summary>
+    internal int PreviewCount { get; set; }
+
     /// <summary>分组行在右侧说它带了几步；空组要说"空组"——否则没法把第一步放进去。</summary>
     public string ChildCount => Step.Steps is { Count: > 0 } children
         ? $"{children.Count} 步"
+        : PreviewCount > 0 ? $"{PreviewCount} 步"
         : IsGroup ? "空组" : "";
 
     public Visibility ChildCountVisibility => Ui.Show(ChildCount.Length > 0);
