@@ -20,3 +20,7 @@ __*.png
 
 # 证据归档：生成物、体积大，只留在本地（见 tests/evidence.ps1）
 tests/evidence/
+
+# 设计评审素材与本地备份：随手的截图与快照，不进版本库
+.impeccable/
+_session-backup/
