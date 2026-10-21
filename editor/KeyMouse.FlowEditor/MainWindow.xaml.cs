@@ -195,6 +195,19 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 点父行 = 展开 / 收起它的子项。用 Tapped 而不是 SelectionChanged：
     /// 键盘上下键换行也会改选中，那不该顺带开合。
     /// </summary>
+    /// <summary>
+    /// 把账本列按自身尺寸裁死。WinUI 的 Grid 不裁剪子元素，列表里任何落在右缘的绘制
+    /// （展开的滚动条、悬停底、拖影）都会漏到分隔线那条缝里——实测在缝上看到过一块米色。
+    /// </summary>
+    private void OnLedgerSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is not FrameworkElement host) return;
+        host.Clip = new Microsoft.UI.Xaml.Media.RectangleGeometry
+        {
+            Rect = new Windows.Foundation.Rect(0, 0, e.NewSize.Width, e.NewSize.Height),
+        };
+    }
+
     private void OnRowTapped(object sender, TappedRoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not StepVm row) return;

@@ -143,7 +143,10 @@
                         <ColumnDefinition x:Name="InspectorColumn" Width="1*" MinWidth="380" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Column="0">
+                    <!-- LedgerHost 会被代码按自身尺寸裁死：WinUI 的面板默认不裁剪子元素，
+                         列表里任何落在右缘的绘制（滚动条、悬停底、拖影）都会漏进分隔线那条缝。
+                         裁掉以后，缝里只剩我们画的那一条线。 -->
+                    <Grid Grid.Column="0" x:Name="LedgerHost" SizeChanged="OnLedgerSizeChanged">
                         <!-- 脊柱：一条 1px 的线，从第一颗珠穿到最后一颗；它是"顺序"本身，不是装饰。 -->
                         <Border Width="1" Margin="15,18,0,18" HorizontalAlignment="Left" VerticalAlignment="Stretch"
                                 Background="{ThemeResource KpRuleBrush}" />
@@ -271,8 +274,11 @@
                     </Grid>
 
                     <!-- 1px 常显，正好落在列边界：行底的色带与它对齐。8px 热区压在这条线两侧。 -->
+                    <!-- Width=8 / Height=Auto：Splitter 的构造函数把宽高都设成 8，竖着用的时候必须把高度放开，
+                         否则它只是缝里一个小小的 8×8 方块（实测就是那块"莫名其妙的色块"）。 -->
                     <local:Splitter Grid.Column="1" x:Name="VerticalSplitter" Target="{x:Bind InspectorColumn}" Edge="Left"
                                     Direction="Horizontal" Invert="True" MinTarget="320" MaxTarget="820"
+                                    Width="8" Height="Auto" VerticalAlignment="Stretch"
                                     MinWidth="8" MinHeight="0" BorderThickness="1,0,0,0"
                                     BorderBrush="{ThemeResource KpRuleBrush}"
                                     Visibility="{x:Bind HasSelection, Mode=OneWay}" />
@@ -343,6 +349,7 @@
 
         <local:Splitter Grid.Row="3" x:Name="HorizontalSplitter" Target="{x:Bind LogRow}" Edge="Top"
                         Direction="Vertical" Invert="True" MinTarget="0" MaxTarget="420"
+                        Width="Auto" Height="8" HorizontalAlignment="Stretch"
                         Visibility="{x:Bind LogSplitterVisibility, Mode=OneWay}" Margin="16,0,16,0" />
 
         <Grid Grid.Row="4" Padding="16,8,16,16">
