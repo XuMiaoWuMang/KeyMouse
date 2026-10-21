@@ -4,7 +4,8 @@
 
         .\km b            只编译 CLI（含 Core / Runner），不碰编辑器        ~1s
         .\km ba           编译整个解决方案（含 WinUI 编辑器）              ~16s
-        .\km e            只编译编辑器                                    ~13s
+        .\km e            编译编辑器 **并重新打包 dist**（编辑器连的是它）  ~18s
+        .\km e -NoDist    只编译编辑器                                    ~13s
         .\km t            单元测试（全部，不需要桌面，跑已编译的 exe）      ~1s
         .\km t parsing    只跑改到的模块（可写多个）                        ~1s
         .\km tl           列出测试模块
@@ -22,6 +23,10 @@
 
     为什么默认只编译 CLI：整个解决方案里 13s 花在 WinUI 编辑器的 XAML 上，
     而 CLI 只改 Core 时重建是 1.7s。编辑器不参与就不该付这笔钱。
+
+    为什么 km e 顺带打包：编辑器启动的引擎是 dist\KeyMouse.exe（编辑器目录 → 仓库 dist
+    → PATH 依次找），只重建 bin 的话，在编辑器里跑的还是旧逻辑——实测踩过：换行输入
+    明明改了，编辑器里跑出来仍然是一行。这 5 秒买的是"看到的就是刚改的"。
 #>
 [CmdletBinding()]
 param(
@@ -106,6 +111,15 @@ switch ($Verb) {
     { $_ -in 'e', 'editor' } {
         Say '-> 编译编辑器（WinUI 3）'
         Timed 'editor' { RunDotnet @('build', $editor, '-c', 'Release', '--nologo', '-v:q') }
+
+        # 编辑器连的是 dist\KeyMouse.exe：只重建 bin 会让它在旧引擎上跑
+        if ($Rest -notcontains '-NoDist') {
+            Say '-> 重新打包 dist（编辑器用的就是这个 exe）'
+            Timed 'publish' {
+                RunDotnet @('publish', $cli, '-c', 'Release', '-r', 'win-x64', '--self-contained:false',
+                            '-p:PublishSingleFile=true', '--nologo', '-v:q', '-o', $dist)
+            }
+        }
         break
     }
 
