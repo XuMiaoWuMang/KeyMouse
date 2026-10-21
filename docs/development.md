@@ -22,6 +22,10 @@
 **为什么默认不 build 整个解决方案**：WinUI 编辑器的 XAML 编译占掉 13s，而只改 Core 时 CLI 重建是 1.7s。
 整个解决方案只在 CI 与 `verify.ps1` 里跑。
 
+> **改过 Core 之后，编辑器要用的那个 exe 得重新打包。** 编辑器启动的是 `dist\KeyMouse.exe`（编辑器目录 → 仓库 `dist` → PATH 依次找），
+> `km b` 只更新 `bin`。只重建 `bin` 的话，编辑器里跑的还是旧逻辑——实测踩过：换行输入明明改了，编辑器里跑出来仍然是一行。
+> 所以改完 Core 想从编辑器验证，多跑一次 `km d`。
+
 VS Code 里对应的任务在 `.vscode/tasks.json`（`Ctrl+Shift+B` = 只编译 CLI，`km: watch` 是后台监视），
 `.vscode/launch.json` 提供「运行 KeyMouse」与「调试单元测试」两个启动配置。
 
