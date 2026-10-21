@@ -79,7 +79,20 @@ internal sealed class FlowCondition
 
 internal sealed class FlowStep
 {
+    private string? _text;
+
     public string Type { get; set; } = "";
+
+    /// <summary>
+    /// 要输入的文字。换行**只允许 \n**：WinUI 的 TextBox 存的是裸 \r，Windows 文件里是 \r\n，
+    /// 两者直接写进流程文件后，引擎会把 \r 当作 CRLF 的前半个字符跳掉——"编辑器里明明三行，打出来一行"。
+    /// 在模型这一层折平，读入、编辑、保存三条路就都干净了。
+    /// </summary>
+    public string? Text
+    {
+        get => _text;
+        set => _text = value?.Replace("\r\n", "\n").Replace('\r', '\n');
+    }
     public FlowTarget? Target { get; set; }
     public FlowRegion? Region { get; set; }
     public FlowCondition? When { get; set; }
@@ -88,7 +101,6 @@ internal sealed class FlowStep
     public FlowPoint? To { get; set; }
     public string? Button { get; set; }
     public string? Combo { get; set; }
-    public string? Text { get; set; }
     public int? IntervalMs { get; set; }
     public int? TimeoutMs { get; set; }
     public string? Match { get; set; }

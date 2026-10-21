@@ -250,10 +250,13 @@ internal static class NativeInput
     /// <summary>Types text through KEYEVENTF_UNICODE - layout and IME independent.</summary>
     public static void TypeText(string text, int intervalMs)
     {
+        // 换行有三种写法：\r\n（Windows 文件）、\n（JSON 转义）、\r（WinUI TextBox 就是这么存换行的）。
+        // 一律折成 \n，否则裸 \r 会被当成 CRLF 的前半个字符跳掉——编辑器里改过的多行文本就一个回车都不发。
+        text = text.Replace("\r\n", "\n").Replace('\r', '\n');
+
         for (int i = 0; i < text.Length; i++)
         {
             char c = text[i];
-            if (c == '\r') continue;   // \r\n 只算一个换行
 
             // 换行必须按 Enter：Unicode 键事件把 0x0A 当成一个普通字符，目标程序收不到换行，
             // 多行文本会被压成一行（实测）。\t 同理，但它会改变焦点，不替用户决定。

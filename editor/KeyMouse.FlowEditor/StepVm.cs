@@ -386,6 +386,13 @@ public sealed class StepVm : INotifyPropertyChanged
         return node;
     }
 
+    /// <summary>
+    /// 写回文本字段。**必须先把换行折成 \n**：WinUI 的 TextBox 用裸 \r 表示换行，
+    /// 直接存进流程文件会让引擎把它当成 CRLF 的前半个字符跳掉（实测：编辑器里改过的多行文本打出来没有换行）。
+    /// </summary>
+    internal void SetText(string path, string? value) =>
+        Write(path, value is null ? null : JsonValue.Create(value.Replace("\r\n", "\n").Replace('\r', '\n')));
+
     internal string? GetText(string path) => Read(path) switch
     {
         JsonValue value when value.TryGetValue(out string? text) => text,
@@ -414,9 +421,6 @@ public sealed class StepVm : INotifyPropertyChanged
             Height = int.TryParse(region["height"]?.ToString(), out int h) ? h : 0,
         }
         : null;
-
-    internal void SetText(string path, string? value) =>
-        Write(path, string.IsNullOrEmpty(value) ? null : JsonValue.Create(value));
 
     internal void SetBool(string path, bool value) => Write(path, JsonValue.Create(value));
 
