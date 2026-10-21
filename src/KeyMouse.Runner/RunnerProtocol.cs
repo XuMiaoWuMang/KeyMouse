@@ -92,6 +92,9 @@ internal sealed class RunnerParameters
     public int? Target { get; set; }
     public string? Client { get; set; }
     public string? Version { get; set; }
+
+    /// <summary>pick-region：<c>point</c> 只取一个点（点击类动作），缺省是框选一块区域。</summary>
+    public string? Mode { get; set; }
 }
 
 /// <summary>One line the Runner sends back. <c>kind</c> is the discriminator.</summary>

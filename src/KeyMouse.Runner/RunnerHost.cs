@@ -247,7 +247,10 @@ internal sealed class RunnerHost
             Console.SetOut(captured);
             try
             {
-                exitCode = Commands.Execute(["region", "pick", "--json"]);
+                bool point = string.Equals(request.Params?.Mode, "point", StringComparison.OrdinalIgnoreCase);
+                exitCode = Commands.Execute(point
+                    ? ["region", "pick", "--point", "--json"]
+                    : ["region", "pick", "--json"]);
             }
             finally
             {

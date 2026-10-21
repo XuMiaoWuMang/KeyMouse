@@ -228,7 +228,12 @@ internal sealed class InspectorBuilder
         body.Children.Add(grid);
         if (field.Kind is "point" or "region")
         {
-            var pick = new Button { Content = "从屏幕取一块…", HorizontalAlignment = HorizontalAlignment.Left };
+            // 只取坐标的字段说"取一点"，要读屏的字段说"取一块"——点一下和框一下是两种手势。
+            var pick = new Button
+            {
+                Content = field.Kind == "region" ? "从屏幕取一块…" : "从屏幕取一点…",
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
             pick.Click += (_, _) =>
             {
                 if (field.Kind == "region") _pickRegion(prefix);

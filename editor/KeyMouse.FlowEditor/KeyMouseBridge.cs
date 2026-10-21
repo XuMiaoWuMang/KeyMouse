@@ -73,9 +73,14 @@ internal static class KeyMouseBridge
     /// Asks the Runner to run the region picker (the same overlay the CLI uses, on an STA thread
     /// inside the service) and returns what the human drew.
     /// </summary>
-    internal static async Task<PickedRegion?> PickRegionAsync(RunnerClient client)
+    internal static Task<PickedRegion?> PickRegionAsync(RunnerClient client) => PickAsync(client, point: false);
+
+    /// <summary>只要一个点：浮层里点一下就结束（点击类动作不需要框）。</summary>
+    internal static Task<PickedRegion?> PickPointAsync(RunnerClient client) => PickAsync(client, point: true);
+
+    private static async Task<PickedRegion?> PickAsync(RunnerClient client, bool point)
     {
-        RunnerEvent result = await client.SendAsync("pick-region");
+        RunnerEvent result = await client.SendAsync("pick-region", point ? new RunnerParameters { Mode = "point" } : null);
         if (result.Kind != "result" || result.Value is not { } value) return null;
 
         if (!value.TryGetProperty("region", out var region) || region.ValueKind != JsonValueKind.Array) return null;

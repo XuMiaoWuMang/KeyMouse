@@ -624,6 +624,9 @@ KeyMouse schema click-text     # 只看一种步骤：必须 / 可选 / 取值 /
 **拖动框选**，或**单击选中某个窗口的整个客户区**，`ESC` / 右键取消。它**只报坐标**，
 并给出一条可以直接粘贴的 `probe` 命令。
 
+只需要一个坐标时（点击、移动这类动作）用 `--point`：浮层画一条十字线和实时坐标，
+**单击即取这一点**，不必先框一个框再把左上角当点——编辑器里这些动作的按钮就叫「从屏幕取一点…」。
+
 ```
 KeyMouse region pick                          # 框一块区域
 KeyMouse region pick --json                   # 机器可读：screen / window / space / region / probe

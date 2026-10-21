@@ -41,6 +41,7 @@ internal static class RegionCommand
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(args, "rect");
+        bool pointMode = options.ContainsKey("point");
 
         if (positional.Count == 0)
             throw new ArgumentException("region：需要一个子命令（目前只有 pick）");
@@ -61,8 +62,8 @@ internal static class RegionCommand
         }
         else
         {
-            var selection = RegionPicker.Pick()
-                ?? throw new CommandFailure(3, "已取消选区——没有产生任何坐标");
+            var selection = RegionPicker.Pick(pointMode)
+                ?? throw new CommandFailure(3, pointMode ? "已取消取点——没有产生任何坐标" : "已取消选区——没有产生任何坐标");
             picked = new ScreenRect(selection.X, selection.Y, selection.Width, selection.Height);
         }
 
@@ -118,6 +119,10 @@ internal static class RegionCommand
     /// </summary>
     internal static (string? Space, ScreenRect? Region) Classify(ScreenRect selection, ScreenRect windowRect, ScreenRect clientRect)
     {
+        // 取点得到的是 0 宽高，"必须整个落在窗口里"会把一个点判成越界——按 1×1 判。
+        if (selection.Width <= 0 || selection.Height <= 0)
+            selection = new ScreenRect(selection.X, selection.Y, 1, 1);
+
         if (clientRect.Contains(selection)) return ("client", selection.RelativeTo(clientRect.X, clientRect.Y));
         if (windowRect.Contains(selection)) return ("window", selection.RelativeTo(windowRect.X, windowRect.Y));
         return (null, null);

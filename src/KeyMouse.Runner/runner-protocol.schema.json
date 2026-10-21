@@ -61,7 +61,7 @@
       "note": "录制操作序列。shot 参数与 run 同义。"
     },
     { "method": "validate", "params": ["flow"], "terminal": ["result", "error"], "required": ["flow"], "resultFields": ["ok", "steps", "issues"] },
-    { "method": "pick-region", "params": [], "terminal": ["result", "error"], "resultFields": ["region 的形状由取区域命令决定"] },
+    { "method": "pick-region", "params": ["mode"], "terminal": ["result", "error"], "resultFields": ["region 的形状由取区域命令决定"], "note": "mode=point 时浮层只取一个点（单击即定），缺省拖框取一块区域" },
     { "method": "ocr", "params": ["process", "class", "region"], "terminal": ["result", "error"], "note": "region 必须是长度 4 的数组 [x,y,w,h]；长度不对视为未给。" },
     { "method": "cancel", "params": ["target"], "terminal": ["result", "error"], "resultFields": ["job", "state"], "note": "target 缺省时用请求 id 自身作目标（一次 run 的 id 就等于它的作业号）。" },
     { "method": "pause", "params": ["target"], "terminal": ["result", "error"], "resultFields": ["job", "state"] },
@@ -97,6 +97,7 @@
     "region": { "type": "array", "items": "integer", "length": 4, "note": "[x,y,w,h]" },
     "target": { "type": "integer", "note": "控制类方法的作业号；缺省时取请求 id" },
     "client": { "type": "string", "note": "客户端标识（谁在问）；服务端记在作业上，list / status 看得到" },
+    "mode": { "type": "string", "note": "pick-region 用：point = 单击取一个点（点击类动作），缺省 = 拖框取一块区域" },
     "version": { "type": "string", "note": "客户端说的协议版本；与顶层 version 不合时服务端回 error(code=2)。缺省视为不说，不做检查" }
   },
 

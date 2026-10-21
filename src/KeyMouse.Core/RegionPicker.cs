@@ -24,8 +24,13 @@ internal readonly record struct PickedSelection(int X, int Y, int Width, int Hei
 /// </summary>
 internal static class RegionPicker
 {
-    /// <summary>Shows the overlay. Returns null when the user cancels (ESC or right click).</summary>
-    internal static PickedSelection? Pick()
+    /// <summary>
+    /// 显示浮层。返回 null 表示取消（ESC 或右键）。
+    ///
+    /// <paramref name="pointMode"/>：只要一个点的时候用它——点一下就结束，不必框。
+    /// 点击类动作只需要坐标，(x,y,0,0) 就是它的全部；让人先框一个框再悄悄取左上角是错误的交互。
+    /// </summary>
+    internal static PickedSelection? Pick(bool pointMode = false)
     {
         // The coordinates this overlay produces have to be the physical pixels that SendInput and
         // probe speak, and for that the thread drawing it must be per-monitor-V2 aware. The
@@ -47,7 +52,7 @@ internal static class RegionPicker
         var frame = NativeCapture.TryCaptureScreen(virtualScreen.X, virtualScreen.Y, virtualScreen.Width, virtualScreen.Height)
             ?? throw new CommandFailure(4, "屏幕抓不下来——没有可交互的桌面？（锁屏或远程会话里选不了区）");
 
-        using var overlay = new Overlay(virtualScreen, frame);
+        using var overlay = new Overlay(virtualScreen, frame, pointMode);
         var picked = overlay.ShowDialog() == DialogResult.OK ? overlay.Result : null;
         if (picked is null && overlay.Failure is { } failure) throw new CommandFailure(4, failure);
         return picked;
@@ -100,8 +105,11 @@ internal static class RegionPicker
         /// <summary>Why the overlay refused to hand back coordinates, when it did.</summary>
         internal string? Failure { get; private set; }
 
-        internal Overlay(Rectangle virtualScreen, NativeCapture.Frame frame)
+        private readonly bool _pointMode;
+
+        internal Overlay(Rectangle virtualScreen, NativeCapture.Frame frame, bool pointMode = false)
         {
+            _pointMode = pointMode;
             _virtualScreen = virtualScreen;
             _snapshot = ToBitmap(frame);
             _dimmed = Dimmed(_snapshot);
@@ -115,7 +123,7 @@ internal static class RegionPicker
             DoubleBuffered = true;
             AutoScaleMode = AutoScaleMode.None;
             Cursor = Cursors.Cross;
-            Text = "KeyMouse 选区";
+            Text = pointMode ? "KeyMouse 取点" : "KeyMouse 选区";
 
             // Reading Handle here creates the window, so it can be recognised - and skipped - below.
             IntPtr own = Handle;
@@ -153,6 +161,13 @@ internal static class RegionPicker
             var g = e.Graphics;
             g.DrawImageUnscaled(_dimmed, 0, 0);
 
+            if (_pointMode)
+            {
+                DrawCrosshair(g);
+                DrawHint(g);
+                return;
+            }
+
             Rectangle highlight = _dragging ? Normalize(_start, _current) : HoverRect();
             if (!highlight.IsEmpty)
             {
@@ -175,6 +190,13 @@ internal static class RegionPicker
             if (e.Button == MouseButtons.Right) { Cancel(); return; }
             if (e.Button != MouseButtons.Left) return;
 
+            // 点模式：按下就定，不用等松开，也不用框
+            if (_pointMode)
+            {
+                Confirm(new Rectangle(e.Location.X, e.Location.Y, 0, 0), wholeClientArea: false);
+                return;
+            }
+
             _dragging = true;
             _start = e.Location;
             _current = e.Location;
@@ -184,6 +206,14 @@ internal static class RegionPicker
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
+            if (_pointMode)
+            {
+                _current = e.Location;
+                _hover = WindowUnder(e.Location);
+                Invalidate();
+                return;
+            }
+
             if (_dragging)
             {
                 _current = e.Location;
@@ -313,9 +343,27 @@ internal static class RegionPicker
             g.DrawString(text, _labelFont, foreground, x + 6, y + 3);
         }
 
+        /// <summary>点模式下的十字线：一条竖线一条横线，交点是即将取到的那个像素。</summary>
+        private void DrawCrosshair(Graphics g)
+        {
+            Point screen = PointToScreen(_current);
+
+            using var pen = new Pen(Color.FromArgb(0, 120, 215), 1);
+            g.DrawLine(pen, 0, _current.Y, ClientSize.Width, _current.Y);
+            g.DrawLine(pen, _current.X, 0, _current.X, ClientSize.Height);
+
+            using var dot = new SolidBrush(Color.FromArgb(0, 120, 215));
+            g.FillRectangle(dot, _current.X - 1, _current.Y - 1, 3, 3);
+
+            string where = _hover is null ? "" : $"  {_hover.Title}";
+            DrawLabel(g, new Rectangle(_current.X, _current.Y, 1, 1), $"{screen.X}, {screen.Y}{where}");
+        }
+
         private void DrawHint(Graphics g)
         {
-            const string hint = "拖动框选区域　·　单击 = 选中该窗口的整个客户区　·　ESC 取消";
+            string hint = _pointMode
+                ? "单击 = 取这个点　·　ESC 或右键取消"
+                : "拖动框选区域　·　单击 = 选中该窗口的整个客户区　·　ESC 取消";
             SizeF size = g.MeasureString(hint, _labelFont);
             int width = (int)size.Width + 20;
             int height = (int)size.Height + 10;

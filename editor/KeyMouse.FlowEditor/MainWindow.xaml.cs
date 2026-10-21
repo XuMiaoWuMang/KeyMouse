@@ -697,12 +697,18 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             RunnerClient? client = await EnsureClientAsync();
             if (client is null) return;
 
-            Show("取区域", "用鼠标框一块区域：拖拽框选，单击选整个客户区，ESC 取消。", InfoBarSeverity.Informational);
-            PickedRegion? picked = await KeyMouseBridge.PickRegionAsync(client);
+            if (isRegion)
+                Show("取区域", "用鼠标框一块区域：拖拽框选，单击选整个客户区，ESC 取消。", InfoBarSeverity.Informational);
+            else
+                Show("取点", "在屏幕上点一下要操作的位置，ESC 或右键取消。", InfoBarSeverity.Informational);
+
+            PickedRegion? picked = isRegion
+                ? await KeyMouseBridge.PickRegionAsync(client)
+                : await KeyMouseBridge.PickPointAsync(client);
             BringToFront();
             if (picked is null)
             {
-                Show("取区域", "取消了，没有改动。", InfoBarSeverity.Warning);
+                Show(isRegion ? "取区域" : "取点", "取消了，没有改动。", InfoBarSeverity.Warning);
                 return;
             }
 
@@ -726,13 +732,19 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             if (picked.Class is { Length: > 0 }) step.SetText($"{prefix}.class", picked.Class);
             if (picked.Title is { Length: > 0 }) step.SetText($"{prefix}.title", picked.Title);
 
+            // 数值是**程序写进去**的：输入框不会自己知道，必须重建面板，
+            // 否则取了点以后 X/Y 还显示 0（实测）。
+            BuildInspector();
+
             Show(isRegion ? "取区域" : "取点",
-                $"记下 {picked.Width}x{picked.Height} @ {picked.X},{picked.Y}，窗口 {picked.Process ?? picked.Class ?? "（无）"}",
+                isRegion
+                    ? $"记下 {picked.Width}x{picked.Height} @ {picked.X},{picked.Y}，窗口 {picked.Process ?? picked.Class ?? "（无）"}"
+                    : $"记下点 {picked.X},{picked.Y}，窗口 {picked.Process ?? picked.Class ?? "（无）"}",
                 InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
-            Show("取区域失败", ex.Message, InfoBarSeverity.Error);
+            Show(isRegion ? "取区域失败" : "取点失败", ex.Message, InfoBarSeverity.Error);
         }
     }
 

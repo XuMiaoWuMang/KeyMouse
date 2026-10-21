@@ -81,7 +81,7 @@ internal static class Usage
 
         new("选区（给人挑坐标，不读文字）", null,
         [
-            new("region pick [--rect x,y,w,h] [--json]", "框一块区域，报告它落在哪个窗口的哪个坐标系里，并给出一条可直接粘贴的 probe 命令。只报坐标；--rect 跳过浮层（脚本与测试用）"),
+            new("region pick [--rect x,y,w,h] [--point] [--json]", "框一块区域，报告它落在哪个窗口的哪个坐标系里，并给出一条可直接粘贴的 probe 命令。--point 改成单击取一个点（点击类动作用它）；--rect 跳过浮层（脚本与测试用）"),
         ]),
 
         new("录制（把一次操作变成可回放的 JSON 流程）", new[]
