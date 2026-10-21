@@ -131,6 +131,25 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     public Visibility NoSelection => Ui.Show(SelectedStep is null);
 
+    // ------------------------------------------------------------------ 调试视图：默认收起
+
+    private bool _jsonOpen;
+
+    /// <summary>
+    /// "这一步的 JSON"是调试视图，默认收起：它一展开就把检查器顶出视口，最后那个框会被窗口底边切掉一半。
+    /// 收起不是省钱，是让默认状态下的面板以一条干净的线结束。
+    /// </summary>
+    public Visibility JsonVisibility => Ui.Show(_jsonOpen);
+
+    public string JsonChevron => _jsonOpen ? "\uE70E" : "\uE70D";
+
+    private void OnToggleJson(object sender, RoutedEventArgs e)
+    {
+        _jsonOpen = !_jsonOpen;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(JsonVisibility)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(JsonChevron)));
+    }
+
     // ------------------------------------------------------------------ window plumbing
 
     private void SizeAndCenter(int width, int height)
@@ -154,7 +173,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateStates()
     {
-        bool any = Model.Steps.Count > 0;
+        bool any = Model.Rows.Count > 0;
         bool selected = SelectedStep is not null;
         PickButton.IsEnabled = SelectedStep is not null;
         DryRunButton.IsEnabled = any && _run is null;
@@ -178,7 +197,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private void OnStepSelected(object sender, SelectionChangedEventArgs e)
     {
         SelectedStep = StepList.SelectedItem as StepVm;
-        foreach (StepVm row in Model.Steps) row.SetSelected(ReferenceEquals(row, SelectedStep));
+        foreach (StepVm row in Model.Rows) row.SetSelected(ReferenceEquals(row, SelectedStep));
         BuildInspector();
         UpdateStates();
     }
@@ -235,7 +254,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         _hasDocument = true;
         _settings.Remember(path);
         RefreshStart();
-            StepList.SelectedIndex = Model.Steps.Count > 0 ? 0 : -1;
+            StepList.SelectedIndex = Model.Rows.Count > 0 ? 0 : -1;
             LogBox.Text = "";
             // 打开这件事走提示条，不占"运行输出"——那个面板只留给运行。
             // 打开成功不弹提示：文件路径已经在标题栏上，弹一次只是噪音。
@@ -270,7 +289,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         if (issues == 0) return true;
 
         BuildInspector();
-        int firstBad = Model.Steps.ToList().FindIndex(s => s.HasIssues) + 1;
+        int firstBad = Model.Rows.ToList().FindIndex(s => s.HasIssues) + 1;
         Show("还差几项没填", $"第 {firstBad} 步有 {issues} 处必填项没填，已在对应字段下方标出。", InfoBarSeverity.Warning);
         return false;
     }
@@ -326,7 +345,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private void Move(int offset)
     {
         if (SelectedStep is not { } step) return;
-        int target = Model.Steps.IndexOf(step) + offset;
+        int target = Model.Rows.IndexOf(step) + offset;
         Model.Move(step, offset);
         StepList.SelectedIndex = target;
     }
@@ -334,7 +353,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private void OnDuplicate(object sender, RoutedEventArgs e)
     {
         if (SelectedStep is not { } step) return;
-        int index = Model.Steps.IndexOf(step);
+        int index = Model.Rows.IndexOf(step);
         Model.Duplicate(step);
         StepList.SelectedIndex = index + 1;
     }
@@ -344,9 +363,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private void DeleteSelected()
     {
         if (SelectedStep is not { } step) return;
-        int index = Model.Steps.IndexOf(step);
+        int index = Model.Rows.IndexOf(step);
         Model.Remove(step);
-        StepList.SelectedIndex = Model.Steps.Count == 0 ? -1 : Math.Min(index, Model.Steps.Count - 1);
+        StepList.SelectedIndex = Model.Rows.Count == 0 ? -1 : Math.Min(index, Model.Rows.Count - 1);
     }
 
     /// <summary>
@@ -362,6 +381,12 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     // ---------------------------------------------------------------- 运行输出：有内容才占地方
 
     private bool _logShown;
+
+    /// <summary>
+    /// 这次运行的计划（循环展开、子流程内联后的线性序列）。它只用来回答一个界面问题：
+    /// Runner 报的"第 N 个执行项"对应界面上哪一行。
+    /// </summary>
+    private FlowPlan? _plan;
 
     /// <summary>没输出时整块收起——一个空的输出面板占着半屏，是最没道理的浪费。</summary>
     public Visibility OutputVisibility => Ui.Show(_logShown);
@@ -416,11 +441,14 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         ? $"{contract.SummaryZh}（{type}）"
         : type;
 
+    /// <summary>
+    /// 加一步：加在选中那一步之后；选中的是组内子步骤，就加进那个组里（所见即所得）。
+    /// 返回值是显示行里真实的那个 VM，选中它而不是"下一个位置"。
+    /// </summary>
     private void AddStep(string type)
     {
-        int index = SelectedStep is null ? Model.Steps.Count : Model.Steps.IndexOf(SelectedStep) + 1;
-        Model.Add(type, index);
-        StepList.SelectedIndex = index;
+        StepVm added = Model.Add(type, SelectedStep);
+        StepList.SelectedItem = added;
     }
 
     /// <summary>系统是否允许动画。关掉时一切过渡都免了。</summary>
@@ -442,7 +470,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// <summary>新建：清空当前流程（未保存时会先问一句），然后停在空状态等下一步。</summary>
     private async void OnNewFlow(object sender, RoutedEventArgs e)
     {
-        if (Model.Steps.Count > 0 && !await ConfirmDiscardAsync("新建流程"))
+        if (Model.Rows.Count > 0 && !await ConfirmDiscardAsync("新建流程"))
         {
             return;
         }
@@ -760,6 +788,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        // 执行序号 ≠ 行号：循环会展开、子流程会内联。先在本地算一份计划，事件来了才认得人。
+        try
+        {
+            _plan = FlowPlan.Build(Model.BuildDocument(), Model.DocumentPath ?? "");
+        }
+        catch (Exception)
+        {
+            _plan = null;   // 计划建不起来不影响跑：Runner 自己会报格式错误
+        }
+
         LogBox.Text = "";
         // 输出面板自己会出现（见 Log），不需要展开任何东西
         Log($"# KeyMouse serve 连接已建立；请求 run {path}{(dryRun ? "（--dry-run）" : "")}");
@@ -796,9 +834,11 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
         }
         finally
         {
+            foreach (StepVm row in Model.Rows) row.ClearRunning();
             _run.Dispose();
             _run = null;
             _job = null;
+            _plan = null;
             _paused = false;
             StopButton.Visibility = Visibility.Collapsed;
             PauseButton.Visibility = Visibility.Collapsed;
@@ -815,15 +855,15 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
     /// </summary>
     private void ShowRunSummary(int exitCode)
     {
-        StepVm? failed = Model.Steps.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
-        int ok = Model.Steps.Count(s => s.RunDetail.EndsWith("ms") && !s.RunDetail.StartsWith("失败"));
-        long totalMs = Model.Steps.Sum(s => long.TryParse(s.RunDetail.Replace("失败 · ", "").Replace(" ms", ""), out long ms) ? ms : 0);
+        StepVm? failed = Model.Rows.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
+        int ok = Model.Rows.Count(s => s.RunDetail.EndsWith("ms") && !s.RunDetail.StartsWith("失败"));
+        long totalMs = Model.Rows.Sum(s => long.TryParse(s.RunDetail.Replace("失败 · ", "").Replace(" ms", ""), out long ms) ? ms : 0);
 
         bool success = exitCode == 0;
         RunSummaryIcon.Glyph = success ? "\uE73E" : "\uEA39";
         RunSummaryText.Text = success
             ? $"{ok} 步全部成功，共 {totalMs} ms。{Explain(0)}"
-            : $"第 {Model.Steps.IndexOf(failed!) + 1} 步「{StepCatalog.NameOf(failed!.Step.Type)}」失败。"
+            : $"第 {failed!.Number} 步「{StepCatalog.NameOf(failed.Step.Type)}」失败。"
               + (ok > 0 ? $"前面 {ok} 步成功。" : "") + Explain(exitCode);
         RunSummaryJump.Visibility = Ui.Show(!success);
         RunSummary.Visibility = Visibility.Visible;
@@ -848,7 +888,7 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
     /// <summary>失败时一键跳到那一步，省得在大流程里自己找。</summary>
     private void OnJumpToFailure(object sender, RoutedEventArgs e)
     {
-        StepVm? failed = Model.Steps.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
+        StepVm? failed = Model.Rows.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
         if (failed is null) return;
         StepList.SelectedItem = failed;
         StepList.ScrollIntoView(failed);
@@ -869,24 +909,48 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
 
             case "step" when e.Index is int index:
                 // 状态显示在**那一行上**，不为每一步弹一次提示：跑二十步弹二十次，那不叫反馈，叫噪音。
-                if (index - 1 >= 0 && index - 1 < Model.Steps.Count)
+                StepVm? row = RowForExecution(index);
+                if (e.State == "started")
                 {
-                    StepVm row = Model.Steps[index - 1];
-                    if (e.State == "started")
+                    foreach (StepVm other in Model.Rows)
+                    {
+                        if (!ReferenceEquals(other, row)) other.ClearRunning();
+                    }
+
+                    if (row is not null)
                     {
                         row.MarkRunning();
-                        StepList.SelectedIndex = index - 1;
-                        Log($"  [{index}/{e.Total ?? Model.Steps.Count}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
+                        StepList.SelectedItem = row;
+                        StepList.ScrollIntoView(row);
                     }
-                    else
-                    {
-                        row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
-                        if (e.Shot is { Length: > 0 } shot && File.Exists(shot)) { row.SetShot(shot); NotifyShot(); }
-                        Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms");
-                    }
+
+                    Log($"  [{index}/{e.Total ?? _plan?.StepCount ?? Model.Rows.Count}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
+                }
+                else if (row is not null)
+                {
+                    row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
+                    if (e.Shot is { Length: > 0 } shot && File.Exists(shot)) { row.SetShot(shot); NotifyShot(); }
+                    Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms");
+                }
+                else
+                {
+                    // 内联进来的子流程步骤不属于这个文件：只在日志里如实报，不往任何一行上贴结果。
+                    Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms（子流程内）");
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// 执行项序号（1 起）→ 界面行。循环展开后会多次指向同一行，那时**同一行反复刷新**是对的：
+    /// 它确实又跑了一遍。
+    /// </summary>
+    private StepVm? RowForExecution(int index)
+    {
+        if (_plan is null) return index - 1 >= 0 && index - 1 < Model.Rows.Count ? Model.Rows[index - 1] : null;
+        int i = index - 1;
+        if (i < 0 || i >= _plan.Items.Count) return null;
+        return Model.VmForNode(_plan.Items[i].Step);
     }
 
     /// <summary>The exit codes mean the same thing here as on the command line - say so in the UI.</summary>

@@ -48,7 +48,7 @@ internal sealed class InspectorBuilder
         {
             panel.Children.Add(Field(field, field.Name, markRequired && field.Required));
         }
-        _host.Children.Add(Card(panel));
+        _host.Children.Add(panel);
     }
 
     /// <summary>
@@ -62,7 +62,6 @@ internal sealed class InspectorBuilder
         var panel = new StackPanel { Spacing = 12 };
         var toggle = new ToggleSwitch
         {
-            Header = "只在满足条件时执行",
             OnContent = "满足才执行",
             OffContent = "每次都执行",
             IsOn = _step.GetText("when.text") is { Length: > 0 },
@@ -75,8 +74,8 @@ internal sealed class InspectorBuilder
         var text = new TextBox { PlaceholderText = "读到这段文字才执行，例如：登录成功" };
         text.Text = _step.GetText("when.text") ?? "";
         text.TextChanged += (_, _) => _step.SetText("when.text", text.Text);
-        body.Children.Add(Label("读到什么才算满足（必填）", text,
-            "在开始这一步之前先读一次；读到就执行，读不到就按下面的设置跳过或失败。"));
+        body.Children.Add(Label("读到什么才算满足", text,
+            "在开始这一步之前先读一次；读到就执行，读不到就按下面的设置跳过或失败。", required: true));
 
         body.Children.Add(new Expander
         {
@@ -93,7 +92,7 @@ internal sealed class InspectorBuilder
             text.Text = "";
         };
 
-        _host.Children.Add(Card(panel));
+        _host.Children.Add(Section("只在满足条件时执行", required: false, panel));
     }
 
     private UIElement Advanced()
@@ -109,7 +108,7 @@ internal sealed class InspectorBuilder
 
     private UIElement Field(FlowField field, string path, bool required)
     {
-        string label = $"{field.LabelZh}{(required ? "  必填" : "")}";
+        string label = field.LabelZh;
 
         if (field.Kind is "steps" or "vars" or "stringList")
         {
@@ -138,7 +137,7 @@ internal sealed class InspectorBuilder
         // const 与嵌套结构自带标题：直接返回，否则同一个名字会出现两遍。
         if (field.Kind == "const" || FlowSchema.ShapeFields(field.Kind).Count > 0) return control;
 
-        var fieldBlock = Label(label, control, field.HelpZh);
+        var fieldBlock = Label(label, control, field.HelpZh, required);
         if (_step.IssueFor(path) is { Length: > 0 } complaint)
         {
             // 规则 4.6：错误文字放在输入框下方，而不是只弹一个会消失的提示。
@@ -165,7 +164,8 @@ internal sealed class InspectorBuilder
         }
 
         var grid = new Grid { ColumnSpacing = 12, RowSpacing = 12 };
-        int columns = fields.Count <= 1 ? 1 : 2;
+        // 规格表是一列：字段名必须落在同一条竖线上，两列会把左栏劈成两段。
+        const int columns = 1;
         for (int i = 0; i < columns; i++)
         {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -204,18 +204,7 @@ internal sealed class InspectorBuilder
             body.Children.Add(pick);
         }
 
-        var block = new StackPanel { Spacing = 8 };
-        block.Children.Add(Header($"{field.LabelZh}{(required ? "（必填）" : "")}"));
-        block.Children.Add(new Border
-        {
-            // 分组靠留白与一条细竖线，不再套一层灰底卡片：层级要看得懂，容器不必套容器。
-            Margin = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(14, 2, 0, 2),
-            BorderThickness = new Thickness(1, 0, 0, 0),
-            BorderBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],
-            Child = body,
-        });
-        return block;
+        return Section(field.LabelZh, required, body);
     }
 
     /// <summary>固定值：不渲染输入控件，只在缺失时写进 JSON，并显示成一句说明。</summary>
@@ -225,15 +214,25 @@ internal sealed class InspectorBuilder
         return Note($"{field.LabelZh}：{field.Constant}（固定）");
     }
 
-    /// <summary>标签 + 一行 ⓘ（说明收在提示里，字段本身只占一行）。</summary>
-    private static StackPanel Label(string label, UIElement control, string? help)
+    /// <summary>
+    /// 一个字段 = 一行标签（+ⓘ，右侧在需要时标「必填」）+ 控件。
+    ///
+    /// 「必填」不再拼进标签的文字里：拼进去以后每条标签长短不一，左边那张"标签列"就没有一条竖线可看，
+    /// 而这条竖线正是表单能被一眼扫完的原因。它现在是一个独立的、右对齐的弱标记。
+    /// </summary>
+    private static StackPanel Label(string label, UIElement control, string? help, bool required = false)
     {
-        var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        head.Children.Add(new TextBlock
-        {
-            Text = label,
-            Style = (Style)Application.Current.Resources["FieldCaption"],
-        });
+        // 规格表：左边 108 是一列右对齐的字段名，右边是值。字段名右对齐，值左对齐，
+        // 中间那条空白就是"表"的竖线——它不必真的画出来。
+        var row = new Grid { ColumnSpacing = 12 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(108) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var gutter = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 4, 0, 0) };
+
+        var marks = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, HorizontalAlignment = HorizontalAlignment.Right };
+
+        var head = new Grid { ColumnSpacing = 4 };
         if (help is { Length: > 0 })
         {
             var info = new FontIcon
@@ -244,12 +243,36 @@ internal sealed class InspectorBuilder
                 Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
             };
             ToolTipService.SetToolTip(info, help);
-            head.Children.Add(info);
+            marks.Children.Add(info);
         }
 
-        var panel = new StackPanel { Spacing = 4 };   // 标签到控件
-        panel.Children.Add(head);
-        panel.Children.Add(control);
+        if (required)
+        {
+            marks.Children.Add(new TextBlock
+            {
+                Text = "必填",
+                Style = (Style)Application.Current.Resources["RequiredMark"],
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
+        head.Children.Add(new TextBlock
+        {
+            Text = label,
+            Style = (Style)Application.Current.Resources["FieldLabel"],
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+
+        gutter.Children.Add(head);
+        if (marks.Children.Count > 0) gutter.Children.Add(marks);
+
+        row.Children.Add(gutter);
+        Grid.SetColumn(control as FrameworkElement, 1);
+        row.Children.Add(control);
+
+        var panel = new StackPanel { Spacing = 12 };
+        panel.Children.Add(row);
         return panel;
     }
 
@@ -266,9 +289,39 @@ internal sealed class InspectorBuilder
         Style = (Style)Application.Current.Resources["FieldCaption"],
     };
 
-    private static Border Card(UIElement child) => new()
+    /// <summary>
+    /// 分区：一行标题（需要时右侧标「必填」）+ 一条通栏 1px 线 + 内容。
+    /// 层级由字重与线说清楚，所以不再套一层灰底卡片——容器不必套容器。
+    /// </summary>
+    private static UIElement Section(string title, bool required, UIElement body)
     {
-        Style = (Style)Application.Current.Resources["CardBorder"],
-        Child = child,
-    };
+        var head = new Grid { ColumnSpacing = 8 };
+        head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        head.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        head.Children.Add(Header(title));
+
+        if (required)
+        {
+            var mark = new TextBlock
+            {
+                Text = "必填",
+                Style = (Style)Application.Current.Resources["RequiredMark"],
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(mark, 2);
+            head.Children.Add(mark);
+        }
+
+        var stack = new StackPanel { Spacing = 10 };
+        stack.Children.Add(head);
+        stack.Children.Add(new Border
+        {
+            Height = 1,
+            Background = (Brush)Application.Current.Resources["KpRuleBrush"],
+            Margin = new Thickness(0, 2, 0, 6),
+        });
+        stack.Children.Add(body);
+        return stack;
+    }
 }

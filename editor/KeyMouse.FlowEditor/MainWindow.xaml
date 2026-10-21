@@ -5,10 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:KeyMouse.FlowEditor">
 
-    <Grid x:Name="Root" SizeChanged="OnPaletteSizeChanged">
-        <Grid.Resources>
-        </Grid.Resources>
-
+    <Grid x:Name="Root" SizeChanged="OnPaletteSizeChanged" Background="{ThemeResource KpPaperBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -17,111 +14,106 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 -->
-        <Grid x:Name="TitleBar" Grid.Row="0" Height="44" Padding="16,0" ColumnSpacing="12">
+        <!-- 标题栏：名字在左，文件在右，未保存是一颗朱砂点。 -->
+        <Grid x:Name="TitleBar" Grid.Row="0" Height="44" Padding="16,0" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                <FontIcon Glyph="&#xE7C9;" FontSize="16" />
-                <TextBlock Text="KeyMouse 流程编辑器" Style="{StaticResource SectionHeader}"
-                           VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE7C9;" FontSize="13" Foreground="{ThemeResource KpInkBrush}" />
+                <TextBlock Text="KeyMouse" Style="{StaticResource TitleText}" VerticalAlignment="Center" />
+                <TextBlock Text="流程编辑器" VerticalAlignment="Center" FontSize="13"
+                           Foreground="{ThemeResource KpInk3Brush}" />
             </StackPanel>
             <TextBlock Grid.Column="1" Text="{x:Bind Model.Subtitle, Mode=OneWay}" VerticalAlignment="Center"
                        HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
-                       Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                       FontFamily="{StaticResource KpMonoFont}" FontSize="11"
+                       Foreground="{ThemeResource KpInk3Brush}" />
             <TextBlock Grid.Column="2" Text="{x:Bind Model.DirtyMark, Mode=OneWay}" VerticalAlignment="Center"
-                       Margin="0,0,140,0" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                       Margin="0,0,140,0" FontSize="11"
+                       Foreground="{ThemeResource KpSignalBrush}" />
         </Grid>
 
-        <!-- 工具栏：常用动作在左（加步骤、跑），文件操作收进"文件"菜单 -->
-        <Grid Grid.Row="1" Padding="16,2,16,10" ColumnSpacing="12">
+        <!-- 工具栏：一条带下划线的纸带。左边加步骤，右边跑。 -->
+        <Grid Grid.Row="1" Padding="16,0,16,0" ColumnSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollMode="Auto" VerticalAlignment="Center">
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                    HorizontalScrollMode="Auto" VerticalAlignment="Center">
-                        <StackPanel x:Name="PaletteHost" Orientation="Horizontal" Spacing="6" />
-                    </ScrollViewer>
-                </ScrollViewer>
-                <Button x:Name="MoreStepsButton" Click="OnMoreSteps" Style="{StaticResource ToolButton}" ToolTipService.ToolTip="按用途挑步骤类型（Ctrl+Shift+A）">
+            <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,0,10">
+                <StackPanel x:Name="PaletteHost" Orientation="Horizontal" Spacing="2" />
+                <Button x:Name="MoreStepsButton" Click="OnMoreSteps" Style="{StaticResource ToolButton}"
+                        ToolTipService.ToolTip="按用途挑步骤类型（Ctrl+Shift+A）">
                     <Button.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="A" />
                     </Button.KeyboardAccelerators>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE710;" FontSize="14" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE710;" FontSize="11" />
                         <TextBlock Text="更多" />
                     </StackPanel>
                 </Button>
-
-                <Border Width="1" Height="24" Margin="4,0" Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-                        VerticalAlignment="Center" />
-
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,10">
                 <Button x:Name="PauseButton" Click="OnPauseRun" Visibility="Collapsed" Style="{StaticResource ToolButton}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE769;" FontSize="14" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE769;" FontSize="11" />
                         <TextBlock Text="暂停" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="StopButton" Click="OnStopRun" Visibility="Collapsed" Style="{StaticResource ToolButton}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE71A;" FontSize="14" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE71A;" FontSize="11" />
                         <TextBlock Text="停止" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="DryRunButton" Click="OnDryRun" Style="{StaticResource ToolButton}"
                         ToolTipService.ToolTip="只做资格检查，不发送任何输入">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE768;" FontSize="14" />
-                        <TextBlock Text="试运行" />
-                    </StackPanel>
+                    <TextBlock Text="试运行" Padding="4,0" />
                 </Button>
-                <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,6"
+                <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource KpPrimaryButton}"
                         ToolTipService.ToolTip="播放（F5）">
                     <Button.KeyboardAccelerators>
                         <KeyboardAccelerator Key="F5" />
                     </Button.KeyboardAccelerators>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE768;" FontSize="14" />
-                        <TextBlock Text="播放" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE768;" FontSize="11" />
+                        <TextBlock Text="播放" FontWeight="SemiBold" />
                     </StackPanel>
                 </Button>
-
+                <Border Width="1" Height="20" Margin="6,0" Background="{ThemeResource KpRuleBrush}"
+                        VerticalAlignment="Center" />
                 <DropDownButton x:Name="FileButton" Style="{StaticResource ToolButton}" ToolTipService.ToolTip="文件">
-                    <FontIcon Glyph="&#xE712;" FontSize="14" />
+                    <FontIcon Glyph="&#xE712;" FontSize="12" />
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                             <MenuFlyoutItem x:Name="OpenButton" Text="打开…" Click="OnOpen">
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Modifiers="Control" Key="O" />
-                            </MenuFlyoutItem.KeyboardAccelerators>
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Modifiers="Control" Key="O" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8E5;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem x:Name="SaveButton" Text="保存" Click="OnSave">
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Modifiers="Control" Key="S" />
-                            </MenuFlyoutItem.KeyboardAccelerators>
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Modifiers="Control" Key="S" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE74E;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem x:Name="SaveAsButton" Text="另存为…" Click="OnSaveAs">
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Modifiers="Control,Shift" Key="S" />
-                            </MenuFlyoutItem.KeyboardAccelerators>
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Modifiers="Control,Shift" Key="S" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE792;" />
                                 </MenuFlyoutItem.Icon>
@@ -136,185 +128,239 @@
                     </DropDownButton.Flyout>
                 </DropDownButton>
             </StackPanel>
+
+            <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Hairline}" />
         </Grid>
 
-        <!-- 步骤列表 + 配置：中间的分隔条可以拖，配置区想多宽就多宽 -->
-        <Grid Grid.Row="2" Padding="16,0,16,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ListColumn" Width="1.4*" MinWidth="260" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="InspectorColumn" Width="1*" MinWidth="380" />
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+        <!-- 工作区：一张纸，左账本（一条脊柱串起全部步骤），右规格表。 -->
+        <Grid Grid.Row="2" Padding="16,10,16,0">
+            <Border Style="{StaticResource CardBorder}" Padding="0">
                 <Grid>
-                    <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Steps, Mode=OneWay}" KeyDown="OnStepListKeyDown"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"
-                              SelectionMode="Single" SelectionChanged="OnStepSelected"
-                              CanReorderItems="True" CanDragItems="True" AllowDrop="True"
-                              ItemContainerTransitions="{x:Null}">
-                        <ListView.ContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Text="复制这一步" Click="OnDuplicate" />
-                                <MenuFlyoutItem Text="删除这一步" Click="OnDelete" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem Text="上移" Click="OnMoveUp" />
-                                <MenuFlyoutItem Text="下移" Click="OnMoveDown" />
-                            </MenuFlyout>
-                        </ListView.ContextFlyout>                        <ListView.KeyboardAccelerators>
-                            <KeyboardAccelerator Key="Delete" />
-                        </ListView.KeyboardAccelerators>
-                        <ListView.ItemContainerStyle>
-                            <!-- ListViewItem 默认按内容宽度排（Left），于是行里的 * 列没有空间可分，
-                                 摘要会被压成一列一个字。让行撑满列表宽度，列宽才按定义分配。 -->
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="Padding" Value="0" />
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="local:StepVm">
-                                <Grid ColumnSpacing="12" Padding="4,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{x:Bind Number, Mode=OneWay}" Width="22" TextAlignment="Right"
-                                               VerticalAlignment="Center" Opacity="0.55"
-                                               Style="{StaticResource CaptionTextBlockStyle}" />
-                                    <!-- 徽标的面色跟着"这一行是不是选中的"走：只有选中那一行是强调色。
-                                         写死成强调色的话，选中态就少了最明显的那一个信号（实测：看起来像点了没反应）。 -->
-                                    <Border Grid.Column="1" Width="28" Height="28" CornerRadius="6"
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="ListColumn" Width="1.45*" MinWidth="260" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition x:Name="InspectorColumn" Width="1*" MinWidth="380" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <!-- 脊柱：一条 1px 的线，从第一颗珠穿到最后一颗；它是"顺序"本身，不是装饰。 -->
+                        <Border Width="1" Margin="15,18,0,18" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                                Background="{ThemeResource KpRuleBrush}" />
+
+                        <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Rows, Mode=OneWay}" KeyDown="OnStepListKeyDown"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"
+                                  SelectionMode="Single" SelectionChanged="OnStepSelected"
+                                  ItemContainerTransitions="{x:Null}" Padding="0,16,0,8" Background="Transparent">
+                            <ListView.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="复制这一步" Click="OnDuplicate" />
+                                    <MenuFlyoutItem Text="删除这一步" Click="OnDelete" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="上移" Click="OnMoveUp" />
+                                    <MenuFlyoutItem Text="下移" Click="OnMoveDown" />
+                                </MenuFlyout>
+                            </ListView.ContextFlyout>
+                            <ListView.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Delete" />
+                            </ListView.KeyboardAccelerators>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="MinHeight" Value="38" />
+                                    <!-- 系统的焦点黑方框留在纸上太脏，而且选中态已经由珠 + 纸色说清（单选列表里焦点即选中）。 -->
+                                    <Setter Property="UseSystemFocusVisuals" Value="False" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="local:StepVm">
+                                    <Grid Height="38" ColumnSpacing="8" Padding="{x:Bind RowPadding, Mode=OneWay}"
+                                          Background="{x:Bind RowBrush, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 正在执行：行首 2px 朱砂细条。一屏只有一条，它的位置就是"现在到哪儿了"。 -->
+                                        <Border Width="2" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                                                Margin="-22,0,0,0" Background="{ThemeResource KpSignalBrush}"
+                                                Visibility="{x:Bind ActivityVisibility, Mode=OneWay}" />
+
+                                        <!-- 分支脊柱：子步骤落在自己那条线上，珠子照样把线咬断。 -->
+                                        <Border Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                                Background="{ThemeResource KpRuleBrush}"
+                                                Visibility="{x:Bind BranchVisibility, Mode=OneWay}" />
+                                        <!-- 肘：组内第一行从主脊柱连到分支，只有第一行需要。 -->
+                                        <Border Width="22" Height="1" Margin="-7,0,0,0" HorizontalAlignment="Left"
+                                                VerticalAlignment="Top" Background="{ThemeResource KpRuleBrush}"
+                                                Visibility="{x:Bind ElbowVisibility, Mode=OneWay}" />
+                                        <Border Width="{x:Bind BeadSize, Mode=OneWay}" Height="{x:Bind BeadSize, Mode=OneWay}"
+                                                CornerRadius="6" HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" Background="{x:Bind BeadBrush, Mode=OneWay}"
+                                                BorderBrush="{x:Bind BeadRingBrush, Mode=OneWay}" BorderThickness="2" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind Number, Mode=OneWay}"
+                                                   Style="{StaticResource LedgerNumber}"
+                                                   Foreground="{x:Bind NumberBrush, Mode=OneWay}" />
+                                        <Border Grid.Column="2" Width="24" Height="24" CornerRadius="4"
                                                 Background="{x:Bind BadgeBrush, Mode=OneWay}">
-                                            <FontIcon Glyph="{x:Bind Glyph}" FontSize="13"
+                                            <FontIcon Glyph="{x:Bind Glyph}" FontSize="11"
                                                       Foreground="{x:Bind BadgeInk, Mode=OneWay}" />
                                         </Border>
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="3" VerticalAlignment="Center">
                                             <TextBlock Text="{x:Bind TypeName}" Style="{StaticResource SectionHeader}"
                                                        TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
                                             <TextBlock Text="{x:Bind Summary, Mode=OneWay}"
-                                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                                       FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{ThemeResource KpInk3Brush}" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6"
-                                                    VerticalAlignment="Center" Margin="0,0,12,0"
-                                                    Visibility="{x:Bind RunVisibility, Mode=OneWay}">
-                                            <FontIcon Glyph="{x:Bind RunGlyph, Mode=OneWay}" FontSize="13" />
-                                            <TextBlock Text="{x:Bind RunDetail, Mode=OneWay}" VerticalAlignment="Center"
-                                                       Style="{StaticResource FieldCaption}" />
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8"
+                                                    VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <!-- 分组行说它带了几步；跑过之后这里换成运行结果。 -->
+                                            <TextBlock Text="{x:Bind ChildCount, Mode=OneWay}"
+                                                       Visibility="{x:Bind ChildCountVisibility, Mode=OneWay}"
+                                                       VerticalAlignment="Center" FontFamily="{StaticResource KpMonoFont}"
+                                                       FontSize="11" Foreground="{ThemeResource KpInk3Brush}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="6"
+                                                        Visibility="{x:Bind RunVisibility, Mode=OneWay}">
+                                                <FontIcon Glyph="{x:Bind RunGlyph, Mode=OneWay}" FontSize="11" />
+                                                <TextBlock Text="{x:Bind RunDetail, Mode=OneWay}" VerticalAlignment="Center"
+                                                           FontFamily="{StaticResource KpMonoFont}" FontSize="11"
+                                                           Foreground="{ThemeResource KpInk3Brush}" />
+                                            </StackPanel>
                                         </StackPanel>
+
+                                        <Border Grid.Column="2" Grid.ColumnSpan="3" VerticalAlignment="Bottom" Height="1"
+                                                Background="{ThemeResource KpRuleBrush}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <!-- 空白文档：已经新建了，只是还没步骤。这时要回答"第一步怎么加"。 -->
                         <StackPanel x:Name="EmptyDocHint" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    MaxWidth="360" Spacing="8" Visibility="Collapsed">
-                            <TextBlock Text="还没有步骤" Style="{StaticResource PaneTitle}" />
-                            <TextBlock Style="{StaticResource FieldCaption}" TextWrapping="Wrap"
-                                       Text="用工具栏上那排常用步骤直接加一步，或者点「更多」按用途挑；也可以按 Ctrl+Shift+A。" />
+                                    MaxWidth="320" Spacing="6" Visibility="Collapsed">
+                            <TextBlock Text="空流程" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Style="{StaticResource FieldCaption}"
+                                       Text="从上面挑一个动作加进来；按 Ctrl+Shift+A 看全部类型。" />
                         </StackPanel>
+                    </Grid>
 
-                        <!-- 起始面必须能滚：内容比卡片高时，宁可滚动，也不许把标题切成半截字。
-                             注意：要收起的是**这个 ScrollViewer**，不是里面的 EmptyState。
-                             只收起里面的内容，外层这块看不见的滚动面仍然盖在步骤列表上，
-                             点击与按键全被它吃掉——实测：点任何一行都没反应。 -->
-                        <ScrollViewer x:Name="StartScroll" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto" HorizontalScrollMode="Disabled">
-                            <StackPanel x:Name="EmptyState" HorizontalAlignment="Stretch"
-                                        MaxWidth="520" Spacing="24" Padding="0,16">
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="还没有打开流程" Style="{StaticResource PaneTitle}" />
-                                    <TextBlock Style="{StaticResource FieldCaption}" TextWrapping="Wrap"
-                                               Text="流程是一串步骤：切窗口、点击、输入文字、等某段文字出现。搭好之后可以先试运行，确认真能走通再播放。" />
-                                </StackPanel>
+                    <local:Splitter Grid.Column="1" x:Name="VerticalSplitter" Target="{x:Bind InspectorColumn}" Edge="Left"
+                                    Direction="Horizontal" Invert="True" MinTarget="320" MaxTarget="820"
+                                    MinWidth="8" MinHeight="0" Visibility="{x:Bind HasSelection, Mode=OneWay}" />
+
+                    <!-- 规格表：左栏是字段名，右栏是值。 -->
+                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Visible" VerticalScrollMode="Auto">
+                        <StackPanel Margin="20,16,20,20" Spacing="16" Visibility="{x:Bind HasSelection, Mode=OneWay}">
+                            <StackPanel x:Name="InspectorHost" Spacing="16" />
+                            <StackPanel Spacing="6">
+                                <Button Click="OnToggleJson" Style="{StaticResource ToolButton}" Padding="0"
+                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                        ToolTipService.ToolTip="展开或收起这一步的 JSON">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="JSON" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
+                                        <FontIcon Grid.Column="1" Glyph="{x:Bind JsonChevron, Mode=OneWay}" FontSize="10"
+                                                  VerticalAlignment="Center"
+                                                  Foreground="{ThemeResource KpInk3Brush}" />
+                                    </Grid>
+                                </Button>
+                                <Border Style="{StaticResource Hairline}" />
+                                <TextBox Text="{x:Bind SelectedStep.Json, Mode=OneWay}" IsReadOnly="True"
+                                         Visibility="{x:Bind JsonVisibility, Mode=OneWay}"
+                                         TextWrapping="Wrap" AcceptsReturn="True" FontFamily="{StaticResource KpMonoFont}"
+                                         FontSize="11" Background="{ThemeResource KpFieldBrush}"
+                                         BorderBrush="{ThemeResource KpRuleBrush}" BorderThickness="1" CornerRadius="4"
+                                         MinHeight="80" MaxHeight="200" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 起始面：没有打开流程时，它拥有整张纸。 -->
+                    <Grid Grid.ColumnSpan="3" Visibility="{x:Bind StartScroll.Visibility, Mode=OneWay}">
+                        <ScrollViewer x:Name="StartScroll" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto"
+                                      HorizontalScrollMode="Disabled">
+                            <StackPanel x:Name="EmptyState" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        MaxWidth="640" Spacing="16" Padding="24,24,24,20">
+                                <TextBlock Text="还没有打开流程" Style="{StaticResource PaneTitle}" />
+                                <TextBlock Style="{StaticResource FieldCaption}" MaxWidth="520" TextWrapping="Wrap"
+                                           Text="一条流程就是一串动作：切到某个窗口、点一下、输入文字、等屏幕上出现某段字。写好后可以先试运行，确认真能走通再播放。" />
+                                <Border Style="{StaticResource Hairline}" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button x:Name="StartNewButton" Content="新建流程" Click="OnNewFlow"
-                                            Style="{StaticResource AccentButtonStyle}" Padding="16,8"
+                                            Style="{StaticResource KpPrimaryButton}"
                                             ToolTipService.ToolTip="新建流程（Ctrl+N）">
                                         <Button.KeyboardAccelerators>
                                             <KeyboardAccelerator Modifiers="Control" Key="N" />
                                         </Button.KeyboardAccelerators>
                                     </Button>
-                                    <Button x:Name="StartOpenButton" Content="打开流程…" Click="OnOpen" Padding="16,8" />
+                                    <Button x:Name="StartOpenButton" Content="打开流程…" Click="OnOpen" Padding="16,7" />
                                 </StackPanel>
-                                <StackPanel x:Name="RecentBlock" Spacing="8" Visibility="Collapsed">
-                                    <TextBlock Text="最近打开" Style="{StaticResource SectionHeader}" />
-                                    <StackPanel x:Name="RecentList" Spacing="2" />
+                                <StackPanel x:Name="RecentBlock" Spacing="6" Visibility="Collapsed">
+                                    <TextBlock Text="最近" Style="{StaticResource MicroLabel}" />
+                                    <StackPanel x:Name="RecentList" Spacing="0" />
                                 </StackPanel>
+                                <Border Style="{StaticResource Hairline}" />
                                 <TextBlock Style="{StaticResource FieldCaption}" TextWrapping="Wrap"
-                                           Text="想先录一段操作？在命令行运行 KeyMouse record，再打开它生成的 JSON。" />
+                                           Text="想先录一段？在命令行跑 KeyMouse record，再打开它写出的 JSON。" />
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
-                </Border>
-
-                <local:Splitter Grid.Column="1" x:Name="VerticalSplitter" Target="{x:Bind InspectorColumn}" Edge="Left"
-                                Direction="Horizontal" Invert="True" MinTarget="320" MaxTarget="820"
-                                MinWidth="8" MinHeight="0" /><ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Visible" VerticalScrollMode="Auto">
-                    <StackPanel Spacing="12" Visibility="{x:Bind HasSelection, Mode=OneWay}">
-                        <StackPanel x:Name="InspectorHost" Spacing="16" />
-                        <Border Style="{StaticResource CardBorder}">
-                            <Expander Header="这一步的 JSON（调试视图）">
-                                <TextBox Text="{x:Bind SelectedStep.Json, Mode=OneWay}" IsReadOnly="True"
-                                         TextWrapping="Wrap" AcceptsReturn="True" FontFamily="Consolas"
-                                         FontSize="12" MinHeight="100" MaxHeight="240" />
-                            </Expander>
-                        </Border>
-                    </StackPanel>
-            </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
 
-        <!-- 运行输出：没输出时只有一行标题，有输出才展开；高度可以拖 -->
         <local:Splitter Grid.Row="3" x:Name="HorizontalSplitter" Target="{x:Bind LogRow}" Edge="Top"
                         Direction="Vertical" Invert="True" MinTarget="0" MaxTarget="420"
-                        Visibility="{x:Bind LogSplitterVisibility, Mode=OneWay}" />
+                        Visibility="{x:Bind LogSplitterVisibility, Mode=OneWay}" Margin="16,0,16,0" />
 
-        <Grid Grid.Row="4" Padding="16,6,16,14" RowSpacing="8">
+        <Grid Grid.Row="4" Padding="16,8,16,16">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
                 <RowDefinition x:Name="LogRow" Height="Auto" />
             </Grid.RowDefinitions>
 
-
-            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="10"
+            <Border Grid.Row="0" Style="{StaticResource CardBorder}" Padding="14,12"
                     Visibility="{x:Bind OutputVisibility, Mode=OneWay}">
                 <Grid RowSpacing="8">
                     <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="运行输出" Style="{StaticResource SectionHeader}" VerticalAlignment="Center" />
+                        <TextBlock Text="运行输出" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
                         <Button Grid.Column="1" Click="OnClearLog" Style="{StaticResource ToolButton}"
                                 ToolTipService.ToolTip="清空输出">
-                            <FontIcon Glyph="&#xE74D;" FontSize="13" />
+                            <FontIcon Glyph="&#xE74D;" FontSize="11" />
                         </Button>
                     </Grid>
 
-                <!-- 运行结论：跑完就地写在这儿。不弹模态、也不用一闪而过的提示打发人。 -->
-                <Grid x:Name="RunSummary" Grid.Row="1" Visibility="Collapsed" Margin="0,10,0,4" ColumnSpacing="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <FontIcon x:Name="RunSummaryIcon" Grid.Column="0" FontSize="14" VerticalAlignment="Top" Margin="0,2,0,0" />
-                    <TextBlock x:Name="RunSummaryText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" />
-                    <Button x:Name="RunSummaryJump" Grid.Column="2" Content="选中失败的那一步" Click="OnJumpToFailure"
-                            Visibility="Collapsed" />
-                </Grid>
+                    <Grid x:Name="RunSummary" Grid.Row="1" Visibility="Collapsed" Margin="0,2,0,2" ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon x:Name="RunSummaryIcon" Grid.Column="0" FontSize="12" VerticalAlignment="Top" Margin="0,2,0,0" />
+                        <TextBlock x:Name="RunSummaryText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <Button x:Name="RunSummaryJump" Grid.Column="2" Content="选中失败的那一步" Click="OnJumpToFailure"
+                                Visibility="Collapsed" Padding="10,4" />
+                    </Grid>
+
                     <TextBox x:Name="LogBox" Grid.Row="2" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
-                             FontFamily="Consolas" FontSize="12"
+                             FontFamily="{StaticResource KpMonoFont}" FontSize="11" Padding="8"
+                             Background="{ThemeResource KpFieldBrush}" BorderBrush="{ThemeResource KpRuleBrush}"
+                             BorderThickness="1" CornerRadius="4"
                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
                              ScrollViewer.VerticalScrollBarVisibility="Visible" />
                 </Grid>

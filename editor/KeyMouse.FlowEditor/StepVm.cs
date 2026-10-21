@@ -49,7 +49,10 @@ public sealed class StepVm : INotifyPropertyChanged
     private static readonly string[] RowProperties =
     [
         nameof(Number), nameof(Summary), nameof(RunGlyph), nameof(RunVisibility), nameof(RunDetail),
+        nameof(RowPadding), nameof(BranchVisibility), nameof(ElbowVisibility), nameof(ChildCount), nameof(ChildCountVisibility),
         nameof(ShotVisibility), nameof(ShotImage), nameof(BadgeBrush), nameof(BadgeInk),
+        nameof(BeadBrush), nameof(BeadRingBrush), nameof(RowBrush), nameof(BeadSize),
+        nameof(ActivityVisibility), nameof(NumberBrush),
     ];
 
     internal void RefreshBadge() => Refresh();
@@ -85,11 +88,44 @@ public sealed class StepVm : INotifyPropertyChanged
     /// 强调色的意义是"这里可以动"；铺在每一行上就变成了装饰，选中态也失去对比。
     /// </summary>
     public Brush BadgeBrush => IsSelected
-        ? (Brush)Application.Current.Resources["AccentFillColorSecondaryBrush"]
-        : (Brush)Application.Current.Resources["ControlFillColorSecondaryBrush"];
+        ? (Brush)Application.Current.Resources["KpSignalBrush"]
+        : (Brush)Application.Current.Resources["KpFieldBrush"];
     public Brush BadgeInk => IsSelected
-        ? (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"]
-        : (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+        ? (Brush)Application.Current.Resources["KpOnSignalBrush"]
+        : (Brush)Application.Current.Resources["KpInk2Brush"];
+
+    /// <summary>
+    /// 账本脊柱上的那颗珠。
+    ///
+    /// 全部步骤共用一条 1px 的脊线，珠子把脊线"咬断"：未选中的珠是纸色、圈一道细线，
+    /// 看起来是脊线上的一个结；选中的珠实心朱砂——同一屏里唯一的一颗。
+    /// 顺序由这条线的连续与断开表达，不靠行号加粗或底色。
+    /// </summary>
+    private bool _running;
+
+    /// <summary>正在执行的那一行：行首一条朱砂细条。一屏只有一条，位置就是"现在到哪儿了"。</summary>
+    public Visibility ActivityVisibility => Ui.Show(_running);
+
+    /// <summary>跑动中的编号也翻朱砂——与那条细条是同一个信号。</summary>
+    public Brush NumberBrush => _running
+        ? (Brush)Application.Current.Resources["KpSignalBrush"]
+        : (Brush)Application.Current.Resources["KpInk2Brush"];
+
+    public Brush BeadBrush => IsSelected
+        ? (Brush)Application.Current.Resources["KpSignalBrush"]
+        : (Brush)Application.Current.Resources["KpCardBrush"];
+
+    /// <summary>选中的珠大一号：一屏只有一颗，它是"当前在这儿"，不是装饰。</summary>
+    public double BeadSize => IsSelected ? 13 : 9;
+
+    public Brush BeadRingBrush => IsSelected
+        ? (Brush)Application.Current.Resources["KpCardBrush"]
+        : (Brush)Application.Current.Resources["KpInk3Brush"];
+
+    /// <summary>选中那一行的底色：一层极浅的纸黄，只用来把"当前"这条从纸面上轻轻托起来。</summary>
+    public Brush RowBrush => IsSelected
+        ? (Brush)Application.Current.Resources["KpSelectedBrush"]
+        : (Brush)Application.Current.Resources["ControlFillColorTransparentBrush"];
 
     // ---------------------------------------------------------------- 运行证据（每一步留下的截图）
 
@@ -150,6 +186,14 @@ public sealed class StepVm : INotifyPropertyChanged
     {
         _runState = "running";
         _runMs = 0;
+        _running = true;
+        Refresh();
+    }
+
+    internal void ClearRunning()
+    {
+        if (!_running) return;
+        _running = false;
         Refresh();
     }
 
@@ -159,6 +203,7 @@ public sealed class StepVm : INotifyPropertyChanged
         // "跳过"是什么意思，都由 Runner 的日志说明，这一行不替它解释。
         _runState = exitCode == 0 ? "ok" : "failed";
         _runMs = durationMs;
+        _running = false;
         Refresh();
     }
 
@@ -217,7 +262,39 @@ public sealed class StepVm : INotifyPropertyChanged
 
     // ---------------------------------------------------------------- display
 
-    public int Number { get; internal set; }
+    /// <summary>分层编号：顶层 1、2、3，组里的 2.1、2.2。等宽右对齐，个位永远在同一条竖线上。</summary>
+    public string Number { get; internal set; } = "";
+
+    /// <summary>0 = 顶层，1 = 组内。只支持两层——格式本身就只有两层（分组是唯一的容器）。</summary>
+    internal int Depth { get; set; }
+
+    /// <summary>属于哪个分组（顶层步骤为 null）。</summary>
+    internal StepVm? Group { get; set; }
+
+    internal bool FirstInGroup { get; set; }
+
+    public bool IsChild => Depth > 0;
+
+    /// <summary>子步骤整体右移，让"它属于上面那个组"不用解释。</summary>
+    public Thickness RowPadding => new(Depth * 22, 0, 14, 0);
+
+    public Visibility BranchVisibility => Ui.Show(IsChild);
+
+    /// <summary>组内第一行画一段横线，把分支接回主脊柱——只有第一行需要这个"肘"。</summary>
+    public Visibility ElbowVisibility => Ui.Show(IsChild && FirstInGroup);
+
+    /// <summary>
+    /// 分组：只有 repeat / foreach 带子步骤（call 是引用另一个文件，不在这一行里内联）。
+    /// 这个判断只用于"能不能往里加一步"和显示计数，不参与渲染哪些字段（那是契约的事）。
+    /// </summary>
+    public bool IsGroup => Step.Type is "repeat" or "foreach";
+
+    /// <summary>分组行在右侧说它带了几步；空组要说"空组"——否则没法把第一步放进去。</summary>
+    public string ChildCount => Step.Steps is { Count: > 0 } children
+        ? $"{children.Count} 步"
+        : IsGroup ? "空组" : "";
+
+    public Visibility ChildCountVisibility => Ui.Show(ChildCount.Length > 0);
     public string TypeName => StepCatalog.NameOf(Step.Type);
     public string Glyph => StepCatalog.GlyphOf(Step.Type);
     public string Summary => StepCatalog.Summarize(Step);

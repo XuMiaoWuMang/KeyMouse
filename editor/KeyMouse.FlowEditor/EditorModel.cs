@@ -22,6 +22,15 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public ObservableCollection<StepVm> Steps { get; } = [];
 
+    /// <summary>
+    /// 列表真正显示的东西：顶层步骤 + 每个分组里的子步骤，按文件里的顺序摊平。
+    /// <see cref="Steps"/> 仍然是权威（写文件、增删顶层都只认它），这里只负责"看得见的顺序"。
+    /// 子步骤的 VM 按 FlowStep 节点缓存，重建显示行时不会把用户正选着的那一行换成另一个对象。
+    /// </summary>
+    public ObservableCollection<StepVm> Rows { get; } = [];
+
+    private readonly Dictionary<FlowStep, StepVm> _byNode = [];
+
     public string? DocumentPath => _documentPath;
 
     public string FileLabel => _documentPath is null ? "未命名流程" : Path.GetFileName(_documentPath);
@@ -34,7 +43,7 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public bool IsDirty => _dirty;
 
-    public string Footer => $"{Steps.Count} 步" + (_dirty ? "，有未保存的改动" : "");
+    public string Footer => $"{Rows.Count} 步" + (_dirty ? "，有未保存的改动" : "");
 
     /// <summary>
     /// Marks the document as edited - but decides by comparing content, not by counting edits.
@@ -50,17 +59,62 @@ public sealed class EditorModel : INotifyPropertyChanged
     private void Notify()
     {
         PropertyChanged?.Invoke(this, Everything);
-        foreach (var step in Steps) step.Refresh();
+        foreach (var step in Rows) step.Refresh();
     }
 
+    /// <summary>
+    /// 重排编号并重建显示行。编号是分层的：顶层 1、2、3；组里的子步骤 2.1、2.2。
+    /// 子步骤与它的分组之间靠 <see cref="StepVm.Group"/> 连着，界面据此画分支。
+    /// </summary>
     public void Renumber()
     {
+        Rows.Clear();
         for (int i = 0; i < Steps.Count; i++)
         {
-            Steps[i].Number = i + 1;
-            Steps[i].Refresh();   // 行号是 OneWay 绑定：不逐个通知，插一步之后后面的行号就会重号（实测 1,2,3,3）
+            StepVm top = Steps[i];
+            top.Number = (i + 1).ToString();
+            top.Depth = 0;
+            top.Group = null;
+            Rows.Add(top);
+
+            if (top.Step.Steps is not { Count: > 0 } children) continue;
+            for (int j = 0; j < children.Count; j++)
+            {
+                StepVm child = VmFor(children[j]);
+                child.Number = $"{i + 1}.{j + 1}";
+                child.Depth = 1;
+                child.Group = top;
+                child.FirstInGroup = j == 0;
+                Rows.Add(child);
+            }
         }
+
+        // 行号与缩进都是 OneWay 绑定：不逐个通知，插一步之后后面的行就会重号（实测 1,2,3,3）
+        foreach (var row in Rows) row.Refresh();
         PropertyChanged?.Invoke(this, Everything);
+    }
+
+    /// <summary>
+    /// 按 FlowStep 节点找回它对应的显示行。Runner 报的是**执行序号**（循环已展开、子流程已
+    /// 内联），要落到界面上哪一行，必须回到同一个节点上认人——内联进来的子流程步骤不属于
+    /// 这个文件，所以返回 null，调用方只记日志、不点错行。
+    /// </summary>
+    internal StepVm? VmForNode(FlowStep? node)
+    {
+        if (node is null) return null;
+        foreach (StepVm vm in Rows)
+        {
+            if (ReferenceEquals(vm.Step, node)) return vm;
+        }
+        return VmFor(node) is { } cached && _byNode.ContainsKey(node) ? cached : null;
+    }
+
+    private StepVm VmFor(FlowStep node)
+    {
+        if (_byNode.TryGetValue(node, out StepVm? existing)) return existing;
+        var vm = new StepVm(node, this);
+        _byNode[node] = vm;
+        return vm;
     }
 
     internal FlowDocument BuildDocument()
@@ -79,6 +133,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     {
         FlowDocument document = FlowDocument.Load(path);
         Steps.Clear();
+        _byNode.Clear();
         foreach (var step in document.Steps) Steps.Add(new StepVm(step, this));
         _documentPath = path;
         _dirty = false;
@@ -91,13 +146,14 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// 把每一步按契约检查一遍，返回有问题的字段总数。保存与运行之前先跑它：错误必须落到
     /// 具体字段上（检查器就地显示），而不是等加载器回一句"第 N 步需要某某"。
     /// </summary>
-    internal int Validate() => Steps.Sum(step => step.Validate());
+    internal int Validate() => Rows.Sum(step => step.Validate());
     /// <summary>有没有未保存的改动。工具在丢掉别人的东西之前应该先问一句。</summary>
 
     /// <summary>新建：清空步骤与文件路径，回到空状态。</summary>
     internal void Reset()
     {
         Steps.Clear();
+        _byNode.Clear();
         _documentPath = null;
         _dirty = false;
         _savedJson = Serialize();
@@ -145,38 +201,86 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public string Serialize() => JsonSerializer.Serialize(BuildDocument(), FlowDocument.Json);
 
-    public void Add(string type, int index)
+    /// <summary>
+    /// 在 anchor 之后加一步。锚点是组里的子步骤时，新步骤加进那个组——所见即所得，
+    /// 不需要用户先知道"这是组内"这件事。
+    /// </summary>
+    public StepVm Add(string type, StepVm? anchor)
     {
-        var step = new StepVm(StepCatalog.Create(type), this);
-        index = Math.Clamp(index, 0, Steps.Count);
-        Steps.Insert(index, step);
+        var fresh = new StepVm(StepCatalog.Create(type), this);
+        if (anchor is null) Steps.Add(fresh);
+        else if (anchor.Group?.Step.Steps is { } nested)
+        {
+            int at = nested.IndexOf(anchor.Step);
+            nested.Insert(at < 0 ? nested.Count : at + 1, fresh.Step);
+        }
+        else if (anchor.IsGroup)
+        {
+            // 选中分组行再点一个动作 = 往这个组里加第一步。空组也能因此被填上。
+            anchor.Step.Steps ??= [];
+            anchor.Step.Steps.Add(fresh.Step);
+        }
+        else
+        {
+            int at = Steps.IndexOf(anchor);
+            Steps.Insert(at < 0 ? Steps.Count : at + 1, fresh);
+        }
+
         _dirty = true;
         Renumber();
+        return _byNode.TryGetValue(fresh.Step, out StepVm? display) ? display : fresh;
     }
 
     public void Remove(StepVm step)
     {
-        if (!Steps.Remove(step)) return;
+        if (step.Group?.Step.Steps is { } nested)
+        {
+            if (!nested.Remove(step.Step)) return;
+            _byNode.Remove(step.Step);
+        }
+        else if (!Steps.Remove(step)) return;
+
         _dirty = true;
         Renumber();
     }
 
     public void Duplicate(StepVm step)
     {
-        int index = Steps.IndexOf(step);
-        if (index < 0) return;
-        var copy = StepVmFactory.Copy(step, this);
-        Steps.Insert(index + 1, copy);
+        StepVm copy = StepVmFactory.Copy(step, this);
+        if (step.Group?.Step.Steps is { } nested)
+        {
+            int at = nested.IndexOf(step.Step);
+            if (at < 0) return;
+            nested.Insert(at + 1, copy.Step);
+        }
+        else
+        {
+            int at = Steps.IndexOf(step);
+            if (at < 0) return;
+            Steps.Insert(at + 1, copy);
+        }
+
         _dirty = true;
         Renumber();
     }
 
     public void Move(StepVm step, int offset)
     {
-        int index = Steps.IndexOf(step);
-        int target = index + offset;
-        if (index < 0 || target < 0 || target >= Steps.Count) return;
-        Steps.Move(index, target);
+        if (step.Group?.Step.Steps is { } nested)
+        {
+            int from = nested.IndexOf(step.Step);
+            int to = from + offset;
+            if (from < 0 || to < 0 || to >= nested.Count) return;
+            (nested[from], nested[to]) = (nested[to], nested[from]);
+        }
+        else
+        {
+            int from = Steps.IndexOf(step);
+            int to = from + offset;
+            if (from < 0 || to < 0 || to >= Steps.Count) return;
+            Steps.Move(from, to);
+        }
+
         _dirty = true;
         Renumber();
     }

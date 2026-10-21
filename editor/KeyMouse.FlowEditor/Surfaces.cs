@@ -46,7 +46,7 @@ internal sealed partial class Surfaces
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
                 BorderThickness = new Thickness(0),
-                Padding = new Thickness(0, 8, 12, 8),
+                Padding = new Thickness(0, 6, 12, 6),
                 CornerRadius = new CornerRadius(6),
                 Content = new StackPanel
                 {
@@ -76,19 +76,34 @@ internal sealed partial class Surfaces
     /// </summary>
     internal async Task PickStepAsync(XamlRoot root, Action<string> add)
     {
-        var content = new StackPanel { Spacing = 20, Width = 520 };
+        var content = new StackPanel { Spacing = 16, Width = 440 };
         foreach ((string title, string[] types) in Groups)
         {
             content.Children.Add(new TextBlock
             {
                 Text = title,
-                Style = (Style)Application.Current.Resources["SectionHeader"],
+                Style = (Style)Application.Current.Resources["MicroLabel"],
+            });
+            content.Children.Add(new Border
+            {
+                Height = 1,
+                Background = (Brush)Application.Current.Resources["KpRuleBrush"],
             });
 
-            var group = new StackPanel { Spacing = 2 };
-            foreach (string type in types)
+            var group = new StackPanel { Spacing = 0 };
+            for (int i = 0; i < types.Length; i++)
             {
-                group.Children.Add(Row(type, add));
+                group.Children.Add(Row(types[i], add));
+                // 行间一条从图标右侧起画的细线：一整列选项因此读成一张表，而不是一堆按钮。
+                if (i < types.Length - 1)
+                {
+                    group.Children.Add(new Border
+                    {
+                        Height = 1,
+                        Margin = new Thickness(30, 0, 0, 0),
+                        Background = (Brush)Application.Current.Resources["KpRuleBrush"],
+                    });
+                }
             }
             content.Children.Add(group);
         }
@@ -96,10 +111,21 @@ internal sealed partial class Surfaces
         var dialog = new ContentDialog
         {
             XamlRoot = root,
-            Title = "加一步",
-            Content = new ScrollViewer { Content = content, MaxHeight = 520 },
+            Title = new TextBlock
+            {
+                Text = "加一步",
+                Style = (Style)Application.Current.Resources["PaneTitle"],
+            },
+            Content = new ScrollViewer { Content = content, MaxHeight = 460 },
             CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Close,
+            // 系统的"默认按钮"会被画成强调色（蓝），且盖过 CloseButtonStyle。这里不设默认按钮。
+            DefaultButton = ContentDialogButton.None,
+            // 对话框的默认按钮会被系统画成强调色（蓝）。这个世界里不借它。
+            CloseButtonStyle = (Style)Application.Current.Resources["KpQuietButton"],
+            Background = (Brush)Application.Current.Resources["KpCardBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["KpRuleBrush"],
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
         };
         await dialog.ShowAsync();
     }
@@ -112,29 +138,34 @@ internal sealed partial class Surfaces
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderThickness = new Thickness(0),
-            Padding = new Thickness(12, 10, 12, 10),
-            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(6, 8, 8, 8),
+            CornerRadius = new CornerRadius(4),
         };
 
         var line = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 12,
+            Spacing = 10,
             Children =
             {
                 new FontIcon
                 {
                     Glyph = StepCatalog.GlyphOf(type),
-                    FontSize = 15,
-                    Width = 20,
+                    FontSize = 13,
+                    Width = 18,
                     VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = (Brush)Application.Current.Resources["KpInk2Brush"],
                 },
                 new StackPanel
                 {
                     Spacing = 2,
                     Children =
                     {
-                        new TextBlock { Text = StepCatalog.NameOf(type) },
+                        new TextBlock
+                        {
+                            Text = StepCatalog.NameOf(type),
+                            Style = (Style)Application.Current.Resources["SectionHeader"],
+                        },
                         new TextBlock
                         {
                             Text = Describe(type),

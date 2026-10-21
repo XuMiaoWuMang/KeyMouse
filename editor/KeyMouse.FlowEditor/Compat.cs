@@ -142,8 +142,8 @@ internal static class StepCatalog
                            $"上限 {step.TimeoutMs ?? 5000} ms）",
             "click-text" => $"找「{Clip(step.Text)}」并点它（{Zh("click-text", "match", step.Match ?? TextPredicate.Contains)}，容错 {step.MaxErrors ?? 1}）",
             "read-text" => $"读一块区域 → 变量 {step.Into}",
-            "repeat" => $"重复 {(step.Times ?? 0)} 次（{step.Steps?.Count ?? 0} 步）",
-            "foreach" => $"遍历 {step.In}（{step.Steps?.Count ?? 0} 步）",
+            "repeat" => $"重复 {step.Times ?? 0} 次",
+            "foreach" => $"遍历 {step.In}",
             "call" => $"调用子流程 {step.Flow}" + (step.Vars is { Count: > 0 } vars ? $"（传 {vars.Count} 个变量）" : "") + (step.Export is { Length: > 0 } export ? $"，导出 {string.Join("/", export)}" : ""),
             _ => step.Type,
         };
