@@ -328,12 +328,19 @@ public sealed class StepVm : INotifyPropertyChanged
     public string ChildCount => Step.Steps is { Count: > 0 } children
         ? $"{children.Count} 步"
         : PreviewCount > 0 ? $"{PreviewCount} 步"
+        : RunCount > 0 ? $"{RunCount} 次"
         : IsGroup ? "空组" : "";
 
     public Visibility ChildCountVisibility => Ui.Show(ChildCount.Length > 0);
     public string TypeName => StepCatalog.NameOf(Step.Type);
     public string Glyph => StepCatalog.GlyphOf(Step.Type);
-    public string Summary => StepCatalog.Summarize(Step);
+    /// <summary>折叠行（连续鼠标移动的头一行）用一句话代替原摘要：起点 → 终点，跑了多少次。</summary>
+    internal string? SummaryOverride { get; set; }
+
+    public string Summary => SummaryOverride ?? StepCatalog.Summarize(Step);
+
+    /// <summary>这一行折叠了几步（连续 move 的头一行才有）。</summary>
+    internal int RunCount { get; set; }
     public string Json => JsonSerializer.Serialize(Step, FlowDocument.Json);
     // ---------------------------------------------------------------- 契约驱动的字段读写
 

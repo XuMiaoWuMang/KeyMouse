@@ -69,12 +69,53 @@ public sealed class EditorModel : INotifyPropertyChanged
     public void Renumber()
     {
         Rows.Clear();
+
+        // 连续的鼠标移动先折叠：3 次以上的一组，头一行说"起点 → 终点 · N 次"，
+        // 每一下移动单独成为它的子行。读流程的人要的是"从哪儿到哪儿"，
+        // 四十几行 (x,y) 只会把真正要看的步骤挤出视野。
+        (int Head, int Offset, int Count)[] runs = FoldMoves();
+
+        // 编号按**看得见的顺序**走：折叠组占一个号，组内子行接在它下面。
+        // 用底层下标编会出现 1、2、7 这种跳号——用户看的是这一屏，不是数组。
+        int display = 0;
+        int[] displayNo = new int[Steps.Count];
+        for (int i = 0; i < Steps.Count; i++)
+        {
+            if (runs[i].Head >= 0 && runs[i].Head != i)
+            {
+                displayNo[i] = displayNo[runs[i].Head];
+                continue;
+            }
+            displayNo[i] = ++display;
+        }
+
         for (int i = 0; i < Steps.Count; i++)
         {
             StepVm top = Steps[i];
-            top.Number = (i + 1).ToString();
-            top.Depth = 0;
+            top.Number = displayNo[i].ToString();
             top.Group = null;
+            top.RunCount = 0;
+            top.SummaryOverride = null;
+
+            if (runs[i].Head == i && runs[i].Count > 0)
+            {
+                top.Depth = 0;
+                top.RunCount = runs[i].Count;
+                top.SummaryOverride = MoveRunSummary(i, runs[i].Count);
+                Rows.Add(top);
+                continue;
+            }
+
+            if (runs[i].Head >= 0)
+            {
+                // 折叠组里的后续步骤：保留顶层身份（增删移仍按 Steps 走），只改显示层。
+                top.Depth = 1;
+                top.Number = $"{displayNo[runs[i].Head]}.{runs[i].Offset}";
+                Rows.Add(top);
+                continue;
+            }
+
+            top.Depth = 0;
             Rows.Add(top);
 
             if (top.Step.Type == "call" && top.Step.Flow is { Length: > 0 } flow)
@@ -86,7 +127,7 @@ public sealed class EditorModel : INotifyPropertyChanged
                 for (int j = 0; j < top.PreviewCount; j++)
                 {
                     StepVm child = PreviewVm(preview![j], Path.GetFileName(flow));
-                    child.Number = $"{i + 1}.{j + 1}";
+                    child.Number = $"{displayNo[i]}.{j + 1}";
                     child.Depth = 1;
                     child.Group = top;
                     child.FirstInGroup = j == 0;
@@ -98,7 +139,7 @@ public sealed class EditorModel : INotifyPropertyChanged
             for (int j = 0; j < children.Count; j++)
             {
                 StepVm child = VmFor(children[j]);
-                child.Number = $"{i + 1}.{j + 1}";
+                child.Number = $"{displayNo[i]}.{j + 1}";
                 child.Depth = 1;
                 child.Group = top;
                 child.FirstInGroup = j == 0;
@@ -109,6 +150,48 @@ public sealed class EditorModel : INotifyPropertyChanged
         // 行号与缩进都是 OneWay 绑定：不逐个通知，插一步之后后面的行就会重号（实测 1,2,3,3）
         foreach (var row in Rows) row.Refresh();
         PropertyChanged?.Invoke(this, Everything);
+    }
+
+    /// <summary>
+    /// 找出连续 mouse move 的组（至少 3 次）。返回每个顶层下标所属的组：
+    /// Head = 组头下标（组内每个成员都指向同一个头），Offset = 组内第几个，Count = 组大小。
+    /// 不是组员的项 Head = -1。
+    /// </summary>
+    private (int Head, int Offset, int Count)[] FoldMoves()
+    {
+        var map = new (int Head, int Offset, int Count)[Steps.Count];
+        for (int i = 0; i < map.Length; i++) map[i] = (-1, 0, 0);
+
+        int k = 0;
+        while (k < Steps.Count)
+        {
+            if (Steps[k].Step.Type != "move")
+            {
+                k++;
+                continue;
+            }
+
+            int end = k;
+            while (end + 1 < Steps.Count && Steps[end + 1].Step.Type == "move") end++;
+            int count = end - k + 1;
+
+            if (count >= 3)
+            {
+                for (int m = k; m <= end; m++) map[m] = (k, m - k, count);
+            }
+            k = end + 1;
+        }
+
+        return map;
+    }
+
+    /// <summary>折叠行的摘要：起点 → 终点。两个端点都来自真实步骤，不猜。</summary>
+    private string MoveRunSummary(int head, int count)
+    {
+        string Point(StepVm vm) => vm.Step.At is { } at ? $"{at.X},{at.Y}" : "?";
+        StepVm first = Steps[head];
+        StepVm last = Steps[head + count - 1];
+        return $"{Point(first)} → {Point(last)}";
     }
 
     /// <summary>
