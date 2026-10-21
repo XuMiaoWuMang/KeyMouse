@@ -93,7 +93,8 @@
                 <DropDownButton x:Name="FileButton" Style="{StaticResource ToolButton}" ToolTipService.ToolTip="文件">
                     <FontIcon Glyph="&#xE712;" FontSize="12" />
                     <DropDownButton.Flyout>
-                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuFlyout Placement="BottomEdgeAlignedRight"
+                                    MenuFlyoutPresenterStyle="{StaticResource KpFlyoutPresenter}">
                             <MenuFlyoutItem x:Name="OpenButton" Text="打开…" Click="OnOpen">
                                 <MenuFlyoutItem.KeyboardAccelerators>
                                     <KeyboardAccelerator Modifiers="Control" Key="O" />
@@ -152,7 +153,7 @@
                                   SelectionMode="Single" SelectionChanged="OnStepSelected"
                                   ItemContainerTransitions="{x:Null}" Padding="0,16,0,8" Background="Transparent">
                             <ListView.ContextFlyout>
-                                <MenuFlyout>
+                                <MenuFlyout MenuFlyoutPresenterStyle="{StaticResource KpFlyoutPresenter}">
                                     <MenuFlyoutItem Text="复制这一步" Click="OnDuplicate" />
                                     <MenuFlyoutItem Text="删除这一步" Click="OnDelete" />
                                     <MenuFlyoutSeparator />

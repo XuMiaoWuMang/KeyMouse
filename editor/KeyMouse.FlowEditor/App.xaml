@@ -337,6 +337,29 @@
                 </Setter>
             </Style>
 
+            <!--
+              菜单与工具提示：系统画的浮层，但面、线、圆角可以交给我们。
+              阴影是弹层窗自己画的，不归这套系统管（与对话框同理）。
+            -->
+            <Style x:Key="KpFlyoutPresenter" TargetType="MenuFlyoutPresenter">
+                <Setter Property="Background" Value="{ThemeResource KpCardBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource KpRuleBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Padding" Value="4" />
+                <Setter Property="MaxWidth" Value="380" />
+            </Style>
+
+            <Style TargetType="ToolTip">
+                <Setter Property="Background" Value="{ThemeResource KpCardBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource KpRuleBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Padding" Value="8,6" />
+                <Setter Property="FontFamily" Value="{StaticResource KpTextFont}" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
             <!-- 安静按钮：纸上的一个框。用于对话框的取消、次要动作。 -->
             <Style x:Key="KpQuietButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />
