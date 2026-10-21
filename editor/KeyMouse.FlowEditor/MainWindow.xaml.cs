@@ -34,6 +34,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         HorizontalSplitter.Target = LogRow;
         VerticalSplitter.Track(Root);
         HorizontalSplitter.Track(Root);
+        HorizontalSplitter.Changed += () =>
+        {
+            // 拖动中不管：手指还在拖着，这时候收起来会跟手势打架。松手后再判断。
+            if (HorizontalSplitter.IsDragging || !_logShown) return;
+            if (LogRow.ActualHeight > 24) return;
+
+            _logShown = false;
+            LogRow.Height = GridLength.Auto;
+            NotifyOutput();
+        };
         Root.SizeChanged += (_, _) => ClampPanes();
 
         Title = "KeyMouse 流程编辑器";
@@ -294,6 +304,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private void NotifyOutput()
     {
         PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(OutputVisibility)));
+        PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(OutputChipVisibility)));
         PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LogSplitterVisibility)));
     }
 
@@ -443,6 +454,17 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     /// <summary>没输出时整块收起——一个空的输出面板占着半屏，是最没道理的浪费。</summary>
     public Visibility OutputVisibility => Ui.Show(_logShown);
+
+    /// <summary>面板收起来时露出的那一小块「输出」。</summary>
+    public Visibility OutputChipVisibility => Ui.Show(!_logShown);
+
+    /// <summary>把输出面板叫回来（默认高度：窗口高度的三成，夹在 140–260 之间）。</summary>
+    private void OnShowOutput(object sender, RoutedEventArgs e)
+    {
+        _logShown = true;
+        LogRow.Height = new GridLength(Math.Clamp(Root.ActualHeight * 0.3, 140, 260));
+        NotifyOutput();
+    }
 
     public Visibility LogSplitterVisibility => Ui.Show(_logShown);
 

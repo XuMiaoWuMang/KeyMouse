@@ -356,6 +356,19 @@
                 <RowDefinition x:Name="LogRow" Height="Auto" />
             </Grid.RowDefinitions>
 
+            <!-- 输出面板收起来（被拖到底、或者点了清空）之后，这里留一个叫它回来的入口；
+                 没有它，拖到底就等于"把输出弄丢了"，只能重启。 -->
+            <Button x:Name="OutputChip" Grid.Row="0" Click="OnShowOutput"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,4,0,0"
+                    Style="{StaticResource KpQuietButton}"
+                    Visibility="{x:Bind OutputChipVisibility, Mode=OneWay}"
+                    ToolTipService.ToolTip="重新打开运行输出">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE9D9;" FontSize="11" />
+                    <TextBlock Text="输出" />
+                </StackPanel>
+            </Button>
+
             <Border Grid.Row="0" Style="{StaticResource CardBorder}" Padding="14,12"
                     Visibility="{x:Bind OutputVisibility, Mode=OneWay}">
                 <Grid RowSpacing="8">

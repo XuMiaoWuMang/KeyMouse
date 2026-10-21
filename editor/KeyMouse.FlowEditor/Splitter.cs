@@ -64,6 +64,9 @@ public sealed partial class Splitter : Grid
     /// <summary>拖动结束时通知宿主，宿主据此判断"面板是不是已经小到该收起来了"。</summary>
     public event Action? Changed;
 
+    /// <summary>正在拖？宿主用它区分"拖动中"和"松手了"。</summary>
+    public bool IsDragging => _dragging;
+
     /// <summary>要调整的列（Direction=Horizontal）或行（Direction=Vertical）。</summary>
     public DependencyObject? Target { get; set; }
 
