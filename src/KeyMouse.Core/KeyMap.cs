@@ -2,33 +2,38 @@ using System.Globalization;
 
 namespace KeyMouse;
 
-/// <summary>Maps readable key names to virtual-key codes, and back for the recorder.</summary>
+// 一个映射字典，包含 按键->虚拟键码（VK）的正向映射，也包含虚拟键码（VK）->按键名称的反向映射。
+// 用于解析按键名称和虚拟键码之间的关系。
 internal static class KeyMap
 {
+    // 构建一个只读的正向映射字典，用于根据按键名称快速查找对应的虚拟键码（VK）和是否为扩展键（Ext）。
     private static readonly Dictionary<string, (ushort Vk, bool Ext)> Map = Build();
+    // 构建一个只读的反向映射字典，用于根据虚拟键码快速查找对应的按键名称。
     private static readonly Dictionary<ushort, string> Reverse = BuildReverse();
 
-    /// <summary>The canonical name for a virtual key, or null when it has none.</summary>
+    // 查询指定虚拟键码（VK）的对应的按键名称，不存在则返回null
     public static string? NameOf(int vk) =>
         Reverse.TryGetValue((ushort)vk, out string? name) ? name : null;
 
+    // 根据已有的正向映射 Map（名称 → 虚拟键码），构建一个反向映射 reverse（虚拟键码 → 名称），用于通过 VK 码快速查出对应的按键名称。
     private static Dictionary<ushort, string> BuildReverse()
     {
         var reverse = new Dictionary<ushort, string>();
         foreach (var (name, entry) in Map)
         {
-            // First name wins: the map lists "enter" before "return", "esc" before "escape".
+            // 当多个名称对应同一个 VK 时，保留最先遍历到的那个名称
             if (!reverse.ContainsKey(entry.Vk)) reverse[entry.Vk] = name;
         }
         return reverse;
     }
 
+    // 根据传入的按键名称字符串，解析出对应的虚拟键码（VK）和是否为扩展键（Ext）。
     public static (ushort Vk, bool Ext) Resolve(string name)
     {
         string n = name.Trim();
         if (Map.TryGetValue(n, out var hit)) return hit;
 
-        // escape hatch for keys without a name: vk:0x5B or vk:5B
+        // 如果名称不在预定义的映射表中，还支持通过 vk: 前缀直接指定十六进制虚拟键码。
         if (n.StartsWith("vk:", StringComparison.OrdinalIgnoreCase))
         {
             ReadOnlySpan<char> digits = n.AsSpan(3);
@@ -40,8 +45,11 @@ internal static class KeyMap
         throw new ArgumentException($"未知按键 '{name}'（按键名列表见 KeyMouse help）");
     }
 
+    // 提供一个公开的、只读的、按忽略大小写排序后的 Map 键名集合，方便外部遍历、显示或处理所有名称。
+    // 返回值是IEnumerable，只有当外部真正需要遍历时才会进行排序和枚举，避免不必要的性能开销。
     public static IEnumerable<string> Names => Map.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase);
 
+    // 初始化字典 
     private static Dictionary<string, (ushort, bool)> Build()
     {
         var m = new Dictionary<string, (ushort, bool)>(StringComparer.OrdinalIgnoreCase);

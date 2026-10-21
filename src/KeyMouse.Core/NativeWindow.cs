@@ -3,16 +3,22 @@ using System.Text;
 
 namespace KeyMouse;
 
-/// <summary>Win32 window interop used for window targeting, eligibility checks and focus.</summary>
+// Win32 窗口互操作层的声明和薄封装
 internal static class NativeWindow
 {
+    // 取顶层根窗口
     public const uint GA_ROOT = 2;
+    // 空消息，用于响应性探测
     public const uint WM_NULL = 0x0000;
+    // 若目标线程挂起则立即返回，避免探测卡死
     public const uint SMTO_ABORTIFHUNG = 0x0002;
+    // 窗口是否被遮盖
     public const uint DWMWA_CLOAKED = 14;
+    // 还原最小化窗口
     public const int SW_RESTORE = 9;
 
     [StructLayout(LayoutKind.Sequential)]
+    // 窗口矩形结构体，表示窗口在屏幕上的位置和大小
     public struct RECT
     {
         public int Left;
@@ -24,12 +30,14 @@ internal static class NativeWindow
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    // 屏幕坐标点结构体，表示屏幕上的一个点
     public struct POINT
     {
         public int X;
         public int Y;
     }
 
+    // 封装一些原生的c接口
     public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
     [DllImport("user32.dll")]
@@ -83,13 +91,8 @@ internal static class NativeWindow
     [DllImport("kernel32.dll")]
     private static extern uint GetCurrentThreadId();
 
-    /// <summary>
-    /// Joins our input queue to the foreground window's thread. Windows refuses SetForegroundWindow
-    /// whenever the caller does not already own the foreground ("foreground lock"); attaching is the
-    /// documented way to make that call legal, and it does it **without injecting a single keystroke** -
-    /// which is why it belongs before giving up, not after.
-    /// </summary>
-    /// <returns>The thread id we attached to, or 0 when nothing was attached.</returns>
+    // AttachThreadInput 是文档化的合法化方式，而且不注入任何按键。
+    // 所以它应该在放弃之前使用，而不是之后。
     public static uint AttachToForegroundThread()
     {
         IntPtr foreground = GetForegroundWindow();
@@ -100,7 +103,7 @@ internal static class NativeWindow
         return AttachThreadInput(other, self, true) ? other : 0;
     }
 
-    /// <summary>Detaches from the **same** thread we attached to (the foreground may have moved on).</summary>
+    // 分离线程
     public static void DetachFromThread(uint threadId)
     {
         if (threadId == 0) return;
@@ -123,14 +126,9 @@ internal static class NativeWindow
     [DllImport("dwmapi.dll", EntryPoint = "DwmGetWindowAttribute")]
     private static extern int DwmGetWindowAttributeRect(IntPtr hwnd, uint dwAttribute, out RECT pvAttribute, int cbAttribute);
 
-    /// <summary>
-    /// The window's *visible* frame, in screen coordinates.
-    ///
-    /// GetWindowRect is not the same rectangle: since Windows 10 it includes the invisible
-    /// resize border, about eight pixels per side, while PrintWindow paints only what is
-    /// visible. Mixing the two offsets a capture by exactly that border - measured as captured
-    /// text with its top sliced off. Falls back to GetWindowRect when DWM has no answer.
-    /// </summary>
+    // DWM 时代 GetWindowRect 与用户实际可见区域不一致：它含不可见的缩放边框，实测每边约 8 像素，
+    // 而 PrintWindow 只画可见部分——两者混用会把截图整体偏移那条边框（实测：抓到的字顶部被切掉）。
+    // 所以优先查 DWM 的可见外框，它没答案时才退回 GetWindowRect。
     internal static bool TryGetVisibleFrame(IntPtr hwnd, out RECT bounds)
     {
         const uint DWMWA_EXTENDED_FRAME_BOUNDS = 9;
@@ -170,11 +168,8 @@ internal static class NativeWindow
 
     public static IntPtr Root(IntPtr h) => h == IntPtr.Zero ? IntPtr.Zero : GetAncestor(h, GA_ROOT);
 
-    /// <summary>
-    /// The window that owns this one, or zero for a primary window. Dialogs, popups,
-    /// composition bridges and IME UI are owned by the app's real window, which makes
-    /// this the most reliable way to tell a target from its helpers.
-    /// </summary>
+    // 这个窗口的属主窗口；主窗口返回 0。对话框、弹层、输入法窗口都挂在应用真窗口名下，
+    // 所以"有没有属主"是区分目标窗口和它的帮手窗口最可靠的一条。
     public static IntPtr GetOwner(IntPtr h) => h == IntPtr.Zero ? IntPtr.Zero : GetWindow(h, GW_OWNER);
 
     [DllImport("kernel32.dll", SetLastError = true)]
@@ -190,16 +185,10 @@ internal static class NativeWindow
 
     private static readonly Dictionary<uint, string> ProcessNameCache = new();
 
-    /// <summary>Drops the pid cache. Only the benchmark needs this, to time a cold lookup.</summary>
+    // 清空进程名缓存。只有性能基准需要它——它要量的是"冷查一次"的耗时。
     internal static void ClearProcessNameCache() => ProcessNameCache.Clear();
 
-    /// <summary>
-    /// Image name for a pid (without extension), cached for the life of this process.
-    /// System.Diagnostics.Process.GetProcessById costs ~1.3 ms per call - a command that
-    /// enumerates a desktop with 69 distinct processes spent ~90 ms in it alone.
-    /// QueryFullProcessImageName is one syscall. A pid recycled by a different process
-    /// during a single CLI run is not a case worth the extra bookkeeping.
-    /// </summary>
+    // 将进程ID转换为进程名，对二者进行缓存避免重复查询造成不必要的开销，查询失败返回"?"。
     public static string ProcessNameOf(uint pid)
     {
         if (ProcessNameCache.TryGetValue(pid, out string? cached)) return cached;
@@ -225,7 +214,7 @@ internal static class NativeWindow
         return name;
     }
 
-    /// <summary>True when DWM considers the window cloaked (suspended UWP app, other virtual desktop).</summary>
+    // 用 DWMWA_CLOAKED 判断窗口是否被 DWM 遮盖。
     public static bool IsCloaked(IntPtr h)
     {
         try
@@ -234,14 +223,17 @@ internal static class NativeWindow
         }
         catch (DllNotFoundException)
         {
+            // 极老系统或非 Windows 环境没有 dwmapi.dll，此时返回 false
             return false;
         }
     }
 
-    /// <summary>Round-trips WM_NULL to the window's message queue. null = no answer within the timeout (hung).</summary>
+    // 响应性探测
     public static long? ResponseMs(IntPtr h, uint timeoutMs)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        // 给目标窗口发一个 WM_NULL 消息，测量它多久能响应；如果超时或窗口挂起，返回 null，否则返回耗时毫秒数
+        // lpdwResult 对这个测量没有意义，所以被丢弃
         IntPtr ok = SendMessageTimeout(h, WM_NULL, IntPtr.Zero, IntPtr.Zero, SMTO_ABORTIFHUNG, timeoutMs, out _);
         sw.Stop();
         return ok == IntPtr.Zero ? null : sw.ElapsedMilliseconds;

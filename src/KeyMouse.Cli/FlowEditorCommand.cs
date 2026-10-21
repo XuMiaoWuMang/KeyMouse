@@ -27,7 +27,7 @@ internal static class FlowEditorCommand
                 "找不到编辑器 KeyMouse.FlowEditor.exe，它应当在相同目录下");
         }
 
-        // todo：未知作用的 UseShellExecute
+        // 不打开shell, 直接启动编辑器
         var startInfo = new ProcessStartInfo(editor) { UseShellExecute = false };
         startInfo.ArgumentList.Add(path);
         Process.Start(startInfo);
