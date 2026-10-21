@@ -45,46 +45,110 @@ internal sealed partial class InspectorFields
     /// 而 0 是合法坐标，于是"没填"和"填了 0"再也分不出来，校验也就永远发现不了。与其加一层
     /// "到底填了没有"的影子状态，不如让必填的数字框还原上一个值。
     /// </summary>
+    /// <summary>
+    /// 数字框是**我们自己画的**：一个等宽右对齐的文本框，没有系统的步进钮。
+    ///
+    /// 两个理由。一是排版：数字该沿一条竖线对齐、按等宽排，那是这一页里"机器内容"的声音。
+    /// 二是颜色：系统的 NumberBox 会在边框与按钮上借用框架强调色，那不在这个世界里。
+    /// 加减用 ↑ ↓（每次 1，撞到契约的上下限就停），连点比拖那两颗小箭头快。
+    /// </summary>
     internal UIElement NumberBox(FlowField field, string path)
     {
-        double current = double.TryParse(_step.GetText(path), out double value) ? value : double.NaN;
-        var box = new NumberBox
+        int? current = int.TryParse(_step.GetText(path), out int parsed) ? parsed : null;
+        var box = new TextBox
         {
-            Value = current,
+            Text = current?.ToString() ?? "",
             PlaceholderText = Placeholder(field),
-            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+            FontFamily = (FontFamily)Application.Current.Resources["KpMonoFont"],
+            TextAlignment = TextAlignment.Right,
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        if (field.Min is int min) box.Minimum = min;
-        if (field.Max is int max) box.Maximum = max;
 
-        bool restoring = false;
-        box.ValueChanged += (_, e) =>
+        bool busy = false;
+        void Apply(bool final)
         {
-            if (restoring) return;
-            if (!double.IsNaN(e.NewValue))
+            if (busy) return;
+            busy = true;
+            try
             {
-                _step.SetNumber(path, (int)e.NewValue);
-                return;
-            }
+                string raw = box.Text.Trim();
+                if (raw.Length == 0)
+                {
+                    if (!field.Required) _step.SetNumber(path, null);
+                    else if (final) box.Text = current?.ToString() ?? "";
+                    return;
+                }
 
-            if (!field.Required)
+                if (!int.TryParse(raw, out int value))
+                {
+                    // 半截输入（"-"、"1x"）先不动模型；离开输入框时才还原成模型里的值。
+                    if (final) box.Text = _step.GetText(path) ?? "";
+                    return;
+                }
+
+                if (final)
+                {
+                    if (field.Min is int low && value < low) value = low;
+                    if (field.Max is int high && value > high) value = high;
+                    string shown = value.ToString();
+                    if (shown != raw) box.Text = shown;
+                }
+
+                _step.SetNumber(path, value);
+            }
+            finally
             {
-                _step.SetNumber(path, null);
-                return;
+                busy = false;
             }
+        }
 
-            restoring = true;
-            box.Value = double.IsNaN(current) ? 0 : current;
-            restoring = false;
+        box.TextChanged += (_, _) => Apply(final: false);
+        box.LostFocus += (_, _) => Apply(final: true);
+        box.PreviewKeyDown += (_, e) =>
+        {
+            int step = e.Key switch
+            {
+                Windows.System.VirtualKey.Up => 1,
+                Windows.System.VirtualKey.Down => -1,
+                _ => 0,
+            };
+            if (step == 0) return;
+
+            int value = (int.TryParse(box.Text.Trim(), out int parsedValue) ? parsedValue : field.Min ?? 0) + step;
+            if (field.Min is int low && value < low) value = low;
+            if (field.Max is int high && value > high) value = high;
+            box.Text = value.ToString();
+            box.SelectionStart = box.Text.Length;
+            e.Handled = true;
         };
+
         return box;
     }
 
+    /// <summary>开关也用自绘的那一颗：系统的 ToggleSwitch 开态是框架强调色。</summary>
     internal UIElement Toggle(FlowField field, string path)
     {
-        var toggle = new ToggleSwitch { IsOn = _step.GetBool(path), OnContent = "是", OffContent = "否" };
-        toggle.Toggled += (_, _) => _step.SetBool(path, toggle.IsOn);
+        var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+        var toggle = new Microsoft.UI.Xaml.Controls.Primitives.ToggleButton
+        {
+            Style = (Style)Application.Current.Resources["KpSwitch"],
+            IsChecked = _step.GetBool(path),
+            Content = label,
+        };
+
+        void Sync() => label.Text = toggle.IsChecked == true ? "是" : "否";
+        Sync();
+
+        toggle.Checked += (_, _) =>
+        {
+            Sync();
+            _step.SetBool(path, true);
+        };
+        toggle.Unchecked += (_, _) =>
+        {
+            Sync();
+            _step.SetBool(path, false);
+        };
         return toggle;
     }
 
