@@ -23,14 +23,19 @@ internal static class KeyMouseBridge
     };
 
     /// <summary>
-    /// Finds KeyMouse.exe: next to the editor first (that is how a release ships them), then up the
-    /// tree for a development checkout, then PATH. It is what `serve` is started from.
+    /// Finds KeyMouse.exe: next to the editor first, then in the `cli` folder beside it (that is how
+    /// the installer lays them out), then up the tree for a development checkout, then PATH.
+    /// It is what `serve` is started from.
+    ///
+    /// 安装程序把命令行放在 `<安装目录>\cli\`，而编辑器只会在自己目录里找——
+    /// 结果装完之后编辑器找不到引擎，播放和试运行直接失败（实测反馈）。这条候选不能少。
     /// </summary>
     internal static string? ResolveTool()
     {
         var candidates = new List<string>();
         string here = AppContext.BaseDirectory;
         candidates.Add(Path.Combine(here, "KeyMouse.exe"));
+        candidates.Add(Path.Combine(here, "cli", "KeyMouse.exe"));
 
         var directory = new DirectoryInfo(here);
         for (int i = 0; i < 10 && directory is not null; i++, directory = directory.Parent)
