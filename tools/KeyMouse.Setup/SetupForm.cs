@@ -12,6 +12,13 @@ internal sealed class SetupForm : Form
     private readonly TextBox _path = new() { Dock = DockStyle.Fill, Text = "" };
     private readonly Label _status = new() { AutoSize = false, Height = 48, Dock = DockStyle.Fill };
     private readonly ProgressBar _bar = new() { Dock = DockStyle.Fill, Style = ProgressBarStyle.Marquee, Visible = false };
+    private readonly CheckBox _withCli = new()
+    {
+        Text = "同时安装命令行（没有时才装）",
+        AutoSize = true,
+        Checked = true,
+    };
+
     private readonly Button _install = new() { Text = "安装", AutoSize = true, Padding = new Padding(16, 4, 16, 4) };
     private readonly Button _cancel = new() { Text = "取消", AutoSize = true, Padding = new Padding(12, 4, 12, 4) };
 
@@ -64,7 +71,7 @@ internal sealed class SetupForm : Form
             ColumnCount = 1,
             Padding = new Padding(18),
         };
-        foreach (Control control in new Control[] { title, pathRow, _status, _bar, buttons })
+        foreach (Control control in new Control[] { title, pathRow, _withCli, _status, _bar, buttons })
         {
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.Controls.Add(control);
@@ -89,6 +96,7 @@ internal sealed class SetupForm : Form
     {
         string? existing = Installer.FindExistingCli(_path.Text);
         _status.ForeColor = Color.FromArgb(106, 101, 92);
+        _withCli.Enabled = existing is null;   // 已经装了命令行就别让人误会会再装一遍
         _status.Text = existing is null
             ? "未检测到 KeyMouse 命令行。安装时一并装到 安装目录\\cli\\。"
             : "已检测到 KeyMouse 命令行，安装时不会覆盖：" + existing;
@@ -108,8 +116,8 @@ internal sealed class SetupForm : Form
         _bar.Visible = true;
         _status.ForeColor = Color.FromArgb(106, 101, 92);
 
-        var log = new Progress<string>(text => _status.Text = text);
-        int code = await Task.Run(() => Installer.Run(directory, silent: false, progress: text =>
+        bool withCli = _withCli.Checked;
+        int code = await Task.Run(() => Installer.Run(directory, silent: false, installCli: withCli, progress: text =>
         {
             // 逐条刷到界面上：解压大文件时用户要看得见它没卡住
             if (!IsDisposed) _status.Text = text;

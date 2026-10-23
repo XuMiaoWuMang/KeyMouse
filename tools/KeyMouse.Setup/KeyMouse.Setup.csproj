@@ -24,6 +24,11 @@
   </PropertyGroup>
 
   <!-- 两个载荷：编辑器本体、命令行。由 tools\pack-release.ps1 生成。 -->
+  <!-- 安装位置登记处与编辑器共用同一份源码：键名只在一个地方出现。 -->
+  <ItemGroup>
+    <Compile Include="..\..\src\KeyMouse.Core\ProductRegistry.cs" Link="ProductRegistry.cs" />
+  </ItemGroup>
+
   <ItemGroup Condition="Exists('Assets\flowedit.zip') And Exists('Assets\cli.zip')">
     <EmbeddedResource Include="Assets\flowedit.zip" />
     <EmbeddedResource Include="Assets\cli.zip" />

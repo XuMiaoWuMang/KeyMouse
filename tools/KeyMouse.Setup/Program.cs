@@ -22,9 +22,10 @@ internal static class Program
     {
         // --silent --dir <路径>：给脚本和自动化用（CI 里验安装结果）。
         string? dir = ArgValue(args, "--dir");
+        bool wantCli = !args.Contains("--no-cli");
         if (args.Contains("--silent"))
         {
-            int code = Installer.Run(dir ?? Installer.DefaultDirectory, silent: true, progress: null);
+            int code = Installer.Run(dir ?? Installer.DefaultDirectory, silent: true, progress: null, installCli: wantCli);
             Environment.Exit(code);
         }
 
@@ -47,9 +48,14 @@ internal static class Installer
 
     internal static string Clip(string? text) => text ?? "";
 
-    /// <summary>这台机器上已有的命令行：安装目录里、或者 PATH 里。</summary>
+    /// <summary>
+    /// 这台机器上已有的命令行，按可信度排：注册表登记 → 安装目录的 cli → PATH。
+    /// 注册表排第一是因为它记的是"上次装到哪儿"，与本次选的目标目录无关。
+    /// </summary>
     internal static string? FindExistingCli(string installDirectory)
     {
+        if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { } registered) return registered;
+
         string local = Path.Combine(installDirectory, "cli", "KeyMouse.exe");
         if (File.Exists(local)) return local;
 
@@ -70,7 +76,7 @@ internal static class Installer
         return null;
     }
 
-    internal static int Run(string directory, bool silent, Action<string>? progress)
+    internal static int Run(string directory, bool silent, Action<string>? progress, bool installCli = true)
     {
         try
         {
@@ -78,14 +84,27 @@ internal static class Installer
             progress?.Invoke("正在安装编辑器…");
             Extract("flowedit.zip", directory, progress);
 
+            // 先登记界面：只装 GUI 的时候，注册表里就只有这一条。
+            string gui = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+            KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.GuiValue, gui);
+
             if (FindExistingCli(directory) is { } existing)
             {
-                progress?.Invoke("已检测到命令行，跳过：" + existing);
+                progress?.Invoke("已检测到命令行，跳过安装：" + existing);
+                // 只在这次真的要装命令行时才写 CliPath；明确"只装界面"就一个字都不碰它。
+                if (installCli) KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, existing);
+            }
+            else if (!installCli)
+            {
+                // 明确只要界面：那就只写 GuiPath，一个字都不碰命令行。
+                progress?.Invoke("只安装界面（没有登记命令行）。");
             }
             else
             {
                 progress?.Invoke("未检测到命令行，一并安装到 cli…");
+                string cli = Path.Combine(directory, "cli", "KeyMouse.exe");
                 Extract("cli.zip", Path.Combine(directory, "cli"), progress);
+                KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, cli);
             }
 
             progress?.Invoke("正在创建快捷方式…");
@@ -160,6 +179,7 @@ internal static class Installer
             "taskkill /f /im KeyMouse.FlowEditor.exe >nul 2>&1",
             "taskkill /f /im KeyMouse.exe >nul 2>&1",
             "del \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\" + Program.ProductName + ".lnk\" >nul 2>&1",
+            "reg delete \"HKCU\\" + KeyMouse.ProductRegistry.KeyPath + "\" /f >nul 2>&1",
             "cd /d \"%TEMP%\"",
             "rmdir /s /q \"" + directory + "\"",
             "echo 已卸载。",

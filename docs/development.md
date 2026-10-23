@@ -22,8 +22,9 @@
 **为什么默认不 build 整个解决方案**：WinUI 编辑器的 XAML 编译占掉 13s，而只改 Core 时 CLI 重建是 1.7s。
 整个解决方案只在 CI 与 `verify.ps1` 里跑。
 
-> **编辑器连的是 `dist\KeyMouse.exe`，不是 `bin`。** 它按"编辑器目录 → `<编辑器目录>\cli\` → 仓库 `dist` → PATH"找引擎
-> （第二项就是安装程序的布局：命令行装在 `<安装目录>\cli\`）。
+> **编辑器连的是 `dist\KeyMouse.exe`，不是 `bin`。** 找引擎的顺序：
+> **注册表 `HKCU\Software\KeyMouse` 的 `CliPath`** → 编辑器目录 → 它的 `cli` 子目录 → 仓库 `dist` → PATH。
+> 注册表排第一是因为只有它知道「命令行可能装在别的目录」——安装程序写它，编辑器读它。详见 [release.md](release.md)。
 > 所以 `km e` 会在编译完编辑器之后**顺手重新打包 dist**（`.\km e -NoDist` 可跳过）；
 > 只改 Core 又想从编辑器里验证时，`km b` 不够用——那条路上跑的还是上一次打包的引擎。
 

@@ -32,6 +32,10 @@ internal static class KeyMouseBridge
     /// </summary>
     internal static string? ResolveTool()
     {
+        // 第一候选永远是安装程序登记的路径：GUI 与 CLI 可以装在不同目录，
+        // 只有注册表知道这件事（猜"在我旁边"在发布环境里错过一次）。
+        if (ProductRegistry.Read(ProductRegistry.CliValue) is { } registered) return registered;
+
         var candidates = new List<string>();
         string here = AppContext.BaseDirectory;
         candidates.Add(Path.Combine(here, "KeyMouse.exe"));
