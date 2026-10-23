@@ -1,0 +1,170 @@
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Reflection;
+
+namespace KeyMouse.Setup;
+
+/// <summary>
+/// 极简安装程序：解开两个载荷，顺手把"这台机器上有没有命令行"这件事判断掉。
+///
+/// 三条决定：
+/// * 编辑器是自包含的（WinUI 自带运行时），所以装完就能用，不需要先装 .NET。
+/// * 命令行只在**没找到**的时候才装进 `cli\`——已经装了的人不该被覆盖成旧版本。
+/// * 不写注册表、不装服务、不做"组件选择"。卸载脚本就放在安装目录里，删掉目录就等于卸干净。
+/// </summary>
+internal static class Program
+{
+    internal const string ProductName = "KeyMouse 流程编辑器";
+    internal const string Version = "0.1.0";
+
+    [STAThread]
+    private static void Main(string[] args)
+    {
+        // --silent --dir <路径>：给脚本和自动化用（CI 里验安装结果）。
+        string? dir = ArgValue(args, "--dir");
+        if (args.Contains("--silent"))
+        {
+            int code = Installer.Run(dir ?? Installer.DefaultDirectory, silent: true, progress: null);
+            Environment.Exit(code);
+        }
+
+        ApplicationConfiguration.Initialize();
+        Application.Run(new SetupForm(dir ?? Installer.DefaultDirectory));
+    }
+
+    private static string? ArgValue(string[] args, string name)
+    {
+        int i = Array.IndexOf(args, name);
+        return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+    }
+}
+
+internal static class Installer
+{
+    /// <summary>默认装在用户目录下：不需要管理员权限，卸载就是删目录。</summary>
+    internal static string DefaultDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "KeyMouse");
+
+    internal static string Clip(string? text) => text ?? "";
+
+    /// <summary>这台机器上已有的命令行：安装目录里、或者 PATH 里。</summary>
+    internal static string? FindExistingCli(string installDirectory)
+    {
+        string local = Path.Combine(installDirectory, "cli", "KeyMouse.exe");
+        if (File.Exists(local)) return local;
+
+        string? path = Environment.GetEnvironmentVariable("PATH");
+        if (path is null) return null;
+        foreach (string folder in path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            try
+            {
+                string candidate = Path.Combine(folder.Trim(), "KeyMouse.exe");
+                if (File.Exists(candidate)) return candidate;
+            }
+            catch (ArgumentException)
+            {
+                // PATH 里有一条畸形路径不值得让安装失败
+            }
+        }
+        return null;
+    }
+
+    internal static int Run(string directory, bool silent, Action<string>? progress)
+    {
+        try
+        {
+            Directory.CreateDirectory(directory);
+            progress?.Invoke("正在安装编辑器…");
+            Extract("flowedit.zip", directory, progress);
+
+            if (FindExistingCli(directory) is { } existing)
+            {
+                progress?.Invoke("已检测到命令行，跳过：" + existing);
+            }
+            else
+            {
+                progress?.Invoke("未检测到命令行，一并安装到 cli…");
+                Extract("cli.zip", Path.Combine(directory, "cli"), progress);
+            }
+
+            progress?.Invoke("正在创建快捷方式…");
+            Shortcut(directory);
+            Uninstall(directory);
+            progress?.Invoke("完成。");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            progress?.Invoke("安装失败：" + ex.Message);
+            if (silent) Console.Error.WriteLine(ex);
+            return 1;
+        }
+    }
+
+    private static void Extract(string resource, string directory, Action<string>? progress)
+    {
+        Assembly assembly = typeof(Installer).Assembly;
+        using Stream? stream = assembly.GetManifestResourceStream("KeyMouse.Setup.Assets." + resource)
+            ?? throw new InvalidOperationException("安装包缺少载荷：" + resource);
+
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        Directory.CreateDirectory(directory);
+        foreach (ZipArchiveEntry entry in archive.Entries)
+        {
+            string target = Path.GetFullPath(Path.Combine(directory, entry.FullName.Replace('/', Path.DirectorySeparatorChar)));
+            if (!target.StartsWith(Path.GetFullPath(directory), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("载荷里有越界路径：" + entry.FullName);
+
+            if (entry.Name.Length == 0)
+            {
+                Directory.CreateDirectory(target);
+                continue;
+            }
+
+            progress?.Invoke("解开 " + entry.FullName);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            entry.ExtractToFile(target, overwrite: true);
+        }
+    }
+
+    /// <summary>开始菜单里放一个快捷方式。COM 调用失败不算安装失败——文件已经到位了。</summary>
+    private static void Shortcut(string directory)
+    {
+        try
+        {
+            string programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            string link = Path.Combine(programs, Program.ProductName + ".lnk");
+            Type? shell = Type.GetTypeFromProgID("WScript.Shell");
+            if (shell is null) return;
+
+            dynamic wsh = Activator.CreateInstance(shell)!;
+            dynamic shortcut = wsh.CreateShortcut(link);
+            shortcut.TargetPath = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+            shortcut.WorkingDirectory = directory;
+            shortcut.IconLocation = Path.Combine(directory, "KeyMouse.FlowEditor.exe") + ",0";
+            shortcut.Save();
+        }
+        catch (Exception)
+        {
+            // 快捷方式只是顺手的事
+        }
+    }
+
+    /// <summary>卸载脚本放在安装目录里：删目录之前先把快捷方式和残留进程收掉。</summary>
+    private static void Uninstall(string directory)
+    {
+        string script = string.Join(Environment.NewLine,
+            "@echo off",
+            "chcp 65001 >nul",
+            "taskkill /f /im KeyMouse.FlowEditor.exe >nul 2>&1",
+            "taskkill /f /im KeyMouse.exe >nul 2>&1",
+            "del \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\" + Program.ProductName + ".lnk\" >nul 2>&1",
+            "cd /d \"%TEMP%\"",
+            "rmdir /s /q \"" + directory + "\"",
+            "echo 已卸载。",
+            "pause");
+
+        File.WriteAllText(Path.Combine(directory, "卸载.cmd"), script, System.Text.Encoding.UTF8);
+    }
+}

@@ -14,12 +14,19 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
     <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <Product>KeyMouse 流程编辑器</Product>
+    <Company>KeyMouse</Company>
 
     <!-- Unpackaged, and self-contained: measured on this machine the only Windows App Runtime present
          is the CBS (inbox) one, which the bootstrapper refuses (exit 0x80670016), while
          WindowsAppSDKSelfContained starts fine. It also means the editor needs nothing installed. -->
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+    <!-- 试过 <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages> 去掉 99 个语言目录：
+         结果是 resources.pri 一起没了，启动时 XamlParseException。宁可多 80 个目录，也不能起不来。 -->
   </PropertyGroup>
 
   <ItemGroup>

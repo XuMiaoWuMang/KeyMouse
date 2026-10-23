@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>KeyMouse.Setup</RootNamespace>
+    <AssemblyName>KeyMouseSetup</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <Product>KeyMouse 流程编辑器</Product>
+    <Company>KeyMouse</Company>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+    <!-- 安装程序自己要能独立跑：.NET 运行时不一定是有的。 -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!-- 两个载荷：编辑器本体、命令行。由 tools\pack-release.ps1 生成。 -->
+  <ItemGroup Condition="Exists('Assets\flowedit.zip') And Exists('Assets\cli.zip')">
+    <EmbeddedResource Include="Assets\flowedit.zip" />
+    <EmbeddedResource Include="Assets\cli.zip" />
+  </ItemGroup>
+
+</Project>

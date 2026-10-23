@@ -24,3 +24,6 @@ tests/evidence/
 # 设计评审素材与本地备份：随手的截图与快照，不进版本库
 .impeccable/
 _session-backup/
+
+# 安装程序的载荷（由 tools\pack-release.ps1 生成）
+tools/KeyMouse.Setup/Assets/*.zip

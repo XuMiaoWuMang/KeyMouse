@@ -229,7 +229,19 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
    （`BadgeBrush`/`BadgeInk`）改了属性必须走 `StepVm.Refresh()` 那份名字清单逐个发，否则界面不重画
    （实测：在中间插一步后行号重号 1,2,3,3；徽标写死强调色则"点了像没反应"）。
 
-## 版本号
+## 版本号与发布
 
-`KeyMouse.csproj` 的 `<Version>` 和 `Program.Version` **必须一致**（内置帮助从后者取版本）。
-未发布前的多次改动共用一个版本号；发布之后才 +1。
+三个地方必须一致：`KeyMouse.Cli.csproj` 的 `<Version>`、`Program.Version`（内置帮助从它取版本）、
+以及 `KeyMouse.FlowEditor.csproj` 的 `<Version>`。当前统一为 **0.1.0**。
+
+| 产物 | 标签 | 谁触发 |
+| --- | --- | --- |
+| 命令行（`KeyMouse-x64.exe` / `KeyMouse-fx-x64.exe`） | `v<版本>` | `.github/workflows/release.yml` |
+| 图形编辑器 + 安装程序（`flowedit`） | `gui` | `tools\pack-release.ps1`，产物在 `dist\` |
+
+`tools\pack-release.ps1` 一条命令打完：编辑器（自包含）→ 命令行（自包含 + 框架依赖）→ 两个载荷 zip →
+安装程序。安装程序 `KeyMouseSetup-0.1.0.exe` 会把编辑器装到用户目录，**只有在没找到 `KeyMouse.exe` 时**
+才把命令行一并装进 `<安装目录>\cli\`。
+
+> 界面语言：KeyMouse 与 KeyMouse 流程编辑器**目前只有中文**。没有 i18n 层，
+> 也不做"半英文半中文"的混排——把一种语言写干净，比两种都写不干净强。
