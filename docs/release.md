@@ -4,8 +4,8 @@
 
 | 产物 | 标签 | 装完长什么样 |
 | --- | --- | --- |
-| KeyMouse（命令行） | v0.1.0 | 单文件 KeyMouse.exe，自包含或框架依赖 |
-| KeyMouse 流程编辑器（GUI） | gui | 安装程序，默认装到 %LOCALAPPDATA%\Programs\KeyMouse |
+| KeyMouse（命令行） | cli-v0.1.0 | 单文件 KeyMouse.exe，自包含或框架依赖 |
+| KeyMouse 流程编辑器（GUI） | gui-v0.1.0 | 安装程序，默认装到 %LOCALAPPDATA%\Programs\KeyMouse |
 
 ## 安装程序做了什么
 

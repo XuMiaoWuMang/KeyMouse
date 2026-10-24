@@ -3,8 +3,8 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
-      - 'gui'
+      - 'cli-v*'
+      - 'gui-v*'
   workflow_dispatch:
 
 permissions:
@@ -40,14 +40,14 @@ jobs:
 
       # gui 标签发布的是编辑器（含安装程序）：它要自包含的 WinUI 运行时，
       # 构造过程和本地打包完全一致——同一个脚本，少一条"CI 与本地不一致"的岔路。
-      - name: Pack the editor installer (gui tag only)
-        if: startsWith(github.ref, 'refs/tags/gui')
+      - name: Pack the editor installer (gui-v* tag only)
+        if: startsWith(github.ref, 'refs/tags/gui-')
         shell: pwsh
         run: ./tools/pack-release.ps1
 
       # 两条发布各管各的：命令行标签只发两个 exe，gui 标签只发安装程序。
-      - name: Attach the CLI binaries (v* tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach the CLI binaries (cli-v* tag)
+        if: startsWith(github.ref, 'refs/tags/cli-')
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -55,8 +55,8 @@ jobs:
             dist/KeyMouse-x64.exe
           generate_release_notes: true
 
-      - name: Attach the editor installer (gui tag)
-        if: startsWith(github.ref, 'refs/tags/gui')
+      - name: Attach the editor installer (gui-v* tag)
+        if: startsWith(github.ref, 'refs/tags/gui-')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/KeyMouseSetup-*.exe

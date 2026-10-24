@@ -81,14 +81,14 @@ if ($Publish) {
 '@
 
         $assets = @{
-            'gui'    = @(Get-ChildItem (Join-Path $root 'dist') -Filter 'KeyMouseSetup-*.exe' | ForEach-Object { $_.FullName })
-            'v0.1.0' = @(
+            'gui-v0.1.0' = @(Get-ChildItem (Join-Path $root 'dist') -Filter 'KeyMouseSetup-*.exe' | ForEach-Object { $_.FullName })
+            'cli-v0.1.0' = @(
                 (Join-Path $root 'dist\KeyMouse-x64.exe'),
                 (Join-Path $root 'dist\KeyMouse-fx-x64.exe')
             )
         }
 
-        foreach ($tag in @('gui', 'v0.1.0')) {
+        foreach ($tag in @('gui-v0.1.0', 'cli-v0.1.0')) {
             $body = @{ tag_name = $tag; name = $tag; body = $notes; draft = $false; prerelease = $false } | ConvertTo-Json
             $release = Invoke-RestMethod -Method Post -Uri ($api + '/releases') -Headers $headers -Body $body -ContentType 'application/json'
             foreach ($file in $assets[$tag]) {

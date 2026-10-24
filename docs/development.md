@@ -238,8 +238,8 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 
 | 产物 | 标签 | 谁触发 |
 | --- | --- | --- |
-| 命令行（`KeyMouse-x64.exe` / `KeyMouse-fx-x64.exe`） | `v<版本>` | `.github/workflows/release.yml` |
-| 图形编辑器 + 安装程序（`flowedit`） | `gui` | `tools\pack-release.ps1`，产物在 `dist\` |
+| 命令行（`KeyMouse-x64.exe` / `KeyMouse-fx-x64.exe`） | `cli-v<版本>` | `.github/workflows/release.yml` |
+| 图形编辑器 + 安装程序（`flowedit`） | `gui-v<版本>` | `.github/workflows/release.yml`（内部调 `tools\pack-release.ps1`） |
 
 `tools\pack-release.ps1` 一条命令打完：编辑器（自包含）→ 命令行（自包含 + 框架依赖）→ 两个载荷 zip →
 安装程序。安装程序 `KeyMouseSetup-0.1.0.exe` 会把编辑器装到用户目录，**只有在没找到 `KeyMouse.exe` 时**
