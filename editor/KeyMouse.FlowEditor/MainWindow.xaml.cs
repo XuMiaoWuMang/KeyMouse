@@ -722,16 +722,24 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
-                step.SetPoint(path, new FlowPoint
-                {
-                    Space = picked.Space == "screen" ? FlowSpace.Screen : FlowSpace.Client, X = picked.X, Y = picked.Y,
-                });
+                // 没有指定窗口的步骤：存**屏幕坐标**，就到那个位置发事件，跟谁在前台无关。
+                bool anchored = step.GetText("target.process") is { Length: > 0 }
+                                || step.GetText("target.class") is { Length: > 0 };
+                step.SetPoint(path, anchored
+                    ? new FlowPoint { Space = picked.Space == "screen" ? FlowSpace.Screen : FlowSpace.Client, X = picked.X, Y = picked.Y }
+                    : new FlowPoint { Space = FlowSpace.Screen, X = picked.ScreenX, Y = picked.ScreenY });
             }
 
+            // 只有本来就有窗口的步骤才回填窗口；没窗口的步骤不该因为取了个点就被绑上窗口。
+            bool hasWindow = step.GetText("target.process") is { Length: > 0 }
+                             || step.GetText("target.class") is { Length: > 0 };
             string prefix = path.Contains('.') ? path[..path.LastIndexOf('.')] : "target";
-            if (picked.Process is { Length: > 0 }) step.SetText($"{prefix}.process", picked.Process);
-            if (picked.Class is { Length: > 0 }) step.SetText($"{prefix}.class", picked.Class);
-            if (picked.Title is { Length: > 0 }) step.SetText($"{prefix}.title", picked.Title);
+            if (hasWindow)
+            {
+                if (picked.Process is { Length: > 0 }) step.SetText($"{prefix}.process", picked.Process);
+                if (picked.Class is { Length: > 0 }) step.SetText($"{prefix}.class", picked.Class);
+                if (picked.Title is { Length: > 0 }) step.SetText($"{prefix}.title", picked.Title);
+            }
 
             // 数值是**程序写进去**的：输入框不会自己知道，必须重建面板，
             // 否则取了点以后 X/Y 还显示 0（实测）。

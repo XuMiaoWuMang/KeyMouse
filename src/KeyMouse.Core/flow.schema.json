@@ -475,8 +475,12 @@
           "required": false,
           "requiredWhen": "at.space=client",
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
+          },
+          "help": {
+            "zh": "留空 = 直接把事件发到屏幕坐标／当前焦点，不校验窗口、不抢前台；填了就按窗口来（先验证再聚焦）。",
+            "en": "Empty means fire at the screen position / current focus, with no window checks; a window brings the gate and the focus step."
           }
         }
       ]
@@ -522,14 +526,15 @@
         {
           "name": "target",
           "kind": "target",
-          "required": true,
+          "required": false,
+          "requiredWhen": "from.space=client",
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
           },
           "help": {
-            "zh": "拖拽只支持客户区坐标，所以必须给窗口。",
-            "en": "Drag is client-relative only, so the window is required."
+            "zh": "留空 = 按屏幕坐标直接拖，不要求任何窗口在前台；用客户区坐标时才需要它。",
+            "en": "Empty means absolute screen coordinates; the window is only needed for client coordinates."
           }
         }
       ]
@@ -555,8 +560,12 @@
           "required": false,
           "requiredWhen": "at.space=client",
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
+          },
+          "help": {
+            "zh": "留空 = 直接把事件发到屏幕坐标／当前焦点，不校验窗口、不抢前台；填了就按窗口来（先验证再聚焦）。",
+            "en": "Empty means fire at the screen position / current focus, with no window checks; a window brings the gate and the focus step."
           }
         }
       ]
@@ -616,8 +625,12 @@
           "required": false,
           "requiredWhen": "at.space=client",
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
+          },
+          "help": {
+            "zh": "留空 = 直接把事件发到屏幕坐标／当前焦点，不校验窗口、不抢前台；填了就按窗口来（先验证再聚焦）。",
+            "en": "Empty means fire at the screen position / current focus, with no window checks; a window brings the gate and the focus step."
           }
         }
       ]
@@ -654,8 +667,12 @@
           "kind": "target",
           "required": false,
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
+          },
+          "help": {
+            "zh": "留空 = 直接发到当前焦点所在的窗口，不抢前台；填了就先验证再聚焦。",
+            "en": "Empty means type into whatever has focus; a window is verified and focused first."
           }
         }
       ]
@@ -713,8 +730,12 @@
           "kind": "target",
           "required": false,
           "label": {
-            "zh": "目标窗口",
+            "zh": "目标窗口（可选）",
             "en": "target"
+          },
+          "help": {
+            "zh": "留空 = 直接发到当前焦点所在的窗口，不抢前台；填了就先验证再聚焦。",
+            "en": "Empty means type into whatever has focus; a window is verified and focused first."
           }
         }
       ]

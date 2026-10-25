@@ -621,13 +621,27 @@ internal sealed class FlowDocument
 
             case "drag":
                 if (step.From is null || step.To is null) throw new CommandFailure(2, "drag 步骤需要 from 与 to");
-                if (step.From.Space != FlowSpace.Client || step.To.Space != FlowSpace.Client)
-                    throw new CommandFailure(2, "drag 目前只支持客户区坐标（space=client）");
-                args.AddRange(["mouse", "drag",
-                    "-wx", step.From.X.ToString(CultureInfo.InvariantCulture),
-                    "-wy", step.From.Y.ToString(CultureInfo.InvariantCulture),
-                    "--wx2", step.To.X.ToString(CultureInfo.InvariantCulture),
-                    "--wy2", step.To.Y.ToString(CultureInfo.InvariantCulture)]);
+                if (step.From.Space != step.To.Space)
+                    throw new CommandFailure(2, "drag 的起点与终点必须在同一个坐标空间");
+
+                if (step.From.Space == FlowSpace.Client)
+                {
+                    RequireTarget(step);
+                    args.AddRange(["mouse", "drag",
+                        "-wx", step.From.X.ToString(CultureInfo.InvariantCulture),
+                        "-wy", step.From.Y.ToString(CultureInfo.InvariantCulture),
+                        "--wx2", step.To.X.ToString(CultureInfo.InvariantCulture),
+                        "--wy2", step.To.Y.ToString(CultureInfo.InvariantCulture)]);
+                }
+                else
+                {
+                    // 屏幕坐标的拖拽不需要窗口：从这儿拖到那儿，跟当前谁在前台无关。
+                    args.AddRange(["mouse", "drag",
+                        step.From.X.ToString(CultureInfo.InvariantCulture),
+                        step.From.Y.ToString(CultureInfo.InvariantCulture),
+                        step.To.X.ToString(CultureInfo.InvariantCulture),
+                        step.To.Y.ToString(CultureInfo.InvariantCulture)]);
+                }
                 if (step.DurationMs is int duration)
                 {
                     args.AddRange(["--duration", duration.ToString(CultureInfo.InvariantCulture)]);

@@ -94,8 +94,21 @@ KeyMouse <group> <command> [参数] [选项]
 
 ---
 
-## 窗口策略
+## 不指定窗口（默认）
 
+**给坐标就能点，不需要任何窗口在前台。** 没有选择器时，事件直接发到屏幕位置／当前焦点：
+
+```
+KeyMouse mouse click left -x 640 -y 480      # 就点屏幕上这个点，不管谁在前台
+KeyMouse mouse drag 100 100 400 300          # 从这儿拖到那儿
+KeyMouse key type "hello"                   # 打给当前焦点所在的窗口
+```
+
+不校验窗口、不抢前台、不做闸门检查——这正是自动化要的默认行为。
+需要严格性时再**手动指定窗口**（下面的选择器），那时才会先验证、再聚焦、再发事件；
+客户区坐标（`-wx/-wy`）因为要换算，始终需要一个窗口。
+
+## 窗口策略
 | 选项 | 说明 |
 | --- | --- |
 | `--focus-policy gentle`（默认） | `SetForegroundWindow` → 回读 `GetForegroundWindow` 验证 → 最多 3 次 |

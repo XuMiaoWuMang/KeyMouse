@@ -6,7 +6,12 @@ namespace KeyMouse.FlowEditor;
 
 /// <summary>What the Runner's `pick-region` reports, reduced to what the editor needs.</summary>
 internal sealed record PickedRegion(
-    string Space, int X, int Y, int Width, int Height, string? Process, string? Class, string? Title, string? Note);
+    string Space, int X, int Y, int Width, int Height, string? Process, string? Class, string? Title, string? Note)
+{
+    /// <summary>同一个点的屏幕坐标。步骤没有目标窗口时（"就发到这个屏幕位置"）只有它有意义。</summary>
+    internal int ScreenX { get; init; }
+    internal int ScreenY { get; init; }
+}
 
 /// <summary>
 /// The editor's link to the product's other half: not a pile of one-shot child processes, but one
@@ -115,7 +120,19 @@ internal static class KeyMouseBridge
         string? note = value.TryGetProperty("note", out var noteElement) && noteElement.ValueKind == JsonValueKind.String
             ? noteElement.GetString()
             : null;
-        return new PickedRegion(space, rect[0], rect[1], rect[2], rect[3], processName, className, title, note);
+        int screenX = rect[0], screenY = rect[1];
+        if (value.TryGetProperty("screen", out var screen) && screen.ValueKind == JsonValueKind.Object &&
+            screen.TryGetProperty("rect", out var screenRect) && screenRect.ValueKind == JsonValueKind.Array)
+        {
+            int[] absolute = screenRect.EnumerateArray().Select(element => element.GetInt32()).ToArray();
+            if (absolute.Length == 4) { screenX = absolute[0]; screenY = absolute[1]; }
+        }
+
+        return new PickedRegion(space, rect[0], rect[1], rect[2], rect[3], processName, className, title, note)
+        {
+            ScreenX = screenX,
+            ScreenY = screenY,
+        };
     }
 
     /// <summary>

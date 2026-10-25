@@ -155,8 +155,8 @@ internal static class FlowTests
         Harness.Check("...while its tuning knobs are optional",
             !Required("click-text", "match") && !Required("click-text", "button") && !Required("click-text", "timeoutMs"));
         Harness.Check("read-text needs into", Required("read-text", "into"));
-        Harness.Check("drag needs both ends and a window",
-            Required("drag", "from") && Required("drag", "to") && Required("drag", "target"));
+        Harness.Check("drag needs both ends, and a window only for client coordinates",
+            Required("drag", "from") && Required("drag", "to") && !Required("drag", "target"));
         Harness.Check("a key is either a combo or a single key", FlowSchema.Steps["key"].OneOf.Count == 2);
         Harness.Check("a repeat needs a count and a body",
             Required("repeat", "times") && Required("repeat", "steps"));
