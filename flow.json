@@ -1,0 +1,2027 @@
+{
+  "format": "keymouse-flow",
+  "version": 1,
+  "steps": [
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 930,
+        "y": 84
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 932,
+        "y": 95
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 934,
+        "y": 110
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 936,
+        "y": 125
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 937,
+        "y": 134
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 938,
+        "y": 144
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 938,
+        "y": 154
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 940,
+        "y": 167
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 943,
+        "y": 182
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 197
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 951,
+        "y": 215
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 955,
+        "y": 232
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 960,
+        "y": 250
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 964,
+        "y": 267
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 968,
+        "y": 285
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 972,
+        "y": 301
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 975,
+        "y": 318
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 977,
+        "y": 334
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 979,
+        "y": 351
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 980,
+        "y": 368
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 980,
+        "y": 383
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 982,
+        "y": 400
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 982,
+        "y": 415
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 983,
+        "y": 430
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 443
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 456
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 474
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 491
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 506
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 520
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 533
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 546
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 560
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 578
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 595
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 609
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 621
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 633
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 645
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 656
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 667
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 678
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 691
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 703
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 717
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 732
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 745
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 759
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 772
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 785
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 799
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 813
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 830
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 846
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 860
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 874
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 889
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 900
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 908
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 918
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 984,
+        "y": 935
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "screen",
+        "x": 1615,
+        "y": 1194
+      },
+      "note": "这一步在客户区之外（标题栏/桌面）：记的是屏幕坐标，窗口移动后需要重新指位置"
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1302,
+        "y": 1013
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1302,
+        "y": 1021
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1302,
+        "y": 1035
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1302,
+        "y": 1043
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1304,
+        "y": 1055
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1304,
+        "y": 1064
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1304,
+        "y": 1072
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1304,
+        "y": 1082
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1303,
+        "y": 1092
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1303,
+        "y": 1102
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1303,
+        "y": 1110
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1303,
+        "y": 1121
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1303,
+        "y": 1134
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "firefox",
+        "class": "MozillaWindowClass",
+        "title": "DeepSeek Harness｜共探智能上限 — Mozilla Firefox"
+      },
+      "at": {
+        "space": "client",
+        "x": 1616,
+        "y": 1346
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "firefox",
+        "class": "MozillaWindowClass",
+        "title": "DeepSeek Harness｜共探智能上限 — Mozilla Firefox"
+      },
+      "at": {
+        "space": "client",
+        "x": 1616,
+        "y": 1358
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "firefox",
+        "class": "MozillaWindowClass",
+        "title": "DeepSeek Harness｜共探智能上限 — Mozilla Firefox"
+      },
+      "at": {
+        "space": "client",
+        "x": 1614,
+        "y": 1366
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1614,
+        "y": 9
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1614,
+        "y": 17
+      }
+    },
+    {
+      "type": "click",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1614,
+        "y": 20
+      },
+      "shot": "keymouse-record.shots/0001-click.png"
+    },
+    {
+      "type": "sleep",
+      "ms": 7422
+    },
+    {
+      "type": "click",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1796,
+        "y": 32
+      },
+      "shot": "keymouse-record.shots/0002-click.png"
+    },
+    {
+      "type": "sleep",
+      "ms": 406
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1796,
+        "y": 32
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1792,
+        "y": 24
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "explorer",
+        "class": "Shell_TrayWnd"
+      },
+      "at": {
+        "space": "client",
+        "x": 1785,
+        "y": 11
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "firefox",
+        "class": "MozillaWindowClass",
+        "title": "DeepSeek Harness｜共探智能上限 — Mozilla Firefox"
+      },
+      "at": {
+        "space": "client",
+        "x": 1773,
+        "y": 1359
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "firefox",
+        "class": "MozillaWindowClass",
+        "title": "DeepSeek Harness｜共探智能上限 — Mozilla Firefox"
+      },
+      "at": {
+        "space": "client",
+        "x": 1760,
+        "y": 1340
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1436,
+        "y": 1129
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1428,
+        "y": 1118
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1420,
+        "y": 1107
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1412,
+        "y": 1097
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1405,
+        "y": 1087
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1397,
+        "y": 1074
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1389,
+        "y": 1061
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1380,
+        "y": 1046
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1372,
+        "y": 1034
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1365,
+        "y": 1023
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "哔哩哔哩",
+        "class": "Chrome_WidgetWin_1",
+        "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili"
+      },
+      "at": {
+        "space": "client",
+        "x": 1357,
+        "y": 1009
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 1030,
+        "y": 944
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 1020,
+        "y": 924
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 1009,
+        "y": 902
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 995,
+        "y": 879
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 985,
+        "y": 860
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 978,
+        "y": 847
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 972,
+        "y": 836
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 967,
+        "y": 824
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 962,
+        "y": 812
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 958,
+        "y": 800
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 954,
+        "y": 786
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 952,
+        "y": 771
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 951,
+        "y": 758
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 950,
+        "y": 747
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 949,
+        "y": 738
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 948,
+        "y": 728
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 716
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 705
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 945,
+        "y": 694
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 684
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 674
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 662
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 647
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 632
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 944,
+        "y": 613
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 592
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 569
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 547
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 524
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 504
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 486
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 470
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 455
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 949,
+        "y": 436
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 949,
+        "y": 418
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 948,
+        "y": 395
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 947,
+        "y": 368
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 347
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 946,
+        "y": 330
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 945,
+        "y": 315
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 943,
+        "y": 300
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 941,
+        "y": 283
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 939,
+        "y": 267
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 939,
+        "y": 251
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 939,
+        "y": 232
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 940,
+        "y": 212
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 940,
+        "y": 196
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 940,
+        "y": 184
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 940,
+        "y": 175
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 938,
+        "y": 166
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 936,
+        "y": 157
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 934,
+        "y": 149
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 932,
+        "y": 136
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 930,
+        "y": 128
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 928,
+        "y": 118
+      }
+    },
+    {
+      "type": "move",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 926,
+        "y": 109
+      }
+    },
+    {
+      "type": "click",
+      "target": {
+        "process": "KeyMouse.FlowEditor",
+        "class": "WinUIDesktopWin32WindowClass",
+        "title": "KeyMouse 流程编辑器"
+      },
+      "at": {
+        "space": "client",
+        "x": 925,
+        "y": 102
+      },
+      "shot": "keymouse-record.shots/0003-click.png"
+    }
+  ],
+  "allowRestore": false
+}

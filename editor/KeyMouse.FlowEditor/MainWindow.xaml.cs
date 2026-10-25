@@ -343,11 +343,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void OnOpen(object sender, RoutedEventArgs e)
     {
-        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
-        picker.FileTypeFilter.Add(".json");
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
-        var file = await picker.PickSingleFileAsync();
-        if (file is not null) OpenFile(file.Path);
+        string? path = await Picker.OpenFlowAsync(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        if (path is not null) OpenFile(path);
     }
 
     /// <summary>
@@ -387,18 +384,15 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void OnSaveAs(object sender, RoutedEventArgs e)
     {
-        var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
-        picker.FileTypeChoices.Add("KeyMouse 流程", [".json"]);
-        picker.SuggestedFileName = Model.DocumentPath is { Length: > 0 } existing
+        string suggested = Model.DocumentPath is { Length: > 0 } existing
             ? Path.GetFileNameWithoutExtension(existing)
             : "flow";
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
-        var file = await picker.PickSaveFileAsync();
-        if (file is null) return;
+        string? path = await Picker.SaveFlowAsync(WinRT.Interop.WindowNative.GetWindowHandle(this), suggested);
+        if (path is null) return;
         try
         {
-            Model.Save(file.Path);
-            Show("已保存", file.Path, InfoBarSeverity.Success);
+            Model.Save(path);
+            Show("已保存", path, InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
