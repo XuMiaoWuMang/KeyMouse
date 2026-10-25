@@ -14,7 +14,6 @@ internal sealed class SetupForm : Form
     private readonly ProgressBar _bar = new() { Dock = DockStyle.Fill, Style = ProgressBarStyle.Marquee, Visible = false };
     private readonly CheckBox _withCli = new()
     {
-        Text = "同时安装命令行（没有时才装）",
         AutoSize = true,
         Checked = true,
     };
@@ -96,10 +95,24 @@ internal sealed class SetupForm : Form
     {
         string? existing = Installer.FindExistingCli(_path.Text);
         _status.ForeColor = Color.FromArgb(106, 101, 92);
-        _withCli.Enabled = existing is null;   // 已经装了命令行就别让人误会会再装一遍
+
+        if (Installer.IsFirstInstall)
+        {
+            // 首次安装：没有命令行编辑器就跑不了流程，所以不提供"不装"这个选项。
+            _withCli.Checked = true;
+            _withCli.Enabled = false;
+            _withCli.Text = "一并安装命令行（首次安装必装）";
+            _status.Text = "未检测到 KeyMouse。编辑器与命令行会一起装上。";
+            return;
+        }
+
+        _withCli.Enabled = true;
+        _withCli.Checked = true;   // 默认更新
+        _withCli.Text = "同时更新命令行到本安装包的版本";
+        string where = Installer.InstalledDirectory ?? Installer.DefaultDirectory;
         _status.Text = existing is null
-            ? "未检测到 KeyMouse 命令行。安装时一并装到 安装目录\\cli\\。"
-            : "已检测到 KeyMouse 命令行，安装时不会覆盖：" + existing;
+            ? "检测到旧版 KeyMouse（" + where + "），但没有可用命令行——安装时会补上。"
+            : "检测到已安装的 KeyMouse（" + where + "）。默认更新命令行：" + Environment.NewLine + existing;
     }
 
     private async void Install()
@@ -116,8 +129,8 @@ internal sealed class SetupForm : Form
         _bar.Visible = true;
         _status.ForeColor = Color.FromArgb(106, 101, 92);
 
-        bool withCli = _withCli.Checked;
-        int code = await Task.Run(() => Installer.Run(directory, silent: false, installCli: withCli, progress: text =>
+        bool withCli = _withCli.Checked || Installer.IsFirstInstall;
+        int code = await Task.Run(() => Installer.Run(directory, silent: false, updateCli: withCli, progress: text =>
         {
             // 逐条刷到界面上：解压大文件时用户要看得见它没卡住
             if (!IsDisposed) _status.Text = text;

@@ -5,12 +5,13 @@ using System.Reflection;
 namespace KeyMouse.Setup;
 
 /// <summary>
-/// 极简安装程序：解开两个载荷，顺手把"这台机器上有没有命令行"这件事判断掉。
-///
-/// 三条决定：
-/// * 编辑器是自包含的（WinUI 自带运行时），所以装完就能用，不需要先装 .NET。
-/// * 命令行只在**没找到**的时候才装进 `cli\`——已经装了的人不该被覆盖成旧版本。
-/// * 不写注册表、不装服务、不做"组件选择"。卸载脚本就放在安装目录里，删掉目录就等于卸干净。
+/// 极简安装程序。五条规则（都是实测踩出来的）：
+/// * 编辑器自包含，装完就能用，不需要先装 .NET。
+/// * **首次安装**（注册表里没有可用的 GuiPath）强制一并装命令行——没有 CLI，编辑器跑不了流程。
+/// * **非首次**改为"是否更新命令行"，默认更新；仓库里两份载荷本来就该同版本。
+/// * 默认安装位置 = **上次装过的地方**（注册表 GuiPath 所在目录），不再一律塞进 LocalAppData。
+/// * 安装**完全替换**旧文件：目标目录如果是我们的，先整体清空，避免旧版本文件残留。
+/// 卸载由安装目录里的 uninstall.exe 完成（本程序自身复制过去，用 --uninstall 或改名都认）。
 /// </summary>
 internal static class Program
 {
@@ -20,18 +21,51 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        // --silent --dir <路径>：给脚本和自动化用（CI 里验安装结果）。
-        string? dir = ArgValue(args, "--dir");
-        bool wantCli = !args.Contains("--no-cli");
-        if (args.Contains("--silent"))
+        // WinExe 默认没有控制台：脚本里跑 --silent / --print-default 时把输出接回父控制台，
+        // 同时留一份日志——出错时"退出码 1 什么都不说"是最难查的形态。
+        AttachConsole(-1);
+        Log.Write("start " + string.Join(' ', args));
+
+        bool silent = args.Contains("--silent");
+
+        // 改名成 uninstall.exe 或带 --uninstall 都走卸载：一个二进制，两个身份。
+        string self = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "setup");
+        if (args.Contains("--uninstall") || self.Equals("uninstall", StringComparison.OrdinalIgnoreCase))
         {
-            int code = Installer.Run(dir ?? Installer.DefaultDirectory, silent: true, progress: null, installCli: wantCli);
-            Environment.Exit(code);
+            if (!silent && !args.Contains("--yes"))
+            {
+                DialogResult answer = MessageBox.Show(
+                    "卸载 KeyMouse？\n\n会删除安装目录（含命令行）、开始菜单快捷方式，并清空注册表登记。",
+                    Program.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (answer != DialogResult.Yes) return;
+            }
+
+            int removed = Installer.Remove(silent ? null : text => Console.WriteLine(text));
+            if (silent) Environment.Exit(removed);
+            return;
+        }
+
+        string target = ArgValue(args, "--dir") ?? Installer.DefaultDirectory;
+
+        // 给测试与脚本用：只报告算出来的默认安装位置。
+        if (args.Contains("--print-default"))
+        {
+            Console.WriteLine(target);
+            return;
+        }
+
+        bool updateCli = !args.Contains("--no-cli");
+        if (silent)
+        {
+            Environment.Exit(Installer.Run(target, silent: true, progress: null, updateCli));
         }
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new SetupForm(dir ?? Installer.DefaultDirectory));
+        Application.Run(new SetupForm(target));
     }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AttachConsole(int processId);
 
     private static string? ArgValue(string[] args, string name)
     {
@@ -40,22 +74,55 @@ internal static class Program
     }
 }
 
+/// <summary>安装/卸载轨迹：%TEMP%\keymouse-setup.log。用户报"装不上"时先看它。</summary>
+internal static class Log
+{
+    internal static string File => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "keymouse-setup.log");
+
+    internal static void Write(string line)
+    {
+        try
+        {
+            System.IO.File.AppendAllText(File, DateTime.Now.ToString("HH:mm:ss") + "  " + line + Environment.NewLine);
+        }
+        catch (Exception)
+        {
+        }
+    }
+}
+
 internal static class Installer
 {
-    /// <summary>默认装在用户目录下：不需要管理员权限，卸载就是删目录。</summary>
-    internal static string DefaultDirectory => Path.Combine(
+    private static string FallbackDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "KeyMouse");
+
+    /// <summary>上次装到哪儿（注册表里的 GuiPath，且文件确实还在）；没装过返回 null。</summary>
+    internal static string? InstalledDirectory
+    {
+        get
+        {
+            if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue) is { } gui
+                && File.Exists(gui))
+            {
+                return Path.GetDirectoryName(gui);
+            }
+
+            // 注册表被清过但文件还在的情形：认目录也算装过。
+            if (File.Exists(Path.Combine(FallbackDirectory, "KeyMouse.FlowEditor.exe"))) return FallbackDirectory;
+            return null;
+        }
+    }
+
+    internal static bool IsFirstInstall => InstalledDirectory is null;
+
+    /// <summary>默认安装位置：装过就回原处，没装过才用用户目录。</summary>
+    internal static string DefaultDirectory => InstalledDirectory ?? FallbackDirectory;
 
     internal static string Clip(string? text) => text ?? "";
 
-    /// <summary>
-    /// 这台机器上已有的命令行，按可信度排：注册表登记 → 安装目录的 cli → PATH。
-    /// 注册表排第一是因为它记的是"上次装到哪儿"，与本次选的目标目录无关。
-    /// </summary>
+    /// <summary>这台机器上能用的命令行（注册表只认确实存在的文件）。</summary>
     internal static string? FindExistingCli(string installDirectory)
     {
-        // 只认**确实还在**的那一个：注册表里可能是几天前装到临时目录、早就被清掉的路径。
-        // 以前不检查存在性，于是"已检测到命令行，跳过安装"把新 CLI 一起跳过了（实测踩到）。
         if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { } registered && File.Exists(registered))
             return registered;
 
@@ -79,55 +146,119 @@ internal static class Installer
         return null;
     }
 
-    internal static int Run(string directory, bool silent, Action<string>? progress, bool installCli = true)
+    internal static int Run(string directory, bool silent, Action<string>? progress, bool updateCli)
     {
         try
         {
+            bool first = IsFirstInstall;
+            if (first) updateCli = true;   // 首次安装：命令行是必需件
+
             Directory.CreateDirectory(directory);
+
+            progress?.Invoke("正在清理旧文件…");
+            Replace(directory, progress);
+
             progress?.Invoke("正在安装编辑器…");
             Extract("flowedit.zip", directory, progress);
 
-            // 先登记界面：只装 GUI 的时候，注册表里就只有这一条。
-            string gui = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
-            KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.GuiValue, gui);
-
-            if (FindExistingCli(directory) is { } existing)
+            string cli = Path.Combine(directory, "cli", "KeyMouse.exe");
+            string? existing = FindExistingCli(directory);
+            if (updateCli || !File.Exists(cli))
             {
-                progress?.Invoke("已检测到命令行，跳过安装：" + existing);
-                // 只在这次真的要装命令行时才写 CliPath；明确"只装界面"就一个字都不碰它。
-                if (installCli) KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, existing);
-            }
-            else if (!installCli)
-            {
-                // 明确只要界面：只写 GuiPath。但如果注册表里留着一条**已经不存在**的 CliPath，
-                // 必须清掉——否则编辑器会一直去找那个早就没了的引擎（实测：指向临时目录的旧副本）。
-                if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { Length: > 0 } stale
-                    && !File.Exists(stale))
-                {
-                    KeyMouse.ProductRegistry.Clear(KeyMouse.ProductRegistry.CliValue);
-                    progress?.Invoke("清掉了失效的命令行登记：" + stale);
-                }
-                progress?.Invoke("只安装界面（没有登记命令行）。");
+                progress?.Invoke(first ? "首次安装：一并安装命令行…" : "正在更新命令行…");
+                RemoveDirectory(Path.Combine(directory, "cli"));
+                Extract("cli.zip", Path.Combine(directory, "cli"), progress);
+                existing = cli;
             }
             else
             {
-                progress?.Invoke("未检测到命令行，一并安装到 cli…");
-                string cli = Path.Combine(directory, "cli", "KeyMouse.exe");
-                Extract("cli.zip", Path.Combine(directory, "cli"), progress);
-                KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, cli);
+                progress?.Invoke("保留已有的命令行：" + (existing ?? cli));
             }
+
+            string gui = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+            KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.GuiValue, gui);
+            if (existing is not null && File.Exists(existing))
+                KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, existing);
 
             progress?.Invoke("正在创建快捷方式…");
             Shortcut(directory);
-            Uninstall(directory);
+
+            progress?.Invoke("正在放置卸载程序…");
+            Uninstaller(directory);
+
             progress?.Invoke("完成。");
             return 0;
         }
         catch (Exception ex)
         {
+            Log.Write("install failed: " + ex);
             progress?.Invoke("安装失败：" + ex.Message);
-            if (silent) Console.Error.WriteLine(ex);
+            Console.Error.WriteLine("安装失败：" + ex.Message);
             return 1;
+        }
+    }
+
+    /// <summary>
+    /// 完全替换：目标目录如果属于 KeyMouse（有我们的 exe，或注册表就指向这里），整体清空；
+    /// 否则只删我们已知的文件名，免得把用户自己放在同一目录里的东西一起删掉。
+    /// </summary>
+    private static void Replace(string directory, Action<string>? progress)
+    {
+        if (!Directory.Exists(directory)) return;
+
+        string full = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar);
+        if (full.Length <= 3)
+            throw new InvalidOperationException("拒绝安装到磁盘根目录：" + directory);
+
+        bool ours = File.Exists(Path.Combine(directory, "KeyMouse.FlowEditor.exe"))
+                    || (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue) is { } gui
+                        && Path.GetFullPath(gui).StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+
+        if (ours)
+        {
+            progress?.Invoke("清空旧的安装目录…");
+            foreach (string entry in Directory.EnumerateFileSystemEntries(directory))
+            {
+                try
+                {
+                    if (Directory.Exists(entry)) Directory.Delete(entry, recursive: true);
+                    else File.Delete(entry);
+                }
+                catch (Exception)
+                {
+                    // 被占用的文件（比如正在运行的编辑器）删不掉时，后面的覆盖安装会再试一次
+                }
+            }
+            return;
+        }
+
+        foreach (string entry in Directory.EnumerateFileSystemEntries(directory))
+        {
+            string name = Path.GetFileName(entry);
+            bool known = name.StartsWith("KeyMouse.", StringComparison.OrdinalIgnoreCase)
+                         || name.Equals("cli", StringComparison.OrdinalIgnoreCase)
+                         || name.Equals("uninstall.exe", StringComparison.OrdinalIgnoreCase)
+                         || name.Equals("卸载.cmd", StringComparison.OrdinalIgnoreCase);
+            if (!known) continue;
+            try
+            {
+                if (Directory.Exists(entry)) Directory.Delete(entry, recursive: true);
+                else File.Delete(entry);
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    private static void RemoveDirectory(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+        catch (Exception)
+        {
         }
     }
 
@@ -153,6 +284,8 @@ internal static class Installer
 
             progress?.Invoke("解开 " + entry.FullName);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            // 旧文件若是只读，覆盖会失败——先去掉只读；文件还不存在时不能调 SetAttributes。
+            if (File.Exists(target)) File.SetAttributes(target, FileAttributes.Normal);
             entry.ExtractToFile(target, overwrite: true);
         }
     }
@@ -180,21 +313,173 @@ internal static class Installer
         }
     }
 
-    /// <summary>卸载脚本放在安装目录里：删目录之前先把快捷方式和残留进程收掉。</summary>
-    private static void Uninstall(string directory)
+    /// <summary>把本程序自己复制成 uninstall.exe：一个二进制，两个身份。</summary>
+    private static void Uninstaller(string directory)
     {
-        string script = string.Join(Environment.NewLine,
-            "@echo off",
-            "chcp 65001 >nul",
-            "taskkill /f /im KeyMouse.FlowEditor.exe >nul 2>&1",
-            "taskkill /f /im KeyMouse.exe >nul 2>&1",
-            "del \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\" + Program.ProductName + ".lnk\" >nul 2>&1",
-            "reg delete \"HKCU\\" + KeyMouse.ProductRegistry.KeyPath + "\" /f >nul 2>&1",
-            "cd /d \"%TEMP%\"",
-            "rmdir /s /q \"" + directory + "\"",
-            "echo 已卸载。",
-            "pause");
+        try
+        {
+            string self = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string target = Path.Combine(directory, "uninstall.exe");
+            if (self.Length > 0 && File.Exists(self) && !string.Equals(self, target, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(self, target, overwrite: true);
 
-        File.WriteAllText(Path.Combine(directory, "卸载.cmd"), script, System.Text.Encoding.UTF8);
+                // 单文件发布只有一个 exe，但**不是**单文件时（构建方式不同），改名后的副本还缺
+                // 它自己的 dll / runtimeconfig / deps——不一起复制，uninstall.exe 根本起不来
+                // （实测："The application to execute does not exist: KeyMouseSetup.dll"）。
+                string folder = Path.GetDirectoryName(self)!;
+                string stem = Path.GetFileNameWithoutExtension(self);
+                foreach (string suffix in new[] { ".dll", ".runtimeconfig.json", ".deps.json" })
+                {
+                    string source = Path.Combine(folder, stem + suffix);
+                    if (File.Exists(source)) File.Copy(source, Path.Combine(directory, "uninstall" + suffix), overwrite: true);
+                }
+            }
+
+            // 旧版的批处理卸载脚本不再需要
+            string legacy = Path.Combine(directory, "卸载.cmd");
+            if (File.Exists(legacy)) File.Delete(legacy);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 一键卸载：杀掉进程、删编辑器目录与命令行目录、删快捷方式、清注册表，最后把自己也删掉。
+    /// 返回 0 表示该删的都删了。
+    /// </summary>
+    internal static int Remove(Action<string>? progress)
+    {
+        int problems = 0;
+        string? gui = KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue);
+        string? cli = KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue);
+
+        string? guiDirectory = gui is not null && Path.GetDirectoryName(gui) is { Length: > 0 } g ? g : null;
+        if (guiDirectory is null && File.Exists(Path.Combine(FallbackDirectory, "KeyMouse.FlowEditor.exe")))
+            guiDirectory = FallbackDirectory;
+
+        foreach (string process in new[] { "KeyMouse.FlowEditor", "KeyMouse" })
+        {
+            try
+            {
+                foreach (Process running in Process.GetProcessesByName(process))
+                {
+                    try { running.Kill(entireProcessTree: true); running.WaitForExit(3000); }
+                    catch (Exception) { }
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        Thread.Sleep(400);   // 让文件句柄松开
+
+        string self = Environment.ProcessPath ?? "";
+        bool selfInside = guiDirectory is not null && self.Length > 0
+            && Path.GetFullPath(self).StartsWith(
+                Path.GetFullPath(guiDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase);
+
+        if (guiDirectory is not null)
+        {
+            if (selfInside)
+            {
+                // 卸载程序自己就在这个目录里，直接删必然失败。交给退出后运行的临时脚本，
+                // 并且**不算失败**——用户要的是"目录最后没了"，不是"现在就没了"。
+                progress?.Invoke("卸载程序正在退出，目录随后由系统删除：" + guiDirectory);
+            }
+            else
+            {
+                progress?.Invoke("删除编辑器目录：" + guiDirectory);
+                problems += DeleteTree(guiDirectory);
+            }
+        }
+
+        // 命令行可能在安装目录里（<dir>\cli），也可能登记在别处
+        var cliDirectories = new List<string>();
+        if (guiDirectory is not null) cliDirectories.Add(Path.Combine(guiDirectory, "cli"));
+        if (cli is not null && Path.GetDirectoryName(cli) is { Length: > 0 } c) cliDirectories.Add(c);
+
+        foreach (string directory in cliDirectories.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (!Directory.Exists(directory)) continue;
+            // 只删“像我们”的目录，绝不把用户选过的任意目录整棵删掉
+            string leaf = Path.GetFileName(directory.TrimEnd(Path.DirectorySeparatorChar));
+            bool ours = leaf.Equals("cli", StringComparison.OrdinalIgnoreCase)
+                        || leaf.StartsWith("KeyMouse", StringComparison.OrdinalIgnoreCase);
+            if (ours)
+            {
+                progress?.Invoke("删除命令行目录：" + directory);
+                problems += DeleteTree(directory);
+            }
+            else
+            {
+                foreach (string file in new[] { "KeyMouse.exe", "KeyMouse.dll", "KeyMouse.Core.dll", "KeyMouse.Runner.dll" })
+                {
+                    string path = Path.Combine(directory, file);
+                    if (!File.Exists(path)) continue;
+                    try { File.Delete(path); } catch (Exception) { problems++; }
+                }
+            }
+        }
+
+        try
+        {
+            string link = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), Program.ProductName + ".lnk");
+            if (File.Exists(link)) File.Delete(link);
+        }
+        catch (Exception)
+        {
+            problems++;
+        }
+
+        progress?.Invoke("清空注册表登记…");
+        KeyMouse.ProductRegistry.Clear();
+
+        progress?.Invoke(problems == 0 ? "已卸载。" : $"卸载完成，但有 {problems} 项没删掉（可能正被占用）。");
+        Log.Write("uninstall done, problems=" + problems);
+        if (selfInside) SelfDelete(Path.GetDirectoryName(self));
+        return problems == 0 ? 0 : 1;
+    }
+
+    private static int DeleteTree(string directory)
+    {
+        try
+        {
+            if (!Directory.Exists(directory)) return 0;
+            Directory.Delete(directory, recursive: true);
+            return 0;
+        }
+        catch (Exception)
+        {
+            return 1;
+        }
+    }
+
+    /// <summary>本进程占着 uninstall.exe：写一个临时脚本，等我们退出后再删目录。</summary>
+    private static void SelfDelete(string? directory)
+    {
+        try
+        {
+            if (directory is null) return;
+
+            string script = Path.Combine(Path.GetTempPath(), "keymouse-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+            File.WriteAllText(script, string.Join(Environment.NewLine,
+                "@echo off",
+                "ping 127.0.0.1 -n 3 >nul",
+                "rmdir /s /q \"" + directory + "\" 2>nul",
+                "del /f /q \"" + script + "\" 2>nul"), System.Text.Encoding.UTF8);
+
+            Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + script + "\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+            });
+        }
+        catch (Exception)
+        {
+        }
     }
 }
