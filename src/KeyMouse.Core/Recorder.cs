@@ -165,9 +165,13 @@ internal static class Recorder
                 return;
             }
 
-            // ESC 单独处理：要等第二次才能确定"这是停止键"，所以先扣着。
-            if (e.Kind == HookKind.KeyDown && e.VirtualKey == VkEscape)
+            // ESC 一律在这里处理完（按下与抬起都算）：
+            // 抬起如果不拦下来，它会走下面"其他事件"的分支，把待定的那次立刻刷成一条记录——
+            // 于是第二次 ESC 又变成"第一次"，连按两次永远停不下来（实测反馈）。
+            if (e.VirtualKey == VkEscape)
             {
+                if (e.Kind != HookKind.KeyDown) return;   // 抬起：不记录、不刷待定
+
                 if (_pendingEscape is not null && Now() - _lastEscapeAt < 1000)
                 {
                     _pendingEscape = null;   // 连按两次：一次都不记，直接停

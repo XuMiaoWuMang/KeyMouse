@@ -30,6 +30,7 @@ internal static class StopKeyTests
 
         var twice = Session();
         twice.OnEvent(Key(0x1B, 1000));
+        twice.OnEvent(Key(0x1B, 1060, up: true));   // 第一次的抬起：真实按键序列里一定存在
         twice.OnEvent(Key(0x1B, 1200));
         Harness.Check("第二次 ESC 触发停止", twice.ShouldStop());
         twice.Finish();
