@@ -7,6 +7,10 @@
     <RootNamespace>KeyMouse.FlowEditor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>
+    <!-- 只有一份产物：否则 km ba（走解决方案，Platform=x64）写 bin\x64\Release，
+         而 km e（直接 dotnet build）写 bin\Release，于是同一个程序有两个 exe，
+         改完只重编一份、启动的却是另一份——这一轮已经因此白查了一次。 -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
     <Nullable>enable</Nullable>
