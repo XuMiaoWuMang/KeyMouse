@@ -391,46 +391,35 @@ internal static class Recorder
             document.Save(OutputPath);
         }
 
-        /// <summary>Builds one step: resolves the window, converts the point, and takes the shot.</summary>
+        /// <summary>
+        /// Builds one step. Coordinates are **screen pixels** and no window is attached:
+        /// 录制的目的就是复刻你按下的那个位置，跟它当时属于哪个窗口无关。
+        /// 窗口只在这一步**拍照**时用到（取景框要对准你在看的地方）。
+        /// </summary>
         private FlowStep Describe(HookEvent e, string type, string? detail, Point? point, Point? to, int? duration, int? wheelDelta)
         {
             var step = new FlowStep { Type = type };
+            Point actual = point ?? new Point(e.X, e.Y);
             IntPtr window = type is "click" or "drag" or "wheel" or "move"
-                ? WindowLocator.WindowAt(point?.X ?? e.X, point?.Y ?? e.Y)
+                ? WindowLocator.WindowAt(actual.X, actual.Y)
                 : NativeWindow.GetForegroundWindow();
-
-            if (window != IntPtr.Zero)
-            {
-                WindowInfo info = WindowInfo.Capture(window);
-                step.Target = new FlowTarget
-                {
-                    Process = info.ProcessName,
-                    Class = info.ClassName,
-                    Title = info.Title.Length > 0 ? info.Title : null,
-                };
-            }
 
             Point? reference = point;
             if (type is "click" or "wheel" or "move" or "drag")
             {
-                step.At = ToPoint(window, point ?? new Point(e.X, e.Y), out string? note);
-                if (note is not null) step.Note = note;
+                step.At = new FlowPoint { Space = FlowSpace.Screen, X = actual.X, Y = actual.Y };
             }
             else
             {
-                // Keys and typing belong to the focused window; the pointer position is only used to
-                // aim the screenshot, because that is where the human was looking.
-                Point pointer = NativeHooks.GetCursorPosition();
+                // 键盘事件没有坐标；指针位置只用来对准截图。
                 step.At = null;
-                reference = pointer;
-                if (window != IntPtr.Zero && !WindowLocator.IsInsideClientArea(window, pointer.X, pointer.Y))
-                    step.Note = "键盘事件：截图取自本次操作时的鼠标位置";
+                reference = NativeHooks.GetCursorPosition();
             }
 
             if (type == "drag" && to is { } destination)
             {
                 step.From = step.At;
-                step.To = ToPoint(window, destination, out _);
+                step.To = new FlowPoint { Space = FlowSpace.Screen, X = destination.X, Y = destination.Y };
                 step.DurationMs = duration;
             }
             if (type == "wheel")
@@ -458,26 +447,6 @@ internal static class Recorder
             return step;
         }
 
-        private FlowPoint ToPoint(IntPtr window, Point screen, out string? note)
-        {
-            note = null;
-            if (window != IntPtr.Zero && NativeWindow.GetClientRect(window, out NativeWindow.RECT client))
-            {
-                var origin = new NativeWindow.POINT { X = 0, Y = 0 };
-                if (NativeWindow.ClientToScreen(window, ref origin))
-                {
-                    int width = client.Right - client.Left;
-                    int height = client.Bottom - client.Top;
-                    if (screen.X >= origin.X && screen.Y >= origin.Y &&
-                        screen.X < origin.X + width && screen.Y < origin.Y + height)
-                    {
-                        return new FlowPoint { Space = FlowSpace.Client, X = screen.X - origin.X, Y = screen.Y - origin.Y };
-                    }
-                }
-            }
-            note ??= "这一步在客户区之外（标题栏/桌面）：记的是屏幕坐标，窗口移动后需要重新指位置";
-            return new FlowPoint { Space = FlowSpace.Screen, X = screen.X, Y = screen.Y };
-        }
 
         /// <summary>
         /// The step's screenshot: the whole client area of the window the action happened in, scaled
