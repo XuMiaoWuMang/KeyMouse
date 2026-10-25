@@ -117,6 +117,11 @@ internal static class NativeHooks
     private static extern bool PeekMessage(out MSG message, IntPtr window, uint min, uint max, uint remove);
 
     [DllImport("user32.dll")]
+    private static extern uint MsgWaitForMultipleObjects(uint count, IntPtr handles, bool waitAll, uint timeoutMs, uint wakeMask);
+
+    private const uint QsAllInput = 0x04FF;
+
+    [DllImport("user32.dll")]
     private static extern bool TranslateMessage(ref MSG message);
 
     [DllImport("user32.dll")]
@@ -171,6 +176,10 @@ internal static class NativeHooks
         };
         HookProc mouse = (code, wParam, lParam) =>
         {
+            // 回调里抛出的异常会穿回原生钩子链，把输入留在半坏的状态（鼠标被粘住的一种成因）。
+            // 录制器宁可漏一条事件，也不能让整机输入出问题。
+            try
+            {
             int message = wParam.ToInt32();
             if (code >= 0)
             {
@@ -196,6 +205,11 @@ internal static class NativeHooks
                     : kind is HookKind.ButtonDown or HookKind.ButtonUp ? button : 0;
                 onEvent(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));
             }
+            }
+            catch (Exception)
+            {
+                // 见上：录制失败可以重来，输入卡死不行
+            }
             return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         };
 
@@ -211,16 +225,16 @@ internal static class NativeHooks
 
         try
         {
+            // 低级钩子是在带内执行的：钩子线程睡 5ms，整机输入就跟着多 5ms 延迟。
+            // 任务栏这种悬停事件最密的地方最先卡住——实测里鼠标会贴在任务栏上出不来。
+            // 所以不再空转：有事件就泵，没事件就睡着，超时只是为了看得见 stop()。
             while (!stop())
             {
-                if (PeekMessage(out MSG message, IntPtr.Zero, 0, 0, PmRemove))
+                MsgWaitForMultipleObjects(0, IntPtr.Zero, false, 50, QsAllInput);
+                while (PeekMessage(out MSG message, IntPtr.Zero, 0, 0, PmRemove))
                 {
                     TranslateMessage(ref message);
                     DispatchMessage(ref message);
-                }
-                else
-                {
-                    Thread.Sleep(5);
                 }
             }
         }
