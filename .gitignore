@@ -27,3 +27,7 @@ _session-backup/
 
 # 安装程序的载荷（由 tools\pack-release.ps1 生成）
 tools/KeyMouse.Setup/Assets/*.zip
+
+# 测试录制产物（录制会写 <流程>.json 与 <流程>.shots/）
+x.json
+x.shots/
