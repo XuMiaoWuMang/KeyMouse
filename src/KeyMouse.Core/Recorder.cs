@@ -51,6 +51,7 @@ internal static class Recorder
         Console.WriteLine($"● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止，连按两次 ESC 也停" +
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
         Console.WriteLine("  鼠标轨迹会一起录（--no-shots 关截图，--move-threshold N 调抽稀）");
+        Console.WriteLine("  注意：管理员权限窗口上的操作录不到，要录它们请也用管理员身份运行");
         NativeHooks.Record(session.OnEvent, session.ShouldStop);
         session.Finish();
 
@@ -58,6 +59,18 @@ internal static class Recorder
         // 钩子到底看见了什么：这几行的存在是为了回答"我明明点了，流程里为什么没有"。
         string seen = string.Join("，", NativeHooks.Seen.OrderBy(pair => pair.Key).Select(pair => $"{pair.Key} {pair.Value}"));
         Console.WriteLine("  钩子收到：" + (seen.Length > 0 ? seen : "（一个事件都没有）"));
+
+        // 权限比我们高的窗口，Windows 不会把发往它的输入交给我们的钩子——
+        // 这不是"漏记"，是系统边界。说出来，别让用户对着一份少了点击的流程文件猜。
+        if (NativeHooks.OutOfReach.Count > 0)
+        {
+            Console.WriteLine("  ⚠ 这些窗口的权限比 KeyMouse 高，落在那里的点击录不到：");
+            foreach (var pair in NativeHooks.OutOfReach)
+            {
+                Console.WriteLine($"      pid {pair.Key}  {pair.Value}");
+            }
+            Console.WriteLine("    要录这些窗口上的操作，请以管理员身份运行 KeyMouse（右键 → 以管理员身份运行）。");
+        }
         if (session.ShotCount > 0) Console.WriteLine($"  截图 {session.ShotCount} 张 → {session.ShotDirectory}");
         Console.WriteLine("  回放：KeyMouse run " + Path.GetFileName(output) + " [--dry-run]");
         return 0;
@@ -385,6 +398,14 @@ internal static class Recorder
 
             FlushWheel();
             FlushTrajectory();
+
+            // 只在抬起没被送达时留下的一次按下：它几乎肯定是一次点击（谁也不会攥着鼠标录到结束），
+            // 不能因为配对失败就整条丢掉。
+            if (pressed is { } dangling)
+            {
+                Emit(Describe(dangling.Event, "click", dangling.Button,
+                    new Point(dangling.Event.X, dangling.Event.Y), null, null, null), dangling.Event);
+            }
 
             var document = new FlowDocument
             {

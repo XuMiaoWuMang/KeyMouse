@@ -148,6 +148,14 @@ internal static class NativeHooks
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int virtualKey);
 
+    [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(POINT point);
+    [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
+    [DllImport("user32.dll")] private static extern int GetWindowThreadProcessId(IntPtr window, out int pid);
+    [DllImport("user32.dll")] private static extern int GetWindowTextW(IntPtr window, [Out] char[] text, int count);
+    [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(int access, bool inherit, int pid);
+    [DllImport("advapi32.dll", SetLastError = true)] private static extern bool OpenProcessToken(IntPtr process, int access, out IntPtr token);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr handle);
+
     private const int VkLeftButton = 0x01;
     private const int VkRightButton = 0x02;
     private const int VkMiddleButton = 0x04;
@@ -182,6 +190,53 @@ internal static class NativeHooks
 
     private static readonly int[] PolledButtons = [VkLeftButton, VkRightButton, VkMiddleButton];
 
+    /// <summary>
+    /// 录制期间光标停在过、但**权限比我们高**的窗口（进程令牌打不开）。
+    /// Windows 不会把发往更高完整性窗口的输入交给低权限进程的全局钩子——
+    /// 这些窗口上的点击既收不到也补不了，只能如实告诉用户。（实测：哔哩哔哩客户端就是这种）
+    /// </summary>
+    internal static readonly Dictionary<int, string> OutOfReach = [];
+
+    /// <summary>光标底下的顶层窗口，能不能读到它的进程令牌；读不到就把 pid + 标题记下来。</summary>
+    private static void CheckReach()
+    {
+        var cursor = new POINT();
+        if (!GetCursorPos(out cursor)) return;
+
+        IntPtr window = GetAncestor(WindowFromPoint(cursor), 2 /*GA_ROOT*/);
+        if (window == IntPtr.Zero) return;
+        if (GetWindowThreadProcessId(window, out int pid) == 0 || pid <= 4) return;
+
+        IntPtr process = OpenProcess(0x1000 /*PROCESS_QUERY_LIMITED_INFORMATION*/, false, pid);
+        if (process == IntPtr.Zero)
+        {
+            // 连进程都打不开：多半是别的用户/更强的隔离
+            OutOfReach[pid] = Title(window);
+            return;
+        }
+
+        try
+        {
+            if (!OpenProcessToken(process, 0x0008 /*TOKEN_QUERY*/, out IntPtr token))
+            {
+                OutOfReach[pid] = Title(window);
+                return;
+            }
+            CloseHandle(token);
+        }
+        finally
+        {
+            CloseHandle(process);
+        }
+    }
+
+    private static string Title(IntPtr window)
+    {
+        var buffer = new char[512];
+        int length = GetWindowTextW(window, buffer, buffer.Length);
+        return length > 0 ? new string(buffer, 0, Math.Min(length, buffer.Length)) : "（无标题）";
+    }
+
     /// <summary>这一轮录制里钩子真正收到的事件条数，按类型分开计数（诊断用）。</summary>
     internal static readonly Dictionary<string, int> Seen = [];
 
@@ -194,6 +249,7 @@ internal static class NativeHooks
     {
         _sink = onEvent;
         Seen.Clear();
+        OutOfReach.Clear();
         HookProc keyboard = _keyboardHook = (code, wParam, lParam) =>
         {
             int message = wParam.ToInt32();
@@ -266,10 +322,19 @@ internal static class NativeHooks
             // 所以不再空转：有事件就泵，没事件就睡着，超时只是为了看得见 stop()。
             var held = new Dictionary<int, bool>();
             foreach (int button in PolledButtons) held[button] = false;
+            uint lastReachCheck = 0;
 
             while (!stop())
             {
                 MsgWaitForMultipleObjects(0, IntPtr.Zero, false, 20, QsAllInput);
+
+                // 每 250ms 看一眼光标底下是谁：权限更高的窗口要记下来，最后如实告诉用户。
+                uint tick = (uint)Environment.TickCount64;
+                if (tick - lastReachCheck > 250)
+                {
+                    lastReachCheck = tick;
+                    try { CheckReach(); } catch (Exception) { }
+                }
 
                 // 有些输入到不了低级钩子（触摸/触控笔被提升成鼠标消息、或目标进程的完整性更高）。
                 // 钩子本来只负责"看"，这里补一层轮询：状态变了就记一条，并标明是采样来的。
