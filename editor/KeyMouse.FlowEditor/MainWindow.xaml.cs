@@ -46,7 +46,11 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         };
         Root.SizeChanged += (_, _) => ClampPanes();
 
-        Title = "KeyMouse 流程编辑器";
+        // 标题带构建时间：这一轮反复被"跑的是旧 exe"骗过，让人一眼能看出手上这份是不是刚编的。
+        string built = "未知";
+        try { built = File.GetLastWriteTime(typeof(MainWindow).Assembly.Location).ToString("MM-dd HH:mm"); }
+        catch (Exception) { }
+        Title = $"KeyMouse 流程编辑器 0.1.0（构建 {built}）";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         try
