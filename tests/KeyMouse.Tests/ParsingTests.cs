@@ -363,7 +363,7 @@ internal static class ParsingTests
         Harness.Check("--strict-point", g.StrictPoint);
 
         Commands.ExtractGlobalOptions(new[] { "key", "press", "f24" }, out g);
-        Harness.Equal("focus policy defaults to gentle", "gentle", g.FocusPolicy);
+        Harness.Equal("focus policy defaults to never (不碰焦点)", "never", g.FocusPolicy);
         Harness.Equal("focus attempts default to 3", 3, g.FocusAttempts);
 
         Harness.Throws<ArgumentException>("a flag without its value is an error",

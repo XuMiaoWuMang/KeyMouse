@@ -147,7 +147,7 @@ internal static class Usage
 
         new("窗口策略", null,
         [
-            new("--focus-policy gentle|none", "gentle（默认）：SetForegroundWindow 后回读真实的前台窗口，最多 3 次；仍不成功则以退出码 5 结束。none：要求它已经是前台窗口"),
+            new("--focus-policy never|gentle|none", "never（默认）：不碰焦点，窗口只用来换算坐标与校验资格。gentle：SetForegroundWindow 后回读验证，最多 3 次。none：要求它已经是前台窗口"),
             new("--focus-attempts <n>", "温和模式的尝试次数（默认 3）"),
             new("--allow-restore", "允许 KeyMouse 还原最小化窗口（默认关；流程文件里可写 allowRestore: true，两者任一即可）"),
             new("-wx <cx> -wy <cy>", "客户区坐标（必须成对出现，且必须带选择器）；在 mouse drag 里它是起点，终点是 --wx2 <cx2> --wy2 <cy2>（四个必须一起给）"),

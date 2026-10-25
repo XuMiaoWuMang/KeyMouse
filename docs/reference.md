@@ -105,13 +105,17 @@ KeyMouse key type "hello"                   # 打给当前焦点所在的窗口
 ```
 
 不校验窗口、不抢前台、不做闸门检查——这正是自动化要的默认行为。
-需要严格性时再**手动指定窗口**（下面的选择器），那时才会先验证、再聚焦、再发事件；
+
+**手动指定窗口时也不抢焦点**：选择器默认只用来换算客户区坐标与校验资格（`--focus-policy never`），
+绝不 `SetForegroundWindow`——点下去落在屏幕上最上面那个窗口，由你负责摆好。
+需要工具先把窗口提到前台，再显式加 `--focus-policy gentle`。
 客户区坐标（`-wx/-wy`）因为要换算，始终需要一个窗口。
 
 ## 窗口策略
 | 选项 | 说明 |
 | --- | --- |
-| `--focus-policy gentle`（默认） | `SetForegroundWindow` → 回读 `GetForegroundWindow` 验证 → 最多 3 次 |
+| `--focus-policy never`（默认） | **不碰焦点**：窗口只用来换算坐标与校验资格 |
+| `--focus-policy gentle` | `SetForegroundWindow` → 回读 `GetForegroundWindow` 验证 → 最多 3 次 |
 | `--focus-policy none` | 目标必须**已经**是前台窗口，否则拒绝 |
 | `--focus-attempts <n>` | 温和模式的尝试次数（默认 3） |
 | `--allow-restore` | 允许自动还原最小化窗口（默认拒绝） |

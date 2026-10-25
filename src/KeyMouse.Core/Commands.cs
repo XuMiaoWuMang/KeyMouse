@@ -172,6 +172,9 @@ internal static class Commands
 
     private static void FocusTarget(WindowInfo target, GlobalOptions g)
     {
+        // 默认什么都不做：窗口只用来换算坐标，焦点归用户。
+        if (string.Equals(g.FocusPolicy, "never", StringComparison.OrdinalIgnoreCase)) return;
+
         if (string.Equals(g.FocusPolicy, "none", StringComparison.OrdinalIgnoreCase))
         {
             if (!WindowFocus.IsForeground(target.Handle))
@@ -180,7 +183,7 @@ internal static class Commands
         }
 
         if (!string.Equals(g.FocusPolicy, "gentle", StringComparison.OrdinalIgnoreCase))
-            throw new CommandFailure(2, $"--focus-policy 只能是 gentle 或 none（收到 '{g.FocusPolicy}'）");
+            throw new CommandFailure(2, $"--focus-policy 只能是 never / gentle / none（收到 '{g.FocusPolicy}'）");
 
         var result = WindowFocus.Focus(target.Handle, g.FocusAttempts);
         if (!result.Ok)
@@ -568,7 +571,12 @@ internal static class Commands
         public uint? Pid;
         public IntPtr? Hwnd;
         public int? Pick;
-        public string FocusPolicy = "gentle";
+        /// <summary>
+    /// never（默认）：**不碰焦点**——给了窗口只用来换算坐标与校验资格，绝不 SetForegroundWindow。
+    /// 工具相信调用方知道自己在做什么；"我点哪儿就发哪儿"比"我先帮你切窗口"更少意外。
+    /// gentle / none 是显式选择的严格模式。
+    /// </summary>
+    public string FocusPolicy = "never";
         public int FocusAttempts = WindowFocus.DefaultAttempts;
         public bool AllowRestore;
         public bool StrictPoint;
@@ -638,7 +646,7 @@ internal static class Commands
                 case "pid": g.Pid = (uint)IntArg(Take("进程 ID"), "--pid"); break;
                 case "hwnd": g.Hwnd = WindowLocator.ParseHandle(Take("窗口句柄")); break;
                 case "pick": g.Pick = IntArg(Take("候选序号"), "--pick"); break;
-                case "focus-policy": g.FocusPolicy = Take("gentle|none"); break;
+                case "focus-policy": g.FocusPolicy = Take("never|gentle|none"); break;
                 case "focus-attempts": g.FocusAttempts = Math.Max(1, IntArg(Take("尝试次数"), "--focus-attempts")); break;
                 case "allow-restore": g.AllowRestore = true; break;
                 case "strict-point": g.StrictPoint = true; break;
