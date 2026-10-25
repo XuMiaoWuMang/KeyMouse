@@ -32,3 +32,6 @@ tools/KeyMouse.Setup/Assets/*.zip
 x.json
 x.shots/
 flow.json
+
+# 本地 GitHub token（clean-releases.ps1 读它，用完即删）
+.keymouse-github-token
