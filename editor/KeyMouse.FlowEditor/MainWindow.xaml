@@ -62,23 +62,35 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,0,10">
-                <Button x:Name="PauseButton" Click="OnPauseRun" Visibility="Collapsed" Style="{StaticResource ToolButton}">
+                <Button x:Name="PauseButton" Click="OnPauseRun" Visibility="Collapsed" Style="{StaticResource ToolButton}"
+                        AutomationProperties.Name="暂停">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE769;" FontSize="11" />
                         <TextBlock Text="暂停" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="StopButton" Click="OnStopRun" Visibility="Collapsed" Style="{StaticResource ToolButton}">
+                <Button x:Name="StopButton" Click="OnStopRun" Visibility="Collapsed" Style="{StaticResource ToolButton}"
+                        AutomationProperties.Name="停止">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE71A;" FontSize="11" />
                         <TextBlock Text="停止" />
                     </StackPanel>
                 </Button>
+                <Button x:Name="RecordButton" Click="OnRecord" Style="{StaticResource ToolButton}"
+                        AutomationProperties.Name="录制"
+                        ToolTipService.ToolTip="录一段屏幕操作，转成流程（录制中按 Ctrl+Alt+Q 结束）">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon x:Name="RecordIcon" Glyph="&#xE7C8;" FontSize="11" />
+                        <TextBlock x:Name="RecordLabel" Text="录制" />
+                    </StackPanel>
+                </Button>
                 <Button x:Name="DryRunButton" Click="OnDryRun" Style="{StaticResource ToolButton}"
+                        AutomationProperties.Name="试运行"
                         ToolTipService.ToolTip="只做资格检查，不发送任何输入">
                     <TextBlock Text="试运行" Padding="4,0" />
                 </Button>
                 <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource KpPrimaryButton}"
+                        AutomationProperties.Name="播放"
                         ToolTipService.ToolTip="播放（F5）">
                     <Button.KeyboardAccelerators>
                         <KeyboardAccelerator Key="F5" />

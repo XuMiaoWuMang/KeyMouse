@@ -143,6 +143,28 @@ internal static class KeyMouseBridge
         };
     }
 
+    /// <summary>
+    /// 录一段操作，写成流程文件。结束靠录制进程的全局热键 Ctrl+Alt+Q（它才在监听键鼠），
+    /// 客户端能做的只是"不再等"——所以取消只影响界面，不会丢已经录到的内容。
+    /// </summary>
+    internal static async Task<int> RecordAsync(
+        RunnerClient client, string outPath, Action<RunnerEvent> onEvent, CancellationToken cancellation)
+    {
+        RunnerEvent finished = await client.SendAsync("record", new RunnerParameters
+        {
+            Out = outPath,
+            Echo = true,
+            Shots = true,   // 录制时逐步留图：回放时能看见"当时屏幕上是什么"
+        }, onEvent, cancellation);
+
+        return finished.Kind switch
+        {
+            "finished" => finished.ExitCode ?? 0,
+            "error" => finished.Code ?? 1,
+            _ => 1,
+        };
+    }
+
     internal static Task<RunnerEvent> CancelAsync(RunnerClient client, int job) =>
         client.SendAsync("cancel", new RunnerParameters { Target = job });
 

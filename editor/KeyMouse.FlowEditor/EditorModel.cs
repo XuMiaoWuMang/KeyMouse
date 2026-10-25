@@ -315,16 +315,21 @@ public sealed class EditorModel : INotifyPropertyChanged
         return document;
     }
 
-    /// <summary>Reads a flow file. Throws <see cref="CommandFailure"/> with the loader's own message.</summary>
-    public void Load(string path)
+    /// <summary>
+    /// Reads a flow file. Throws <see cref="CommandFailure"/> with the loader's own message.
+    ///
+    /// <paramref name="keepPath"/> = false 用于**录制**：录到的内容进编辑区，但文件还是临时的，
+    /// 不该被当成用户的文档路径（否则一按 Ctrl+S 就写回临时文件，人还以为存好了）。
+    /// </summary>
+    public void Load(string path, bool keepPath = true)
     {
         FlowDocument document = FlowDocument.Load(path);
         Steps.Clear();
         _byNode.Clear();
         foreach (var step in document.Steps) Steps.Add(new StepVm(step, this));
-        _documentPath = path;
-        _dirty = false;
+        _documentPath = keepPath ? path : null;
         _savedJson = Serialize();
+        _dirty = !keepPath;
         Renumber();
         Notify();
     }
@@ -334,6 +339,18 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// 具体字段上（检查器就地显示），而不是等加载器回一句"第 N 步需要某某"。
     /// </summary>
     internal int Validate() => Rows.Where(row => !row.IsPreview).Sum(step => step.Validate());
+    /// <summary>
+    /// 把当前状态当成"已保存"。打开文件后要调用：选中第一行会触发检查器把默认值写进模型，
+    /// 那是渲染副作用，不是用户的改动——不抹掉的话，刚打开的文件立刻就是"有未保存的改动"，
+    /// 每次播放、录制、打开都要先过一道确认框（实测）。
+    /// </summary>
+    internal void MarkClean()
+    {
+        _savedJson = Serialize();
+        _dirty = false;
+        Notify();
+    }
+
     /// <summary>有没有未保存的改动。工具在丢掉别人的东西之前应该先问一句。</summary>
 
     /// <summary>新建：清空步骤与文件路径，回到空状态。</summary>

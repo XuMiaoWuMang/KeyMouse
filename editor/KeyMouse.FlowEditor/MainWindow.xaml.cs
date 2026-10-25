@@ -325,6 +325,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         _settings.Remember(path);
         RefreshStart();
             StepList.SelectedIndex = Model.Rows.Count > 0 ? 0 : -1;
+            Model.MarkClean();   // 检查器渲染时写的默认值不算用户的改动
             LogBox.Text = "";
             // 打开这件事走提示条，不占"运行输出"——那个面板只留给运行。
             // 打开成功不弹提示：文件路径已经在标题栏上，弹一次只是噪音。
@@ -810,6 +811,107 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private async void OnDryRun(object sender, RoutedEventArgs e) => await RunAsync(dryRun: true);
 
     private async void OnPlay(object sender, RoutedEventArgs e) => await RunAsync(dryRun: false);
+
+    private CancellationTokenSource? _record;
+    private RunnerClient? _recordClient;
+    private int? _recordJob;
+
+    /// <summary>
+    /// 录制：把一段屏幕操作变成流程，直接进编辑区（未命名，存哪儿由你决定）。
+    ///
+    /// 停止是录制进程的全局热键 Ctrl+Alt+Q——只有它在监听键鼠；界面这边的「结束录制」只是不再等它。
+    /// </summary>
+    private async void OnRecord(object sender, RoutedEventArgs e)
+    {
+        if (_record is not null)
+        {
+            // 真的让它停：Runner 的 cancel 会让录制进程收尾并写出文件（见 Recorder.ShouldStop）。
+            // 光取消客户端的等待只是"不等了"，录制还在继续跑。
+            RecordButton.IsEnabled = false;
+            Show("录制", "正在结束录制…", InfoBarSeverity.Informational);
+            if (_recordClient is { } running && _recordJob is int job) await KeyMouseBridge.CancelAsync(running, job);
+            else _record.Cancel();
+            return;
+        }
+
+        if (!await ConfirmDiscardAsync("开始录制")) return;
+
+        RunnerClient? client = await EnsureClientAsync();
+        if (client is null) return;
+
+        string path = Path.Combine(Path.GetTempPath(), "keymouse-record.json");
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch (IOException) { }
+
+        LogBox.Text = "";
+        Log($"# KeyMouse serve 连接已建立；请求 record -> {path}");
+        Show("录制", "正在录制。按 Ctrl+Alt+Q 结束（或点「结束录制」）。", InfoBarSeverity.Informational);
+
+        _record = new CancellationTokenSource();
+        _recordClient = client;
+        _recordJob = null;
+        RecordLabel.Text = "结束录制";
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "结束录制");
+        RecordIcon.Glyph = "\uE71A";
+        DryRunButton.IsEnabled = false;
+        PlayButton.IsEnabled = false;
+
+        try
+        {
+            await KeyMouseBridge.RecordAsync(client, path, ev => DispatcherQueue.TryEnqueue(() => OnRecordEvent(ev)), _record.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Show("录制出错", ex.Message, InfoBarSeverity.Error);
+        }
+        finally
+        {
+            _record.Dispose();
+            _record = null;
+            _recordClient = null;
+            _recordJob = null;
+            RecordButton.IsEnabled = true;
+            RecordLabel.Text = "录制";
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");
+            RecordIcon.Glyph = "\uE7C8";
+            UpdateStates();
+            BringToFront();
+        }
+
+        if (!File.Exists(path))
+        {
+            Show("录制", "没有产生流程文件（可能一步都没录到）。", InfoBarSeverity.Warning);
+            return;
+        }
+
+        try
+        {
+            Model.Load(path, keepPath: false);
+        }
+        catch (Exception ex)
+        {
+            Show("录到的流程读不了", ex.Message, InfoBarSeverity.Error);
+            return;
+        }
+
+        _hasDocument = true;
+        SelectedStep = null;
+        UpdateStates();
+        Show("录制完成", $"录到 {Model.Steps.Count} 步：{path}。另存为你的流程文件即可。", InfoBarSeverity.Success);
+    }
+
+    /// <summary>录制进程的输出全部进「运行输出」，与运行时的日志同一个去处。</summary>
+    private void OnRecordEvent(RunnerEvent ev)
+    {
+        if (ev.Job is int job) _recordJob = job;   // 「结束录制」要用它发 cancel
+
+        if (ev.Kind == "log" && ev.Line is { Length: > 0 } line) Log(line);
+        else if (ev.Kind == "finished") Log($"录制结束，退出码 {ev.ExitCode}");
+        else if (ev.Kind == "error") Log("# 错误  " + (ev.Message ?? "录制失败"));
+    }
 
     private async void OnStopRun(object sender, RoutedEventArgs e)
     {
