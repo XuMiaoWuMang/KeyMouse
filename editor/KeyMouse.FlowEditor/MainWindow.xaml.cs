@@ -987,6 +987,21 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private async Task RunAsync(bool dryRun)
     {
+        // 这里是 async void 处理器 await 的入口：任何漏出来的异常都会直接结束进程。
+        // 所以整段兜住，把原因写进面板与日志——失败可以，蒸发不行。
+        try
+        {
+            await RunCoreAsync(dryRun);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex);
+            Show("运行出错", ex.Message, InfoBarSeverity.Error);
+        }
+    }
+
+    private async Task RunCoreAsync(bool dryRun)
+    {
         if (_run is not null) return;
 
         RunnerClient? client = await EnsureClientAsync();
@@ -1076,10 +1091,14 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
 
         bool success = exitCode == 0;
         RunSummaryIcon.Glyph = success ? "\uE73E" : "\uEA39";
+        // failed 可能是 null：格式错误、窗口不可用、Runner 拒跑都会让整次运行以非 0 结束，
+        // 却没有"某一步失败"的事件。以前这里写 failed!.Number，等于用空引用把程序带走（实测崩过）。
         RunSummaryText.Text = success
             ? $"{ok} 步全部成功，共 {totalMs} ms。{Explain(0)}"
-            : $"第 {failed!.Number} 步「{StepCatalog.NameOf(failed.Step.Type)}」失败。"
-              + (ok > 0 ? $"前面 {ok} 步成功。" : "") + Explain(exitCode);
+            : failed is null
+                ? $"这次没跑起来（退出码 {exitCode}）。{Explain(exitCode)}"
+                : $"第 {failed.Number} 步「{StepCatalog.NameOf(failed.Step.Type)}」失败。"
+                  + (ok > 0 ? $"前面 {ok} 步成功。" : "") + Explain(exitCode);
         RunSummaryJump.Visibility = Ui.Show(!success);
         RunSummary.Visibility = Visibility.Visible;
         NotifyOutput();

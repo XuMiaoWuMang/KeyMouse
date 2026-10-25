@@ -9,6 +9,17 @@ public partial class App : Application
     public App()
     {
         UnhandledException += OnUnhandled;
+
+        // UI 线程之外的两条路，XAML 的处理器看不到：管道读线程、后台 Task。
+        // 不记录的话，表现就是"程序直接没了、日志里什么都没有"。
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            CrashLog.Write(args.ExceptionObject as Exception, "非 UI 线程");
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            CrashLog.Write(args.Exception, "未观察的 Task");
+            args.SetObserved();
+        };
+
         InitializeComponent();
     }
 
@@ -20,19 +31,7 @@ public partial class App : Application
     /// </summary>
     private static void OnUnhandled(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        try
-        {
-            string directory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeyMouse");
-            Directory.CreateDirectory(directory);
-            File.AppendAllText(
-                Path.Combine(directory, "editor-crash.log"),
-                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {e.Exception}{Environment.NewLine}{Environment.NewLine}");
-        }
-        catch (Exception)
-        {
-            // 连写文件都失败时，也别让兜底本身把进程带走。
-        }
+        CrashLog.Write(e.Exception, "UI 线程");
 
         e.Handled = true;   // 窗口留着，用户还能继续用；原因在文件里。
     }
