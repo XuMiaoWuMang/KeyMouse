@@ -19,7 +19,7 @@
         .\km w            监视 src/ 与 tests/：改了就跟一次「编译 + 单元测试」
         .\km w -once      只跟一次（用来确认监视本身是好的）
         .\km docs         文档链接检查
-        .\km clean        清掉 bin / obj / dist
+        .\km clean        清掉 bin / obj / dist / out（含根目录那三个）
 
     为什么默认只编译 CLI：整个解决方案里 13s 花在 WinUI 编辑器的 XAML 上，
     而 CLI 只改 Core 时重建是 1.7s。编辑器不参与就不该付这笔钱。
@@ -226,10 +226,17 @@ switch ($Verb) {
     }
 
     { $_ -in 'c', 'clean' } {
-        Say '-> 清理 bin / obj / dist'
+        Say '-> 清理 bin / obj / dist / out'
         Get-ChildItem -Path (Join-Path $root 'src'), (Join-Path $root 'tests'), $editor -Recurse -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -in 'bin', 'obj' } |
             ForEach-Object { Remove-Item -Recurse -Force $_.FullName -ErrorAction SilentlyContinue }
+
+        # 根目录这几个是 SDK 建临时项目、以及发布暂存留下的，和项目无关但很占地方
+        foreach ($name in 'bin', 'obj', 'out') {
+            $path = Join-Path $root $name
+            if (Test-Path $path) { Remove-Item -Recurse -Force $path -ErrorAction SilentlyContinue }
+        }
+
         if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
         Say '   done' 'DarkGray'
         break

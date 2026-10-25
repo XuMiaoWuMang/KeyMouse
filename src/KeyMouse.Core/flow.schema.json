@@ -222,16 +222,24 @@
       "fields": [
         {
           "name": "space",
-          "kind": "const",
-          "value": "client",
+          "kind": "enum",
           "required": true,
+          "values": [
+            "client",
+            "window"
+          ],
+          "default": "client",
           "label": {
-            "zh": "坐标空间（固定客户区）",
+            "zh": "坐标空间（客户区 / 整个窗口）",
             "en": "space"
           },
+          "valueLabels": {
+            "client": { "zh": "客户区", "en": "client" },
+            "window": { "zh": "整个窗口（含标题栏）", "en": "window" }
+          },
           "help": {
-            "zh": "区域只支持客户区坐标：屏幕坐标会因为窗口移动而失效。",
-            "en": "Regions are client-relative only: screen coordinates break when the window moves."
+            "zh": "读屏要落在某个窗口里：client 是客户区，window 连标题栏与边框一起算。",
+            "en": "Reads need a window: client is the client area, window includes the frame."
           }
         },
         {

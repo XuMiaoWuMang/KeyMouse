@@ -361,6 +361,9 @@ internal static class FlowRunner
         WindowSelector selector, FlowRegion region, string expected, string mode, int maxErrors,
         int timeoutMs, int intervalMs, int confirm, bool dryRun, bool allowRestore, int stepIndex)
     {
+        // 区域可以落在客户区，也可以落在整个窗口（标题栏那类）。引擎两种都支持。
+        bool windowSpace = region.Space == FlowSpace.Window;
+
         if (dryRun)
         {
             // No engine call in a dry run: resolve the window and check the rectangle, which is what a
@@ -370,7 +373,7 @@ internal static class FlowRunner
                 return new PollResult(false, null, 4, $"（dry-run）目标窗口现在不可用：{selector.Describe()}", "");
             try
             {
-                Probe.ValidateRegion(resolution.Usable[0], windowSpace: false, region.Rect());
+                Probe.ValidateRegion(resolution.Usable[0], windowSpace, region.Rect());
             }
             catch (ArgumentException ex)
             {
@@ -400,7 +403,7 @@ internal static class FlowRunner
             {
                 try
                 {
-                    var (text, _, lines) = Probe.ReadOnce(resolution.Usable[0], windowSpace: false, region.Rect());
+                    var (text, _, lines) = Probe.ReadOnce(resolution.Usable[0], windowSpace, region.Rect());
                     lastText = text;
                     TextMatch? match = TextLocator.Find(lines, expected, mode, maxErrors);
                     if (match is not null)
@@ -502,12 +505,28 @@ internal static class FlowRunner
         int x = region.X + poll.Match.Rect[0] + poll.Match.Rect[2] / 2;
         int y = region.Y + poll.Match.Rect[1] + poll.Match.Rect[3] / 2;
 
-        var arguments = new List<string> { "mouse", "click", step.Button ?? "left", "-wx", x.ToString(), "-wy", y.ToString() };
+        // 客户区坐标可以直接交给 -wx/-wy；窗口坐标要先加上窗口原点变成屏幕坐标再点。
+        // （两种都按同一个窗口选择器换算，所以"读到哪儿"与"点到哪儿"不会分叉。）
+        bool absolute = region.Space == FlowSpace.Window;
+        if (absolute)
+        {
+            var target = WindowResolver.Resolve(selector, options.AllowRestore);
+            if (target.Usable.Count == 0)
+                return (4, $"要点的窗口现在不可用：{selector.Describe()}");
+            if (!NativeWindow.GetWindowRect(target.Usable[0].Handle, out NativeWindow.RECT rect))
+                return (4, "窗口矩形读不出来——没有发出任何点击");
+            x += rect.Left;
+            y += rect.Top;
+        }
+
+        var arguments = new List<string> { "mouse", "click", step.Button ?? "left" };
+        if (absolute) arguments.AddRange(["-x", x.ToString(), "-y", y.ToString()]);
+        else arguments.AddRange(["-wx", x.ToString(), "-wy", y.ToString()]);
         if (!string.IsNullOrWhiteSpace(step.Target?.Process)) arguments.AddRange(["--process", step.Target!.Process]);
         if (!string.IsNullOrWhiteSpace(step.Target?.Class)) arguments.AddRange(["--class", step.Target!.Class]);
 
         var (exitCode, output) = ScriptRunner.RunOnce(execute, arguments);
-        return (exitCode, $"「{poll.Match.Matched}」在客户区 {x},{y}（框 {poll.Match.Rect[0]},{poll.Match.Rect[1]} " +
+        return (exitCode, $"「{poll.Match.Matched}」在{(absolute ? "屏幕" : "客户区")} {x},{y}（框 {poll.Match.Rect[0]},{poll.Match.Rect[1]} " +
                           $"{poll.Match.Rect[2]}x{poll.Match.Rect[3]}，置信度 {poll.Match.Confidence:0.0}）→ " +
                           Shorten(output));
     }

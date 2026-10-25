@@ -11,6 +11,9 @@ internal static class FlowSpace
 {
     internal const string Client = "client";
     internal const string Screen = "screen";
+
+    /// <summary>整个窗口（含标题栏与边框）。读屏时用得上：标题栏那类区域不属于客户区。</summary>
+    internal const string Window = "window";
 }
 
 /// <summary>滚轮的方向。竖向是默认，所以只有横向需要在文件里写出来。</summary>
@@ -48,6 +51,7 @@ internal sealed class FlowPoint
 /// <summary>A rectangle a condition reads, in the same vocabulary `probe` uses.</summary>
 internal sealed class FlowRegion
 {
+    /// <summary>client（客户区）或 window（整个窗口）。读屏必须落在某个窗口里，所以没有 screen。</summary>
     public string Space { get; set; } = FlowSpace.Client;
     public int X { get; set; }
     public int Y { get; set; }
@@ -285,9 +289,9 @@ internal sealed class FlowDocument
                 if (string.IsNullOrWhiteSpace(conditionTarget?.Process) && string.IsNullOrWhiteSpace(conditionTarget?.Class))
                     throw new CommandFailure(2,
                         $"第 {i + 1} 步的 when 需要 target（自己给，或者步骤本身有）——否则不知道该读哪个窗口");
-                if (when.Region.Space != FlowSpace.Client)
+                if (when.Region.Space is not (FlowSpace.Client or FlowSpace.Window))
                     throw new CommandFailure(2,
-                        $"第 {i + 1} 步 when 的 region 只支持客户区坐标（space=client）");
+                        $"第 {i + 1} 步 when 的 region 只支持 {FlowSpace.Client} 或 {FlowSpace.Window}");
                 if (when.Else is { } otherwise && otherwise is not ("skip" or "fail"))
                     throw new CommandFailure(2, $"第 {i + 1} 步 when 的 else '{otherwise}' 不认识（可用：skip | fail）");
             }
@@ -299,9 +303,10 @@ internal sealed class FlowDocument
                 if (step.Match is { } mode && !TextPredicate.IsKnownMode(mode))
                     throw new CommandFailure(2,
                         $"第 {i + 1} 步 {step.Type} 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
-                if (step.Region.Space != FlowSpace.Client)
+                if (step.Region.Space is not (FlowSpace.Client or FlowSpace.Window))
                     throw new CommandFailure(2,
-                        $"第 {i + 1} 步 {step.Type} 的 region 只支持客户区坐标（space=client）：屏幕坐标会因为窗口移动而失效");
+                        $"第 {i + 1} 步 {step.Type} 的 region 只支持 {FlowSpace.Client}（客户区）或 {FlowSpace.Window}（整个窗口）：" +
+                        "读屏必须落在某个窗口里，没有窗口就没有可比对的坐标系");
                 if (step.Type is "wait-text" or "click-text" && string.IsNullOrEmpty(step.Text))
                     throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 text（等什么字）");
                 if (step.Type == "read-text" && string.IsNullOrEmpty(step.Into))

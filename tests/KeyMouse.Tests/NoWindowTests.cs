@@ -57,5 +57,29 @@ internal static class NoWindowTests
         };
         Harness.Check("整篇没有一个窗口，也能通过加载与编译",
             FlowPlan.Build(document, Path.Combine(Path.GetTempPath(), "keymouse-nowindow-test.json")).StepCount == 3);
+
+        // 读屏必须落在某个窗口里：区域允许 client / window，不允许 screen。
+        Harness.Group("nowindow: 读屏区域的空间");
+
+        FlowStep Reading(string space) => new()
+        {
+            Type = "wait-text",
+            Text = "完成",
+            Target = new FlowTarget { Process = "notepad" },
+            Region = new FlowRegion { Space = space, X = 0, Y = 0, Width = 100, Height = 20 },
+        };
+
+        // 校验发生在加载时（FlowDocument.Load），所以这里走一遍真实的 存盘 → 加载。
+        string Load(FlowStep step)
+        {
+            string path = Path.Combine(Path.GetTempPath(), "keymouse-region-" + step.Region!.Space + ".json");
+            new FlowDocument { Steps = [step] }.Save(path);
+            return FlowDocument.Load(path).Steps[0].Region!.Space;
+        }
+
+        Harness.Equal("region 可以是整个窗口（标题栏那类也能读）", "window", Load(Reading("window")));
+        Harness.Equal("region 默认还是客户区", "client", Load(Reading("client")));
+        Harness.Throws<CommandFailure>("region 写 screen 会被拒（没有窗口就没有可比对的坐标系）",
+            () => Load(Reading("screen")));
     }
 }
