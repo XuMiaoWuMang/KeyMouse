@@ -449,6 +449,12 @@ internal static class Recorder
                 if (step.Combo is null) step.Text = detail;
             }
 
+            if (e.Sampled)
+            {
+                // 老实说清楚：这一下不是钩子看见的，是轮询补上的。
+                step.Note = "轮询补记：原始按钮事件没有到达钩子，位置与时间按当时光标采样";
+            }
+
             if (_shots && reference is { } shotAt && type is "click" or "drag" or "wheel" or "type" or "key")
             {
                 step.Shot = TakeShot(window, shotAt, type);

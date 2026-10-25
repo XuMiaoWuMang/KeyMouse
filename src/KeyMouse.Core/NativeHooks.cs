@@ -22,7 +22,11 @@ internal enum HookKind
 /// what makes the recorded pauses meaningful: they are the gaps the user actually left.
 /// </summary>
 internal readonly record struct HookEvent(
-    HookKind Kind, int VirtualKey, int X, int Y, int Data, uint Time, IntPtr Window);
+    HookKind Kind, int VirtualKey, int X, int Y, int Data, uint Time, IntPtr Window)
+{
+    /// <summary>这条事件不是钩子送来的，而是轮询按钮状态补记的（位置/时间为采样值）。</summary>
+    public bool Sampled { get; init; }
+}
 /// <summary>
 /// Global low-level keyboard and mouse hooks (WH_KEYBOARD_LL / WH_MOUSE_LL).
 ///
@@ -142,6 +146,13 @@ internal static class NativeHooks
     private static extern bool GetCursorPos(out POINT point);
 
     [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
+
+    private const int VkLeftButton = 0x01;
+    private const int VkRightButton = 0x02;
+    private const int VkMiddleButton = 0x04;
+
+    [DllImport("user32.dll")]
     internal static extern int GetSystemMetrics(int index);
 
     internal const int SmXVirtualScreen = 76;
@@ -165,6 +176,11 @@ internal static class NativeHooks
     private static HookProc? _keyboardHook;
     private static HookProc? _mouseHook;
     private static Action<HookEvent>? _sink;
+
+    /// <summary>每个按钮最近一次由钩子报告的时间（毫秒 tick）：轮询到同一状态时用来去重。</summary>
+    private static readonly Dictionary<int, uint> LastHookButton = [];
+
+    private static readonly int[] PolledButtons = [VkLeftButton, VkRightButton, VkMiddleButton];
 
     /// <summary>这一轮录制里钩子真正收到的事件条数，按类型分开计数（诊断用）。</summary>
     internal static readonly Dictionary<string, int> Seen = [];
@@ -222,6 +238,7 @@ internal static class NativeHooks
                     ? (short)(data.MouseData >> 16)
                     : kind is HookKind.ButtonDown or HookKind.ButtonUp ? button : 0;
                 Count(kind.ToString());
+                if (kind is HookKind.ButtonDown or HookKind.ButtonUp) LastHookButton[data2] = data.Time;
                 _sink?.Invoke(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));
             }
             }
@@ -247,9 +264,32 @@ internal static class NativeHooks
             // 低级钩子是在带内执行的：钩子线程睡 5ms，整机输入就跟着多 5ms 延迟。
             // 任务栏这种悬停事件最密的地方最先卡住——实测里鼠标会贴在任务栏上出不来。
             // 所以不再空转：有事件就泵，没事件就睡着，超时只是为了看得见 stop()。
+            var held = new Dictionary<int, bool>();
+            foreach (int button in PolledButtons) held[button] = false;
+
             while (!stop())
             {
-                MsgWaitForMultipleObjects(0, IntPtr.Zero, false, 50, QsAllInput);
+                MsgWaitForMultipleObjects(0, IntPtr.Zero, false, 20, QsAllInput);
+
+                // 有些输入到不了低级钩子（触摸/触控笔被提升成鼠标消息、或目标进程的完整性更高）。
+                // 钩子本来只负责"看"，这里补一层轮询：状态变了就记一条，并标明是采样来的。
+                foreach (int button in PolledButtons)
+                {
+                    bool down = (GetAsyncKeyState(button) & 0x8000) != 0;
+                    if (down == held[button]) continue;
+                    held[button] = down;
+
+                    uint now = (uint)Environment.TickCount64;
+                    if (LastHookButton.TryGetValue(button, out uint hookTime) && now - hookTime < 250)
+                        continue;   // 钩子刚报过同一个动作，别重复记
+
+                    System.Drawing.Point cursor = GetCursorPosition();
+                    _sink?.Invoke(new HookEvent(
+                        down ? HookKind.ButtonDown : HookKind.ButtonUp, 0, cursor.X, cursor.Y, button, now, IntPtr.Zero)
+                    {
+                        Sampled = true,
+                    });
+                }
                 while (PeekMessage(out MSG message, IntPtr.Zero, 0, 0, PmRemove))
                 {
                     TranslateMessage(ref message);
