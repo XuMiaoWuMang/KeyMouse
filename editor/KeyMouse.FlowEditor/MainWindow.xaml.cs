@@ -112,7 +112,17 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (_client is not null) return _client;
 
-        _client = await KeyMouseBridge.ConnectAsync(_tool);
+        try
+        {
+            _client = await KeyMouseBridge.ConnectAsync(_tool);
+        }
+        catch (RunnerAccessDeniedException ex)
+        {
+            // 管道被更高权限的 Runner 占着：说得清楚一点，别让用户对着"未指定的错误"猜。
+            Show("连不上 Runner", ex.Message, InfoBarSeverity.Error);
+            return null;
+        }
+
         if (_client is null)
         {
             Show("连不上 Runner",

@@ -1,9 +1,16 @@
+using System.Globalization;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
 namespace KeyMouse.Runner;
+
+/// <summary>
+/// 管道存在但连不上：通常是另一个 Runner 以更高权限运行（提权启动过编辑器或命令行）。
+/// 单独一个类型，是为了让界面能给出怎么办，而不是把 UnauthorizedAccessException 甩给用户。
+/// </summary>
+internal sealed class RunnerAccessDeniedException(string message) : Exception(message);
 
 /// <summary>
 /// The client side of the pipe, used by the editor (and by tests). One connection, a background pump
@@ -44,6 +51,17 @@ internal sealed class RunnerClient : IDisposable
         {
             pipe.Dispose();
             return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // 管道存在，但它的 DACL 不让我们连：另一个 Runner 正以**更高权限**运行
+            // （典型场景：为录制管理员窗口提权跑过编辑器，它的 serve 留了下来）。
+            // 这不是"没有 Runner"，所以不能悄悄返回 null——那样启动的新 Runner 也抢不到这个管道名。
+            pipe.Dispose();
+            throw new RunnerAccessDeniedException(
+                "有一个 KeyMouse Runner 正在以更高权限运行，当前程序连不上它（命名管道拒绝访问）。\n" +
+                "办法：以**同样的权限**启动本程序（编辑器用管理员身份运行），" +
+                "或者在任务管理器里结束那个 KeyMouse.exe（它需要管理员权限才能结束）。");
         }
     }
 
@@ -176,6 +194,10 @@ internal sealed class RunnerClient : IDisposable
             RedirectStandardError = true,
         };
         startInfo.ArgumentList.Add("serve");
+        // 让 serve 知道是谁把它拉起来的：调用方一消失，它自己退出。
+        // 否则留下的孤儿会一直占着命名管道，之后启动的编辑器连不上它。
+        startInfo.ArgumentList.Add("--parent");
+        startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
 
         var words = new List<string>();
         void Remember(object _, System.Diagnostics.DataReceivedEventArgs e)

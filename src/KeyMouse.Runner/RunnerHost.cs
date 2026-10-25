@@ -345,10 +345,42 @@ internal sealed class RunnerHost
 
     // ------------------------------------------------------------------ serving
 
+    /// <summary>父进程消失就退出：后台线程轮询，够用且不需要 Job Object 的权限。</summary>
+    private static void WatchParent(int pid)
+    {
+        var thread = new Thread(() =>
+        {
+            while (true)
+            {
+                Thread.Sleep(2000);
+                try
+                {
+                    using var parent = System.Diagnostics.Process.GetProcessById(pid);
+                    if (parent.HasExited) break;
+                }
+                catch (ArgumentException)
+                {
+                    break;   // 进程已经不存在
+                }
+                catch (Exception)
+                {
+                    // 读不了状态时不要误杀：宁可留下，也不要因为一次异常就丢掉服务
+                }
+            }
+            Environment.Exit(0);
+        })
+        {
+            IsBackground = true,
+            Name = "keymouse-parent-watch",
+        };
+        thread.Start();
+    }
+
     /// <summary>`engine serve`: listen until cancelled or asked to shut down.</summary>
     internal static int Run(string[] args)
     {
         bool once = args.Contains("--once");
+        int parent = 0;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -357,10 +389,19 @@ internal sealed class RunnerHost
                     break;
                 case "--once":
                     break;
+                case "--parent":
+                    if (i + 1 >= args.Length || !int.TryParse(args[i + 1], out parent))
+                        return Commands.Fail(2, "--parent 需要一个进程号");
+                    i++;
+                    break;
                 default:
-                    return Commands.Fail(2, $"用法：KeyMouse serve [--once]（--once 只服务第一个连接，测试用）。收到：{args[i]}");
+                    return Commands.Fail(2, $"用法：KeyMouse serve [--once] [--parent <pid>]（--once 只服务第一个连接，测试用）。收到：{args[i]}");
             }
         }
+
+        // 被谁拉起来就跟着谁活：编辑器退出后，留下的孤儿会一直占着命名管道，
+        // 之后启动的编辑器连不上它（UnauthorizedAccessException 或"点了没反应"）。
+        if (parent > 0) WatchParent(parent);
 
         var host = new RunnerHost();
         using var stop = new CancellationTokenSource();
