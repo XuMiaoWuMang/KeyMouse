@@ -24,6 +24,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private bool _paused;
     private CancellationTokenSource? _run;
 
+    // 输出面板与列表更新都是**按帧合并**的：631 步的流程会瞬间产生 1200+ 条事件，
+    // 一条一条改控件会把 UI 线程噎死（实测：窗口标题直接变「未响应」）。
+    private readonly System.Text.StringBuilder _pending = new();
+    private int _pendingLines;
+    private readonly System.Text.StringBuilder _logText = new();
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _flush;
+    private StepVm? _runningRow;
+    private StepVm? _scrollTo;
+    private const int MaxLogLines = 900;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -301,9 +311,50 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Log(string line)
     {
-        LogBox.Text += line + Environment.NewLine;
-        LogBox.SelectionStart = LogBox.Text.Length;
+        // 只入队，不碰控件：真正的写入由 80ms 一次的合并刷新完成。
+        _pending.Append(line).Append('\n');
+        _pendingLines++;
         OpenLog();
+        EnsureFlush();
+    }
+
+    private void EnsureFlush()
+    {
+        if (_flush is not null) return;
+
+        _flush = DispatcherQueue.CreateTimer();
+        _flush.Interval = TimeSpan.FromMilliseconds(80);
+        _flush.IsRepeating = true;
+        _flush.Tick += (_, _) => FlushUi();
+        _flush.Start();
+    }
+
+    private void FlushUi()
+    {
+        if (_pending.Length > 0)
+        {
+            _logText.Append(_pending);
+            _pending.Clear();
+            _pendingLines = 0;
+
+            // 只留最后 MaxLogLines 行：跑一小时的流程不该把整个文本堆在内存里。
+            if (_logText.Length > 400_000)
+            {
+                string all = _logText.ToString();
+                int cut = all.IndexOf('\n', Math.Max(0, all.Length - 200_000));
+                _logText.Clear().Append(cut >= 0 ? all[(cut + 1)..] : all);
+            }
+
+            LogBox.Text = _logText.ToString();
+            LogBox.SelectionStart = LogBox.Text.Length;
+        }
+
+        if (_scrollTo is { } row)
+        {
+            _scrollTo = null;
+            StepList.SelectedItem = row;
+            StepList.ScrollIntoView(row);
+        }
     }
 
     /// <summary>
@@ -1075,6 +1126,8 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
         finally
         {
             foreach (StepVm row in Model.Rows) row.ClearRunning();
+            _runningRow = null;
+            _scrollTo = null;
             _run.Dispose();
             _run = null;
             _job = null;
@@ -1156,16 +1209,14 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
                 StepVm? row = RowForExecution(index);
                 if (e.State == "started")
                 {
-                    foreach (StepVm other in Model.Rows)
-                    {
-                        if (!ReferenceEquals(other, row)) other.ClearRunning();
-                    }
+                    // 只清上一行，不遍历全表：631 步 × 631 行的循环就是把 UI 卡死的那一半原因。
+                    if (_runningRow is { } previous && !ReferenceEquals(previous, row)) previous.ClearRunning();
+                    _runningRow = row;
 
                     if (row is not null)
                     {
                         row.MarkRunning();
-                        StepList.SelectedItem = row;
-                        StepList.ScrollIntoView(row);
+                        _scrollTo = row;   // 滚动也按帧合并，别每步都滚一次
                     }
 
                     Log($"  [{index}/{e.Total ?? _plan?.StepCount ?? Model.Rows.Count}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
