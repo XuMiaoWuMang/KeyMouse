@@ -57,6 +57,20 @@ internal static class ProductRegistry
         }
     }
 
+    /// <summary>清掉单个值（比如一条指向已不存在文件的 CliPath）。</summary>
+    internal static void Clear(string name)
+    {
+        try
+        {
+            using RegistryKey? key = Registry.CurrentUser.OpenSubKey(KeyPath, writable: true);
+            key?.DeleteValue(name, throwOnMissingValue: false);
+        }
+        catch (Exception)
+        {
+            // 同上：清理失败不该让安装停住
+        }
+    }
+
     /// <summary>卸载时清掉整个键。</summary>
     internal static void Clear()
     {

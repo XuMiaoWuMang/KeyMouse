@@ -54,7 +54,10 @@ internal static class Installer
     /// </summary>
     internal static string? FindExistingCli(string installDirectory)
     {
-        if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { } registered) return registered;
+        // 只认**确实还在**的那一个：注册表里可能是几天前装到临时目录、早就被清掉的路径。
+        // 以前不检查存在性，于是"已检测到命令行，跳过安装"把新 CLI 一起跳过了（实测踩到）。
+        if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { } registered && File.Exists(registered))
+            return registered;
 
         string local = Path.Combine(installDirectory, "cli", "KeyMouse.exe");
         if (File.Exists(local)) return local;
@@ -96,7 +99,14 @@ internal static class Installer
             }
             else if (!installCli)
             {
-                // 明确只要界面：那就只写 GuiPath，一个字都不碰命令行。
+                // 明确只要界面：只写 GuiPath。但如果注册表里留着一条**已经不存在**的 CliPath，
+                // 必须清掉——否则编辑器会一直去找那个早就没了的引擎（实测：指向临时目录的旧副本）。
+                if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { Length: > 0 } stale
+                    && !File.Exists(stale))
+                {
+                    KeyMouse.ProductRegistry.Clear(KeyMouse.ProductRegistry.CliValue);
+                    progress?.Invoke("清掉了失效的命令行登记：" + stale);
+                }
                 progress?.Invoke("只安装界面（没有登记命令行）。");
             }
             else

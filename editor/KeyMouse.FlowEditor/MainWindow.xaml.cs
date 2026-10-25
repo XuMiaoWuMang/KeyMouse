@@ -1092,6 +1092,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         LogBox.Text = "";
         // 输出面板自己会出现（见 Log），不需要展开任何东西
         Log($"# KeyMouse serve 连接已建立；请求 run {path}{(dryRun ? "（--dry-run）" : "")}");
+        // 引擎路径写在运行输出里：版本不对时，第一眼就能看到它在用哪个 exe（实测踩过"注册表指向旧副本"）。
+        Log($"# 引擎 {_tool ?? "（没找到 KeyMouse.exe）"}");
         Show(dryRun ? "试运行" : "播放", "正在跑…", InfoBarSeverity.Informational);
 
         _run = new CancellationTokenSource();
