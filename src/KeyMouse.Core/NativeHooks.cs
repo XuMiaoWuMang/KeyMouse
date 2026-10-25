@@ -12,6 +12,9 @@ internal enum HookKind
     ButtonDown,
     ButtonUp,
     Wheel,
+
+    /// <summary>横向滚轮（WM_MOUSEHWHEEL）。与竖向分开，因为回放命令不同（mouse hwheel）。</summary>
+    HWheel,
 }
 
 /// <summary>
@@ -177,7 +180,8 @@ internal static class NativeHooks
                     WmMouseMove => HookKind.MouseMove,
                     WmLeftButtonDown or WmRightButtonDown or WmMiddleButtonDown or WmXButtonDown => HookKind.ButtonDown,
                     WmLeftButtonUp or WmRightButtonUp or WmMiddleButtonUp or WmXButtonUp => HookKind.ButtonUp,
-                    WmMouseWheel or WmMouseHWheel => HookKind.Wheel,
+                    WmMouseWheel => HookKind.Wheel,
+                WmMouseHWheel => HookKind.HWheel,
                     _ => HookKind.MouseMove,
                 };
                 int button = message switch
@@ -187,7 +191,7 @@ internal static class NativeHooks
                     WmXButtonDown or WmXButtonUp => 4,
                     _ => 1,
                 };
-                int data2 = kind == HookKind.Wheel
+                int data2 = kind is HookKind.Wheel or HookKind.HWheel
                     ? (short)(data.MouseData >> 16)
                     : kind is HookKind.ButtonDown or HookKind.ButtonUp ? button : 0;
                 onEvent(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));

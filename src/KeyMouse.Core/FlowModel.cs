@@ -13,6 +13,13 @@ internal static class FlowSpace
     internal const string Screen = "screen";
 }
 
+/// <summary>滚轮的方向。竖向是默认，所以只有横向需要在文件里写出来。</summary>
+internal static class FlowAxis
+{
+    internal const string Vertical = "vertical";
+    internal const string Horizontal = "horizontal";
+}
+
 /// <summary>The window a step applies to. Process and class are the durable selector; the title is
 /// recorded for the human (and for the editor) because titles change.</summary>
 internal sealed class FlowTarget
@@ -107,6 +114,9 @@ internal sealed class FlowStep
     public int? MaxErrors { get; set; }
     public int? Confirm { get; set; }
     public int? Delta { get; set; }
+
+    /// <summary>`wheel`: vertical（默认，可不写）或 horizontal。</summary>
+    public string? Axis { get; set; }
     public int? Ms { get; set; }
     public int? DurationMs { get; set; }
     public string? Shot { get; set; }
@@ -372,6 +382,10 @@ internal sealed class FlowDocument
                 throw new CommandFailure(2, $"{where}的 repeat 需要 times（0 到 {MaxLoopIterations} 之间）");
             if (step.Type == "foreach" && string.IsNullOrEmpty(step.In))
                 throw new CommandFailure(2, $"{where}的 foreach 需要 in（遍历哪个列表变量）");
+            if (step.Axis is { Length: > 0 } axis &&
+                !string.Equals(axis, FlowAxis.Vertical, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(axis, FlowAxis.Horizontal, StringComparison.OrdinalIgnoreCase))
+                throw new CommandFailure(2, $"{where}的 axis '{axis}' 不认识（可用：{FlowAxis.Vertical} | {FlowAxis.Horizontal}）");
 
             CheckRequired(step, where);
             CheckPlaceholders(step, scope, where);
@@ -593,7 +607,14 @@ internal sealed class FlowDocument
                 break;
 
             case "wheel":
-                args.AddRange(["mouse", "wheel", (step.Delta ?? 120).ToString(CultureInfo.InvariantCulture)]);
+                if (step.Axis is { Length: > 0 } unknown &&
+                    !string.Equals(unknown, FlowAxis.Vertical, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(unknown, FlowAxis.Horizontal, StringComparison.OrdinalIgnoreCase))
+                    throw new CommandFailure(2, $"wheel 的 axis '{unknown}' 不认识（可用：{FlowAxis.Vertical} | {FlowAxis.Horizontal}）");
+
+                // 横向滚轮是另一条命令（mouse hwheel），不是给 wheel 加个负号。
+                bool horizontal = string.Equals(step.Axis, FlowAxis.Horizontal, StringComparison.OrdinalIgnoreCase);
+                args.AddRange(["mouse", horizontal ? "hwheel" : "wheel", (step.Delta ?? 120).ToString(CultureInfo.InvariantCulture)]);
                 args.AddRange(PointArguments(step, step.At, "-x", "-y", "-wx", "-wy"));
                 args.AddRange(selector);
                 break;

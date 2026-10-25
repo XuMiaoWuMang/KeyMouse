@@ -156,7 +156,11 @@ internal static class Recorder
                     break;
                 case HookKind.Wheel:
                     FlushTyping();
-                    _raw.Add((e, "wheel", null));
+                    _raw.Add((e, "wheel", "vertical"));
+                    break;
+                case HookKind.HWheel:
+                    FlushTyping();
+                    _raw.Add((e, "wheel", "horizontal"));
                     break;
             }
 
@@ -264,6 +268,7 @@ internal static class Recorder
 
             var trajectory = new List<HookEvent>();
             var wheelBurst = new List<HookEvent>();
+            string? wheelAxis = null;   // 这一串滚动是竖向还是横向（换轴就另起一步）
             (HookEvent Event, string Button)? pressed = null;
             int trajectoryAtPress = 0;
             var lastStepTime = _startedAt;
@@ -301,7 +306,7 @@ internal static class Recorder
                 if (wheelBurst.Count == 0) return;
                 var first = wheelBurst[0];
                 int delta = wheelBurst.Sum(w => w.Data);
-                var step = Describe(first, "wheel", null, new Point(first.X, first.Y), null, null, delta);
+                var step = Describe(first, "wheel", wheelAxis, new Point(first.X, first.Y), null, null, delta);
                 Emit(step, wheelBurst[^1]);
                 wheelBurst.Clear();
             }
@@ -344,7 +349,15 @@ internal static class Recorder
                         continue;
 
                     case "wheel":
-                        if (wheelBurst.Count > 0 && e.Time - wheelBurst[^1].Time > 200) FlushWheel();
+                        // 同一次连续滚动才合并。换轴、或者方向反过来，都算新的一步——
+                        // 否则"上滚两格再下滚两格"会被加成 delta 0，等于什么都没做。
+                        if (wheelBurst.Count > 0)
+                        {
+                            bool sameAxis = wheelAxis == detail;
+                            bool sameSign = Math.Sign(e.Data) == Math.Sign(wheelBurst[^1].Data);
+                            if (!sameAxis || !sameSign || e.Time - wheelBurst[^1].Time > 200) FlushWheel();
+                        }
+                        wheelAxis = detail;
                         wheelBurst.Add(e);
                         continue;
 
@@ -420,7 +433,12 @@ internal static class Recorder
                 step.To = ToPoint(window, destination, out _);
                 step.DurationMs = duration;
             }
-            if (type == "wheel") step.Delta = wheelDelta;
+            if (type == "wheel")
+            {
+                step.Delta = wheelDelta;
+                // 竖向是默认，不写进文件；只有横向才留痕（回放走 mouse hwheel）。
+                if (detail == "horizontal") step.Axis = FlowAxis.Horizontal;
+            }
             if (type == "type")
             {
                 step.Text = detail;

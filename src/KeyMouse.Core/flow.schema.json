@@ -578,6 +578,30 @@
           }
         },
         {
+          "name": "axis",
+          "kind": "enum",
+          "required": false,
+          "values": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical",
+          "valueLabels": {
+            "vertical": {
+              "zh": "竖向",
+              "en": "vertical"
+            },
+            "horizontal": {
+              "zh": "横向",
+              "en": "horizontal"
+            }
+          },
+          "label": {
+            "zh": "方向",
+            "en": "axis"
+          }
+        },
+        {
           "name": "at",
           "kind": "point",
           "required": false,
