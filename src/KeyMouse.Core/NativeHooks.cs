@@ -158,10 +158,27 @@ internal static class NativeHooks
     /// callback throws). Everything the hooks see is handed to <paramref name="onEvent"/>, which
     /// must return quickly: it runs inside the hook chain of every input event on the machine.
     /// </summary>
+    /// <summary>
+    /// 钩子委托必须活到卸载为止：原生侧只握着函数指针，委托一被 GC 回收，钩子就指向空气。
+    /// 用静态字段钉住——局部变量在 Release 下可能被判成死引用（这类"偶发丢事件"通常就是它）。
+    /// </summary>
+    private static HookProc? _keyboardHook;
+    private static HookProc? _mouseHook;
+    private static Action<HookEvent>? _sink;
+
+    /// <summary>这一轮录制里钩子真正收到的事件条数，按类型分开计数（诊断用）。</summary>
+    internal static readonly Dictionary<string, int> Seen = [];
+
+    private static void Count(string kind)
+    {
+        Seen[kind] = Seen.TryGetValue(kind, out int n) ? n + 1 : 1;
+    }
+
     internal static void Record(Action<HookEvent> onEvent, Func<bool> stop)
     {
-        // The delegates must outlive the call: the OS keeps raw pointers to them.
-        HookProc keyboard = (code, wParam, lParam) =>
+        _sink = onEvent;
+        Seen.Clear();
+        HookProc keyboard = _keyboardHook = (code, wParam, lParam) =>
         {
             int message = wParam.ToInt32();
             if (code >= 0)
@@ -170,11 +187,12 @@ internal static class NativeHooks
                 HookKind kind = message is WmKeyDown or WmSysKeyDown ? HookKind.KeyDown : HookKind.KeyUp;
                 // Data carries the scan code for keys: ToUnicodeEx needs it to give the character
                 // the layout actually produces (and it is the only reliable way to record text).
-                onEvent(new HookEvent(kind, (int)data.VkCode, 0, 0, (int)data.ScanCode, data.Time, IntPtr.Zero));
+                Count(kind == HookKind.KeyDown ? "keyDown" : "keyUp");
+                _sink?.Invoke(new HookEvent(kind, (int)data.VkCode, 0, 0, (int)data.ScanCode, data.Time, IntPtr.Zero));
             }
             return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         };
-        HookProc mouse = (code, wParam, lParam) =>
+        HookProc mouse = _mouseHook = (code, wParam, lParam) =>
         {
             // 回调里抛出的异常会穿回原生钩子链，把输入留在半坏的状态（鼠标被粘住的一种成因）。
             // 录制器宁可漏一条事件，也不能让整机输入出问题。
@@ -203,7 +221,8 @@ internal static class NativeHooks
                 int data2 = kind is HookKind.Wheel or HookKind.HWheel
                     ? (short)(data.MouseData >> 16)
                     : kind is HookKind.ButtonDown or HookKind.ButtonUp ? button : 0;
-                onEvent(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));
+                Count(kind.ToString());
+                _sink?.Invoke(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));
             }
             }
             catch (Exception)

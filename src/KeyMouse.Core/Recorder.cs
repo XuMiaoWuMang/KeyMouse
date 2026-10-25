@@ -55,6 +55,9 @@ internal static class Recorder
         session.Finish();
 
         Console.WriteLine($"■ 已停止：{session.Steps.Count} 步 → {Path.GetFullPath(output)}");
+        // 钩子到底看见了什么：这几行的存在是为了回答"我明明点了，流程里为什么没有"。
+        string seen = string.Join("，", NativeHooks.Seen.OrderBy(pair => pair.Key).Select(pair => $"{pair.Key} {pair.Value}"));
+        Console.WriteLine("  钩子收到：" + (seen.Length > 0 ? seen : "（一个事件都没有）"));
         if (session.ShotCount > 0) Console.WriteLine($"  截图 {session.ShotCount} 张 → {session.ShotDirectory}");
         Console.WriteLine("  回放：KeyMouse run " + Path.GetFileName(output) + " [--dry-run]");
         return 0;
@@ -325,6 +328,13 @@ internal static class Recorder
 
                     case "down":
                         FlushWheel();
+                        // 上一次的按下如果没等到抬起（钩子漏了一条 up），不能让它把这一次吞掉：
+                        // 先把那一次按"点了"记下来，再交给新的这一对。
+                        if (pressed is { } orphan)
+                        {
+                            Emit(Describe(orphan.Event, "click", orphan.Button,
+                                new Point(orphan.Event.X, orphan.Event.Y), null, null, null), orphan.Event);
+                        }
                         pressed = (e, detail!);
                         trajectoryAtPress = trajectory.Count;
                         continue;
