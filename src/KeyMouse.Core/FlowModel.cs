@@ -39,7 +39,8 @@ internal sealed class FlowTarget
 
 internal sealed class FlowPoint
 {
-    public string Space { get; set; } = FlowSpace.Client;
+    /// <summary>默认屏幕坐标：不写 space 就是「打在这个屏幕点上」，不牵扯任何窗口。</summary>
+    public string Space { get; set; } = FlowSpace.Screen;
     public int X { get; set; }
     public int Y { get; set; }
 }

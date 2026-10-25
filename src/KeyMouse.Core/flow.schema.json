@@ -184,13 +184,17 @@
           "kind": "enum",
           "required": true,
           "values": [
-            "client",
-            "screen"
+            "screen",
+            "client"
           ],
-          "default": "client",
+          "default": "screen",
           "label": {
-            "zh": "坐标空间",
+            "zh": "坐标空间（默认屏幕）",
             "en": "space"
+          },
+          "help": {
+            "zh": "screen = 直接打在这个屏幕点上（默认，不需要窗口）；client = 窗口客户区相对，必须给目标窗口。",
+            "en": "screen fires at this point with no window (default); client is window-relative and needs a target."
           }
         },
         {
@@ -212,7 +216,7 @@
           }
         }
       ],
-      "comment": "space=client（客户区相对，推荐）时必须给 target，否则坐标无从换算。"
+      "comment": "space=screen（默认）不需要窗口；space=client 必须给 target，否则坐标无从换算。"
     },
     "region": {
       "fields": [
