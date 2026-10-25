@@ -176,7 +176,7 @@ internal sealed class RunnerClient : IDisposable
     }
 
     /// <summary>Starts a Runner if none is listening, and returns a connected client.</summary>
-    internal static async Task<RunnerClient?> ConnectOrStartAsync(string toolPath, int waitMs = 4000)
+    internal static async Task<RunnerClient?> ConnectOrStartAsync(string toolPath, int waitMs = 4000, bool withParent = true)
     {
         if (await ConnectAsync() is { } existing) return existing;
 
@@ -196,8 +196,11 @@ internal sealed class RunnerClient : IDisposable
         startInfo.ArgumentList.Add("serve");
         // 让 serve 知道是谁把它拉起来的：调用方一消失，它自己退出。
         // 否则留下的孤儿会一直占着命名管道，之后启动的编辑器连不上它。
-        startInfo.ArgumentList.Add("--parent");
-        startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+        if (withParent)
+        {
+            startInfo.ArgumentList.Add("--parent");
+            startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+        }
 
         var words = new List<string>();
         void Remember(object _, System.Diagnostics.DataReceivedEventArgs e)
@@ -240,6 +243,12 @@ internal sealed class RunnerClient : IDisposable
                     LastStartFailure = $"serve 起来就退了（退出码 {child.ExitCode}）"
                         + (words.Count > 0 ? "：" + string.Join(" / ", words) : "，而且没有留下任何输出");
                 }
+
+                // 可能配到的是旧版 KeyMouse.exe：它不认识 --parent。退回不带该参数再试一次，
+                // 只是失去了"跟着父进程退出"的保障——比连不上强。
+                if (withParent && LastStartFailure.Contains("--parent", StringComparison.Ordinal))
+                    return await ConnectOrStartAsync(toolPath, waitMs, withParent: false);
+
                 return null;
             }
         }

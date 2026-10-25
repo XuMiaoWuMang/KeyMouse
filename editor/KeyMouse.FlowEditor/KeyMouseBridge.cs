@@ -37,10 +37,10 @@ internal static class KeyMouseBridge
     /// </summary>
     internal static string? ResolveTool()
     {
-        // 第一候选永远是安装程序登记的路径：GUI 与 CLI 可以装在不同目录，
-        // 只有注册表知道这件事（猜"在我旁边"在发布环境里错过一次）。
-        if (ProductRegistry.Read(ProductRegistry.CliValue) is { } registered) return registered;
-
+        // 顺序：**身边这份**优先，注册表里的安装版最后。
+        // 理由很实际：开发时 bin\…\KeyMouse.FlowEditor.exe 旁边就是刚编的 dist\KeyMouse.exe，
+        // 而注册表指向安装目录里的旧 CLI——旧 CLI 不认识新参数（--parent 就是这么炸的：
+        // 新编辑器拉起旧 serve，退出码 2）。安装版自己的 CLI 在 <安装目录>\cli\ 里，仍然找得到。
         var candidates = new List<string>();
         string here = AppContext.BaseDirectory;
         candidates.Add(Path.Combine(here, "KeyMouse.exe"));
@@ -58,6 +58,8 @@ internal static class KeyMouseBridge
         {
             if (File.Exists(candidate)) return candidate;
         }
+
+        if (ProductRegistry.Read(ProductRegistry.CliValue) is { } registered) return registered;
 
         string? path = Environment.GetEnvironmentVariable("PATH");
         foreach (string folder in (path ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
