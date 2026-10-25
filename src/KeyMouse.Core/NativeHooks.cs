@@ -245,6 +245,9 @@ internal static class NativeHooks
         Seen[kind] = Seen.TryGetValue(kind, out int n) ? n + 1 : 1;
     }
 
+    /// <summary>某个虚拟键现在是否按着（录制器用它确认停止组合键，不依赖自己记的修饰键表）。</summary>
+    internal static short KeyState(int virtualKey) => GetAsyncKeyState(virtualKey);
+
     internal static void Record(Action<HookEvent> onEvent, Func<bool> stop)
     {
         _sink = onEvent;

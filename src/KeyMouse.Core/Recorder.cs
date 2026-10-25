@@ -31,6 +31,15 @@ internal static class Recorder
     private const int VkRWin = 0x5C;
     private const int VkEscape = 0x1B;
 
+    // 低级钩子报的是**左右键**（VK_LCONTROL 0xA2 …），不是通用的 VK_CONTROL。
+    // 只认 0x11 的话 Ctrl 永远进不了 _held，于是 Ctrl+Alt+Q 按了没反应（实测反馈）。
+    private const int VkLControl = 0xA2;
+    private const int VkRControl = 0xA3;
+    private const int VkLMenu = 0xA4;
+    private const int VkRMenu = 0xA5;
+    private const int VkLShift = 0xA0;
+    private const int VkRShift = 0xA1;
+
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(
@@ -77,7 +86,7 @@ internal static class Recorder
     }
 
     /// <summary>State for one recording session; the hook callback feeds it events in order.</summary>
-    private sealed class Session
+    internal sealed class Session
     {
         private readonly int _minGapMs;
         private readonly int _moveThreshold;
@@ -91,8 +100,13 @@ internal static class Recorder
         private uint _typingLastAt;
         private int _shotIndex;
         private uint _lastEventTime;
+        /// <summary>
+        /// 按下还没确认的那次 ESC。
+        /// 为了不让"连按两次 ESC 停止"在流程里留下一个 esc，第一次 ESC 先扣着：
+        /// 1 秒内来了第二次就一起丢掉并停止；没来第二次就补记（它是一次真实的按键）。
+        /// </summary>
+        private HookEvent? _pendingEscape;
         private uint _lastEscapeAt;
-        private uint _escapeCount;
         private bool _stopped;
 
         internal Session(string output, int minGapMs, int moveThreshold, bool shots, int durationMs)
@@ -119,6 +133,9 @@ internal static class Recorder
         internal bool ShouldStop()
         {
             if (_stopped) return true;
+
+            // 单按一次 ESC 超过 1 秒没等到第二次：它就是一次普通按键，补记进去。
+            if (_pendingEscape is not null && Now() - _lastEscapeAt >= 1000) FlushPendingEscape();
             // A client attached to the Runner can stop a recording the same way it stops a flow.
             if (Execution.Cancelled)
             {
@@ -136,28 +153,43 @@ internal static class Recorder
         /// <summary>Called inside the hook chain for every input event: keep it cheap.</summary>
         internal void OnEvent(HookEvent e)
         {
-            // The stop combo must not be recorded as part of the flow.
+            // 停止组合键本身不该进流程。修饰键状态除了 _held（可能因钩子的左右键差异漏记），
+            // 再问一次系统：两条路任一成立就算按下（实测 Ctrl+Alt+Q 曾经因为只认 VK_CONTROL 失灵）。
             bool stopCombo = e.Kind == HookKind.KeyDown && e.VirtualKey == 0x51 /* Q */ &&
-                             _held.Contains(VkControl) && _held.Contains(VkMenu);
+                             ((_held.Contains(VkControl) && _held.Contains(VkMenu)) ||
+                              (IsDown(VkControl) && IsDown(VkMenu)));
             if (stopCombo)
             {
+                _pendingEscape = null;
                 _stopped = true;
                 return;
             }
 
+            // ESC 单独处理：要等第二次才能确定"这是停止键"，所以先扣着。
+            if (e.Kind == HookKind.KeyDown && e.VirtualKey == VkEscape)
+            {
+                if (_pendingEscape is not null && Now() - _lastEscapeAt < 1000)
+                {
+                    _pendingEscape = null;   // 连按两次：一次都不记，直接停
+                    _stopped = true;
+                    return;
+                }
+
+                FlushPendingEscape();        // 上一次单按超过 1 秒，补记
+                _pendingEscape = e;
+                _lastEscapeAt = Now();
+                return;
+            }
+
+            FlushPendingEscape();
+
             switch (e.Kind)
             {
                 case HookKind.KeyDown:
-                    if (e.VirtualKey == VkEscape)
-                    {
-                        _escapeCount = Now() - _lastEscapeAt < 1000 ? _escapeCount + 1 : 1;
-                        _lastEscapeAt = Now();
-                        if (_escapeCount >= 2) { _stopped = true; return; }
-                    }
                     OnKeyDown(e);
                     break;
                 case HookKind.KeyUp:
-                    if (IsModifier(e.VirtualKey)) _held.Remove(e.VirtualKey);
+                    _held.Remove(Normalize(e.VirtualKey));
                     break;
                 case HookKind.MouseMove:
                     FlushTyping();
@@ -183,11 +215,30 @@ internal static class Recorder
             _lastEventTime = e.Time;
         }
 
+        private static int Normalize(int vk) => vk switch
+        {
+            VkLControl or VkRControl => VkControl,
+            VkLMenu or VkRMenu => VkMenu,
+            VkLShift or VkRShift => VkShift,
+            _ => vk,
+        };
+
+        private static bool IsDown(int vk) => (NativeHooks.KeyState(vk) & 0x8000) != 0;
+
+        /// <summary>把扣着的那次 ESC 记进流程（它确实被按下了，只是要等确认）。</summary>
+        private void FlushPendingEscape()
+        {
+            if (_pendingEscape is not { } pending) return;
+            _pendingEscape = null;
+            OnKeyDown(pending);
+        }
+
         private void OnKeyDown(HookEvent e)
         {
-            if (IsModifier(e.VirtualKey))
+            int vk = Normalize(e.VirtualKey);
+            if (IsModifier(vk))
             {
-                _held.Add(e.VirtualKey);
+                _held.Add(vk);
                 return;
             }
 
@@ -280,6 +331,7 @@ internal static class Recorder
         /// inserts the pauses the user actually left, and resolves the window each step belongs to.</summary>
         internal void Finish()
         {
+            FlushPendingEscape();
             FlushTyping();
 
             var trajectory = new List<HookEvent>();

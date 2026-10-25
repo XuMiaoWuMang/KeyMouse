@@ -24,6 +24,7 @@ internal static class TestEntry
         ("protocol", "前后端通信契约：方法、事件、参数与终结规则", RunnerProtocolTests.Run),
         ("newlines", "换行归一：CRLF / 裸 CR 一律折成 LF", NewlineTests.Run),
         ("wheel", "滚轮：竖向与横向是两个方向", WheelTests.Run),
+        ("stopkeys", "录制的停止键：Ctrl+Alt+Q 与连按两次 ESC", StopKeyTests.Run),
         ("nowindow", "无窗口执行：默认不要求窗口在前台", NoWindowTests.Run),
     ];
 
