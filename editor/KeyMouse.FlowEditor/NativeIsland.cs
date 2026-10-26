@@ -67,9 +67,29 @@ internal sealed class NativeIsland : IDisposable
         _ready.Wait(3000);
     }
 
+    private static readonly object LogGate = new();
+
+    /// <summary>原生窗口没有托管栈可看：每一步写一行，崩溃时就知道停在哪。</summary>
+    private static void Trace(string line)
+    {
+        try
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "keymouse-island.log");
+            lock (LogGate)
+            {
+                System.IO.File.AppendAllText(path, DateTime.Now.ToString("HH:mm:ss.fff") + "  " + line + Environment.NewLine);
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+
     private void Run()
     {
+        Trace("thread start, class=" + (_classRegistered ? "已注册" : "待注册"));
         EnsureClass();
+        Trace("class ok");
 
         int dpi = GetDpiForSystem();
         double scale = dpi <= 0 ? 1.0 : dpi / 96.0;
@@ -85,6 +105,7 @@ internal sealed class NativeIsland : IDisposable
             ClassName, "KeyMouse 录制中", WsPopup,
             x, y, _width, _height, IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
 
+        Trace("CreateWindowEx -> " + _hwnd.ToInt64().ToString("X"));
         if (_hwnd != IntPtr.Zero)
         {
             SetLayeredWindowAttributes(_hwnd, KeyColor, 0, LwaColorKey);
@@ -212,6 +233,7 @@ internal sealed class NativeIsland : IDisposable
 
     public void Dispose()
     {
+        Trace("dispose");
         _fired = true;
         if (_hwnd != IntPtr.Zero) PostMessage(_hwnd, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero);
 
