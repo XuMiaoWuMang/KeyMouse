@@ -33,11 +33,12 @@ public sealed class EditorModel : INotifyPropertyChanged
 
     public string? DocumentPath => _documentPath;
 
+    private int? _durationMs;
+
     public string FileLabel => _documentPath is null ? "未命名流程" : Path.GetFileName(_documentPath);
 
-    public string Subtitle => _documentPath is null
-        ? "还没有保存到文件"
-        : _documentPath;
+    public string Subtitle => (_documentPath is null ? "还没有保存到文件" : _documentPath)
+        + (_durationMs is int ms ? $" · 录制时长 {ms / 1000.0:0.#} 秒" : "");
 
     public string DirtyMark => _dirty ? "●" : "";
 
@@ -331,6 +332,8 @@ public sealed class EditorModel : INotifyPropertyChanged
         _byNode.Clear();
         foreach (var step in document.Steps) Steps.Add(new StepVm(step, this));
         _documentPath = keepPath ? path : null;
+        // 录制时写进文件头的总时长：界面上要能看到，否则只能去翻 JSON（实测反馈）。
+        _durationMs = document.DurationMs;
         _savedJson = Serialize();
         _dirty = !keepPath;
         Renumber();
@@ -359,6 +362,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// <summary>新建：清空步骤与文件路径，回到空状态。</summary>
     internal void Reset()
     {
+        _durationMs = null;
         Steps.Clear();
         _byNode.Clear();
         _documentPath = null;

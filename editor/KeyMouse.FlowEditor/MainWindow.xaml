@@ -164,9 +164,11 @@
                                 Background="{ThemeResource KpRuleBrush}" />
                         <!-- 说明：行内列宽 31、珠 11、连线 1，中心都在 15.5；这里宽 1 左边距 15 也在 15.5。三者同一条像素列。 -->
 
+                        <!-- 竖向滚动条曾经是 Hidden：展开一个 454 步的折叠组后内容被裁掉，却没有任何"还能往下滚"的暗示，
+                             看起来就像列表被异常截断。给回 Auto。 -->
                         <ListView x:Name="StepList" ItemsSource="{x:Bind Model.Rows, Mode=OneWay}" KeyDown="OnStepListKeyDown"
                                   ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"
-                                  ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollMode="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Auto"
                                   SelectionMode="Single" SelectionChanged="OnStepSelected"
                                   ItemContainerTransitions="{x:Null}" Padding="0,16,0,8" Background="Transparent">
                             <ListView.ContextFlyout>

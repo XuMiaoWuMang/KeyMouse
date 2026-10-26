@@ -201,7 +201,9 @@
             <Style x:Key="LedgerNumber" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource KpMonoFont}" />
                 <Setter Property="FontSize" Value="11" />
-                <Setter Property="Width" Value="20" />
+                <!-- 定宽 20 装不下 1.10：折叠组的第 10 个子步骤会被裁成 1.1（实测反馈）。
+                     用最小宽度：个位数仍然对齐，多出来的位数往左伸进留白。 -->
+                <Setter Property="MinWidth" Value="20" />
                 <Setter Property="TextAlignment" Value="Right" />
                 <Setter Property="Foreground" Value="{ThemeResource KpInk2Brush}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
