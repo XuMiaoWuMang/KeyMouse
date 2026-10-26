@@ -955,15 +955,11 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         string ignore = "";
         try
         {
-            _island ??= new IslandWindow();
-            _island.StopRequested -= OnIslandStop;
-            _island.StopRequested += OnIslandStop;
-            // 36px 的圆，贴屏幕右侧、垂直居中；窗口尺寸 == 圆尺寸，不存在未覆盖区域。
-            // 贴屏幕最右侧（边距 0），垂直居中。
-            Windows.Graphics.RectInt32 islandRect = _island.PlaceRightCenter(44, 0);
-            // 优先按**窗口句柄**忽略：悬浮条可以拖动，矩形会过期。
+            // 原生分层窗口：WinUI 窗口的尺寸会被 presenter 反复改写、也没法逐像素透明。
+            _island = new NativeIsland();
+            _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
+            // 按**窗口句柄**忽略：悬浮按钮可以拖动，矩形会过期。
             ignore = "0x" + _island.Handle.ToInt64().ToString("X");
-            _ = islandRect;
         }
         catch (Exception ex)
         {
@@ -1006,7 +1002,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             SetRecordVisual("录制", "\uE7C8", enabled: true);
             // 任何结束路径都保证窗口回到前台：录制期间它是隐藏的，绝不能留下看不见的进程。
             RestoreAfterRecording();
-            try { _island?.Close(); } catch (Exception) { }
+            try { _island?.Dispose(); } catch (Exception) { }
             _island = null;
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
@@ -1044,7 +1040,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 每一步都由事实驱动（Runner 报 recording/stopping、或运行结束），不靠计时猜。
     /// </summary>
     private bool _hiddenForRecording;
-    private IslandWindow? _island;
+    private NativeIsland? _island;
 
     /// <summary>开始录制前的说明：热键、窗口会隐藏、还有悬浮条可以点。返回 false = 用户取消。</summary>
     private async Task<bool> ConfirmStartRecordingAsync(bool dirty)
@@ -1125,10 +1121,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                 HideForRecording();
                 try
                 {
-                    // 先 Show 再 Activate：只 Activate 一个从未显示过的窗口，在 WinUI 3 里不保证出现。
-                    _island?.AppWindow.Show();
-                    _island?.Activate();
-                    // 不再钉尺寸：presenter 按内容自适应，内容本身就是 44x44。
+                    // 原生窗口在 Start() 里已经显示并置顶，这里无事可做。
                 }
                 catch (Exception ex)
                 {
