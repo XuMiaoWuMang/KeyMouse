@@ -61,6 +61,7 @@ internal sealed class NativeIsland : IDisposable
     /// <summary>显示/隐藏已经建好的窗口。**只隐藏、不销毁**：第二次创建原生窗口会硬崩（实测）。</summary>
     internal void SetVisible(bool visible)
     {
+        Trace("SetVisible(" + visible + ")");
         if (_hwnd == IntPtr.Zero) return;
         _fired = !visible;
         ShowWindow(_hwnd, visible ? 4 /*SW_SHOWNOACTIVATE*/ : 0 /*SW_HIDE*/);
@@ -190,6 +191,7 @@ internal sealed class NativeIsland : IDisposable
                 return IntPtr.Zero;
 
             case WmLButtonUp:
+                Trace("island lbutton up");
                 if (_dragging)
                 {
                     _dragging = false;

@@ -299,7 +299,10 @@ internal static class NativeHooks
                 int data2 = kind is HookKind.Wheel or HookKind.HWheel
                     ? (short)(data.MouseData >> 16)
                     : kind is HookKind.ButtonDown or HookKind.ButtonUp ? button : 0;
-                Count(kind.ToString());
+                // 按按键分开计数：右键录不到时，这一行能直接区分"钩子没收到"和"我们丢了"。
+                Count(kind is HookKind.ButtonDown or HookKind.ButtonUp
+                    ? kind + "(" + (data2 switch { 2 => "right", 3 => "middle", 4 => "x1", _ => "left" }) + ")"
+                    : kind.ToString());
                 if (kind is HookKind.ButtonDown or HookKind.ButtonUp) LastHookButton[data2] = data.Time;
                 _sink?.Invoke(new HookEvent(kind, 0, data.Point.X, data.Point.Y, data2, data.Time, IntPtr.Zero));
             }
