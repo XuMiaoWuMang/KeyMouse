@@ -39,10 +39,15 @@ public sealed partial class IslandWindow : Window
     {
         InitializeComponent();
 
-        // 用会按内容自适应的 presenter：内容固定 44x44，窗口就正好是 44x44，没有多余的白底。
-        // （自己配的 presenter 里 IsResizable=false 会让 MoveAndResize 的**改尺寸**被忽略，
-        //   窗口保持初始大小，多出来的地方露出窗口底色——之前那条白底长条就是这么来的。）
-        AppWindow.SetPresenter(OverlappedPresenter.CreateForContextMenu());
+        // 尺寸由我们自己设：必须**允许 resize**，否则 MoveAndResize 的改尺寸会被忽略，
+        // 窗口保持初始大小、内容缩在一角，表现为"一个大白块而且点不动"（实测）。
+        var presenter = OverlappedPresenter.Create();
+        presenter.SetBorderAndTitleBar(false, false);
+        presenter.IsAlwaysOnTop = true;
+        presenter.IsResizable = true;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        AppWindow.SetPresenter(presenter);
         AppWindow.IsShownInSwitchers = false;
         AppWindow.Title = "KeyMouse 录制中";
 
@@ -67,8 +72,7 @@ public sealed partial class IslandWindow : Window
         int x = work.X + work.Width - size - margin;
         int y = work.Y + (work.Height - size) / 2;
 
-        // 只移动，不设尺寸：尺寸交给内容（自适应 presenter），否则两者会互相覆盖。
-        AppWindow.Move(new PointInt32(x, y));
+        AppWindow.MoveAndResize(new RectInt32(x, y, size, size));
         _pinned = new RectInt32(x, y, size, size);
         return _pinned.Value;
     }

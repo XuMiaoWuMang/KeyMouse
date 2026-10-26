@@ -959,7 +959,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             _island.StopRequested -= OnIslandStop;
             _island.StopRequested += OnIslandStop;
             // 36px 的圆，贴屏幕右侧、垂直居中；窗口尺寸 == 圆尺寸，不存在未覆盖区域。
-            Windows.Graphics.RectInt32 islandRect = _island.PlaceRightCenter(44, 24);
+            // 贴屏幕最右侧（边距 0），垂直居中。
+            Windows.Graphics.RectInt32 islandRect = _island.PlaceRightCenter(44, 0);
             // 优先按**窗口句柄**忽略：悬浮条可以拖动，矩形会过期。
             ignore = "0x" + _island.Handle.ToInt64().ToString("X");
             _ = islandRect;

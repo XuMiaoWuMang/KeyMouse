@@ -4,9 +4,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- 录制期间的悬浮停止按钮：正方形窗口 → 内接正圆 → 圆里一个小方块。
-         窗口尺寸由内容决定（44x44），所以不会出现"白底长条"：多出来的地方就是窗口本身。 -->
-    <Grid x:Name="Root" Width="44" Height="44" Background="Transparent">
-        <Ellipse Width="44" Height="44" Fill="#FFE23B36" />
+         内容**铺满窗口**（不写固定宽高）：点击命中整个窗口，不会出现"大白块点不动"。
+         窗口尺寸由 PlaceRightCenter 的 MoveAndResize 决定。 -->
+    <Grid x:Name="Root" Background="Transparent">
+        <Ellipse Fill="#FFE23B36"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         <Border Width="14" Height="14" CornerRadius="3" Background="#FFFFFFFF"
                 HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>
