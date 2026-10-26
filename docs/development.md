@@ -231,6 +231,26 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
    （`BadgeBrush`/`BadgeInk`）改了属性必须走 `StepVm.Refresh()` 那份名字清单逐个发，否则界面不重画
    （实测：在中间插一步后行号重号 1,2,3,3；徽标写死强调色则"点了像没反应"）。
 
+## 约定：开发构建不提权，发布构建提权
+
+同一份代码有两种权限身份，因为 `dotnet build` **不会**把 `app.manifest` 里的
+`requireAdministrator` 嵌进 exe，而 `dotnet publish` 会：
+
+| 构建 | 产物 | 权限 | 用途 |
+| --- | --- | --- | --- |
+| `km e`（build） | `editor\…\bin\Release\…\win-x64\` | **普通** | 日常开发与**自动化验证界面** |
+| `pack-release.ps1`（publish） | 安装包载荷 → 装完的那个 | **管理员** | 发布；能录/操作管理员窗口 |
+
+为什么保留这个差别，而不是两边都提权：
+
+- 提权后**普通权限进程读不到它的 UI**（UIPI 跨完整性隔离，UIA 返回 0 个按钮），
+  于是界面的自动化验证（UIA 点按钮 + `PrintWindow` 抓图）就彻底做不了；
+- 而发布版必须提权：发往更高完整性窗口的输入不会交给低权限进程的钩子，
+  不提权就录不到、也点不动管理员权限的程序。
+
+判断手上这份是什么身份：**看标题**——`…（构建 10-26 21:33 · 普通权限）`。
+改界面时要验证，用 `km e` 的产物；验证完再 `pack` 出发布包。
+
 ## 版本号与发布
 
 三个地方必须一致：`KeyMouse.Cli.csproj` 的 `<Version>`、`Program.Version`（内置帮助从它取版本）、
