@@ -30,6 +30,22 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private int _pendingLines;
     private readonly System.Text.StringBuilder _logText = new();
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _flush;
+    private static string Elevation()
+    {
+        try
+        {
+            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+            var principal = new System.Security.Principal.WindowsPrincipal(identity);
+            return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator)
+                ? "管理员"
+                : "普通权限";
+        }
+        catch (Exception)
+        {
+            return "权限未知";
+        }
+    }
+
     private StepVm? _runningRow;
     private int _runSteps;      // 本次运行执行了多少步（含折叠在行里的子步骤）
     private int _runFailures;   // 其中失败了几步
@@ -63,7 +79,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         string built = "未知";
         try { built = File.GetLastWriteTime(typeof(MainWindow).Assembly.Location).ToString("MM-dd HH:mm"); }
         catch (Exception) { }
-        Title = $"KeyMouse 流程编辑器 0.1.0（构建 {built}）";
+        // 权限写进标题：开发构建（dotnet build）**不会**嵌入 requireAdministrator，
+        // 只有发布产物（dotnet publish）才有——同一份代码两种权限，不写出来就要靠猜（实测踩过）。
+        Title = $"KeyMouse 流程编辑器 0.1.0（构建 {built} · {Elevation()}）";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         try
