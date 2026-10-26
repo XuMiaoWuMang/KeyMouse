@@ -949,22 +949,23 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         try { if (File.Exists(path)) File.Delete(path); }
         catch (IOException) { }
 
-        // 悬浮条先摆好（隐藏），拿到它的屏幕矩形：录制器要把这个矩形里的鼠标事件全部丢掉，
-        // 否则"点悬浮条停止"那一下会被录进流程，回放时又去点它。
-        // 悬浮按钮是**辅助**，坏掉也绝不能挡住录制：整段包在 try 里，出问题只是没有那个圆点。
+        // 悬浮按钮是**辅助**，坏掉也绝不能挡住录制。
+        // 目前它默认关闭：原生窗口在第二次录制时会硬崩（进程直接消失、崩溃日志无记录，
+        // 说明是原生层问题）。定位之前不放进主流程；设 KEYMOUSE_ISLAND=1 可以打开做实验。
         string ignore = "";
-        try
+        if (Environment.GetEnvironmentVariable("KEYMOUSE_ISLAND") == "1")
         {
-            // 原生分层窗口：WinUI 窗口的尺寸会被 presenter 反复改写、也没法逐像素透明。
-            _island = new NativeIsland();
-            _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
-            // 按**窗口句柄**忽略：悬浮按钮可以拖动，矩形会过期。
-            ignore = "0x" + _island.Handle.ToInt64().ToString("X");
-        }
-        catch (Exception ex)
-        {
-            CrashLog.Write(ex, "准备悬浮条");
-            _island = null;
+            try
+            {
+                _island = new NativeIsland();
+                _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
+                ignore = "0x" + _island.Handle.ToInt64().ToString("X");
+            }
+            catch (Exception ex)
+            {
+                CrashLog.Write(ex, "准备悬浮条");
+                _island = null;
+            }
         }
 
         LogBox.Text = "";
@@ -1114,11 +1115,18 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             if (ev.State == "recording")
             {
                 SetRecordVisual("停止录制", "\uE71A", enabled: true);
-                Show("录制中", "按 Ctrl+Alt+Q 结束。窗口已隐藏，停止后自动回到前台。", InfoBarSeverity.Success);
 
-                // 初始化完成后把窗口藏起来：否则用户只能点「停止录制」——那一下点击会被录进流程，
-                // 回放时再点一次编辑器（实测反馈）。藏起来之后唯一出口就是全局热键。
-                HideForRecording();
+                // 只有悬浮按钮真的存在时才隐藏主窗口：否则用户连"停止录制"都点不到。
+                // 悬浮按钮在时藏窗口，是为了不让那一下点击被录进流程（它会点回编辑器）。
+                if (_island is not null)
+                {
+                    Show("录制中", "按 Ctrl+Alt+Q 结束。窗口已隐藏，停止后自动回到前台。", InfoBarSeverity.Success);
+                    HideForRecording();
+                }
+                else
+                {
+                    Show("录制中", "按 Ctrl+Alt+Q 结束，或点「停止录制」。", InfoBarSeverity.Success);
+                }
                 try
                 {
                     // 原生窗口在 Start() 里已经显示并置顶，这里无事可做。

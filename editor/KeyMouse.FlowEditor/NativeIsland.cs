@@ -69,16 +69,7 @@ internal sealed class NativeIsland : IDisposable
 
     private void Run()
     {
-        WndProc proc = WindowProc;
-        var wc = new WNDCLASSEX
-        {
-            cbSize = Marshal.SizeOf<WNDCLASSEX>(),
-            lpfnWndProc = proc,
-            hInstance = GetModuleHandle(null),
-            lpszClassName = ClassName,
-            hCursor = LoadCursor(IntPtr.Zero, (IntPtr)32512),   // IDC_ARROW
-        };
-        RegisterClassEx(ref wc);
+        EnsureClass();
 
         int dpi = GetDpiForSystem();
         double scale = dpi <= 0 ? 1.0 : dpi / 96.0;
@@ -92,7 +83,7 @@ internal sealed class NativeIsland : IDisposable
         _hwnd = CreateWindowEx(
             WsExLayered | WsExToolWindow | WsExTopmost | WsExNoActivate,
             ClassName, "KeyMouse 录制中", WsPopup,
-            x, y, _width, _height, IntPtr.Zero, IntPtr.Zero, wc.hInstance, IntPtr.Zero);
+            x, y, _width, _height, IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
 
         if (_hwnd != IntPtr.Zero)
         {
@@ -109,6 +100,35 @@ internal sealed class NativeIsland : IDisposable
             DispatchMessage(ref msg);
         }
     }
+
+    /// <summary>
+    /// 窗口类只注册一次，而且窗口过程必须是**静态**委托：注册过的类里存的是裸函数指针，
+    /// 用实例方法的委托时，第一次录制结束、实例被回收之后，第二次创建窗口就跳进已释放内存——
+    /// 进程直接消失，崩溃日志里一个字都没有（实测：录制一次后再点录制，编辑器退出）。
+    /// </summary>
+    private static readonly WndProc Proc = Dispatch;
+    private static bool _classRegistered;
+
+    private static void EnsureClass()
+    {
+        lock (typeof(NativeIsland))
+        {
+            if (_classRegistered) return;
+            var wc = new WNDCLASSEX
+            {
+                cbSize = Marshal.SizeOf<WNDCLASSEX>(),
+                lpfnWndProc = Proc,
+                hInstance = GetModuleHandle(null),
+                lpszClassName = ClassName,
+                hCursor = LoadCursor(IntPtr.Zero, (IntPtr)32512),   // IDC_ARROW
+            };
+            RegisterClassEx(ref wc);
+            _classRegistered = true;
+        }
+    }
+
+    private static IntPtr Dispatch(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam) =>
+        _current is { } island ? island.WindowProc(hwnd, msg, wParam, lParam) : DefWindowProc(hwnd, msg, wParam, lParam);
 
     private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam)
     {
@@ -194,7 +214,11 @@ internal sealed class NativeIsland : IDisposable
     {
         _fired = true;
         if (_hwnd != IntPtr.Zero) PostMessage(_hwnd, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero);
-        _current = null;
+
+        // 等窗口线程真的退出再摘引用：窗口过程要靠 _current 路由，提前置空会让正在派发的消息乱走。
+        try { _thread?.Join(2000); } catch (Exception) { }
+        if (_current == this) _current = null;
+        _hwnd = IntPtr.Zero;
         _thread = null;
     }
 
