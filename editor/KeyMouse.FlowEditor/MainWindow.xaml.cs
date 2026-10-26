@@ -978,6 +978,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             _recordClient = null;
             _recordJob = null;
             SetRecordVisual("录制", "\uE7C8", enabled: true);
+            // 任何结束路径都保证窗口回到前台：录制期间它是隐藏的，绝不能留下看不见的进程。
+            RestoreAfterRecording();
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");
@@ -1013,6 +1015,35 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 录制按钮的四种样子：录制 → 正在初始化 → 停止录制 → 正在停止。
     /// 每一步都由事实驱动（Runner 报 recording/stopping、或运行结束），不靠计时猜。
     /// </summary>
+    private bool _hiddenForRecording;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private void HideForRecording()
+    {
+        if (_hiddenForRecording) return;
+        _hiddenForRecording = true;
+        try { AppWindow.Hide(); } catch (Exception ex) { CrashLog.Write(ex, "隐藏窗口"); }
+    }
+
+    /// <summary>录制结束后把窗口拿回前台。任何结束路径都要走这里，绝不留下一个看不见的进程。</summary>
+    private void RestoreAfterRecording()
+    {
+        if (!_hiddenForRecording) return;
+        _hiddenForRecording = false;
+        try
+        {
+            AppWindow.Show();
+            Activate();
+            SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "恢复窗口");
+        }
+    }
+
     private void SetRecordVisual(string label, string glyph, bool enabled)
     {
         RecordLabel.Text = label;
@@ -1028,11 +1059,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             if (ev.State == "recording")
             {
                 SetRecordVisual("停止录制", "\uE71A", enabled: true);
-                Show("录制中", "按 Ctrl+Alt+Q 结束，或点「停止录制」。", InfoBarSeverity.Success);
+                Show("录制中", "按 Ctrl+Alt+Q 结束。窗口已隐藏，停止后自动回到前台。", InfoBarSeverity.Success);
+
+                // 初始化完成后把窗口藏起来：否则用户只能点「停止录制」——那一下点击会被录进流程，
+                // 回放时再点一次编辑器（实测反馈）。藏起来之后唯一出口就是全局热键。
+                HideForRecording();
             }
             else if (ev.State == "stopping")
             {
-                // 停止键一按下就切：按钮立刻变成"正在停止"，不再接受第二次点击。
+                // 停止键一按下就把窗口拿回前台，并立刻切成"正在停止"。
+                RestoreAfterRecording();
                 SetRecordVisual("正在停止…", "\uE895", enabled: false);
                 Show("录制", "正在停止录制并写出流程…", InfoBarSeverity.Informational);
             }
