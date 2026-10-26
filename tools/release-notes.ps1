@@ -34,7 +34,14 @@ if (-not $Range) {
     if (-not $previous) {
         $previous = & git -C $repoRoot tag -l --sort=-v:refname | Where-Object { $_ -ne $Tag } | Select-Object -First 1
     }
-    $Range = if ($previous) { $previous + '..HEAD' } else { 'HEAD~' + [Math]::Min(25, [int](& git -C $repoRoot rev-list --count HEAD) - 1) + '..HEAD' }
+    if ($previous) {
+        $Range = $previous + '..HEAD'
+    } else {
+        # 没有任何标签可比（浅克隆、或第一次发布）：退回最近若干提交，绝不产出空清单。
+        $count = [int](& git -C $repoRoot rev-list --count HEAD)
+        $back = [Math]::Min(25, [Math]::Max(0, $count - 1))
+        $Range = if ($back -le 0) { 'HEAD' } else { 'HEAD~' + $back + '..HEAD' }
+    }
 }
 
 $commits = & git -C $repoRoot log --no-merges --pretty=format:'%h|%s' $Range 2>$null

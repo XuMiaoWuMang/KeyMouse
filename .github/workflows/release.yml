@@ -15,7 +15,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # 完整历史与标签：生成发布清单要按"上一个标签..本次标签"取提交，
+      # 浅克隆（默认 fetch-depth=1）会把区间算成空。
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -52,7 +56,17 @@ jobs:
 
       - name: Show release notes
         shell: pwsh
-        run: Get-Content release-notes.md | Write-Host
+        run: |
+          Get-Content release-notes.md | Write-Host
+          Write-Host ('清单大小: ' + (Get-Item release-notes.md).Length + ' 字节')
+
+      # body_path 对**已存在**的 release 不可靠（实测两版都是 GitHub 自动笔记），
+      # 发布后再显式覆盖一次；gh 在 runner 上自带，GITHUB_TOKEN 有 contents: write。
+      - name: Apply release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit $env:GITHUB_REF_NAME --notes-file release-notes.md
 
       # 两条发布各管各的：命令行标签只发两个 exe，gui 标签只发安装程序。
       - name: Attach the CLI binaries (cli-v* tag)
