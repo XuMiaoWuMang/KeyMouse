@@ -214,8 +214,12 @@ public sealed class StepVm : INotifyPropertyChanged
 
     internal void ClearRunning()
     {
-        if (!_running) return;
+        // 只清"正在运行"这一个状态：结果（ok/failed）不能被抹掉。
+        // 以前这里只重置 _running，_runState 仍停在 "running"，于是 RunDetail 一直显示"运行中"，
+        // 跑完以后几行还挂着那个提示（实测反馈）。
+        if (_runState != "running") return;
         _running = false;
+        _runState = "";
         Refresh();
     }
 

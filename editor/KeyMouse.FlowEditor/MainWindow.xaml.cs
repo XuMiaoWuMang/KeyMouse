@@ -1283,6 +1283,11 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
                 Log(e.Line ?? "");
                 break;
 
+            // 运行已经结束（_run 为 null）之后还可能收到排队中的事件：
+            // 这时再标"运行中"就永远清不掉了（终态清理已经跑过）。
+            case "step" when _run is null:
+                break;
+
             case "step" when e.Index is int index:
                 // 状态显示在**那一行上**，不为每一步弹一次提示：跑二十步弹二十次，那不叫反馈，叫噪音。
                 StepVm? row = RowForExecution(index);
