@@ -61,7 +61,8 @@ internal static class Recorder
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
         Console.WriteLine("  鼠标轨迹会一起录（--no-shots 关截图，--move-threshold N 调抽稀）");
         Console.WriteLine("  注意：管理员权限窗口上的操作录不到；要录它们请加 --elevate（或右键以管理员身份运行）");
-        NativeHooks.Record(session.OnEvent, session.ShouldStop);
+        NativeHooks.Record(session.OnEvent, session.ShouldStop,
+            () => Execution.RecordingState("recording"));
         session.Finish();
 
         Console.WriteLine($"■ 已停止：{session.Steps.Count} 步 → {Path.GetFullPath(output)}");
@@ -134,9 +135,20 @@ internal static class Recorder
 
         private static uint Now() => (uint)Environment.TickCount64;
 
+        private bool _stoppingReported;
+
         internal bool ShouldStop()
         {
-            if (_stopped) return true;
+            if (_stopped)
+            {
+                // 只报一次：界面把按钮切成"正在停止…"，不必每秒重复。
+                if (!_stoppingReported)
+                {
+                    _stoppingReported = true;
+                    Execution.RecordingState("stopping");
+                }
+                return true;
+            }
 
             // 单按一次 ESC 超过 1 秒没等到第二次：它就是一次普通按键，补记进去。
             if (_pendingEscape is not null && Now() - _lastEscapeAt >= 1000) FlushPendingEscape();

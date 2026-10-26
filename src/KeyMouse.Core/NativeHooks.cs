@@ -248,7 +248,7 @@ internal static class NativeHooks
     /// <summary>某个虚拟键现在是否按着（录制器用它确认停止组合键，不依赖自己记的修饰键表）。</summary>
     internal static short KeyState(int virtualKey) => GetAsyncKeyState(virtualKey);
 
-    internal static void Record(Action<HookEvent> onEvent, Func<bool> stop)
+    internal static void Record(Action<HookEvent> onEvent, Func<bool> stop, Action? ready = null)
     {
         _sink = onEvent;
         Seen.Clear();
@@ -317,6 +317,10 @@ internal static class NativeHooks
             if (installedMouse != IntPtr.Zero) UnhookWindowsHookEx(installedMouse);
             throw new CommandFailure(4, "装不上全局键鼠钩子——录制需要交互式桌面（锁屏/远程会话里录不了）");
         }
+
+        // 钩子真装好了才算"开始录制"。界面靠这一下把"正在初始化"换成"停止录制"，
+        // 而不是点下去就先假装开始了（用户看到的按钮状态必须与事实一致）。
+        ready?.Invoke();
 
         try
         {

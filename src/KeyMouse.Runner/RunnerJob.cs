@@ -77,6 +77,9 @@ internal sealed class RunnerJob : IExecutionControl
     public void StepStarted(int index, string type) =>
         Emit(RunnerEvent.Step(RequestId, Job, index, Total, "started", type));
 
+    public void RecordingState(string state) =>
+        Emit(RunnerEvent.Recording(RequestId, Job, state));
+
     /// <summary>
     /// 一步跑完。顺手留一张证据：**先执行、后截图**，所以行上看到的是这一步做完之后的屏幕，
     /// 而不是它动手之前的。

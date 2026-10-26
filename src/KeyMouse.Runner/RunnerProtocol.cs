@@ -128,6 +128,10 @@ internal sealed class RunnerEvent
             State = state, Type = type, ExitCode = exitCode, DurationMs = durationMs, Shot = shot,
         };
 
+    /// <summary>录制会话的状态：recording（钩子已就绪）/ stopping（收到停止键，正在收尾）。</summary>
+    internal static RunnerEvent Recording(int id, int job, string state) =>
+        new() { Kind = "state", Id = id, Job = job, State = state };
+
     internal static RunnerEvent Finished(int id, int job, int exitCode, long durationMs) =>
         new() { Kind = "finished", Id = id, Job = job, ExitCode = exitCode, DurationMs = durationMs };
 

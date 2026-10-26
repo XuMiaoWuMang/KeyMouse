@@ -923,10 +923,23 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (!await ConfirmDiscardAsync("开始录制")) return;
+        // 先把"正在初始化"摆到界面上，再做任何等待：确认框、拉起 serve 加起来可能 1 秒以上。
+        // 实测：以前的顺序是点完 1.1 秒才出现初始化提示，用户完全不知道程序在干活。
+        SetRecordVisual("正在初始化…", "\uE895", enabled: false);
+        Show("录制", "正在初始化录制程序…", InfoBarSeverity.Informational);
+
+        if (!await ConfirmDiscardAsync("开始录制"))
+        {
+            SetRecordVisual("录制", "\uE7C8", enabled: true);
+            return;
+        }
 
         RunnerClient? client = await EnsureClientAsync();
-        if (client is null) return;
+        if (client is null)
+        {
+            SetRecordVisual("录制", "\uE7C8", enabled: true);
+            return;
+        }
 
         string path = Path.Combine(Path.GetTempPath(), "keymouse-record.json");
         try { if (File.Exists(path)) File.Delete(path); }
@@ -939,9 +952,11 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         _record = new CancellationTokenSource();
         _recordClient = client;
         _recordJob = null;
-        RecordLabel.Text = "结束录制";
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "结束录制");
-        RecordIcon.Glyph = "\uE71A";
+
+        // 先如实说"正在初始化"：录制进程要起进程、装全局钩子，这中间有 1-2 秒。
+        // 以前这段直接显示"结束录制"，等于在还没开始时就宣称正在录（实测反馈）。
+        SetRecordVisual("正在初始化…", "\uE895", enabled: false);
+        Show("录制", "正在初始化录制程序…", InfoBarSeverity.Informational);
         DryRunButton.IsEnabled = false;
         PlayButton.IsEnabled = false;
 
@@ -962,6 +977,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             _record = null;
             _recordClient = null;
             _recordJob = null;
+            SetRecordVisual("录制", "\uE7C8", enabled: true);
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");
@@ -993,8 +1009,36 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>录制进程的输出全部进「运行输出」，与运行时的日志同一个去处。</summary>
+    /// <summary>
+    /// 录制按钮的四种样子：录制 → 正在初始化 → 停止录制 → 正在停止。
+    /// 每一步都由事实驱动（Runner 报 recording/stopping、或运行结束），不靠计时猜。
+    /// </summary>
+    private void SetRecordVisual(string label, string glyph, bool enabled)
+    {
+        RecordLabel.Text = label;
+        RecordIcon.Glyph = glyph;
+        RecordButton.IsEnabled = enabled;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, label);
+    }
+
     private void OnRecordEvent(RunnerEvent ev)
     {
+        if (ev.Kind == "state")
+        {
+            if (ev.State == "recording")
+            {
+                SetRecordVisual("停止录制", "\uE71A", enabled: true);
+                Show("录制中", "按 Ctrl+Alt+Q 结束，或点「停止录制」。", InfoBarSeverity.Success);
+            }
+            else if (ev.State == "stopping")
+            {
+                // 停止键一按下就切：按钮立刻变成"正在停止"，不再接受第二次点击。
+                SetRecordVisual("正在停止…", "\uE895", enabled: false);
+                Show("录制", "正在停止录制并写出流程…", InfoBarSeverity.Informational);
+            }
+            return;
+        }
+
         if (ev.Job is int job) _recordJob = job;   // 「结束录制」要用它发 cancel
 
         if (ev.Kind == "log" && ev.Line is { Length: > 0 } line) Log(line);

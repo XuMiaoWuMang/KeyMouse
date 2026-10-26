@@ -19,6 +19,12 @@ internal interface IExecutionControl
     void StepStarted(int index, string type);
 
     void StepFinished(int index, int exitCode, long durationMs);
+
+    /// <summary>
+    /// 录制会话的状态变化：`recording`（钩子已装好、真的开始录了）、`stopping`（收到停止键，正在收尾）。
+    /// 界面靠它把"正在初始化"换成"停止录制"，而不是点下去就先假装开始了。
+    /// </summary>
+    void RecordingState(string state);
 }
 
 internal static class Execution
@@ -32,6 +38,8 @@ internal static class Execution
 
     internal static void StepFinished(int index, int exitCode, long durationMs) =>
         Control?.StepFinished(index, exitCode, durationMs);
+
+    internal static void RecordingState(string state) => Control?.RecordingState(state);
 
     /// <summary>Stop conditions (a recording session, a wait loop) ask this instead of a Runner type.</summary>
     internal static bool Cancelled => Control?.Cancelled ?? false;
