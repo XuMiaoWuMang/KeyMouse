@@ -98,6 +98,9 @@ internal sealed class RunnerParameters
 
     /// <summary>录制：这些屏幕矩形里的鼠标事件不记（编辑器悬浮条自己的点击）。</summary>
     public string? IgnoreRect { get; set; }
+
+    /// <summary>录制：这个窗口（句柄）上的鼠标事件不记。比矩形可靠——窗口可以拖动。</summary>
+    public string? IgnoreWindow { get; set; }
 }
 
 /// <summary>One line the Runner sends back. <c>kind</c> is the discriminator.</summary>

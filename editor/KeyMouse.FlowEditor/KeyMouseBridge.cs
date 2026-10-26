@@ -175,8 +175,8 @@ internal static class KeyMouseBridge
             Out = outPath,
             Echo = true,
             Shots = true,   // 录制时逐步留图：回放时能看见"当时屏幕上是什么"
-            // 悬浮条自己的点击不该进流程：把这个矩形里的鼠标事件全部丢掉。
-            IgnoreRect = ignoreRect,
+            // 悬浮条自己的点击不该进流程：按窗口句柄丢弃（矩形会随拖动过期）。
+            IgnoreWindow = ignoreRect,
         }, onEvent, cancellation);
 
         return finished.Kind switch

@@ -153,6 +153,7 @@ internal sealed class RunnerHost
                 if (p.Shots == false) arguments.Add("--no-shots");
                 // 编辑器悬浮条的区域：那里面的鼠标事件不进流程（否则回放会去点它）。
                 if (!string.IsNullOrWhiteSpace(p.IgnoreRect)) arguments.AddRange(["--ignore-rect", p.IgnoreRect!]);
+                if (!string.IsNullOrWhiteSpace(p.IgnoreWindow)) arguments.AddRange(["--ignore-window", p.IgnoreWindow!]);
             }
 
             job.State = "running";

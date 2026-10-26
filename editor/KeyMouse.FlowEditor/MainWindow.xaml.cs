@@ -928,17 +928,13 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         SetRecordVisual("正在初始化…", "\uE895", enabled: false);
         Show("录制", "正在初始化录制程序…", InfoBarSeverity.Informational);
 
-        // 先说清楚怎么停：窗口稍后会隐藏，用户必须**事先**知道热键，否则会以为程序卡住了。
-        if (!await ConfirmStartRecordingAsync())
+        // 只说一次：热键 + （必要时）未保存提醒，合并进同一个对话框。
+        // 以前这里连续弹两个 ContentDialog（先热键、再未保存确认），第二个没能显示就把 await 卡死，
+        // 界面停在"正在初始化"、窗口也不隐藏（实测反馈）。
+        if (!await ConfirmStartRecordingAsync(Model.IsDirty))
         {
             SetRecordVisual("录制", "\uE7C8", enabled: true);
             Show("录制", "已取消。", InfoBarSeverity.Informational);
-            return;
-        }
-
-        if (!await ConfirmDiscardAsync("开始录制"))
-        {
-            SetRecordVisual("录制", "\uE7C8", enabled: true);
             return;
         }
 
@@ -955,11 +951,24 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         // 悬浮条先摆好（隐藏），拿到它的屏幕矩形：录制器要把这个矩形里的鼠标事件全部丢掉，
         // 否则"点悬浮条停止"那一下会被录进流程，回放时又去点它。
-        _island ??= new IslandWindow();
-        _island.StopRequested -= OnIslandStop;
-        _island.StopRequested += OnIslandStop;
-        Windows.Graphics.RectInt32 islandRect = _island.PlaceBottomCenter(320, 52);
-        string ignore = $"{islandRect.X},{islandRect.Y},{islandRect.Width},{islandRect.Height}";
+        // 悬浮按钮是**辅助**，坏掉也绝不能挡住录制：整段包在 try 里，出问题只是没有那个圆点。
+        string ignore = "";
+        try
+        {
+            _island ??= new IslandWindow();
+            _island.StopRequested -= OnIslandStop;
+            _island.StopRequested += OnIslandStop;
+            // 36px 的圆，贴屏幕右侧、垂直居中；窗口尺寸 == 圆尺寸，不存在未覆盖区域。
+            Windows.Graphics.RectInt32 islandRect = _island.PlaceRightCenter(36, 28);
+            // 优先按**窗口句柄**忽略：悬浮条可以拖动，矩形会过期。
+            ignore = "0x" + _island.Handle.ToInt64().ToString("X");
+            _ = islandRect;
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "准备悬浮条");
+            _island = null;
+        }
 
         LogBox.Text = "";
         Log("# serve 已连接；请求 record -> " + path + "（忽略悬浮条区域 " + ignore + "）");
@@ -1037,16 +1046,15 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private IslandWindow? _island;
 
     /// <summary>开始录制前的说明：热键、窗口会隐藏、还有悬浮条可以点。返回 false = 用户取消。</summary>
-    private async Task<bool> ConfirmStartRecordingAsync()
+    private async Task<bool> ConfirmStartRecordingAsync(bool dirty)
     {
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "开始录制",
-            Content = "停止录制有两种方式：\n\n" +
-                      "· 按 Ctrl+Alt+Q（全局热键，推荐）\n" +
-                      "· 点屏幕底部的悬浮条「停止」\n\n" +
-                      "开始后编辑器窗口会隐藏，录制结束自动回来。",
+            Content = "停止录制：按 Ctrl+Alt+Q，或点屏幕右侧中间的红色圆点。\n\n" +
+                      "开始后编辑器窗口会隐藏，录制结束自动回来。" +
+                      (dirty ? "\n\n注意：当前流程有未保存的改动，开始录制会丢弃它们。" : ""),
             PrimaryButtonText = "继续录制",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Primary,

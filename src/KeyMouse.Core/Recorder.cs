@@ -43,7 +43,7 @@ internal static class Recorder
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(
-            args, "out", "min-gap", "move-threshold", "duration", "shot-size", "ignore-rect");
+            args, "out", "min-gap", "move-threshold", "duration", "shot-size", "ignore-rect", "ignore-window");
         if (positional.Count > 0)
             throw new ArgumentException($"record 不接受位置参数 '{positional[0]}'");
         if (g.HasSelector)
@@ -60,6 +60,20 @@ internal static class Recorder
         // --ignore-rect x,y,w,h[;x,y,w,h…]：落在这些矩形里的**鼠标事件一律不记**。
         // 用途：录制时窗口是隐藏的，用户靠一个悬浮的"停止"按钮结束——那一下点击属于界面，
         // 不属于用户要复刻的操作，不该进流程文件（否则回放会去点那个按钮）。
+        // --ignore-window <hwnd>：这个窗口上的鼠标事件一律不记。比矩形可靠——窗口可以被拖走。
+        if (options.TryGetValue("ignore-window", out string? rawWindow))
+        {
+            string text = rawWindow.Trim();
+            bool hex = text.StartsWith("0x", StringComparison.OrdinalIgnoreCase);
+            if (!long.TryParse(hex ? text[2..] : text,
+                    hex ? System.Globalization.NumberStyles.HexNumber : System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.InvariantCulture, out long handle) || handle == 0)
+            {
+                throw new ArgumentException($"--ignore-window 需要一个窗口句柄（十进制或 0x 十六进制），收到 '{rawWindow}'");
+            }
+            session.IgnoreWindow = (IntPtr)handle;
+        }
+
         if (options.TryGetValue("ignore-rect", out string? rawRects))
         {
             foreach (string part in rawRects.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -148,6 +162,9 @@ internal static class Recorder
 
         /// <summary>这些矩形里的鼠标事件不记（录制时自己的悬浮控件在这上面）。</summary>
         internal List<(int X, int Y, int W, int H)> IgnoreRects { get; } = [];
+
+        /// <summary>这个窗口上的鼠标事件不记（编辑器的悬浮停止按钮）。拖动窗口后依然有效。</summary>
+        internal IntPtr IgnoreWindow { get; set; }
 
         /// <summary>刚刚吞掉了一次按下：它的抬起也要吞，否则点击配对会错位。</summary>
         private bool _suppressRelease;
@@ -275,11 +292,21 @@ internal static class Recorder
         /// </summary>
         private bool SkipIgnored(HookEvent e)
         {
-            if (IgnoreRects.Count == 0) return false;
+            if (IgnoreRects.Count == 0 && IgnoreWindow == IntPtr.Zero) return false;
 
             bool mouse = e.Kind is HookKind.MouseMove or HookKind.ButtonDown or HookKind.ButtonUp
                 or HookKind.Wheel or HookKind.HWheel;
             if (!mouse) return false;
+
+            if (IgnoreWindow != IntPtr.Zero)
+            {
+                // 事件发生时问一句"这个点属于那个窗口吗"：窗口被拖到哪儿都认得出。
+                if (NativeHooks.WindowAt(e.X, e.Y) == IgnoreWindow)
+                {
+                    if (e.Kind == HookKind.ButtonDown) _suppressRelease = true;
+                    return true;
+                }
+            }
 
             if (e.Kind == HookKind.ButtonUp && _suppressRelease)
             {

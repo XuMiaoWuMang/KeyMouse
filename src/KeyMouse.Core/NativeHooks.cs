@@ -245,6 +245,9 @@ internal static class NativeHooks
         Seen[kind] = Seen.TryGetValue(kind, out int n) ? n + 1 : 1;
     }
 
+    /// <summary>某个屏幕点属于哪个窗口（录制的忽略区判断用）。</summary>
+    internal static IntPtr WindowAt(int x, int y) => WindowFromPoint(new POINT { X = x, Y = y });
+
     /// <summary>某个虚拟键现在是否按着（录制器用它确认停止组合键，不依赖自己记的修饰键表）。</summary>
     internal static short KeyState(int virtualKey) => GetAsyncKeyState(virtualKey);
 
