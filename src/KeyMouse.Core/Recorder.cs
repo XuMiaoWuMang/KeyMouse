@@ -474,6 +474,7 @@ internal static class Recorder
             var document = new FlowDocument
             {
                 RecordedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
+                DurationMs = Steps.Count > 0 ? Steps.Max(s => s.AtMs ?? 0) : 0,
                 Screen = new FlowScreen { Width = VirtualWidth(), Height = VirtualHeight() },
                 Options = new FlowOptions
                 {

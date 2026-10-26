@@ -177,6 +177,13 @@ internal sealed class FlowDocument
     public string Format { get; set; } = FormatName;
     public int Version { get; set; } = CurrentVersion;
     public string? RecordedAt { get; set; }
+
+    /// <summary>
+    /// 这段录制的**总时长**（毫秒）。和逐步的 atMs 一起，让人不必读完全部步骤也能判断
+    /// "这条流程节奏多快、值不值得回放"。手工写的流程不写它。
+    /// </summary>
+    public int? DurationMs { get; set; }
+
     public FlowScreen? Screen { get; set; }
     public FlowOptions? Options { get; set; }
     public List<FlowStep> Steps { get; set; } = new();

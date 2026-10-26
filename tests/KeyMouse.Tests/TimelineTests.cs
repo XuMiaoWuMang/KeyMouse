@@ -32,6 +32,12 @@ internal static class TimelineTests
         Harness.Equal("第二步的 atMs", 150, moves[1].AtMs);
         Harness.Equal("第三步的 atMs", 400, moves[2].AtMs);
 
+        Harness.Group("timeline: 文档记录总时长");
+
+        FlowDocument recorded = FlowDocument.Load(
+            Path.Combine(Path.GetTempPath(), "keymouse-timeline-test.json"));
+        Harness.Equal("总时长 = 最后一步的 atMs", 400, recorded.DurationMs);
+
         Harness.Group("timeline: atMs 能存能读");
 
         string path = Path.Combine(Path.GetTempPath(), "keymouse-timeline-roundtrip.json");

@@ -87,6 +87,8 @@ internal static class FlowRunner
         Console.WriteLine($"流程 {source}");
         Console.WriteLine($"  {plan.StepCount} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
         if (document.RecordedAt is not null) Console.WriteLine($"  录制于 {document.RecordedAt}");
+        if (document.DurationMs is int recordedMs)
+            Console.WriteLine($"  时长 {recordedMs / 1000.0:0.#} 秒（按录制时的时间线回放）");
 
         int exitCode = 0;
         _running = true;
