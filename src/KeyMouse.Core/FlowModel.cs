@@ -124,6 +124,12 @@ internal sealed class FlowStep
     public string? Axis { get; set; }
     public int? Ms { get; set; }
     public int? DurationMs { get; set; }
+
+    /// <summary>
+    /// 录制出来的**时间线偏移**（毫秒，从录制开始算）。有它，回放才复刻真实速度：
+    /// 快速挥动就是一阵密集事件，中间的停顿就是真的停。手工写的流程不写它，仍用 sleep 表达等待。
+    /// </summary>
+    public int? AtMs { get; set; }
     public string? Shot { get; set; }
     public string? Note { get; set; }
 

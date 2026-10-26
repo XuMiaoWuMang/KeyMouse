@@ -124,6 +124,9 @@ internal static class Recorder
                 Path.GetFileNameWithoutExtension(output) + ".shots");
         }
 
+        /// <summary>录制起点的 tick；测试用它构造相对时间轴上的事件。</summary>
+        internal uint StartedAt => _startedAt;
+
         internal string OutputPath { get; }
         internal string ShotDirectory { get; }
         internal int ShotCount { get; private set; }
@@ -348,6 +351,10 @@ internal static class Recorder
 
             void Emit(FlowStep step, HookEvent at)
             {
+                // 时间线：每一步带上"从录制开始算的第几毫秒"。
+                // 回放据此排程，快速挥动与中途停顿都原样复现；sleep 仍写出来给人读，
+                // 但回放以 atMs 为准（见 FlowRunner 的 timeline 段）。
+                step.AtMs = (int)Math.Max(0, (long)at.Time - _startedAt);
                 if (_minGapMs > 0 && Steps.Count > 0)
                 {
                     long gap = (long)at.Time - lastStepTime;

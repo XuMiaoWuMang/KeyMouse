@@ -95,6 +95,13 @@ internal static class FlowRunner
             // Numbered by step, not by plan item: an export item is bookkeeping, and counting it would
             // report "23/21" in the log and in a UI's progress bar.
             int stepNo = 0;
+
+            // 时间线回放：录制出来的每一步都带 atMs（从录制开始算的毫秒）。
+            // 回放按这个时间线排程，快速挥动就是一阵密集事件，中途停顿就是真的停——
+            // 以前只有"每个 move 固定睡 8ms"，所以速度均匀且偏慢（实测反馈）。
+            var timeline = Stopwatch.StartNew();
+            bool timelineDriven = plan.Items.Any(item => item.Step?.AtMs is not null);
+
             for (int i = 0; i < plan.Items.Count; i++)
             {
                 // A step-less item is a `call`'s export: copy the names the subflow agreed to hand back
@@ -119,6 +126,16 @@ internal static class FlowRunner
                 // steps interpolate, which is what makes variables worth having.
                 FlowPlan.Item item = plan.Items[i];
                 FlowStep step = FlowDocument.Resolve(item.Step!, item.Frame);
+
+                if (timelineDriven && !options.DryRun)
+                {
+                    // 等到时间线上的这一刻。等到就已经落后（例如上一步很慢）时不再补等，
+                    // 直接往下走：宁可晚一点，也不要越拖越晚。
+                    if (step.AtMs is int atMs) WaitForTimeline(timeline, atMs, stepNo);
+
+                    // sleep 的等待已经由 atMs 表达，执行它会变成双倍等待。
+                    if (step.Type == "sleep" && step.AtMs is not null) step = new FlowStep { Type = "sleep", Ms = 0 };
+                }
                 VariableFrame frame = item.Frame;
                 var record = new CommandRecord { Index = stepNo, Line = stepNo };
                 var clock = Stopwatch.StartNew();
@@ -470,6 +487,21 @@ internal static class FlowRunner
         step.Match ?? TextPredicate.Contains, Math.Clamp(step.MaxErrors ?? 1, 0, 20),
         Math.Clamp(step.TimeoutMs ?? 5000, 0, 600_000), Math.Clamp(step.IntervalMs ?? 250, 0, 5000),
         Math.Clamp(step.Confirm ?? 2, 1, 10), dryRun, allowRestore, stepIndex);
+
+    /// <summary>
+    /// 等到流程时间线上的某一刻（毫秒，从本次回放开始算）。分片睡眠，
+    /// 这样暂停/停止能在 10ms 内生效——长停顿也是可打断的。
+    /// </summary>
+    private static void WaitForTimeline(Stopwatch clock, int atMs, int stepIndex)
+    {
+        while (true)
+        {
+            long remaining = atMs - clock.ElapsedMilliseconds;
+            if (remaining <= 0) return;
+            Thread.Sleep((int)Math.Min(remaining, 10));
+            Execution.BetweenSteps(stepIndex);
+        }
+    }
 
     private static (int ExitCode, string Output) WaitText(FlowStep step, ScriptOptions options, int stepIndex)
     {

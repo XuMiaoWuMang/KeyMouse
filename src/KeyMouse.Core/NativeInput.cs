@@ -144,9 +144,12 @@ internal static class NativeInput
             int nx = (int)Math.Round((x - vx) * 65535.0 / vw);
             int ny = (int)Math.Round((y - vy) * 65535.0 / vh);
             Send(Mouse(nx, ny, 0, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK));
-            Thread.Sleep(8);
+            // 不睡觉：SendInput 是同步的，光标位置在返回时已经更新。
+            // 以前这里固定 Thread.Sleep(8)——619 次移动就是 5 秒，回放因此"均匀而缓慢"（实测反馈）。
+            // 只有真的没落到位（绝对坐标量化误差）才短暂等待后重试。
             var p = GetCursor();
             if (p.X == x && p.Y == y) return;
+            Thread.Sleep(1);
         }
 
         SetCursorPos(x, y);
