@@ -60,14 +60,6 @@ jobs:
           Get-Content release-notes.md | Write-Host
           Write-Host ('清单大小: ' + (Get-Item release-notes.md).Length + ' 字节')
 
-      # body_path 对**已存在**的 release 不可靠（实测两版都是 GitHub 自动笔记），
-      # 发布后再显式覆盖一次；gh 在 runner 上自带，GITHUB_TOKEN 有 contents: write。
-      - name: Apply release notes
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit $env:GITHUB_REF_NAME --notes-file release-notes.md
-
       # 两条发布各管各的：命令行标签只发两个 exe，gui 标签只发安装程序。
       - name: Attach the CLI binaries (cli-v* tag)
         if: startsWith(github.ref, 'refs/tags/cli-')
@@ -84,3 +76,11 @@ jobs:
         with:
           files: dist/KeyMouseSetup-*.exe
           body_path: release-notes.md
+
+      # 清单必须**在发布之后**写：发布之前 gh release edit 找不到 release，整步失败，
+      # 而它一失败，后面的上传步骤就被跳过——结果是标签发了、资产一个没有（实测 v0.2.0 首推）。
+      - name: Apply release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit $env:GITHUB_REF_NAME --notes-file release-notes.md
