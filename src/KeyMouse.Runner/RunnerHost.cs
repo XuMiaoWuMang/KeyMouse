@@ -151,6 +151,8 @@ internal sealed class RunnerHost
                 if (!string.IsNullOrWhiteSpace(p.Out)) arguments.AddRange(["--out", p.Out!]);
                 if (p.DurationMs is int duration and > 0) arguments.AddRange(["--duration", duration.ToString()]);
                 if (p.Shots == false) arguments.Add("--no-shots");
+                // 编辑器悬浮条的区域：那里面的鼠标事件不进流程（否则回放会去点它）。
+                if (!string.IsNullOrWhiteSpace(p.IgnoreRect)) arguments.AddRange(["--ignore-rect", p.IgnoreRect!]);
             }
 
             job.State = "running";

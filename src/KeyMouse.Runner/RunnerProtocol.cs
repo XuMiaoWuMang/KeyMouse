@@ -95,6 +95,9 @@ internal sealed class RunnerParameters
 
     /// <summary>pick-region：<c>point</c> 只取一个点（点击类动作），缺省是框选一块区域。</summary>
     public string? Mode { get; set; }
+
+    /// <summary>录制：这些屏幕矩形里的鼠标事件不记（编辑器悬浮条自己的点击）。</summary>
+    public string? IgnoreRect { get; set; }
 }
 
 /// <summary>One line the Runner sends back. <c>kind</c> is the discriminator.</summary>

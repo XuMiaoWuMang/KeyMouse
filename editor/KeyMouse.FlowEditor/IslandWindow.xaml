@@ -1,0 +1,18 @@
+<Window
+    x:Class="KeyMouse.FlowEditor.IslandWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 录制期间的悬浮条（"灵动岛"）：主窗口已经隐藏，这里是唯一的可见退路。
+         它自己的点击不会被录进流程：编辑器把这个窗口的矩形作为忽略区域传给录制器。 -->
+    <Grid x:Name="Root" Background="Transparent" MinWidth="300">
+        <Border CornerRadius="18" Background="#E621201D" Padding="14,7" HorizontalAlignment="Stretch">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Ellipse Width="8" Height="8" Fill="#FF6B57" VerticalAlignment="Center" />
+                <TextBlock Text="录制中" Foreground="#FFF6F3ED" FontSize="13" VerticalAlignment="Center" />
+                <TextBlock Text="Ctrl+Alt+Q 结束" Foreground="#FFB4ADA1" FontSize="12" VerticalAlignment="Center" />
+                <Button Content="停止" Click="OnStop" Padding="10,2" FontSize="12" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

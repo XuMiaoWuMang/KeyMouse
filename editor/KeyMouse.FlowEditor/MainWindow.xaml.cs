@@ -928,6 +928,14 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         SetRecordVisual("正在初始化…", "\uE895", enabled: false);
         Show("录制", "正在初始化录制程序…", InfoBarSeverity.Informational);
 
+        // 先说清楚怎么停：窗口稍后会隐藏，用户必须**事先**知道热键，否则会以为程序卡住了。
+        if (!await ConfirmStartRecordingAsync())
+        {
+            SetRecordVisual("录制", "\uE7C8", enabled: true);
+            Show("录制", "已取消。", InfoBarSeverity.Informational);
+            return;
+        }
+
         if (!await ConfirmDiscardAsync("开始录制"))
         {
             SetRecordVisual("录制", "\uE7C8", enabled: true);
@@ -945,8 +953,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         try { if (File.Exists(path)) File.Delete(path); }
         catch (IOException) { }
 
+        // 悬浮条先摆好（隐藏），拿到它的屏幕矩形：录制器要把这个矩形里的鼠标事件全部丢掉，
+        // 否则"点悬浮条停止"那一下会被录进流程，回放时又去点它。
+        _island ??= new IslandWindow();
+        _island.StopRequested -= OnIslandStop;
+        _island.StopRequested += OnIslandStop;
+        Windows.Graphics.RectInt32 islandRect = _island.PlaceBottomCenter(320, 52);
+        string ignore = $"{islandRect.X},{islandRect.Y},{islandRect.Width},{islandRect.Height}";
+
         LogBox.Text = "";
-        Log($"# KeyMouse serve 连接已建立；请求 record -> {path}");
+        Log("# serve 已连接；请求 record -> " + path + "（忽略悬浮条区域 " + ignore + "）");
         Show("录制", "正在录制。按 Ctrl+Alt+Q 结束（或点「结束录制」）。", InfoBarSeverity.Informational);
 
         _record = new CancellationTokenSource();
@@ -962,7 +978,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            await KeyMouseBridge.RecordAsync(client, path, ev => DispatcherQueue.TryEnqueue(() => OnRecordEvent(ev)), _record.Token);
+            await KeyMouseBridge.RecordAsync(client, path, ev => DispatcherQueue.TryEnqueue(() => OnRecordEvent(ev)), _record.Token, ignore);
         }
         catch (OperationCanceledException)
         {
@@ -980,6 +996,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             SetRecordVisual("录制", "\uE7C8", enabled: true);
             // 任何结束路径都保证窗口回到前台：录制期间它是隐藏的，绝不能留下看不见的进程。
             RestoreAfterRecording();
+            try { _island?.Close(); } catch (Exception) { }
+            _island = null;
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");
@@ -1016,9 +1034,41 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 每一步都由事实驱动（Runner 报 recording/stopping、或运行结束），不靠计时猜。
     /// </summary>
     private bool _hiddenForRecording;
+    private IslandWindow? _island;
+
+    /// <summary>开始录制前的说明：热键、窗口会隐藏、还有悬浮条可以点。返回 false = 用户取消。</summary>
+    private async Task<bool> ConfirmStartRecordingAsync()
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "开始录制",
+            Content = "停止录制有两种方式：\n\n" +
+                      "· 按 Ctrl+Alt+Q（全局热键，推荐）\n" +
+                      "· 点屏幕底部的悬浮条「停止」\n\n" +
+                      "开始后编辑器窗口会隐藏，录制结束自动回来。",
+            PrimaryButtonText = "继续录制",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+    }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private async void OnIslandStop()
+    {
+        if (_recordClient is { } running && _recordJob is int job)
+        {
+            SetRecordVisual("正在停止…", "\uE895", enabled: false);
+            await KeyMouseBridge.CancelAsync(running, job);
+        }
+        else
+        {
+            _record?.Cancel();
+        }
+    }
 
     private void HideForRecording()
     {
@@ -1064,6 +1114,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                 // 初始化完成后把窗口藏起来：否则用户只能点「停止录制」——那一下点击会被录进流程，
                 // 回放时再点一次编辑器（实测反馈）。藏起来之后唯一出口就是全局热键。
                 HideForRecording();
+                try
+                {
+                    // 先 Show 再 Activate：只 Activate 一个从未显示过的窗口，在 WinUI 3 里不保证出现。
+                    _island?.AppWindow.Show();
+                    _island?.Activate();
+                }
+                catch (Exception ex)
+                {
+                    CrashLog.Write(ex, "显示悬浮条");
+                }
             }
             else if (ev.State == "stopping")
             {

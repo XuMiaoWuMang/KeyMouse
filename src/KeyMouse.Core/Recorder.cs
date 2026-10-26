@@ -43,7 +43,7 @@ internal static class Recorder
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(
-            args, "out", "min-gap", "move-threshold", "duration", "shot-size");
+            args, "out", "min-gap", "move-threshold", "duration", "shot-size", "ignore-rect");
         if (positional.Count > 0)
             throw new ArgumentException($"record 不接受位置参数 '{positional[0]}'");
         if (g.HasSelector)
@@ -56,6 +56,24 @@ internal static class Recorder
         bool shots = !options.ContainsKey("no-shots");
 
         var session = new Session(output, minGap, moveThreshold, shots, durationMs);
+
+        // --ignore-rect x,y,w,h[;x,y,w,h…]：落在这些矩形里的**鼠标事件一律不记**。
+        // 用途：录制时窗口是隐藏的，用户靠一个悬浮的"停止"按钮结束——那一下点击属于界面，
+        // 不属于用户要复刻的操作，不该进流程文件（否则回放会去点那个按钮）。
+        if (options.TryGetValue("ignore-rect", out string? rawRects))
+        {
+            foreach (string part in rawRects.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                string[] n = part.Split(',');
+                if (n.Length != 4 ||
+                    !int.TryParse(n[0], out int rx) || !int.TryParse(n[1], out int ry) ||
+                    !int.TryParse(n[2], out int rw) || !int.TryParse(n[3], out int rh))
+                {
+                    throw new ArgumentException($"--ignore-rect 需要 x,y,宽,高（可用 ; 分隔多个），收到 '{part}'");
+                }
+                session.IgnoreRects.Add((rx, ry, rw, rh));
+            }
+        }
 
         Console.WriteLine($"● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止，连按两次 ESC 也停" +
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
@@ -128,6 +146,12 @@ internal static class Recorder
         /// <summary>录制起点的 tick；测试用它构造相对时间轴上的事件。</summary>
         internal uint StartedAt => _startedAt;
 
+        /// <summary>这些矩形里的鼠标事件不记（录制时自己的悬浮控件在这上面）。</summary>
+        internal List<(int X, int Y, int W, int H)> IgnoreRects { get; } = [];
+
+        /// <summary>刚刚吞掉了一次按下：它的抬起也要吞，否则点击配对会错位。</summary>
+        private bool _suppressRelease;
+
         internal string OutputPath { get; }
         internal string ShotDirectory { get; }
         internal int ShotCount { get; private set; }
@@ -169,6 +193,8 @@ internal static class Recorder
         /// <summary>Called inside the hook chain for every input event: keep it cheap.</summary>
         internal void OnEvent(HookEvent e)
         {
+            if (SkipIgnored(e)) return;
+
             // 停止组合键本身不该进流程。修饰键状态除了 _held（可能因钩子的左右键差异漏记），
             // 再问一次系统：两条路任一成立就算按下（实测 Ctrl+Alt+Q 曾经因为只认 VK_CONTROL 失灵）。
             bool stopCombo = e.Kind == HookKind.KeyDown && e.VirtualKey == 0x51 /* Q */ &&
@@ -242,6 +268,33 @@ internal static class Recorder
             VkLShift or VkRShift => VkShift,
             _ => vk,
         };
+
+        /// <summary>
+        /// 落在忽略矩形里的鼠标事件直接丢掉；按下被丢时，它的抬起也一并丢，
+        /// 免得后面的点击配对错位（配不上就会多出一次点击）。
+        /// </summary>
+        private bool SkipIgnored(HookEvent e)
+        {
+            if (IgnoreRects.Count == 0) return false;
+
+            bool mouse = e.Kind is HookKind.MouseMove or HookKind.ButtonDown or HookKind.ButtonUp
+                or HookKind.Wheel or HookKind.HWheel;
+            if (!mouse) return false;
+
+            if (e.Kind == HookKind.ButtonUp && _suppressRelease)
+            {
+                _suppressRelease = false;
+                return true;
+            }
+
+            foreach ((int x, int y, int w, int h) in IgnoreRects)
+            {
+                if (e.X < x || e.Y < y || e.X >= x + w || e.Y >= y + h) continue;
+                if (e.Kind == HookKind.ButtonDown) _suppressRelease = true;
+                return true;
+            }
+            return false;
+        }
 
         private static bool IsDown(int vk) => (NativeHooks.KeyState(vk) & 0x8000) != 0;
 

@@ -8,8 +8,8 @@ namespace KeyMouse.Tests;
 /// </summary>
 internal static class TimelineTests
 {
-    private static Recorder.Session Session() => new(
-        Path.Combine(Path.GetTempPath(), "keymouse-timeline-test.json"),
+    private static Recorder.Session Session(string name = "keymouse-timeline-test") => new(
+        Path.Combine(Path.GetTempPath(), name + ".json"),
         300, 8, false, 0);
 
     private static HookEvent Move(int x, int y, uint time) =>
@@ -31,6 +31,24 @@ internal static class TimelineTests
         Harness.Equal("第一步的 atMs", 100, moves[0].AtMs);
         Harness.Equal("第二步的 atMs", 150, moves[1].AtMs);
         Harness.Equal("第三步的 atMs", 400, moves[2].AtMs);
+
+        Harness.Group("record: 忽略矩形里的鼠标事件");
+
+        Recorder.Session ignoring = Session("keymouse-ignore-rect-test");
+        ignoring.IgnoreRects.Add((100, 100, 50, 50));
+        uint t0 = ignoring.StartedAt;
+        ignoring.OnEvent(Move(120, 120, t0 + 10));      // 矩形内：丢掉
+        ignoring.OnEvent(Move(300, 300, t0 + 20));      // 矩形外：留下
+        ignoring.OnEvent(new HookEvent(HookKind.ButtonDown, 0, 120, 120, 1, t0 + 30, IntPtr.Zero));  // 内：丢
+        ignoring.OnEvent(new HookEvent(HookKind.ButtonUp, 0, 120, 120, 1, t0 + 40, IntPtr.Zero));    // 内：丢
+        ignoring.OnEvent(new HookEvent(HookKind.ButtonDown, 0, 400, 400, 1, t0 + 50, IntPtr.Zero));  // 外：留
+        ignoring.OnEvent(new HookEvent(HookKind.ButtonUp, 0, 400, 400, 1, t0 + 60, IntPtr.Zero));    // 外：留
+        ignoring.Finish();
+
+        Harness.Equal("矩形内的移动与点击都不进流程", 2,
+            ignoring.Steps.Count(s => s.Type is "move" or "click"));
+        Harness.Check("留下的是矩形外的那一对",
+            ignoring.Steps.Any(s => s.Type == "click" && s.At is { X: 400, Y: 400 }));
 
         Harness.Group("timeline: 文档记录总时长");
 

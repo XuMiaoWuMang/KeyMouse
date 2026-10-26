@@ -167,13 +167,16 @@ internal static class KeyMouseBridge
     /// 客户端能做的只是"不再等"——所以取消只影响界面，不会丢已经录到的内容。
     /// </summary>
     internal static async Task<int> RecordAsync(
-        RunnerClient client, string outPath, Action<RunnerEvent> onEvent, CancellationToken cancellation)
+        RunnerClient client, string outPath, Action<RunnerEvent> onEvent, CancellationToken cancellation,
+        string? ignoreRect = null)
     {
         RunnerEvent finished = await client.SendAsync("record", new RunnerParameters
         {
             Out = outPath,
             Echo = true,
             Shots = true,   // 录制时逐步留图：回放时能看见"当时屏幕上是什么"
+            // 悬浮条自己的点击不该进流程：把这个矩形里的鼠标事件全部丢掉。
+            IgnoreRect = ignoreRect,
         }, onEvent, cancellation);
 
         return finished.Kind switch

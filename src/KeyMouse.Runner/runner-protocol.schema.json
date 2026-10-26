@@ -98,6 +98,7 @@
     "target": { "type": "integer", "note": "控制类方法的作业号；缺省时取请求 id" },
     "client": { "type": "string", "note": "客户端标识（谁在问）；服务端记在作业上，list / status 看得到" },
     "mode": { "type": "string", "note": "pick-region 用：point = 单击取一个点（点击类动作），缺省 = 拖框取一块区域" },
+    "ignoreRect": { "type": "string", "note": "record 用：这些屏幕矩形（x,y,w,h，可用 ; 分隔多个）里的鼠标事件不进流程——录制时编辑器自己的悬浮条在那上面" },
     "version": { "type": "string", "note": "客户端说的协议版本；与顶层 version 不合时服务端回 error(code=2)。缺省视为不说，不做检查" }
   },
 
