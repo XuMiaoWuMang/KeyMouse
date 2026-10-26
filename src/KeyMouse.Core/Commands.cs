@@ -4,7 +4,21 @@ namespace KeyMouse;
 
 internal static class Commands
 {
+    /// <summary>引擎（Core）版本。产品版本是 0.2.0（见 Cli/编辑器 csproj），两者分开发。</summary>
     internal const string Version = "2.1.0";
+
+    /// <summary>
+    /// 产品版本，从入口程序集的版本取（CLI 的 csproj 里是 0.2.0）。
+    /// `--version` 以前只打印引擎版本（2.1.0），于是"我这是不是最新构建"根本看不出来。
+    /// </summary>
+    internal static string ProductVersion
+    {
+        get
+        {
+            Version? v = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version;
+            return v is null ? Version : $"{v.Major}.{v.Minor}.{v.Build}";
+        }
+    }
 
     /// <summary>打印流程格式的接口契约（前端照着它渲染；`schema 类型` 只看一种）。</summary>
     private static int Schema(string[] rest)
@@ -58,7 +72,7 @@ internal static class Commands
                     PrintUsage();
                     return 0;
                 case "-v" or "--version" or "version":
-                    Console.WriteLine($"KeyMouse {Version}");
+                    Console.WriteLine($"KeyMouse {ProductVersion}（引擎 {Version}）");
                     return 0;
                 case "schema":
                     // The contract itself, for a frontend that would rather read it than be told about it.

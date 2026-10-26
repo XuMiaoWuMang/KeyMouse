@@ -519,7 +519,7 @@ internal static class Recorder
                             // The path of the drag belongs to the drag step, not to extra move steps.
                             if (trajectory.Count > trajectoryAtPress)
                                 trajectory.RemoveRange(trajectoryAtPress, trajectory.Count - trajectoryAtPress);
-                            Emit(Describe(e, "drag", null, from, to, (int)(e.Time - downEvent.Event.Time), null), e);
+                            Emit(Describe(e, "drag", downEvent.Button, from, to, (int)(e.Time - downEvent.Event.Time), null), e);
                         }
                         else
                         {
@@ -609,6 +609,12 @@ internal static class Recorder
                 step.From = step.At;
                 step.To = new FlowPoint { Space = FlowSpace.Screen, X = destination.X, Y = destination.Y };
                 step.DurationMs = duration;
+            }
+            // 按键必须写进文件：以前这里漏了，于是**右键/中键一律按左键回放**（实测反馈）。
+            // 左键是默认，不写；其它键写出来。
+            if (type is "click" or "drag" && detail is { Length: > 0 } pressed && pressed != "left")
+            {
+                step.Button = pressed;
             }
             if (type == "wheel")
             {
