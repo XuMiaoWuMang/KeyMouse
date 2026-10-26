@@ -178,20 +178,36 @@ public sealed class StepVm : INotifyPropertyChanged
 
     public Visibility RunVisibility => Ui.Show(_runState.Length > 0);
 
-    /// <summary>耗时只在真的跑过之后显示。</summary>
+    /// <summary>
+    /// 耗时只在真的跑过之后显示。折叠行（748 次移动合成一行）显示**合计**：
+    /// 只写其中一步的毫秒数会误导——那一行代表 748 步。
+    /// </summary>
     public string RunDetail => _runState switch
     {
         "running" => "运行中",
         "skipped" => "已跳过",
-        "ok" => $"{_runMs} ms",
-        "failed" => $"失败 · {_runMs} ms",
+        "ok" => _aggCount > 1 ? $"{_aggCount} 步 · {_runMs} ms" : $"{_runMs} ms",
+        "failed" => _aggCount > 1 ? $"失败 {_aggCount} 步中 · {_runMs} ms" : $"失败 · {_runMs} ms",
         _ => "",
     };
+
+    private int _aggCount;
+
+    /// <summary>最近一次运行的清态：计数与毫秒都归零，屏幕上的旧结果不该留到下一次。</summary>
+    internal void ResetRun()
+    {
+        _runState = "";
+        _runMs = 0;
+        _aggCount = 0;
+        _running = false;
+        Refresh();
+    }
 
     internal void MarkRunning()
     {
         _runState = "running";
         _runMs = 0;
+        _aggCount = 0;
         _running = true;
         Refresh();
     }
@@ -199,6 +215,16 @@ public sealed class StepVm : INotifyPropertyChanged
     internal void ClearRunning()
     {
         if (!_running) return;
+        _running = false;
+        Refresh();
+    }
+
+    /// <summary>折叠行：把子步骤的结果累加进去，而不是互相覆盖。</summary>
+    internal void MarkAggregate(int exitCode, long durationMs)
+    {
+        _aggCount++;
+        _runMs += durationMs;
+        _runState = exitCode == 0 ? (_runState == "failed" ? "failed" : "ok") : "failed";
         _running = false;
         Refresh();
     }

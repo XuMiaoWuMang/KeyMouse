@@ -31,6 +31,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private readonly System.Text.StringBuilder _logText = new();
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _flush;
     private StepVm? _runningRow;
+    private int _runSteps;      // 本次运行执行了多少步（含折叠在行里的子步骤）
+    private int _runFailures;   // 其中失败了几步
+    private long _runTotalMs;   // 合计耗时
     private StepVm? _scrollTo;
     private const int MaxLogLines = 900;
 
@@ -1090,6 +1093,10 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         LogBox.Text = "";
+        _runSteps = 0;
+        _runFailures = 0;
+        _runTotalMs = 0;
+        foreach (StepVm row in Model.Rows) row.ResetRun();
         // 输出面板自己会出现（见 Log），不需要展开任何东西
         Log($"# KeyMouse serve 连接已建立；请求 run {path}{(dryRun ? "（--dry-run）" : "")}");
         // 引擎路径写在运行输出里：版本不对时，第一眼就能看到它在用哪个 exe（实测踩过"注册表指向旧副本"）。
@@ -1150,9 +1157,11 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
     /// </summary>
     private void ShowRunSummary(int exitCode)
     {
+        // 摘要按**执行步数**统计，不按可见行数：折叠把 748 次移动并成一行，
+        // 按行数算会得到"6 步全部成功"这种与事实不符的结论（实测反馈）。
         StepVm? failed = Model.Rows.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
-        int ok = Model.Rows.Count(s => s.RunDetail.EndsWith("ms") && !s.RunDetail.StartsWith("失败"));
-        long totalMs = Model.Rows.Sum(s => long.TryParse(s.RunDetail.Replace("失败 · ", "").Replace(" ms", ""), out long ms) ? ms : 0);
+        int ok = _runSteps - _runFailures;
+        long totalMs = _runTotalMs;
 
         bool success = exitCode == 0;
         RunSummaryIcon.Glyph = success ? "\uE73E" : "\uEA39";
@@ -1223,9 +1232,18 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
 
                     Log($"  [{index}/{e.Total ?? _plan?.StepCount ?? Model.Rows.Count}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
                 }
-                else if (row is not null)
+                else
                 {
-                    row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
+                    _runSteps++;
+                    _runTotalMs += e.DurationMs ?? 0;
+                    if ((e.ExitCode ?? 0) != 0) _runFailures++;
+                }
+
+                if (row is not null)
+                {
+                    // 折叠行累加子步骤，普通行直接写自己的结果
+                    if (row.ChildTotal > 1) row.MarkAggregate(e.ExitCode ?? 0, e.DurationMs ?? 0);
+                    else row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
                     if (e.Shot is { Length: > 0 } shot && File.Exists(shot)) { row.SetShot(shot); NotifyShot(); }
                     Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms");
                 }
@@ -1247,7 +1265,19 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
         if (_plan is null) return index - 1 >= 0 && index - 1 < Model.Rows.Count ? Model.Rows[index - 1] : null;
         int i = index - 1;
         if (i < 0 || i >= _plan.Items.Count) return null;
-        return Model.VmForNode(_plan.Items[i].Step);
+
+        StepVm? vm = Model.VmForNode(_plan.Items[i].Step);
+        if (vm is null) return null;
+        if (Model.Rows.Contains(vm)) return vm;
+
+        // 折叠时子步骤不在 Rows 里。以前这种情况被当成"内联子流程"、结果只写日志
+        // （截图里 `[7] 完成，0 ms（子流程内）` 就是这么来的）。它其实属于这个文件，
+        // 结果该落到它所属的那一折叠行上。
+        for (StepVm? parent = vm.Group; parent is not null; parent = parent.Group)
+        {
+            if (Model.Rows.Contains(parent)) return parent;
+        }
+        return null;
     }
 
     /// <summary>The exit codes mean the same thing here as on the command line - say so in the UI.</summary>
