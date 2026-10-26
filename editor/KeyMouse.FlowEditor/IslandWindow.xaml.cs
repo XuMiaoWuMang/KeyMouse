@@ -23,6 +23,17 @@ public sealed partial class IslandWindow : Window
     private bool _dragging;
     private POINT _grabbedCursor;
     private PointInt32 _originAt;
+    private RectInt32? _pinned;
+
+    /// <summary>
+    /// 显示之后再钉一次尺寸：presenter 会在首次显示时按内容重算，
+    /// 把 PlaceRightCenter 设的方形又撑成横条（实测 202x66，高度对、宽度多 136）。
+    /// </summary>
+    internal void Pin()
+    {
+        if (_pinned is not RectInt32 r) return;
+        AppWindow.MoveAndResize(r);
+    }
 
     internal IslandWindow()
     {
@@ -61,7 +72,8 @@ public sealed partial class IslandWindow : Window
         int x = work.X + work.Width - size - margin;
         int y = work.Y + (work.Height - size) / 2;
         AppWindow.MoveAndResize(new RectInt32(x, y, size, size));
-        return new RectInt32(x, y, size, size);
+        _pinned = new RectInt32(x, y, size, size);
+        return _pinned.Value;
     }
 
     private void OnPressed(object sender, PointerRoutedEventArgs e)
