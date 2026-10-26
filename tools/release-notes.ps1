@@ -34,6 +34,14 @@ if (-not $Range) {
     if (-not $previous) {
         $previous = & git -C $repoRoot tag -l --sort=-v:refname | Where-Object { $_ -ne $Tag } | Select-Object -First 1
     }
+
+    # 关键：cli-* 与 gui-* 往往指向同一个提交（一次改动同时发两条线）。
+    # 那种"上一个标签"和 HEAD 是同一个提交，区间算出来是空的——那就等同于没有上一个标签。
+    if ($previous) {
+        $headsha = (& git -C $repoRoot rev-list -n1 HEAD)
+        $prevsha = (& git -C $repoRoot rev-list -n1 $previous)
+        if ($headsha -eq $prevsha) { $previous = '' }
+    }
     if ($previous) {
         $Range = $previous + '..HEAD'
     } else {
