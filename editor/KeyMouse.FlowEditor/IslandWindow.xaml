@@ -3,12 +3,10 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- 录制期间的悬浮停止按钮。宽度必须等于高度，两条圆角弧才接成一个圆。
-         尺寸写死在内容上：窗口会按内容自适应，内容不固定就会被撑成横条（实测 202x66）。
-         形状只能是圆角方形而非像素级正圆——WinUI 3 没有逐像素透明，
-         而 SetWindowRgn 会让窗口内所有子内容停止渲染（见 docs/design.md）。 -->
-    <Grid x:Name="Root" Width="44" Height="44" Background="#FFE23B36">
-        <Border CornerRadius="22" BorderThickness="1" BorderBrush="#40FFFFFF" />
+    <!-- 录制期间的悬浮停止按钮：正方形窗口 → 内接正圆 → 圆里一个小方块。
+         窗口尺寸由内容决定（44x44），所以不会出现"白底长条"：多出来的地方就是窗口本身。 -->
+    <Grid x:Name="Root" Width="44" Height="44" Background="Transparent">
+        <Ellipse Width="44" Height="44" Fill="#FFE23B36" />
         <Border Width="14" Height="14" CornerRadius="3" Background="#FFFFFFFF"
                 HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>

@@ -1127,7 +1127,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                     // 先 Show 再 Activate：只 Activate 一个从未显示过的窗口，在 WinUI 3 里不保证出现。
                     _island?.AppWindow.Show();
                     _island?.Activate();
-                    _island?.Pin();   // 显示后 presenter 会重算尺寸，这里再钉一次
+                    // 不再钉尺寸：presenter 按内容自适应，内容本身就是 44x44。
                 }
                 catch (Exception ex)
                 {
