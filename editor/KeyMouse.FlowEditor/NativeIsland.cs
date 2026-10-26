@@ -122,8 +122,8 @@ internal sealed class NativeIsland : IDisposable
         if (_hwnd != IntPtr.Zero)
         {
             SetLayeredWindowAttributes(_hwnd, KeyColor, 0, LwaColorKey);
-            ShowWindow(_hwnd, 4 /*SW_SHOWNOACTIVATE*/);
-            UpdateWindow(_hwnd);
+            // 建好但**先不显示**：只有录制真的开始了才由调用方 SetVisible(true)。
+            // 之前这里直接显示，于是"录制没起来"时屏幕上只剩一个球，用户以为在录。
         }
 
         _ready.Set();

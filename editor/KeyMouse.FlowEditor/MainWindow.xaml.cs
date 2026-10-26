@@ -958,7 +958,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             // **只创建一次**：原生窗口第二次创建会让进程硬崩（实测）。之后只做显示/隐藏。
             _island ??= new NativeIsland();
             if (!_island.IsCreated) _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
-            _island.SetVisible(true);
+            // 这里**不**显示：等 runner 报 recording（钩子真的装好）再显示。
             ignore = "0x" + _island.Handle.ToInt64().ToString("X");
         }
         catch (Exception ex)
@@ -1119,6 +1119,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                 // 悬浮按钮在时藏窗口，是为了不让那一下点击被录进流程（它会点回编辑器）。
                 if (_island is not null)
                 {
+                    // 录制真的开始了：这时才亮出悬浮球并隐藏主窗口。
+                    _island.SetVisible(true);
                     Show("录制中", "按 Ctrl+Alt+Q 结束，或点屏幕右侧的红点。停止后窗口自动回来。", InfoBarSeverity.Success);
                     HideForRecording();
                 }
