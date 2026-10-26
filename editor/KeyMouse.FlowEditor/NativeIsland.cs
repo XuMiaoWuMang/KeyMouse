@@ -55,6 +55,18 @@ internal sealed class NativeIsland : IDisposable
     /// <summary>窗口句柄（录制器用它忽略这个窗口上的鼠标事件）。</summary>
     internal IntPtr Handle => _hwnd;
 
+    /// <summary>窗口是否已经建好（只有第一次 Start 会真的创建）。</summary>
+    internal bool IsCreated => _hwnd != IntPtr.Zero;
+
+    /// <summary>显示/隐藏已经建好的窗口。**只隐藏、不销毁**：第二次创建原生窗口会硬崩（实测）。</summary>
+    internal void SetVisible(bool visible)
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        _fired = !visible;
+        ShowWindow(_hwnd, visible ? 4 /*SW_SHOWNOACTIVATE*/ : 0 /*SW_HIDE*/);
+        if (visible) UpdateWindow(_hwnd);
+    }
+
     /// <summary>创建并显示，位置贴主屏工作区右侧、垂直居中。</summary>
     internal void Start(Action onStop)
     {

@@ -953,19 +953,18 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         // 目前它默认关闭：原生窗口在第二次录制时会硬崩（进程直接消失、崩溃日志无记录，
         // 说明是原生层问题）。定位之前不放进主流程；设 KEYMOUSE_ISLAND=1 可以打开做实验。
         string ignore = "";
-        if (Environment.GetEnvironmentVariable("KEYMOUSE_ISLAND") == "1")
+        try
         {
-            try
-            {
-                _island = new NativeIsland();
-                _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
-                ignore = "0x" + _island.Handle.ToInt64().ToString("X");
-            }
-            catch (Exception ex)
-            {
-                CrashLog.Write(ex, "准备悬浮条");
-                _island = null;
-            }
+            // **只创建一次**：原生窗口第二次创建会让进程硬崩（实测）。之后只做显示/隐藏。
+            _island ??= new NativeIsland();
+            if (!_island.IsCreated) _island.Start(() => DispatcherQueue.TryEnqueue(OnIslandStop));
+            _island.SetVisible(true);
+            ignore = "0x" + _island.Handle.ToInt64().ToString("X");
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "准备悬浮条");
+            _island = null;
         }
 
         LogBox.Text = "";
@@ -1003,8 +1002,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             SetRecordVisual("录制", "\uE7C8", enabled: true);
             // 任何结束路径都保证窗口回到前台：录制期间它是隐藏的，绝不能留下看不见的进程。
             RestoreAfterRecording();
-            try { _island?.Dispose(); } catch (Exception) { }
-            _island = null;
+            // 不销毁：留着给下一次录制复用（销毁后再次创建会崩）。只隐藏。
+            try { _island?.SetVisible(false); } catch (Exception) { }
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");
@@ -1120,7 +1119,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                 // 悬浮按钮在时藏窗口，是为了不让那一下点击被录进流程（它会点回编辑器）。
                 if (_island is not null)
                 {
-                    Show("录制中", "按 Ctrl+Alt+Q 结束。窗口已隐藏，停止后自动回到前台。", InfoBarSeverity.Success);
+                    Show("录制中", "按 Ctrl+Alt+Q 结束，或点屏幕右侧的红点。停止后窗口自动回来。", InfoBarSeverity.Success);
                     HideForRecording();
                 }
                 else
