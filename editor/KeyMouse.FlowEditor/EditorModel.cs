@@ -114,6 +114,9 @@ public sealed class EditorModel : INotifyPropertyChanged
                 top.Depth = 1;
                 top.Number = $"{displayNo[runs[i].Head]}.{runs[i].Offset}";
                 StepVm head = Steps[runs[i].Head];
+                // 折叠后的子步骤属于这一行：运行结果要能沿 Group 找到它并累加，
+                // 否则结果只会写进日志（截图里"740 次"却只累加到 2 步）。
+                top.Group = head;
                 if (head.IsExpanded || head.ChildTotal <= 1) Rows.Add(top);   // 只有一个子项的直接摊开
                 continue;
             }

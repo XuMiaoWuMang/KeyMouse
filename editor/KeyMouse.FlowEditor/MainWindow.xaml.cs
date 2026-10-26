@@ -1234,23 +1234,26 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
                 }
                 else
                 {
+                    // 结果只在"完成"事件上记一次。以前这段写在状态判断外面，
+                    // started 与 finished 各调一次 MarkAggregate，而 MarkRunning 每次都清零，
+                    // 于是折叠行永远显示"2 步"（截图里 13 次 → 2 步）。
                     _runSteps++;
                     _runTotalMs += e.DurationMs ?? 0;
                     if ((e.ExitCode ?? 0) != 0) _runFailures++;
-                }
 
-                if (row is not null)
-                {
-                    // 折叠行累加子步骤，普通行直接写自己的结果
-                    if (row.ChildTotal > 1) row.MarkAggregate(e.ExitCode ?? 0, e.DurationMs ?? 0);
-                    else row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
-                    if (e.Shot is { Length: > 0 } shot && File.Exists(shot)) { row.SetShot(shot); NotifyShot(); }
-                    Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms");
-                }
-                else
-                {
-                    // 内联进来的子流程步骤不属于这个文件：只在日志里如实报，不往任何一行上贴结果。
-                    Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms（子流程内）");
+                    if (row is not null)
+                    {
+                        // 折叠行累加子步骤，普通行直接写自己的结果
+                        if (row.ChildTotal > 1) row.MarkAggregate(e.ExitCode ?? 0, e.DurationMs ?? 0);
+                        else row.MarkResult(e.ExitCode ?? 0, e.DurationMs ?? 0);
+                        if (e.Shot is { Length: > 0 } shot && File.Exists(shot)) { row.SetShot(shot); NotifyShot(); }
+                        Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms");
+                    }
+                    else
+                    {
+                        // 内联进来的子流程步骤不属于这个文件：只在日志里如实报，不往任何一行上贴结果。
+                        Log($"  [{index}] {(e.ExitCode == 0 ? "完成" : $"失败（退出码 {e.ExitCode}）")}，{e.DurationMs} ms（子流程内）");
+                    }
                 }
                 break;
         }
