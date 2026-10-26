@@ -42,6 +42,24 @@ try {
     # 缺了它编辑器启动就 XamlParseException（实测）。从同一份 Release 构建里补过来。
     $tfm = 'net10.0-windows10.0.26100.0'
     $built = Join-Path $root ('editor\KeyMouse.FlowEditor\bin\Release\' + $tfm + '\win-x64')
+    # 根目录瘦身：**不能**把语言目录搬进 language\ ——WinUI 的 MRT 只认 exe 旁边的文化目录，
+    # 搬走即崩（实测 0xC000027B / InvalidCastException；对照组：原样与仅换目录都能起来）。
+    # 能做的是删掉用不到的语言：界面文案本来就是中文硬编码，框架消息回退英文即可。
+    $publish = Join-Path $root 'out/flowedit'
+    if (Test-Path $publish) {
+        # 只留中文与英文：界面文案是中文硬编码，其余 96 个语言永远不会被显示，
+        # 但每个都有 34–792 KB 的真实资源（实测合计 11.9 MB）。删掉它们不影响启动（已验证）。
+        $keep = @('zh-CN', 'en-US', 'en-us')
+        $removed = 0
+        Get-ChildItem $publish -Directory |
+            Where-Object { ($_.Name -match '^[a-zA-Z]{2,3}(-[A-Za-z0-9]+)*$') -and ($keep -notcontains $_.Name) } |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue; $removed++ }
+        Say "   删掉用不到的语言目录：$removed 个"
+
+        Get-ChildItem $publish -Filter '*.pdb' -File | Remove-Item -Force -ErrorAction SilentlyContinue
+        Remove-Item (Join-Path $publish 'createdump.exe') -Force -ErrorAction SilentlyContinue
+    }
+
     if (Test-Path $built) {
         Get-ChildItem $built -Filter '*.pri' -File | ForEach-Object {
             Copy-Item $_.FullName (Join-Path $root 'out/flowedit') -Force
