@@ -49,7 +49,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private StepVm? _runningRow;
     private int _runSteps;      // 本次运行执行了多少步（含折叠在行里的子步骤）
     private int _runFailures;   // 其中失败了几步
-    private long _runTotalMs;   // 合计耗时
+    private long _runTotalMs;   // 各步执行耗时之和（不含步骤之间的等待）
+    private readonly System.Diagnostics.Stopwatch _runClock = new();   // 墙钟：整次运行到底花了多久
     private StepVm? _scrollTo;
     private const int MaxLogLines = 900;
 
@@ -1114,6 +1115,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         _runSteps = 0;
         _runFailures = 0;
         _runTotalMs = 0;
+        _runClock.Restart();
         foreach (StepVm row in Model.Rows) row.ResetRun();
         // 输出面板自己会出现（见 Log），不需要展开任何东西
         Log($"# KeyMouse serve 连接已建立；请求 run {path}{(dryRun ? "（--dry-run）" : "")}");
@@ -1175,6 +1177,7 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
     /// </summary>
     private void ShowRunSummary(int exitCode)
     {
+        _runClock.Stop();
         // 摘要按**执行步数**统计，不按可见行数：折叠把 748 次移动并成一行，
         // 按行数算会得到"6 步全部成功"这种与事实不符的结论（实测反馈）。
         StepVm? failed = Model.Rows.FirstOrDefault(s => s.RunDetail.StartsWith("失败"));
@@ -1185,8 +1188,11 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
         RunSummaryIcon.Glyph = success ? "\uE73E" : "\uEA39";
         // failed 可能是 null：格式错误、窗口不可用、Runner 拒跑都会让整次运行以非 0 结束，
         // 却没有"某一步失败"的事件。以前这里写 failed!.Number，等于用空引用把程序带走（实测崩过）。
+        // 两个耗时都要说，且要说清是哪一种：墙钟含步骤之间的等待（录制时间线），
+        // 各步合计不含——只写一个数会让人以为"录了 9 秒，为什么只跑 4.5 秒"（实测反馈）。
+        string timing = $"用时 {_runClock.Elapsed.TotalSeconds:0.#} 秒（各步执行合计 {totalMs} ms）";
         RunSummaryText.Text = success
-            ? $"{ok} 步全部成功，共 {totalMs} ms。{Explain(0)}"
+            ? $"{ok} 步全部成功，{timing}。{Explain(0)}"
             : failed is null
                 ? $"这次没跑起来（退出码 {exitCode}）。{Explain(exitCode)}"
                 : $"第 {failed.Number} 步「{StepCatalog.NameOf(failed.Step.Type)}」失败。"
