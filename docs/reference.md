@@ -94,6 +94,23 @@ KeyMouse <group> <command> [参数] [选项]
 
 ---
 
+## 提权
+
+**编辑器一律以管理员身份运行**（`app.manifest` 里 `requireAdministrator`）：它是自动化前端，
+不提权就录不到、也点不动以管理员身份运行的程序——发往更高完整性级别窗口的输入，
+Windows 不会交给低权限进程的全局钩子（UIPI）。代价是每次启动一次 UAC。
+
+**命令行默认不提权**（`asInvoker`）：它会被脚本和 CI 大量调用，每次弹 UAC 等于把它废掉。
+需要时显式加 `--elevate`，它以管理员身份重跑同一条命令并把退出码原样带回：
+
+```
+KeyMouse --elevate record --out flow.json     # 录管理员窗口上的操作
+KeyMouse --elevate run flow.json              # 回放同样需要
+```
+
+用户拒绝 UAC 时返回退出码 `1223`（ERROR_CANCELLED），**不会执行任何操作**。
+录制结束时如果发现光标停在过权限更高的窗口，输出里也会提示改用 `--elevate`。
+
 ## 不指定窗口（默认）
 
 **给坐标就能点，不需要任何窗口在前台。** 没有选择器时，事件直接发到屏幕位置／当前焦点：

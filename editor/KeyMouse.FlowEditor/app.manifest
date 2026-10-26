@@ -6,4 +6,16 @@
       <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
     </windowsSettings>
   </application>
+
+  <!-- 编辑器一律以管理员身份运行：它是自动化前端，不提权就录不到、也点不动
+       以管理员身份运行的程序（UIPI 不会把发往高完整性窗口的输入交给低权限进程的钩子）。
+       代价是每次启动一次 UAC；换来的是"录什么就能回放什么"。
+       已知副作用：系统文件选择器在提权下会失败——界面已回退到经典对话框（Picker.cs）。 -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
 </assembly>

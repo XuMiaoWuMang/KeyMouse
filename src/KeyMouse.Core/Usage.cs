@@ -145,6 +145,12 @@ internal static class Usage
             new("--pick <n>", "多个可用候选时选第 n 个（1-based，Z 序从上到下）"),
         ]),
 
+        new("提权", null,
+        [
+            new("KeyMouse --elevate <命令…>", "以管理员身份重跑同一条命令（UAC 提示一次），退出码原样带回；用户拒绝时返回 1223 且不执行任何操作"),
+            new("（编辑器无需此参数）", "编辑器自带 requireAdministrator：启动即提权，否则录不到管理员窗口上的操作"),
+        ]),
+
         new("窗口策略", null,
         [
             new("--focus-policy never|gentle|none", "never（默认）：不碰焦点，窗口只用来换算坐标与校验资格。gentle：SetForegroundWindow 后回读验证，最多 3 次。none：要求它已经是前台窗口"),

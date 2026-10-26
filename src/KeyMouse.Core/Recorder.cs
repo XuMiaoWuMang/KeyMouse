@@ -60,7 +60,7 @@ internal static class Recorder
         Console.WriteLine($"● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止，连按两次 ESC 也停" +
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
         Console.WriteLine("  鼠标轨迹会一起录（--no-shots 关截图，--move-threshold N 调抽稀）");
-        Console.WriteLine("  注意：管理员权限窗口上的操作录不到，要录它们请也用管理员身份运行");
+        Console.WriteLine("  注意：管理员权限窗口上的操作录不到；要录它们请加 --elevate（或右键以管理员身份运行）");
         NativeHooks.Record(session.OnEvent, session.ShouldStop);
         session.Finish();
 
@@ -78,7 +78,8 @@ internal static class Recorder
             {
                 Console.WriteLine($"      pid {pair.Key}  {pair.Value}");
             }
-            Console.WriteLine("    要录这些窗口上的操作，请以管理员身份运行 KeyMouse（右键 → 以管理员身份运行）。");
+            Console.WriteLine("    要录这些窗口上的操作，请用管理员身份运行：");
+            Console.WriteLine("      KeyMouse --elevate record --out …（自动提权），或右键『以管理员身份运行』");
         }
         if (session.ShotCount > 0) Console.WriteLine($"  截图 {session.ShotCount} 张 → {session.ShotDirectory}");
         Console.WriteLine("  回放：KeyMouse run " + Path.GetFileName(output) + " [--dry-run]");
