@@ -28,7 +28,15 @@ public sealed partial class IslandWindow : Window
     {
         InitializeComponent();
 
-        AppWindow.SetPresenter(OverlappedPresenter.CreateForContextMenu());   // 无边框 + 置顶
+        // 不用 CreateForContextMenu：那个 presenter 会按内容自适应尺寸，把 MoveAndResize 覆盖掉，
+        // 结果就是一条 202x56 的横条（实测）。自己配一个：无边框、置顶、不可缩放，尺寸才锁得住。
+        var presenter = OverlappedPresenter.Create();
+        presenter.SetBorderAndTitleBar(false, false);
+        presenter.IsAlwaysOnTop = true;
+        presenter.IsResizable = false;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        AppWindow.SetPresenter(presenter);
         AppWindow.IsShownInSwitchers = false;
         AppWindow.Title = "KeyMouse 录制中";
 
