@@ -82,7 +82,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception) { }
         // 权限写进标题：开发构建（dotnet build）**不会**嵌入 requireAdministrator，
         // 只有发布产物（dotnet publish）才有——同一份代码两种权限，不写出来就要靠猜（实测踩过）。
-        Title = $"KeyMouse 流程编辑器 0.1.0（构建 {built} · {Elevation()}）";
+        Title = $"KeyMouse 流程编辑器 0.2.0（构建 {built} · {Elevation()}）";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         try

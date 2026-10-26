@@ -254,7 +254,7 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 ## 版本号与发布
 
 三个地方必须一致：`KeyMouse.Cli.csproj` 的 `<Version>`、`Program.Version`（内置帮助从它取版本）、
-以及 `KeyMouse.FlowEditor.csproj` 的 `<Version>`。当前统一为 **0.1.0**。
+以及 `KeyMouse.FlowEditor.csproj` 的 `<Version>`。当前统一为 **0.2.0**。
 
 | 产物 | 标签 | 谁触发 |
 | --- | --- | --- |
@@ -262,7 +262,7 @@ pwsh tests/evidence.ps1 -Samples 4 -Attempts 1
 | 图形编辑器 + 安装程序（`flowedit`） | `gui-v<版本>` | `.github/workflows/release.yml`（内部调 `tools\pack-release.ps1`） |
 
 `tools\pack-release.ps1` 一条命令打完：编辑器（自包含）→ 命令行（自包含 + 框架依赖）→ 两个载荷 zip →
-安装程序。安装程序 `KeyMouseSetup-0.1.0.exe` 会把编辑器装到用户目录，**只有在没找到 `KeyMouse.exe` 时**
+安装程序。安装程序 `KeyMouseSetup-0.2.0.exe` 会把编辑器装到用户目录，**只有在没找到 `KeyMouse.exe` 时**
 才把命令行一并装进 `<安装目录>\cli\`。
 
 > 界面语言：KeyMouse 与 KeyMouse 流程编辑器**目前只有中文**。没有 i18n 层，

@@ -16,7 +16,7 @@ namespace KeyMouse.Setup;
 internal static class Program
 {
     internal const string ProductName = "KeyMouse 流程编辑器";
-    internal const string Version = "0.1.0";
+    internal const string Version = "0.2.0";
 
     [STAThread]
     private static void Main(string[] args)

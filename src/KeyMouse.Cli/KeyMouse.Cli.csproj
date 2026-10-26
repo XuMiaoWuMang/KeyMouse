@@ -8,8 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>0.1.0</Version>
-    <InformationalVersion>0.1.0</InformationalVersion>
+    <Version>0.2.0</Version>
+    <InformationalVersion>0.2.0</InformationalVersion>
     <!-- Per-monitor V2 is set in the manifest because it has to apply before anything (WinForms
          included) starts; WFO0003 asks for the property instead, but the property alone does not
          cover the paths that never touch WinForms. -->

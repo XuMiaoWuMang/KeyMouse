@@ -18,8 +18,8 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
     <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
-    <Version>0.1.0</Version>
-    <FileVersion>0.1.0.0</FileVersion>
+    <Version>0.2.0</Version>
+    <FileVersion>0.2.0.0</FileVersion>
     <Product>KeyMouse 流程编辑器</Product>
     <Company>KeyMouse</Company>
 

@@ -1,4 +1,4 @@
-# 安装与发布：0.1.0
+# 安装与发布：0.2.0
 
 两个产物，两条标签，各管各的。
 
@@ -96,7 +96,7 @@ CI 在推标签时会自动执行，逻辑只有一份：`tools\release-notes.ps
 ```
 $env:GITHUB_TOKEN = 'ghp_...'
 .\tools\release.ps1 -RevokeAll    # 删掉所有 Release 与标签
-.\tools\release.ps1 -Publish      # 按 0.1.0 重新发布
+.\tools\release.ps1 -Publish      # 按 0.2.0 重新发布
 ```
 
 没有 token 时只能删标签（git push origin --delete <tag> 走 SSH 就够），Release 对象删不掉。
