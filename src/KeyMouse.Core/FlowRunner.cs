@@ -258,6 +258,52 @@ internal static class FlowRunner
                 if (!options.DryRun) Thread.Sleep(ms);
                 return (0, $"等待 {ms} ms");
 
+            // 长按是一步，不是三步：按下 → 按住 → 松开在同一步里做完。
+            // 写成一步的好处是它可以被当一个操作来编辑（按键/落点/时长/窗口），
+            // 而文件里也不会出现"按下"和"松开"被别的步骤隔开却仍算一次长按的情况。
+            case "hold":
+            case "mousehold":
+            case "keyhold":
+            {
+                int holdMs = Math.Clamp(step.Ms ?? 0, 0, 3_600_000);
+                string what = step.Button is { Length: > 0 } button
+                    ? $"鼠标{button switch { "right" => "右键", "middle" => "中键", _ => "左键" }}"
+                    : $"键盘 {step.Combo ?? step.Text ?? "?"}";
+                if (options.DryRun) return (0, $"长按 {what} {holdMs} ms（试运行未真的按）");
+
+                bool mouse = step.Type == "mousehold" || (step.Type == "hold" && step.Button is { Length: > 0 });
+                if (mouse && step.At is { Space: FlowSpace.Screen }) NativeInput.MoveTo(step.At.X, step.At.Y);
+                // 键盘长按不绕道 CLI 参数解析：直接按下/松开，少一层出错的机会。
+                (ushort Vk, bool Ext) key = default;
+                if (mouse) NativeInput.ButtonDown(step.Button!);
+                else
+                {
+                    key = KeyMap.Resolve(step.Combo ?? step.Text ?? "");
+                    NativeInput.Key(key.Vk, key.Ext, false);
+
+                    // 真人的长按是**系统连发**：按住期间不断产生重复 keydown。
+                    // 只做"按下→干等→松开"时，输入法/文本框只收到一个键（实测：候选框里只有一个 a），
+                    // 因为重复是键盘驱动产生的，注入一次按下不会自动重复。
+                    // 这里照着 Windows 的节奏补出来：首延迟约 500 ms，之后每 33 ms 重复一次。
+                    int repeatStart = Math.Min(500, holdMs);
+                    Thread.Sleep(repeatStart);
+                    for (int elapsed = repeatStart; elapsed < holdMs; elapsed += 33)
+                    {
+                        NativeInput.Key(key.Vk, key.Ext, false);
+                        Thread.Sleep(33);
+                    }
+                    NativeInput.Key(key.Vk, key.Ext, true);
+                    return (0, $"长按 {what} {holdMs} ms（含连发）");
+                }
+
+                Thread.Sleep(holdMs);
+
+                if (mouse) NativeInput.ButtonUp(step.Button!);
+                else NativeInput.Key(key.Vk, key.Ext, true);
+
+                return (0, $"长按 {what} {holdMs} ms");
+            }
+
             case "wait-window":
                 return WaitWindow(step, options);
 

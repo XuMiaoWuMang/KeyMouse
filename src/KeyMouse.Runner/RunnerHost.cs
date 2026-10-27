@@ -119,6 +119,14 @@ internal sealed class RunnerHost
         // will not load is the ordinary case, not an exotic one. It used to throw before the slot was
         // taken and outside every handler, which left the job sitting in "queued" for good - measured
         // on this machine: two jobs stuck that way and a client whose run could never end.
+        // 排队时必须说一声：否则客户端进入"正在跑"状态，却收不到任何事件——
+        // 界面上就是无声卡死（实测：上一次录制还没收尾时点试运行）。
+        if (_oneAtATime.CurrentCount == 0)
+        {
+            job.State = "queued";
+            emit(RunnerEvent.Queued(request.Id, job.Job, 1, "排队中：上一次作业还没结束，等它收尾就开跑。"));
+        }
+
         await _oneAtATime.WaitAsync();
         TextWriter? previousOut = null, previousError = null;
         try

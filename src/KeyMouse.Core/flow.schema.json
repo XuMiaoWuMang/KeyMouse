@@ -234,8 +234,14 @@
             "en": "space"
           },
           "valueLabels": {
-            "client": { "zh": "客户区", "en": "client" },
-            "window": { "zh": "整个窗口（含标题栏）", "en": "window" }
+            "client": {
+              "zh": "客户区",
+              "en": "client"
+            },
+            "window": {
+              "zh": "整个窗口（含标题栏）",
+              "en": "window"
+            }
           },
           "help": {
             "zh": "读屏要落在某个窗口里：client 是客户区，window 连标题栏与边框一起算。",
@@ -752,6 +758,235 @@
         }
       ]
     },
+    "hold": {
+      "summary": {
+        "zh": "长按：按住一个键（鼠标键或键盘键）一段时间再松开",
+        "en": "Hold a key (mouse or keyboard) for a while"
+      },
+      "oneOf": [
+        "button",
+        "text",
+        "combo"
+      ],
+      "fields": [
+        {
+          "name": "button",
+          "kind": "enum",
+          "required": false,
+          "values": [
+            "left",
+            "right",
+            "middle"
+          ],
+          "label": {
+            "zh": "哪个鼠标键",
+            "en": "mouse button"
+          },
+          "help": {
+            "zh": "填了这个就是鼠标长按；留空表示键盘长按（用下面的键名）。",
+            "en": "Set this for a mouse hold; leave empty for a keyboard hold."
+          }
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "键名（键盘）",
+            "en": "key"
+          },
+          "help": {
+            "zh": "如 a / enter / f5。",
+            "en": "e.g. a, enter, f5."
+          },
+          "showWhen": "!button"
+        },
+        {
+          "name": "ms",
+          "kind": "int",
+          "required": true,
+          "min": 1,
+          "max": 3600000,
+          "label": {
+            "zh": "按多久（毫秒）",
+            "en": "hold for"
+          }
+        },
+        {
+          "name": "at",
+          "kind": "point",
+          "required": false,
+          "label": {
+            "zh": "落点",
+            "en": "point"
+          },
+          "help": {
+            "zh": "鼠标长按按在哪里；留空 = 当前光标处。",
+            "en": "Where to press; empty means the current cursor."
+          },
+          "showWhen": "button"
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
+    "mousedown": {
+      "summary": {
+        "zh": "按住鼠标键不放（与 mouseup 配对；两步之间就是按住时长）",
+        "en": "Hold a mouse button (pair with mouseup)"
+      },
+      "fields": [
+        {
+          "name": "button",
+          "kind": "enum",
+          "required": false,
+          "values": [
+            "left",
+            "right",
+            "middle"
+          ],
+          "default": "left",
+          "label": {
+            "zh": "哪个键",
+            "en": "button"
+          }
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
+    "mouseup": {
+      "summary": {
+        "zh": "松开鼠标键（与 mousedown 配对）",
+        "en": "Release a mouse button (pair with mousedown)"
+      },
+      "fields": [
+        {
+          "name": "button",
+          "kind": "enum",
+          "required": false,
+          "values": [
+            "left",
+            "right",
+            "middle"
+          ],
+          "default": "left",
+          "label": {
+            "zh": "哪个键",
+            "en": "button"
+          }
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
+    "keydown": {
+      "summary": {
+        "zh": "按住某个键不放（与 keyup 配对；两步之间就是按住时长）",
+        "en": "Hold a key down (pair with keyup; the gap between them is the hold)"
+      },
+      "oneOf": [
+        "combo",
+        "text"
+      ],
+      "fields": [
+        {
+          "name": "combo",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "组合键",
+            "en": "combo"
+          }
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "单个键名",
+            "en": "key"
+          },
+          "help": {
+            "zh": "如 w / shift。",
+            "en": "e.g. w, shift."
+          }
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
+    "keyup": {
+      "summary": {
+        "zh": "松开某个键（与 keydown 配对）",
+        "en": "Release a key (pair with keydown)"
+      },
+      "oneOf": [
+        "combo",
+        "text"
+      ],
+      "fields": [
+        {
+          "name": "combo",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "组合键",
+            "en": "combo"
+          }
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "单个键名",
+            "en": "key"
+          },
+          "help": {
+            "zh": "如 w / shift。",
+            "en": "e.g. w, shift."
+          }
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
     "sleep": {
       "summary": {
         "zh": "等一会儿",
@@ -1260,6 +1495,114 @@
           "help": {
             "zh": "子流程跑完后，这些名字的值回到调用者；没列出的留在子流程里。",
             "en": "After the call these names land in the caller; everything else stays inside."
+          }
+        }
+      ]
+    },
+    "mousehold": {
+      "summary": {
+        "zh": "鼠标长按：按住鼠标键一段时间再松开",
+        "en": "Hold a mouse button for a while"
+      },
+      "oneOf": [
+        "button"
+      ],
+      "fields": [
+        {
+          "name": "button",
+          "kind": "enum",
+          "required": false,
+          "values": [
+            "left",
+            "right",
+            "middle"
+          ],
+          "label": {
+            "zh": "哪个鼠标键",
+            "en": "mouse button"
+          },
+          "help": {
+            "zh": "填了这个就是鼠标长按；留空表示键盘长按（用下面的键名）。",
+            "en": "Set this for a mouse hold; leave empty for a keyboard hold."
+          }
+        },
+        {
+          "name": "ms",
+          "kind": "int",
+          "required": true,
+          "min": 1,
+          "max": 3600000,
+          "label": {
+            "zh": "按多久（毫秒）",
+            "en": "hold for"
+          }
+        },
+        {
+          "name": "at",
+          "kind": "point",
+          "required": false,
+          "label": {
+            "zh": "落点",
+            "en": "point"
+          },
+          "help": {
+            "zh": "鼠标长按按在哪里；留空 = 当前光标处。",
+            "en": "Where to press; empty means the current cursor."
+          },
+          "showWhen": "button"
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
+          }
+        }
+      ]
+    },
+    "keyhold": {
+      "summary": {
+        "zh": "键盘长按：按住一个键一段时间再松开",
+        "en": "Hold a keyboard key for a while"
+      },
+      "oneOf": [
+        "text"
+      ],
+      "fields": [
+        {
+          "name": "text",
+          "kind": "text",
+          "required": false,
+          "label": {
+            "zh": "键名（键盘）",
+            "en": "key"
+          },
+          "help": {
+            "zh": "如 a / enter / f5。",
+            "en": "e.g. a, enter, f5."
+          },
+          "showWhen": "!button"
+        },
+        {
+          "name": "ms",
+          "kind": "int",
+          "required": true,
+          "min": 1,
+          "max": 3600000,
+          "label": {
+            "zh": "按多久（毫秒）",
+            "en": "hold for"
+          }
+        },
+        {
+          "name": "target",
+          "kind": "target",
+          "required": false,
+          "label": {
+            "zh": "目标窗口（可选）",
+            "en": "target"
           }
         }
       ]

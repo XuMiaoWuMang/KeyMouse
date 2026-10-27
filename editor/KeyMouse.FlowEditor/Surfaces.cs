@@ -26,7 +26,7 @@ internal sealed partial class Surfaces
     internal static readonly (string Title, string[] Types)[] Groups =
     [
         ("窗口", ["focus", "wait-window"]),
-        ("输入", ["click", "type", "key", "drag", "move", "wheel"]),
+        ("输入", ["click", "mousehold", "keyhold", "type", "key", "drag", "move", "wheel"]),
         ("看屏幕", ["wait-text", "click-text", "read-text"]),
         ("流程", ["sleep", "repeat", "foreach", "call"]),
     ];

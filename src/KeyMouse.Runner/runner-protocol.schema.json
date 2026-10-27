@@ -72,6 +72,7 @@
     "hello": { "fields": ["kind", "id", "message"], "note": "连接后的问候（见 greeting），不是任何请求的应答，id 固定 0。" },
     "log": { "fields": ["kind", "id", "job", "line"], "note": "能力层往 stdout/stderr 打的每一行都会变成一条 log。" },
     "step": { "fields": ["kind", "id", "job", "index", "total", "state", "type", "shot", "exitCode", "durationMs"], "note": "state 取值见 stepStates；index 从 1 开始。shot 是这一步留下的证据截图路径（引擎抓不到就是 null，绝不编一个）" },
+    "queued": { "fields": ["kind", "id", "job", "total", "message"], "note": "作业排到队里了（引擎一次只跑一个）：total = 前面还有几个没结束。没有这条事件时，客户端会进入\"正在跑\"却收不到任何东西。" },
     "finished": { "fields": ["kind", "id", "job", "exitCode", "durationMs"], "note": "执行类方法的终结事件；exitCode 与 CLI 退出码同一套。" },
     "result": { "fields": ["kind", "id", "value"], "note": "一问一答方法的终结事件；value 的形状由具体方法决定。" },
     "error": { "fields": ["kind", "id", "code", "message"], "note": "终结事件；message 面向用户，必须是中文。" }

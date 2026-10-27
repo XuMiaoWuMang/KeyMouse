@@ -24,7 +24,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 try {
-    $version = '0.2.0'
+    $version = '0.2.1'
     $assets = Join-Path $root 'tools\KeyMouse.Setup\Assets'
     $dist = Join-Path $root 'dist'
     New-Item -ItemType Directory -Force -Path $assets, $dist | Out-Null

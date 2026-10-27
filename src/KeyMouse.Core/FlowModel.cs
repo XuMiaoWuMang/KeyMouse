@@ -575,13 +575,14 @@ internal sealed class FlowDocument
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
         "click-text", "read-text", "repeat", "foreach", "call",
+        "keydown", "keyup", "mousedown", "mouseup", "hold", "mousehold", "keyhold",
     ];
 
     /// <summary>Steps that read a region: they share the region/target/match rules and the runner.</summary>
     internal static readonly string[] ReadingTypes = ["wait-text", "click-text", "read-text"];
 
     /// <summary>Steps that only exist for the runner: they carry steps of their own or store a value.</summary>
-    internal static readonly string[] RunnerTypes = ["sleep", "wait-window", "wait-text", "click-text", "read-text", "repeat", "foreach"];
+    internal static readonly string[] RunnerTypes = ["sleep", "hold", "mousehold", "keyhold", "wait-window", "wait-text", "click-text", "read-text", "repeat", "foreach"];
 
     /// <summary>One loop cannot run forever: the cap is stated, not discovered at 3 a.m.</summary>
     internal const int MaxLoopIterations = 10_000;
@@ -683,8 +684,34 @@ internal sealed class FlowDocument
                 args.AddRange(selector);
                 break;
 
+            // 鼠标长按：按下 / 抬起（位置取按下的那一点）。
+            case "mousedown":
+                args.AddRange(["mouse", "down", "-button", step.Button ?? "left"]);
+                args.AddRange(selector);
+                break;
+
+            case "mouseup":
+                args.AddRange(["mouse", "up", "-button", step.Button ?? "left"]);
+                args.AddRange(selector);
+                break;
+
+            // 长按的两半：按下 / 抬起。回放时中间隔着时间线，就是"按住了这么久"。
+            case "keydown":
+                args.AddRange(["key", "down", step.Combo ?? step.Text ?? ""]);
+                args.AddRange(selector);
+                break;
+
+            case "keyup":
+                args.AddRange(["key", "up", step.Combo ?? step.Text ?? ""]);
+                args.AddRange(selector);
+                break;
+
+
             default:
-                throw new CommandFailure(2, $"'{step.Type}' 由执行器自己处理，不该编译成命令");
+                // 执行器自己跑的类型（sleep、长按、循环…）没有对应的 CLI 命令：返回空数组，
+                // 调用方据此跳过发命令，而不是把它当成错误（长按刚踩过这个坑）。
+                if (RunnerTypes.Contains(step.Type)) return [];
+                throw new CommandFailure(2, $"'{step.Type}' 不认识");
         }
 
         return args.ToArray();

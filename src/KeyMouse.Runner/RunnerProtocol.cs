@@ -127,6 +127,13 @@ internal sealed class RunnerEvent
     internal static RunnerEvent Log(int id, int job, string line) =>
         new() { Kind = "log", Id = id, Job = job, Line = line };
 
+    /// <summary>
+    /// 排到队里了：引擎一次只跑一个作业，前面那个还没结束。
+    /// 没有这条事件时，客户端会进入"正在跑"却收不到任何东西——界面上就是无声卡死（实测）。
+    /// </summary>
+    internal static RunnerEvent Queued(int id, int job, int ahead, string message) =>
+        new() { Kind = "queued", Id = id, Job = job, Total = ahead, Message = message };
+
     internal static RunnerEvent Step(int id, int job, int index, int total, string state, string type, int? exitCode = null, long? durationMs = null, string? shot = null) =>
         new()
         {

@@ -36,9 +36,27 @@ internal sealed class InspectorBuilder
         if (!FlowSchema.TryGetStep(_step.Step.Type, out FlowStepContract contract)) return;
 
         // 前提条件单独处理：它是一段"要不要"的开关，不是普通字段。
-        AddSection(contract.Own.Where(f => f.Name != "when").ToList(), markRequired: true);
+        // showWhen：长按这种"二选一"的步骤，只显示当前这一种用法该有的字段。
+        AddSection(contract.Own.Where(f => f.Name != "when" && Visible(f)).ToList(), markRequired: true);
         AddWhen(contract);
         AddSection(contract.All.Where(f => f.Name == "note").ToList(), markRequired: false);
+    }
+
+    /// <summary>showWhen 判断："button" = 该字段有值才显示，"!button" = 没值才显示。</summary>
+    private bool Visible(FlowField field)
+    {
+        if (field.ShowWhen is not { Length: > 1 } rule) return true;
+        bool wantEmpty = rule[0] == '!';
+        string target = wantEmpty ? rule[1..] : rule;
+        string? current = target switch
+        {
+            "button" => _step.Step.Button,
+            "text" => _step.Step.Text,
+            "combo" => _step.Step.Combo,
+            _ => null,
+        };
+        bool hasValue = !string.IsNullOrEmpty(current);
+        return wantEmpty ? !hasValue : hasValue;
     }
 
     private void AddSection(IReadOnlyList<FlowField> fields, bool markRequired)

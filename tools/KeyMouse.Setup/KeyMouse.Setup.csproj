@@ -9,8 +9,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.0</Version>
-    <FileVersion>0.2.0.0</FileVersion>
+    <Version>0.2.1</Version>
+    <FileVersion>0.2.1.0</FileVersion>
     <Product>KeyMouse 流程编辑器</Product>
     <Company>KeyMouse</Company>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>

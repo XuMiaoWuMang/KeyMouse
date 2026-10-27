@@ -105,8 +105,15 @@ internal static class FlowTests
                 Type = "move",
                 At = new FlowPoint { Space = "client", X = 1, Y = 1 },
             }));
-        Harness.Throws<CommandFailure>("wait steps are the runner's business, not the compiler's",
-            () => FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }));
+        // 执行器自己跑的类型没有 CLI 命令：编译结果是空数组，而不是异常。
+        // （以前这里抛 CommandFailure，于是长按一放进流程就报"不该编译成命令"。）
+        Harness.Check("runner steps compile to nothing",
+            FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }).Length == 0,
+            "sleep");
+        Harness.Check("holds compile to nothing",
+            FlowDocument.ToArguments(new FlowStep { Type = "keyhold", Text = "a", Ms = 500 }).Length == 0 &&
+            FlowDocument.ToArguments(new FlowStep { Type = "mousehold", Button = "left", Ms = 500 }).Length == 0,
+            "keyhold/mousehold");
 
         Harness.Group("flow: an empty when is the absence of a precondition");
 

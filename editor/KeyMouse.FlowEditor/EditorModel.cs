@@ -74,7 +74,15 @@ public sealed class EditorModel : INotifyPropertyChanged
         // 连续的鼠标移动先折叠：3 次以上的一组，头一行说"起点 → 终点 · N 次"，
         // 每一下移动单独成为它的子行。读流程的人要的是"从哪儿到哪儿"，
         // 四十几行 (x,y) 只会把真正要看的步骤挤出视野。
-        (int Head, int Offset, int Count)[] runs = FoldMoves();
+        // 先折叠"按住再松开"：长按在文件里是按下 + 若干等待 + 松开三步，
+        // 读流程的人只想要一行"长按 鼠标左键 1.7 秒"。
+        (int Head, int Offset, int Count)[] runs = FoldHolds();
+        (int Head, int Offset, int Count)[] moves = FoldMoves();
+        for (int i = 0; i < runs.Length; i++)
+        {
+            // 长按内部不参与移动折叠（它已经是子行）；长按之外的移动组照旧。
+            if (runs[i].Head < 0 && moves[i].Head >= 0) runs[i] = moves[i];
+        }
 
         // 编号按**看得见的顺序**走：折叠组占一个号，组内子行接在它下面。
         // 用底层下标编会出现 1、2、7 这种跳号——用户看的是这一屏，不是数组。
@@ -103,7 +111,9 @@ public sealed class EditorModel : INotifyPropertyChanged
                 top.Depth = 0;
                 top.RunCount = runs[i].Count;
                 top.ChildTotal = runs[i].Count - 1;   // 头一行自己就是第一下移动
-                top.SummaryOverride = MoveRunSummary(i, runs[i].Count);
+                top.SummaryOverride = top.Step.Type is "mousedown" or "keydown"
+                    ? HoldSummary(i, runs[i].Count)
+                    : MoveRunSummary(i, runs[i].Count);
                 Rows.Add(top);
                 continue;
             }
@@ -193,6 +203,70 @@ public sealed class EditorModel : INotifyPropertyChanged
         head.IsExpanded = !head.IsExpanded;
         Renumber();
         return head;
+    }
+
+    /// <summary>
+    /// 找出"按住 + 等待 + 松开"的组：mousedown…mouseup / keydown…keyup。
+    /// 中间只允许 sleep / move（手会抖，视频里也常见），别的步骤出现就说明这不是一次长按。
+    /// </summary>
+    private (int Head, int Offset, int Count)[] FoldHolds()
+    {
+        var map = new (int Head, int Offset, int Count)[Steps.Count];
+        for (int i = 0; i < map.Length; i++) map[i] = (-1, 0, 0);
+
+        int k = 0;
+        while (k < Steps.Count)
+        {
+            string open = Steps[k].Step.Type;
+            if (open is not ("mousedown" or "keydown"))
+            {
+                k++;
+                continue;
+            }
+
+            string close = open == "mousedown" ? "mouseup" : "keyup";
+            int end = k + 1;
+            while (end < Steps.Count && Steps[end].Step.Type is "sleep" or "move") end++;
+            if (end >= Steps.Count || Steps[end].Step.Type != close)
+            {
+                k++;
+                continue;
+            }
+
+            int count = end - k + 1;
+            for (int m = k; m <= end; m++) map[m] = (k, m - k, count);
+            k = end + 1;
+        }
+
+        return map;
+    }
+
+    /// <summary>长按那一行的摘要：键名 + 时长（时长优先取时间线，退回落差）。</summary>
+    private string HoldSummary(int head, int count)
+    {
+        StepVm open = Steps[head];
+        StepVm close = Steps[head + count - 1];
+        string type = open.Step.Type == "mousedown" ? "鼠标" : "键盘";
+        string name = open.Step.Type == "mousedown"
+            ? (open.Step.Button ?? "left") switch
+            {
+                "right" => "鼠标右键",
+                "middle" => "鼠标中键",
+                "x1" => "鼠标侧键 1",
+                "x2" => "鼠标侧键 2",
+                _ => "未知键",
+            }
+            : $"键盘 {open.Step.Combo ?? open.Step.Text}";
+
+        int ms = 0;
+        if (open.Step.AtMs is int from && close.Step.AtMs is int to && to >= from) ms = to - from;
+        for (int i = head + 1; i < head + count; i++)
+        {
+            if (Steps[i].Step.Type == "sleep" && Steps[i].Step.Ms is int sleepMs) ms = Math.Max(ms, sleepMs);
+        }
+
+        string duration = ms >= 1000 ? $"{ms / 1000.0:0.0} 秒" : $"{ms} ms";
+        return $"长按 {name} · {duration}";
     }
 
     /// <summary>

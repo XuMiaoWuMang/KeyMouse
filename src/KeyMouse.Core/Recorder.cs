@@ -252,6 +252,7 @@ internal static class Recorder
                     OnKeyDown(e);
                     break;
                 case HookKind.KeyUp:
+                    OnKeyUp(e);
                     _held.Remove(Normalize(e.VirtualKey));
                     break;
                 case HookKind.MouseMove:
@@ -333,6 +334,72 @@ internal static class Recorder
             OnKeyDown(pending);
         }
 
+        /// <summary>按住超过这个时长就记成"按下 + 抬起"两步，而不是一次点击。</summary>
+        private const int LongPressMs = 250;
+
+        /// <summary>按着还没抬起的普通键：等抬起才知道是点击还是长按。</summary>
+        private (HookEvent Event, string Combo)? _heldKey;
+
+        /// <summary>
+        /// 可打印键按着没抬起：等抬起再决定是"打字"还是"长按"。
+        /// 判据是**系统连发**——按住 W 会产生连续 KeyDown，打字不会。
+        /// </summary>
+        private (HookEvent Event, char Char, int Vk, int Repeats)? _pendingChar;
+
+        /// <summary>刚刚那次键盘长按按了多久（等抬起时算出来的）。</summary>
+        private int _holdKeyMs;
+
+        /// <summary>把挂起的可打印键当普通字符收进正在打的这段字里。</summary>
+        private void CommitPendingChar()
+        {
+            if (_pendingChar is not { } p) return;
+            _pendingChar = null;
+            if (_typing.Length == 0) _typingStartedAt = p.Event.Time;
+            _typingLastAt = p.Event.Time;
+            _typing.Append(p.Char);
+        }
+
+        /// <summary>抬起时决定：短按记一次 key press，长按记 key down + key up（时长由时间线复现）。</summary>
+        private void OnKeyUp(HookEvent e)
+        {
+            int released = Normalize(e.VirtualKey);
+            if (_pendingChar is { } pending && pending.Vk == released)
+            {
+                int pressedFor = (int)(e.Time - pending.Event.Time);
+                bool isHold = pending.Repeats > 0 || pressedFor >= LongPressMs;
+                _pendingChar = null;
+                if (isHold)
+                {
+                    // 按住不放：一步"长按"，时长记在 Ms 里。
+                    FlushTyping();
+                    _raw.Add((pending.Event, "holdkey", KeyExpression(pending.Vk))) ;
+                    _holdKeyMs = pressedFor;
+                }
+                else
+                {
+                    if (_typing.Length == 0) _typingStartedAt = pending.Event.Time;
+                    _typingLastAt = pending.Event.Time;
+                    _typing.Append(pending.Char);
+                }
+                return;
+            }
+
+            if (_heldKey is not { } held) return;
+            if (Normalize(held.Event.VirtualKey) != Normalize(e.VirtualKey)) return;
+
+            _heldKey = null;
+            int duration = (int)(e.Time - held.Event.Time);
+            if (duration >= LongPressMs)
+            {
+                _raw.Add((held.Event, "keydown", held.Combo));
+                _raw.Add((e, "keyup", held.Combo));
+            }
+            else
+            {
+                _raw.Add((held.Event, "key", held.Combo));
+            }
+        }
+
         private void OnKeyDown(HookEvent e)
         {
             int vk = Normalize(e.VirtualKey);
@@ -363,14 +430,23 @@ internal static class Recorder
                                        _held.Contains(VkLWin) || _held.Contains(VkRWin);
             if (character is { } c && !withCommandModifier)
             {
-                if (_typing.Length == 0) _typingStartedAt = e.Time;
-                _typingLastAt = e.Time;
-                _typing.Append(c);
+                // 先挂起：同样的键再响一次就是**系统连发**（按住不放），不是打字。
+                if (_pendingChar is { } waiting && waiting.Vk == vk)
+                {
+                    _pendingChar = (waiting.Event, waiting.Char, waiting.Vk, waiting.Repeats + 1);
+                    return;
+                }
+                CommitPendingChar();
+                _pendingChar = (e, c, vk, 0);
                 return;
             }
 
             FlushTyping();
-            _raw.Add((e, "key", KeyExpression(e.VirtualKey)));
+
+            // 不立刻记：等抬起时才知道是短按（key press）还是长按（key down + key up）。
+            // 系统按住会连发 KeyDown，这里同一键只认第一次。
+            if (_heldKey is { } pending && Normalize(pending.Event.VirtualKey) == vk) return;
+            _heldKey = (e, KeyExpression(e.VirtualKey));
         }
 
         private string KeyExpression(int vk)
@@ -380,7 +456,16 @@ internal static class Recorder
             if (_held.Contains(VkShift)) parts.Add("shift");
             if (_held.Contains(VkMenu)) parts.Add("alt");
             if (_held.Contains(VkLWin)) parts.Add("win");
-            string? name = KeyMap.NameOf(vk) ?? $"vk:{vk:X2}";
+            // 字母/数字键在 KeyMap 里没有名字：直接用字符（不带 Ctrl/Alt/Win 修饰时才有意义，
+            // 例如按住 W 前进→ key down w）。
+            bool plain = !_held.Contains(VkControl) && !_held.Contains(VkMenu) && !_held.Contains(VkLWin);
+            string? name = KeyMap.NameOf(vk);
+            if (name is null && plain)
+            {
+                if (vk is >= 0x41 and <= 0x5A) name = char.ToLowerInvariant((char)vk).ToString();
+                else if (vk is >= 0x30 and <= 0x39) name = ((char)vk).ToString();
+            }
+            name ??= $"vk:{vk:X2}";
             parts.Add(name);
             return string.Join("+", parts);
         }
@@ -414,6 +499,7 @@ internal static class Recorder
 
         private void FlushTyping()
         {
+            CommitPendingChar();
             if (_typing.Length == 0) return;
             string text = _typing.ToString();
             _typing.Clear();
@@ -432,6 +518,12 @@ internal static class Recorder
         internal void Finish()
         {
             FlushPendingEscape();
+            // 录制结束时还按着的键：记成一次按下（没抬起就没法说时长）。
+            if (_heldKey is { } stillDown)
+            {
+                _raw.Add((stillDown.Event, "key", stillDown.Combo));
+                _heldKey = null;
+            }
             FlushTyping();
 
             var trajectory = new List<HookEvent>();
@@ -443,18 +535,10 @@ internal static class Recorder
 
             void Emit(FlowStep step, HookEvent at)
             {
-                // 时间线：每一步带上"从录制开始算的第几毫秒"。
-                // 回放据此排程，快速挥动与中途停顿都原样复现；sleep 仍写出来给人读，
-                // 但回放以 atMs 为准（见 FlowRunner 的 timeline 段）。
+                // 时间线：每一步带上"从录制开始算的第几毫秒"，回放据此排程。
+                // 停顿**不再补 sleep 步骤**：atMs 已经表达了间隔，再写一条"等待时间"
+                // 既重复又碍眼（用户看到的就是 hold / 等待时间 / 抬起 三行，非常像三个操作）。
                 step.AtMs = (int)Math.Max(0, (long)at.Time - _startedAt);
-                if (_minGapMs > 0 && Steps.Count > 0)
-                {
-                    long gap = (long)at.Time - lastStepTime;
-                    if (gap >= _minGapMs)
-                    {
-                        Steps.Add(new FlowStep { Type = "sleep", Ms = (int)Math.Min(gap, int.MaxValue) });
-                    }
-                }
                 Steps.Add(step);
                 lastStepTime = at.Time;
             }
@@ -521,6 +605,15 @@ internal static class Recorder
                                 trajectory.RemoveRange(trajectoryAtPress, trajectory.Count - trajectoryAtPress);
                             Emit(Describe(e, "drag", downEvent.Button, from, to, (int)(e.Time - downEvent.Event.Time), null), e);
                         }
+                        else if ((int)(e.Time - downEvent.Event.Time) >= LongPressMs)
+                        {
+                            // 鼠标长按：按下与抬起各成一步，中间那段时长由时间线复现。
+                            // 一次长按 = 一步。落点取按下那一刻的位置。
+                            var at = new Point(downEvent.Event.X, downEvent.Event.Y);
+                            FlowStep holdStep = Describe(downEvent.Event, "mousehold", downEvent.Button, at, null, null, null);
+                            holdStep.Ms = (int)(e.Time - downEvent.Event.Time);
+                            Emit(holdStep, downEvent.Event);
+                        }
                         else
                         {
                             Emit(Describe(downEvent.Event, "click", downEvent.Button, from, null, null, null), downEvent.Event);
@@ -543,6 +636,27 @@ internal static class Recorder
                     case "key":
                         FlushWheel();
                         Emit(Describe(e, "key", detail, null, null, null, null), e);
+                        continue;
+
+                    // 键盘长按：一步，时长写在 Ms 里。
+                    case "holdkey":
+                    {
+                        FlushWheel();
+                        FlowStep holdKey = Describe(e, "keyhold", detail, null, null, null, null);
+                        holdKey.Ms = _holdKeyMs;
+                        Emit(holdKey, e);
+                        continue;
+                    }
+
+                    // 老文件里的两半写法仍然认（按下与抬起各成一步）。
+                    case "keydown":
+                        FlushWheel();
+                        Emit(Describe(e, "keydown", detail, null, null, null, null), e);
+                        continue;
+
+                    case "keyup":
+                        FlushWheel();
+                        Emit(Describe(e, "keyup", detail, null, null, null, null), e);
                         continue;
 
                     case "type":
@@ -588,12 +702,12 @@ internal static class Recorder
         {
             var step = new FlowStep { Type = type };
             Point actual = point ?? new Point(e.X, e.Y);
-            IntPtr window = type is "click" or "drag" or "wheel" or "move"
+            IntPtr window = type is "click" or "drag" or "wheel" or "move" or "mousedown" or "mouseup" or "mousehold" or "keyhold"
                 ? WindowLocator.WindowAt(actual.X, actual.Y)
                 : NativeWindow.GetForegroundWindow();
 
             Point? reference = point;
-            if (type is "click" or "wheel" or "move" or "drag")
+            if (type is "click" or "wheel" or "move" or "drag" or "mousedown" or "mouseup" or "mousehold")
             {
                 step.At = new FlowPoint { Space = FlowSpace.Screen, X = actual.X, Y = actual.Y };
             }
@@ -611,10 +725,30 @@ internal static class Recorder
                 step.DurationMs = duration;
             }
             // 按键必须写进文件：以前这里漏了，于是**右键/中键一律按左键回放**（实测反馈）。
-            // 左键是默认，不写；其它键写出来。
-            if (type is "click" or "drag" && detail is { Length: > 0 } pressed && pressed != "left")
+            // 长按的按下/抬起**总是**写明按键（否则左键长按和右键长按就分不出来）；
+            // 点击与拖动仍省略左键（默认值），少写一个字是一字。
+            if (type is "mousedown" or "mouseup")
+            {
+                if (detail is { Length: > 0 } held) step.Button = held;
+            }
+            else if (type is "click" or "drag" && detail is { Length: > 0 } pressed && pressed != "left")
             {
                 step.Button = pressed;
+            }
+            else if (type is "mousehold" or "keyhold" && detail is { Length: > 0 } holding)
+            {
+                // 鼠标长按才有 button；键盘长按（w、ctrl+s）走 text/combo——
+                // 以前把键名塞进 button，界面上就变成"长按 鼠标左键 … @ 0,0"（实测反馈）。
+                if (type == "mousehold" && holding is "left" or "right" or "middle" or "x1" or "x2")
+                {
+                    step.Button = holding;
+                }
+                else
+                {
+                    step.At = null;   // 键盘长按没有落点
+                    if (holding.Contains('+')) step.Combo = holding;
+                    else step.Text = holding;
+                }
             }
             if (type == "wheel")
             {
@@ -627,7 +761,8 @@ internal static class Recorder
                 step.Text = detail;
                 step.IntervalMs = e.Data > 0 ? e.Data : 15; // measured pace, see FlushTyping
             }
-            if (type == "key")
+            // 长按的两半按同一个键名走：Combo 里有 + 才算组合键。
+            if (type is "key" or "keydown" or "keyup")
             {
                 step.Combo = detail?.Contains('+') == true ? detail : null;
                 if (step.Combo is null) step.Text = detail;

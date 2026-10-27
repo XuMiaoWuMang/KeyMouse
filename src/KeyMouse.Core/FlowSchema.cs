@@ -16,6 +16,13 @@ internal sealed class FlowField
     internal bool Required { get; init; }
     /// <summary>Set when the field is only required in one situation, e.g. a target once coordinates are client-relative.</summary>
     internal string? RequiredWhen { get; init; }
+
+    /// <summary>
+    /// 只在某个字段有值时显示："button" = button 非空才显示，"!button" = button 为空才显示。
+    /// 长按用它分家：鼠标长按给按键/落点，键盘长按给键名，互不干扰。
+    /// </summary>
+    internal string? ShowWhen { get; init; }
+
     internal int? Min { get; init; }
     internal int? Max { get; init; }
     internal string[] Values { get; init; } = [];
@@ -149,6 +156,7 @@ internal static class FlowSchema
         Kind = element.GetProperty("kind").GetString() ?? "text",
         Required = element.TryGetProperty("required", out JsonElement required) && required.GetBoolean(),
         RequiredWhen = element.TryGetProperty("requiredWhen", out JsonElement when) ? when.GetString() : null,
+        ShowWhen = element.TryGetProperty("showWhen", out JsonElement showWhen) ? showWhen.GetString() : null,
         Min = element.TryGetProperty("min", out JsonElement min) ? min.GetInt32() : null,
         Max = element.TryGetProperty("max", out JsonElement max) ? max.GetInt32() : null,
         Values = element.TryGetProperty("values", out JsonElement values)

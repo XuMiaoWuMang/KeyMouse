@@ -23,6 +23,9 @@ internal static class StepCatalog
         new("type", "输入文字", "\uE8BD", "把一串文字打进去（按字符，不按键盘布局）"),
         new("key", "按键/组合键", "\uE765", "按一个键或一组组合键，例如 ctrl+s"),
         new("sleep", "等待时间", "\uE916", "什么都不做，等这么多毫秒"),
+        new("hold", "长按", "\uE769", "按住一个键一段时间再松开（旧文件）"),
+        new("mousehold", "鼠标长按", "\uE962", "按住鼠标键一段时间再松开"),
+        new("keyhold", "键盘长按", "\uE765", "按住键盘键一段时间再松开"),
         new("wait-window", "等窗口出现", "\uE7C4", "轮询直到目标窗口可用，超时退出码 3"),
         new("wait-text", "等文字出现", "\uE8D4", "读一块区域，等某段文字出现（可给容错预算）"),
         new("click-text", "找字并点它", "\uE8B8", "等文字出现，然后点匹配框的中心"),
@@ -124,13 +127,34 @@ internal static class StepCatalog
     {
         static string Point(FlowPoint? p) => p is null ? "" : $"{p.X},{p.Y}";
         string target = step.Target?.Process is { Length: > 0 } process ? $" → {process}" : "";
+        static string HoldText(FlowStep step, string space, string target)
+        {
+            string what = step.Button is { Length: > 0 } b ? $"鼠标{ButtonText(b)}" : $"键盘 {step.Combo ?? step.Text}";
+            int ms = step.Ms ?? 0;
+            string duration = ms >= 1000 ? $"{ms / 1000.0:0.0} 秒" : $"{ms} ms";
+            return $"长按 {what} · {duration}" + (step.Button is { Length: > 0 } ? $" @ {Point(step.At)}{space}" : space) + target;
+        }
+
+        static string ButtonText(string? button) => button switch
+        {
+            "right" => "右键",
+            "middle" => "中键",
+            "x1" => "侧键 1",
+            "x2" => "侧键 2",
+            _ => "左键",
+        };
         string space = step.At?.Space == FlowSpace.Screen || step.From?.Space == FlowSpace.Screen ? "（屏幕坐标）" : "";
 
         return step.Type switch
         {
             "focus" => $"切到 {step.Target?.Process ?? step.Target?.Class ?? "?"}",
-            "click" => $"{(step.Button ?? "left") switch { "right" => "右键", "middle" => "中键", _ => "左键" }} 点击 @ {Point(step.At)}{space}{target}",
-            "drag" => $"{Point(step.From)} → {Point(step.To)}，{step.DurationMs ?? 0} ms{target}",
+            "click" => $"{ButtonText(step.Button)} 点击 @ {Point(step.At)}{space}{target}",
+            "drag" => $"{ButtonText(step.Button)} 拖动 {Point(step.From)} → {Point(step.To)}，{step.DurationMs ?? 0} ms{target}",
+            "hold" or "mousehold" or "keyhold" => HoldText(step, space, target),
+            "mousedown" => $"{ButtonText(step.Button)} 按住不放 @ {Point(step.At)}{space}{target}",
+            "mouseup" => $"{ButtonText(step.Button)} 松开 @ {Point(step.At)}{space}{target}",
+            "keydown" => $"按住 {step.Combo ?? step.Text}{target}",
+            "keyup" => $"松开 {step.Combo ?? step.Text}{target}",
             "move" => $"移到 {Point(step.At)}{space}{target}",
             "wheel" => $"滚轮 {step.Delta ?? 0} @ {Point(step.At)}{target}",
             "type" => $"输入「{Clip(step.Text)}」，间隔 {step.IntervalMs ?? 15} ms{target}",

@@ -82,7 +82,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception) { }
         // 权限写进标题：开发构建（dotnet build）**不会**嵌入 requireAdministrator，
         // 只有发布产物（dotnet publish）才有——同一份代码两种权限，不写出来就要靠猜（实测踩过）。
-        Title = $"KeyMouse 流程编辑器 0.2.0（构建 {built} · {Elevation()}）";
+        Title = $"KeyMouse 流程编辑器 0.2.1（构建 {built} · {Elevation()}）";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         try
@@ -564,7 +564,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     /// 工具栏左边是"往流程里加一步"——这是这个编辑器最常做的事，所以常用类型直接是一排按钮，
     /// 其余在"更多"里。打开/保存这类文件操作不常做，收进了"文件"菜单。
     /// </summary>
-    private static readonly string[] CommonSteps = ["focus", "click", "type", "wait-text", "click-text"];
+    // 顶部快捷栏只放**最常用**的四个：切换窗口/长按这些留在「更多」里，不占位置。
+    private static readonly string[] CommonSteps = ["click", "type", "wait-text", "click-text"];
 
     private void FillPalette()
     {
@@ -902,6 +903,15 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private async void OnPlay(object sender, RoutedEventArgs e) => await RunAsync(dryRun: false);
 
     private CancellationTokenSource? _record;
+
+    /// <summary>停止信号：引擎对 record 的停止请求不一定会回话（实测会永久不返回），
+    /// 所以收尾不能只等它——停止后最多等几秒就自己收尾。</summary>
+    private TaskCompletionSource? _recordStop;
+
+    /// <summary>这一次录制请求的 id。停止时用它去 cancel，而不是用作业号——
+    /// 作业号可能还是上一轮遗留的（recorded 事件没来得及到），cancel 就发给了已经结束的作业，
+    /// 表现出来就是"点了停止没反应"（实测：停止后 5 秒才写盘）。</summary>
+    private int? _recordRequest;
     private RunnerClient? _recordClient;
     private int? _recordJob;
 
@@ -918,6 +928,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             // 光取消客户端的等待只是"不等了"，录制还在继续跑。
             RecordButton.IsEnabled = false;
             Show("录制", "正在结束录制…", InfoBarSeverity.Informational);
+            _recordStop?.TrySetResult();
             if (_recordClient is { } running && _recordJob is int job) await KeyMouseBridge.CancelAsync(running, job);
             else _record.Cancel();
             return;
@@ -968,10 +979,13 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         LogBox.Text = "";
-        Log("# serve 已连接；请求 record -> " + path + "（忽略悬浮条区域 " + ignore + "）");
+        Log("# 引擎 " + _tool);
+        Log("# serve 已连接；请求 record -> " + path + (ignore.Length > 0 ? "（忽略悬浮按钮）" : ""));
         Show("录制", "正在录制。按 Ctrl+Alt+Q 结束（或点「结束录制」）。", InfoBarSeverity.Informational);
 
         _record = new CancellationTokenSource();
+        _recordStop = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _recordRequest = null;
         _recordClient = client;
         _recordJob = null;
 
@@ -984,7 +998,18 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            await KeyMouseBridge.RecordAsync(client, path, ev => DispatcherQueue.TryEnqueue(() => OnRecordEvent(ev)), _record.Token, ignore);
+            Task work = KeyMouseBridge.RecordAsync(client, path, ev => DispatcherQueue.TryEnqueue(() => OnRecordEvent(ev)), _record.Token, ignore);
+            if (!work.IsCompleted && _recordStop is { } stopSignal)
+            {
+                await Task.WhenAny(work, stopSignal.Task);
+                if (!work.IsCompleted)
+                {
+                    // 已经点了停止，等引擎 4 秒；它不吭声就先收尾（它自己会退出并写盘）。
+                    await Task.WhenAny(work, Task.Delay(4000));
+                }
+            }
+            if (work.IsCompleted) await work;
+            else Log("# 引擎未在 4 秒内结束录制请求，已先收尾（它稍后会自己退出）。");
         }
         catch (OperationCanceledException)
         {
@@ -1064,15 +1089,49 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void OnIslandStop()
     {
-        if (_recordClient is { } running && _recordJob is int job)
+        // **先恢复界面，再去取消**：引擎对停止请求不一定及时回话（实测会卡住不返回），
+        // 而用户对"点了停止"的期待是立刻回到编辑器。录制文件由录制器自己收尾写盘。
+        try { _island?.SetVisible(false); } catch (Exception) { }
+        RestoreAfterRecording();
+
+        try
         {
-            SetRecordVisual("正在停止…", "\uE895", enabled: false);
-            await KeyMouseBridge.CancelAsync(running, job);
+            _recordStop?.TrySetResult();
+            if (_recordClient is { } running && RecordTarget() is int job)
+            {
+                SetRecordVisual("正在停止…", "\uE895", enabled: false);
+                await KeyMouseBridge.CancelAsync(running, job);
+            }
+            else
+            {
+                _record?.Cancel();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            _record?.Cancel();
+            CrashLog.Write(ex, "悬浮按钮停止");
         }
+
+        // 兜底：这里一旦卡住，窗口就再也回不来——用户看到的是"编辑器自己退出了"
+        // （进程还在，只是永远隐藏，实测第 3 轮必现）。所以超时就强制收尾。
+        _ = RestoreIfStuckAsync();
+    }
+
+    /// <summary>取消录制时用哪个编号：优先这一次请求的 id，退回作业号。</summary>
+    private int? RecordTarget() => _recordRequest ?? _recordJob;
+
+    /// <summary>停止流程卡住时的兜底：把窗口、按钮、悬浮球都恢复，绝不留一个看不见的进程。</summary>
+    private async Task RestoreIfStuckAsync()
+    {
+        await Task.Delay(3000);
+        if (!_hiddenForRecording) return;
+
+        try { _island?.SetVisible(false); } catch (Exception) { }
+        _record?.Cancel();
+        RestoreAfterRecording();
+        SetRecordVisual("录制", "\uE7C8", enabled: true);
+        Show("录制", "已停止（引擎没有及时回话，已强制收尾）。", InfoBarSeverity.Warning);
+        Log("# 停止超时：已强制恢复窗口。");
     }
 
     private void HideForRecording()
@@ -1148,6 +1207,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         if (ev.Job is int job) _recordJob = job;   // 「结束录制」要用它发 cancel
+        if (ev.Id > 0) _recordRequest = ev.Id;     // 更稳的取消目标（见 _recordRequest 的说明）
 
         if (ev.Kind == "log" && ev.Line is { Length: > 0 } line) Log(line);
         else if (ev.Kind == "finished") Log($"录制结束，退出码 {ev.ExitCode}");
@@ -1389,6 +1449,12 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
         {
             case "log":
                 Log(e.Line ?? "");
+                break;
+
+            // 引擎一次只跑一个作业：前面那个还没收尾时，这条会把"为什么还没动静"说清楚。
+            case "queued":
+                Log("# " + (e.Message ?? "排队中"));
+                Show("排队中", e.Message ?? "等上一个作业收尾就开跑。", InfoBarSeverity.Informational);
                 break;
 
             // 运行已经结束（_run 为 null）之后还可能收到排队中的事件：
