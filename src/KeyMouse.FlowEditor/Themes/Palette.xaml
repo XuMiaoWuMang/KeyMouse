@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 工程纸（Engineering Paper）的调色板与字体。
+
+     纸、墨、朱砂，三样东西。没有第四样。
+       · 纸面是暖白，卡片是它的提亮，不是另一种灰。
+       · 墨色分三档，全是同一个暖黑，深浅不同而已。
+       · 朱砂只有一个用法：**当前**与**可动**（主操作、选中珠、未保存点、报错除外）。
+     控件 4px、面板 8px；没有投影；没有浮层；线只有 1px 一种。
+
+     和 Styles.xaml 一起合并进 App.xaml，顺序：调色板在前——样式里用 StaticResource 引这里的笔。 -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="KpPaperBrush" Color="#FAF7F2" />
+            <SolidColorBrush x:Key="KpCardBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="KpInkBrush" Color="#17140F" />
+            <SolidColorBrush x:Key="KpInk2Brush" Color="#6A655C" />
+            <SolidColorBrush x:Key="KpInk3Brush" Color="#A39C90" />
+            <SolidColorBrush x:Key="KpRuleBrush" Color="#E6E1D8" />
+            <SolidColorBrush x:Key="KpFieldBrush" Color="#F5F1E9" />
+            <SolidColorBrush x:Key="KpSelectedBrush" Color="#F2ECE2" />
+            <SolidColorBrush x:Key="KpSignalBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="KpSignalHoverBrush" Color="#A83709" />
+            <SolidColorBrush x:Key="KpSignalPressedBrush" Color="#8E2E06" />
+            <SolidColorBrush x:Key="KpSignalOffBrush" Color="#EFE7DA" />
+            <SolidColorBrush x:Key="KpOnSignalBrush" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#17140F" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#6A655C" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#A39C90" />
+            <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#E6E1D8" />
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#E6E1D8" />
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CardBackgroundFillColorSecondaryBrush" Color="#F5F1E9" />
+            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#F5F1E9" />
+            <SolidColorBrush x:Key="ControlFillColorTransparentBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#B3261E" />
+            <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#A39C90" />
+            <SolidColorBrush x:Key="AccentButtonBackground" Color="#C2410C" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#A83709" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#8E2E06" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#F0E9DE" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#A39C90" />
+            <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="FocusVisualPrimaryBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="FocusVisualSecondaryBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#C2410C" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#A83709" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#8E2E06" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#F5F1E9" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#F2ECE2" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#EFE7DA" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#EFE7DA" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="KpPaperBrush" Color="#141312" />
+            <SolidColorBrush x:Key="KpCardBrush" Color="#1B1917" />
+            <SolidColorBrush x:Key="KpInkBrush" Color="#F5F0E8" />
+            <SolidColorBrush x:Key="KpInk2Brush" Color="#A9A29A" />
+            <SolidColorBrush x:Key="KpInk3Brush" Color="#6E6862" />
+            <SolidColorBrush x:Key="KpRuleBrush" Color="#2B2825" />
+            <SolidColorBrush x:Key="KpFieldBrush" Color="#201D1A" />
+            <SolidColorBrush x:Key="KpSelectedBrush" Color="#24201C" />
+            <SolidColorBrush x:Key="KpSignalBrush" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="KpSignalHoverBrush" Color="#FF9C72" />
+            <SolidColorBrush x:Key="KpSignalPressedBrush" Color="#E5764A" />
+            <SolidColorBrush x:Key="KpSignalOffBrush" Color="#2B2825" />
+            <SolidColorBrush x:Key="KpOnSignalBrush" Color="#1A0F08" />
+
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#F5F0E8" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#A9A29A" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#6E6862" />
+            <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#2B2825" />
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#2B2825" />
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#1B1917" />
+            <SolidColorBrush x:Key="CardBackgroundFillColorSecondaryBrush" Color="#201D1A" />
+            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#1B1917" />
+            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#201D1A" />
+            <SolidColorBrush x:Key="ControlFillColorTransparentBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#1A0F08" />
+            <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#FF99A4" />
+            <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6E6862" />
+            <SolidColorBrush x:Key="AccentButtonBackground" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FF9C72" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#E5764A" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#2B2825" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="#1A0F08" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#1A0F08" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#1A0F08" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#6E6862" />
+            <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="FocusVisualPrimaryBrush" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="FocusVisualSecondaryBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FF8A5B" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FF9C72" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#E5764A" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#201D1A" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#24201C" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#2A2521" />
+            <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#2A2521" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <!-- 控件圆角 4，面板圆角 8：两档，不多不少。 -->
+    <x:Double x:Key="ControlCornerRadius">4</x:Double>
+    <CornerRadius x:Key="ControlCornerRadiusValue">4</CornerRadius>
+    <x:Double x:Key="ControlContentThemeFontSize">13</x:Double>
+
+    <FontFamily x:Key="KpTextFont">Segoe UI Variable Text</FontFamily>
+    <FontFamily x:Key="KpDisplayFont">Segoe UI Variable Display</FontFamily>
+    <FontFamily x:Key="KpMonoFont">Cascadia Mono, Consolas</FontFamily>
+</ResourceDictionary>
