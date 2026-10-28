@@ -101,6 +101,11 @@ internal static partial class Commands
                     return Probe.Run(rest[1..], global);
                 case "region":
                     return RegionCommand.Run(rest[1..], global);
+                case "flow":
+                    // `flow edit` 由命令行入口自己接走（它要启动编辑器进程），走到这里说明子命令不是
+                    // edit。别沉默地报"未知命令组"——列表里明明写着 flow，那才让人以为是 bug。
+                    return Fail(2, "flow：只有 `flow edit <流程.json>`（由 KeyMouse.exe 入口处理）；" +
+                                   "只想校验一份流程用 `run <文件> --dry-run`（不发送任何输入）");
                 case "doctor":
                     // 环境诊断：在开发树还是安装版、命令行与编辑器各自在哪找到的。
                     // 它不做别的，所以哪怕别的都跑不起来，这条也应当能跑。

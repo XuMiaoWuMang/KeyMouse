@@ -77,6 +77,37 @@ click-text：找字并点击它
 | `variables` | 否 | 对象 | 值是字符串，或字符串数组（给 `foreach` 遍历）；步骤里用 `{{名字}}` 引用 |
 | `recordedAt` | 否 | 字符串 | 录制时间，只给人看 |
 
+### 3.1 一个能跑的完整例子
+
+照着抄最快。下面这份流程能通过 `KeyMouse run 文件 --dry-run`（只做资格检查、不发送输入），也能在编辑器里直接打开：
+
+```json
+{
+  "format": "keymouse-flow",
+  "version": 1,
+  "recordedAt": "2026-10-29T02:50:00+08:00",
+  "variables": { "name": "世界" },
+  "steps": [
+    { "type": "focus", "target": { "process": "notepad" }, "note": "切到记事本" },
+    { "type": "type", "text": "你好，{{name}}", "intervalMs": 30 },
+    { "type": "key", "combo": "Ctrl+S", "count": 1 },
+    { "type": "sleep", "ms": 300 },
+    { "type": "click-text",
+      "target": { "process": "notepad" },
+      "region": { "space": "client", "x": 0, "y": 0, "width": 400, "height": 32 },
+      "text": "保存", "match": "contains", "timeoutMs": 8000 },
+    { "type": "repeat", "times": 3, "steps": [ { "type": "wheel", "delta": -120 } ] }
+  ]
+}
+```
+
+三处最容易写错的地方：
+
+- **步骤的种类写在 `type` 里，不是 `kind`。** `kind` 是契约里"这个参数该用什么控件"的字段（见 §2），
+  和步骤 JSON 无关；写成 `kind` 的流程会被拒绝，报「第 N 步的类型 '' 不识别」。
+- **`region` 只支持 `space: "client"`**，且高度要盖住整行文字（见 §4 末尾）。
+- **可选字段不写就是"用默认值"**，不要写 `null`——契约里 `null` 是非法值。
+
 ## 4. 步骤级参数一览（必须 = M，可选 = O）
 
 公共字段（每种步骤都可以有）：`note`(O)、`when`(O)、`shot`(O)。
