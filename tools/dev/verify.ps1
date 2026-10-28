@@ -14,6 +14,10 @@
         打包       tools\build\build.ps1 → artifacts\cli      （单文件产物能不能起来）
         桌面冒烟   tests\smoke\run.ps1                        （需要解锁的交互式桌面）
 
+    冒烟这一关有两种"环境不具备"的跳过条件，都会在结论里写明原因：
+        锁屏                    （tools\dev\verify.ps1 自己判定）
+        本会话收不到注入的输入  （tools\dev\check-input.ps1 判定；嵌套/沙箱会话常见）
+
     每次冒烟都在 artifacts\tests\ 下开一个新目录，互不覆盖。
 
     退出码 0 = 全部通过；非 0 = 有东西没过，输出里会点名是哪一个。
@@ -120,7 +124,21 @@ try {
         $skipped.Add("桌面冒烟（判定为锁屏：$lockReason）")
     }
     else {
-        Step '桌面冒烟' { & pwsh -NoProfile -File (Join-Path $root 'tests\smoke\run.ps1') }
+        # 锁屏之外还有第二种"跑不了"：会话收不到注入的输入（嵌套/沙箱会话、远程桌面挂在后台）。
+        # 那种情况下冒烟会红一片而根因只有一个，所以先用一句话的实验问清楚，再决定跑不跑。
+        $inputCheck = & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-input.ps1') -Exe (Join-Path $root 'artifacts\cli\KeyMouse.exe') 2>&1
+        $inputExit = $LASTEXITCODE
+        if ($inputExit -eq 3) {
+            Write-Host ''
+            $inputCheck | Select-Object -Last 6 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+            $skipped.Add('桌面冒烟（本会话收不到注入的输入，见 tools\dev\check-input.ps1）')
+        }
+        elseif ($inputExit -ne 0) {
+            $failed.Add("输入自检（退出码 $inputExit）")
+        }
+        else {
+            Step '桌面冒烟' { & pwsh -NoProfile -File (Join-Path $root 'tests\smoke\run.ps1') -SkipInputCheck }
+        }
     }
 }
 finally {

@@ -158,11 +158,16 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
         if (_client is null)
         {
+            // 「先构建 dist\KeyMouse.exe」这句话曾经挂在界面上很多年，而 dist\ 早就不存在了：
+            // 提示必须说出**当前形态**该去哪儿找，否则它只会把人引到更远的地方。
+            string why = _tool is not null
+                ? "启动 serve 之后没能连上命名管道。"
+                : KeyMouse.ProductLayout.Environment == KeyMouse.ProductEnvironment.Development
+                    ? "找不到 KeyMouse.exe。开发树里它由 tools\\build\\build.ps1（或 km d）产出到 artifacts\\cli\\。"
+                    : "找不到 KeyMouse.exe。安装版里它应当在 <安装目录>\\cli\\ 下，重装一次可以修好。";
             Show("连不上 Runner",
-                (_tool is null
-                    ? "找不到 KeyMouse.exe。先构建 dist\\KeyMouse.exe，或把编辑器与它放在一起。"
-                    : "启动 serve 之后没能连上命名管道。")
-                + (RunnerClient.LastStartFailure is { Length: > 0 } why ? " 它说：" + why : ""),
+                why + " 各候选路径与选中结果：命令行跑一次 KeyMouse doctor。" +
+                (RunnerClient.LastStartFailure is { Length: > 0 } detail ? " 它说：" + detail : ""),
                 InfoBarSeverity.Error);
             return null;
         }
@@ -222,6 +227,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     private EditorSettings _settings = new();
     private double _inspectorWidth = 540;
     private bool _hasDocument;
+    private bool _recording;      // 录制期间试运行/播放一律不可用，见 UpdateStates
     private string[]? _paletteTypes;
     private int _paletteShown = -1;
     private Surfaces? _surfaces;
@@ -233,8 +239,9 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         bool any = Model.Rows.Count > 0;
         bool selected = SelectedStep is not null;
         PickButton.IsEnabled = SelectedStep is not null;
-        DryRunButton.IsEnabled = any && _run is null;
-        PlayButton.IsEnabled = any && _run is null;
+        // 录制期间这两条都关上：录制自己占着鼠标和全局钩子，同时跑流程只会互相打岔。
+        DryRunButton.IsEnabled = any && _run is null && !_recording;
+        PlayButton.IsEnabled = any && _run is null && !_recording;
         // 没有文档的时候，工作区整块留给"从哪儿开始"：右侧检查器此时没有任何东西可检查，
         // 留着它只会把空状态挤成左边一条。
         bool start = !_hasDocument;
@@ -957,13 +964,14 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        string path = Path.Combine(Path.GetTempPath(), "keymouse-record.json");
+        string path = KeyMouse.Scratch.PathFor("keymouse-record.json");
         try { if (File.Exists(path)) File.Delete(path); }
         catch (IOException) { }
 
         // 悬浮按钮是**辅助**，坏掉也绝不能挡住录制。
-        // 目前它默认关闭：原生窗口在第二次录制时会硬崩（进程直接消失、崩溃日志无记录，
-        // 说明是原生层问题）。定位之前不放进主流程；设 KEYMOUSE_ISLAND=1 可以打开做实验。
+        // 它只在 runner 报 recording 之后才显示（见下面的 SetVisible(true)），录制没真的开始就不出现；
+        // 原生窗口在第二次创建时会硬崩（进程直接消失、崩溃日志无记录，说明是原生层问题），
+        // 所以这里整个进程只创建一个，之后只做显示/隐藏。
         string ignore = "";
         try
         {
@@ -994,6 +1002,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         // 以前这段直接显示"结束录制"，等于在还没开始时就宣称正在录（实测反馈）。
         SetRecordVisual("正在初始化…", "\uE895", enabled: false);
         Show("录制", "正在初始化录制程序…", InfoBarSeverity.Informational);
+        // 从按下去的那一刻就算在录制：之后任何一次 UpdateStates 都不会把这两条放出来。
+        _recording = true;
         DryRunButton.IsEnabled = false;
         PlayButton.IsEnabled = false;
 
@@ -1030,6 +1040,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             RestoreAfterRecording();
             // 不销毁：留着给下一次录制复用（销毁后再次创建会崩）。只隐藏。
             try { _island?.SetVisible(false); } catch (Exception) { }
+            _recording = false;
             RecordButton.IsEnabled = true;
             RecordLabel.Text = "录制";
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, "录制");

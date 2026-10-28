@@ -83,10 +83,10 @@ internal static class Program
     }
 }
 
-/// <summary>安装/卸载轨迹：%TEMP%\keymouse-setup.log。用户报"装不上"时先看它。</summary>
+/// <summary>安装/卸载轨迹：%TEMP%\keymouse-setup.log（不可写时退到 %LOCALAPPDATA%\KeyMouse\tmp）。用户报"装不上"时先看它。</summary>
 internal static class Log
 {
-    internal static string File => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "keymouse-setup.log");
+    internal static string File => KeyMouse.Scratch.PathFor("keymouse-setup.log");
 
     internal static void Write(string line)
     {
@@ -474,7 +474,7 @@ internal static class Installer
         {
             if (directory is null) return;
 
-            string script = Path.Combine(Path.GetTempPath(), "keymouse-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+            string script = KeyMouse.Scratch.PathFor("keymouse-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
             File.WriteAllText(script, string.Join(Environment.NewLine,
                 "@echo off",
                 "ping 127.0.0.1 -n 3 >nul",

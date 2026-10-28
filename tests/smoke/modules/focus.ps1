@@ -44,3 +44,6 @@
         ($inspect -match '前台=True') "inspect=[$(($inspect -replace '\s+', ' ').Trim())]"
 
     Remove-Item $focusDir -Recurse -Force -ErrorAction SilentlyContinue
+
+    # 这个模块唯一的副作用是"可能把靶子留在最小化"：还原它，后面的模块不该为本模块的夹具买单。
+    if (-not (Reset-Target)) { Write-Host '  (焦点模块结束时没能把靶子还原)' -ForegroundColor DarkYellow }

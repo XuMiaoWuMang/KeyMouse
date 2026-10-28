@@ -6,6 +6,7 @@
         .\km ba           编译整个解决方案（含 WinUI 编辑器与安装程序）     ~18s
         .\km e            编译编辑器，并把 CLI 发到 artifacts\cli（编辑器连它）
         .\km e -NoCli     只编译编辑器，不碰 artifacts
+        .\km e -NoElevate 普通权限构建编辑器（调界面用：不弹 UAC，也能被普通权限的 KeyMouse 点）
         .\km t            单元测试（全部，不需要桌面，跑已编译的 exe）      ~1s
         .\km t parsing    只跑改到的模块（可写多个）                        ~1s
         .\km tl           列出测试模块
@@ -128,7 +129,14 @@ switch ($Verb) {
 
     { $_ -in 'e', 'editor' } {
         Say '-> 编译编辑器（WinUI 3）'
-        Timed 'editor' { RunDotnet @('build', $editorProject, '-c', 'Release', '--nologo', '-v:q') }
+        # -NoElevate：换成 app.unelevated.manifest，出来的编辑器是普通权限。
+        # 只是调界面时用它——省掉每次启动的 UAC，也让普通权限的 KeyMouse 能点它。
+        $editorArgs = @('build', $editorProject, '-c', 'Release', '--nologo', '-v:q')
+        if ($Rest -contains '-NoElevate') {
+            Say '   普通权限构建（app.unelevated.manifest）：录不到管理员窗口'
+            $editorArgs += '-p:KeyMouseElevated=false'
+        }
+        Timed 'editor' { RunDotnet $editorArgs }
 
         # 开发树里编辑器找的是 artifacts\cli\KeyMouse.exe：只重建 bin 会让它在旧引擎上跑
         if ($Rest -notcontains '-NoCli') {

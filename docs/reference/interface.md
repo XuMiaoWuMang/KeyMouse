@@ -142,6 +142,6 @@ JSON 的数字放不下占位符，这是限制不是疏忽。
 1. 改 `src/KeyMouse.Core/flow.schema.json`（加字段、改必须性、改范围、改说明）。
 2. 跑 `--only flow`：测试会检查"每种步骤类型都有契约条目""每个字段的 kind 编辑器都能渲染"。
 3. 界面**不需要改**：编辑器每次选中步骤时按契约重建检查器。
-4. 若新参数是程序要执行的（不只是给人看），在加载器/执行器里用它，并在 `docs/reference.md` 补一句语义。
+4. 若新参数是程序要执行的（不只是给人看），在加载器/执行器里用它，并在 [`cli.md`](cli.md) 补一句语义。
 
-相关文档：`docs/reference.md`（命令行与语义细节）、`docs/design.md`（为什么这样设计）。
+相关文档：[`cli.md`](cli.md)（命令行与语义细节）、[`../dev/design.md`](../dev/design.md)（为什么这样设计）、[`../guide/environments.md`](../guide/environments.md)（开发树与安装版的目录约定）。

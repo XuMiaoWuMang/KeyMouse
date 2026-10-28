@@ -156,7 +156,8 @@ internal static class StepCatalog
             "keydown" => $"按住 {step.Combo ?? step.Text}{target}",
             "keyup" => $"松开 {step.Combo ?? step.Text}{target}",
             "move" => $"移到 {Point(step.At)}{space}{target}",
-            "wheel" => $"滚轮 {step.Delta ?? 0} @ {Point(step.At)}{target}",
+            // at 是可选的（不给就在光标处滚），所以坐标整段都要跟着省略，否则列表里会剩一个孤零零的 "@"
+            "wheel" => $"滚轮 {step.Delta ?? 0}" + (step.At is null ? "" : $" @ {Point(step.At)}{space}") + target,
             "type" => $"输入「{Clip(step.Text)}」，间隔 {step.IntervalMs ?? 15} ms{target}",
             "key" => step.Combo is { Length: > 0 } combo ? $"按 {combo}{target}" : $"按 {step.Text}{target}",
             "sleep" => $"等 {step.Ms ?? 0} ms",

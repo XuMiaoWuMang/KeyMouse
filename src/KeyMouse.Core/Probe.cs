@@ -176,7 +176,7 @@ internal static class Probe
         // covers capture noise (animations, a caret, a repaint) and not just engine
         // determinism - the engine itself measured byte-identical on identical input.
         var attempts = new List<(string Text, double? Confidence, LineInfo[] Lines)>();
-        string imagePath = Path.Combine(Path.GetTempPath(), $"keymouse-probe-{Environment.ProcessId}.bmp");
+        string imagePath = Scratch.PathFor($"keymouse-probe-{Environment.ProcessId}.bmp");
         NativeCapture.Frame? prepared = null;
 
         try
@@ -365,7 +365,7 @@ internal static class Probe
         string engineCommand = ResolveEngine("tesseract");
         string? tessdata = DefaultTessdata();
         var prepared = Preprocess(frame, 1, 0, nearest: false);
-        string imagePath = Path.Combine(Path.GetTempPath(), $"keymouse-probe-{Environment.ProcessId}.bmp");
+        string imagePath = Scratch.PathFor($"keymouse-probe-{Environment.ProcessId}.bmp");
         try
         {
             WriteBmp(imagePath, prepared);

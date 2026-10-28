@@ -10,6 +10,7 @@
         $targetInScript 在脚本行里带引号的 --title（标题里有空格）
         Check <说明> <bool> [细节]    记一条断言
         Wait-ForWindow <正则> [超时毫秒] [稳定毫秒]
+        Reset-Target                  把靶子还原并聚焦（模块开头用；模块自己最小化过靶子的话，结尾也要还原）
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -64,3 +65,20 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "冒烟靶子起不来（window focus exit=$LASTEXITCODE）——先 dotnet build KeyMouse.sln -c Release"
     exit 1
 }
+
+# ---- 助手：把靶子拉回"看得见、在前台" ----------------------------------------------
+# 冒烟模块是一个接一个跑的，前一个模块可能为了自己的断言把靶子最小化了（focus 模块就会）。
+# 不还原的话，后面每个模块都会撞在"窗口已最小化"上——一片红，但根因只有一个。
+function Reset-Target {
+    Add-Type -Namespace KmSmoke -Name Native -MemberDefinition `
+        '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);' -ErrorAction SilentlyContinue
+    $line = & $Exe window list --process KeyMouse.SmokeTarget 2>&1 | Where-Object { $_ -match '^0x' } | Select-Object -First 1
+    if ($line) {
+        $handle = [IntPtr]([Convert]::ToInt64((($line -split '\s+')[0]), 16))
+        $null = [KmSmoke.Native]::ShowWindow($handle, 9)   # SW_RESTORE
+        Start-Sleep -Milliseconds 200
+    }
+    $null = & $Exe window focus @target 2>&1
+    return ($LASTEXITCODE -eq 0)
+}
+

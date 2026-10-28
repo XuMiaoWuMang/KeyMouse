@@ -87,7 +87,7 @@ internal sealed class NativeIsland : IDisposable
     {
         try
         {
-            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "keymouse-island.log");
+            string path = KeyMouse.Scratch.PathFor("keymouse-island.log");
             lock (LogGate)
             {
                 System.IO.File.AppendAllText(path, DateTime.Now.ToString("HH:mm:ss.fff") + "  " + line + Environment.NewLine);

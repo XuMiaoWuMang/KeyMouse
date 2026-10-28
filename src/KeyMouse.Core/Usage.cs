@@ -77,6 +77,9 @@ internal static class Usage
             new("--json", "输出 JSON（引擎身份、几何、逐词置信度）"),
             new("--keep-image <路径>", "原样保存抓到的像素（不放大、不加白边、不做对比度归一化）——截图就是屏幕上那一块"),
             new("--keep-prepared <路径>", "保存送进引擎的那张图（放大 + 白边 + 归一化之后）"),
+            new("--find <文字>", "读完顺手找这几个字：找到了退出码 0，没找到退出码 3（读成功与否仍按前面几条判）"),
+            new("--match contains|exact|fuzzy", "--find 的比较方式，默认 contains"),
+            new("--max-errors N", "--match fuzzy 的容错预算（按字符计的编辑距离，默认 1，上限 20）"),
         ]),
 
         new("选区（给人挑坐标，不读文字）", null,

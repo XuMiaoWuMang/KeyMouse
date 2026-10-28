@@ -479,7 +479,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     public string SaveForRun()
     {
         if (_documentPath is { Length: > 0 } && !_dirty) return _documentPath;
-        string path = Path.Combine(Path.GetTempPath(), "keymouse-editor-run.json");
+        string path = KeyMouse.Scratch.PathFor("keymouse-editor-run.json");
         BuildDocument().Save(path);
         return path;
     }

@@ -48,7 +48,7 @@ internal static class ProductRegistry
             try
             {
                 File.AppendAllText(
-                    Path.Combine(Path.GetTempPath(), "keymouse-registry.log"),
+                    Scratch.PathFor("keymouse-registry.log"),
                     DateTime.Now.ToString("HH:mm:ss") + " write " + name + "=" + path + " -> " + ex.GetType().Name + ": " + ex.Message + Environment.NewLine);
             }
             catch (Exception)

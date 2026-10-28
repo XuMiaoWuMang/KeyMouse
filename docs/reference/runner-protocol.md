@@ -1,8 +1,8 @@
 # 前后端通信协议契约（Runner Protocol）
 
 > 这份文档是**规范**，不是说明。机器可读的那份在
-> [`src/KeyMouse.Runner/runner-protocol.schema.json`](../src/KeyMouse.Runner/runner-protocol.schema.json)，
-> 一致性由 [`tests/KeyMouse.Tests/RunnerProtocolTests.cs`](../tests/KeyMouse.Tests/RunnerProtocolTests.cs) 强制
+> [`src/KeyMouse.Runner/runner-protocol.schema.json`](../../src/KeyMouse.Runner/runner-protocol.schema.json)，
+> 一致性由 [`tests/KeyMouse.Tests/RunnerProtocolTests.cs`](../../tests/KeyMouse.Tests/RunnerProtocolTests.cs) 强制
 > （`dotnet run --project tests\KeyMouse.Tests -- --only protocol`）。
 >
 > **改协议的顺序是固定的**：先改 schema → 再改两侧代码 → 跑 `--only protocol`。测试红了就是你漏了其中一步。
@@ -15,7 +15,7 @@ KeyMouse.FlowEditor（前端）  ──命名管道 JSON 行──▶  KeyMouse 
         RunnerClient.cs  ◀──────────────────────────   RunnerProtocol.cs
 ```
 
-- **前端**：`editor/KeyMouse.FlowEditor`。
+- **前端**：`src/KeyMouse.FlowEditor`。
 - **后端**：`KeyMouse serve` 进程（`src/KeyMouse.Runner`）。
 - 两侧共用 `RunnerProtocol.cs` 里的线类型，所以"字段名"这一层天然一致；
   这份契约管的是**上面那层语义**：有哪些方法、每个方法读哪些参数、会回哪些事件、什么时候算结束。

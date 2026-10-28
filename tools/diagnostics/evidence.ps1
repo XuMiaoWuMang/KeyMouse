@@ -44,6 +44,14 @@ $jsonDir = Join-Path $run 'json'
 New-Item -ItemType Directory -Force -Path $imageDir, $jsonDir | Out-Null
 $commandLog = Join-Path $run 'commands.txt'
 
+# 临时的中间位图也落进这次归档：跑完一切都在一个文件夹里。
+# 另外绕开受限环境里"子进程写不了 %TEMP%"的问题（probe 会在那里写 bmp 交给引擎）。
+$runTemp = Join-Path $run 'tmp'
+New-Item -ItemType Directory -Force -Path $runTemp | Out-Null
+$savedTemp = @{ TEMP = $env:TEMP; TMP = $env:TMP }
+$env:TEMP = $runTemp
+$env:TMP = $runTemp
+
 Add-Type -AssemblyName System.Drawing
 Add-Type -Namespace Evidence -Name Win -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
@@ -451,4 +459,6 @@ try {
 }
 finally {
     Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force
+    $env:TEMP = $savedTemp.TEMP
+    $env:TMP = $savedTemp.TMP
 }

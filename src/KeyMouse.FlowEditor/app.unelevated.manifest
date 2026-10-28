@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 开发用清单：和 app.manifest 唯一的差别是**不提权**（asInvoker）。
+
+     为什么要有第二份：产品的权限形态是契约的一部分（装好的编辑器必须提权，否则录不到管理员窗口），
+     但开发时每启动一次就弹一次 UAC，界面迭代根本没法做。而且提权进程会挡住普通权限的自动化：
+     用 KeyMouse 去点编辑器自己的按钮时，UIPI 会把输入拦下。所以给开发留一条明确的路：
+
+         pwsh tools\dev\km.ps1 e -NoElevate
+
+     它把本文件当清单编进 exe，出来的编辑器是普通权限：界面照旧，录管理员窗口不行。
+     发布流程（tools/build/pack-release.ps1）不带这个开关，永远用 app.manifest。
+
+     两份清单的 DPI 设置必须一致，否则开发时看到的排版和发布后不一样。 -->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="KeyMouse.FlowEditor.app" />
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>

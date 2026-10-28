@@ -5,7 +5,12 @@
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>KeyMouse.FlowEditor</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 提权是产品契约（装好的编辑器必须能录管理员窗口），清单在 build 时就被嵌进 exe，
+         所以开发构建也是提权的。只是调界面时用 -p:KeyMouseElevated=false 换成
+         app.unelevated.manifest，普通权限跑，不弹 UAC、也能被普通权限的自动化点。
+         命令入口：pwsh tools\dev\km.ps1 e -NoElevate -->
+    <ApplicationManifest Condition="'$(KeyMouseElevated)' != 'false'">app.manifest</ApplicationManifest>
+    <ApplicationManifest Condition="'$(KeyMouseElevated)' == 'false'">$(MSBuildProjectDirectory)\app.unelevated.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>
     <!-- 只有一份产物：否则 km ba（走解决方案，Platform=x64）写 bin\x64\Release，
          而 km e（直接 dotnet build）写 bin\Release，于是同一个程序有两个 exe，

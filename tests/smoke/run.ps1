@@ -9,6 +9,7 @@
             run.log            完整输出（含每个模块的耗时）
             summary.md         人读的结论
             summary.json       机读的结论
+            tmp\               临时文件：模块自己的 .txt/.json，以及 %TEMP% 的重定向
             各种临时脚本      模块自己的 .txt / .json 都落在这里
 
         pwsh tests\smoke\run.ps1                       # 全部模块（发布前跑这个）
@@ -18,14 +19,21 @@
 
     模块在 tests\smoke\modules\，公共部分在 tests\smoke\lib\common.ps1。
     模块按列表顺序执行：`entry` 负责启动冒烟靶子，后面的模块都往它里面打字。
-    不会碰你开着的任何程序，结束时还原剪贴板。退出码 0 = 全部通过。
+    不会碰你开着的任何程序，结束时还原剪贴板。
+
+    跑之前会先验一次"这个会话到底收不收得到注入的输入"（tools\dev\check-input.ps1）。
+    收不到就直接停（退出码 3）并说明原因：那种环境下每个断言都会红，红得毫无信息量。
+    已知会话正常、只想省掉那两秒时用 -SkipInputCheck。
+
+    退出码：0 = 全部通过；1 = 有断言失败；2 = 模块名写错；3 = 本会话收不到注入的输入。
 #>
 [CmdletBinding()]
 param(
     [string]$Exe,
     [string]$TargetExe,
     [string[]]$Only,
-    [switch]$List
+    [switch]$List,
+    [switch]$SkipInputCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,7 +65,9 @@ if ($List) {
 $selected = if ($Only) { @($Only) } else { @($modules.Keys) }
 foreach ($name in $selected) {
     if (-not $modules.Contains($name)) {
-        Write-Error "unknown smoke module '$name' (see: pwsh tests\smoke\run.ps1 -List)"
+        # 不用 Write-Error：$ErrorActionPreference = 'Stop' 会把它变成终止错误，
+        # 退出码就成了 1，和"有模块失败"混在一起。
+        Write-Host "unknown smoke module '$name' (see: pwsh tests\smoke\run.ps1 -List)" -ForegroundColor Red
         exit 2
     }
 }
@@ -67,10 +77,35 @@ if (-not (Test-Path $TargetExe)) { Write-Error "找不到冒烟靶子：$TargetE
 $Exe = (Resolve-Path $Exe).Path
 $TargetExe = (Resolve-Path $TargetExe).Path
 
+# ---- 前置：本会话收不收得到注入的输入 ------------------------------------------------
+# 不做这一步的话，一个收不到输入的会话会把几十条断言一次性染红，而所有红点的根因只有一个。
+if (-not $SkipInputCheck) {
+    & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-input.ps1') -Exe $Exe -TargetExe $TargetExe | Out-Host
+    if ($LASTEXITCODE -eq 3) {
+        Write-Host ''
+        Write-Host '冒烟测试没跑：这个会话收不到 KeyMouse 注入的输入，跑了也只是几十条假红。' -ForegroundColor Yellow
+        Write-Host '换一个真正交互的终端再跑；确认会话没问题时可以加 -SkipInputCheck 跳过这次自检。'
+        exit 3
+    }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "输入自检没做成（exit=$LASTEXITCODE），先把它修好。" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+}
+
 # ---- 本次运行的新目录 --------------------------------------------------------------
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $runDir = Join-Path $root ('artifacts\tests\smoke-' + $stamp)
 New-Item -ItemType Directory -Force -Path $runDir | Out-Null
+
+# 临时目录也搬进运行目录：probe 的中间位图、录制草稿、Runner 的管道线索都留在这一次运行里，
+# 跑完随目录一起删。顺带绕开一种环境问题——某些受限环境里 %TEMP% 对子进程不可写，
+# 那时 probe 会报 "Access to the path ... is denied"，看着像产品坏了，其实只是临时目录。
+$runTemp = Join-Path $runDir 'tmp'
+New-Item -ItemType Directory -Force -Path $runTemp | Out-Null
+$savedTemp = @{ TEMP = $env:TEMP; TMP = $env:TMP }
+$env:TEMP = $runTemp
+$env:TMP = $runTemp
 
 # 每个模块里的临时文件都落在运行目录里（common.ps1 会把它导出成 $RunDir）。
 $script:RunDir = $runDir
@@ -105,11 +140,23 @@ try {
             $before = $script:failed
             $started = Get-Date
             Write-Host "`n--- module: $name ---"
-            . (Join-Path $PSScriptRoot "modules\$name.ps1")
+            # 每个模块都从"靶子可见且在前台"开始：上一个模块可能为了断言把它最小化过。
+            if ($name -ne 'entry' -and -not (Reset-Target)) {
+                Write-Host '  (靶子没拉回前台，本模块的结果仅供参考)' -ForegroundColor DarkYellow
+            }
+            # 一个模块崩了不该带走后面的模块：记一笔，接着跑。
+            try {
+                . (Join-Path $PSScriptRoot "modules\$name.ps1")
+            }
+            catch {
+                Check "$name 模块异常中断" $false $_.Exception.Message
+                Write-Host ("  " + $_.ScriptStackTrace) -ForegroundColor DarkGray
+            }
             $script:results.Add([pscustomobject]@{
                 module   = $name
                 seconds  = [math]::Round(((Get-Date) - $started).TotalSeconds, 1)
-                failures = $script:failed - $before
+                # 夹住下限：模块内直接改计数（或异常路径）时不该出现负数，那只会让人怀疑统计而不是产品。
+                failures = [math]::Max(0, $script:failed - $before)
             })
         }
     }
@@ -122,6 +169,8 @@ try {
 finally {
     Stop-Transcript | Out-Null
     Pop-Location
+    $env:TEMP = $savedTemp.TEMP
+    $env:TMP = $savedTemp.TMP
 }
 
 # ---- 结论：两个文件，一个给人看，一个给脚本看 --------------------------------------
