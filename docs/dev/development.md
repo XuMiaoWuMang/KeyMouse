@@ -271,3 +271,13 @@ pwsh tools\release\clean-releases.ps1 -Remove gui,v0.1.0 -Yes
 | `Product\` | `KeyMouse.Product` | 产品形态：`ProductLayout`、注册表、`Scratch`、`doctor` |
 
 大文件用 partial 按职责拆开，命名规律是"主文件 + `.职责.cs`"：`Commands.{Target,Mouse,Keyboard,Window,Parsing}.cs`、`ScriptRunner.{Parse,Report}.cs`、`Probe.{Target,Image,Engine,Report}.cs`、`MainWindow.{Document,Steps,Run,Record}.cs`。拆的时候只搬代码、不加抽象——类还是那一个类，调用点一行都不用改。
+
+**还没拆的几个大文件，以及为什么先停手**：
+
+| 文件 | 行数 | 为什么没拆 |
+| --- | --- | --- |
+| `src\KeyMouse.Core\Flow\Recorder.cs` | ~900 | `Run` 是一段连续的低级钩子循环（装钩子、收消息、合并轨迹、判停止），状态耦合在局部变量里。按行切片只会得到几个共享十几个变量的"函数"，比现在更难读；真要拆得先改设计 |
+| `src\KeyMouse.Core\Flow\FlowModel.cs` | ~750 | 类型定义（目标/点/区域/条件/步骤/文档）与加载、校验、占位符展开交错：`Load` 调 `ValidateSteps`，`ValidateSteps` 又调 `CheckPlaceholders`。切点只能落在调用链中间，切完两个文件都得来回跳 |
+| `src\KeyMouse.Core\Flow\FlowRunner.cs` | ~640 | 一个执行循环加"每种步骤怎么跑"的分支，分支共享同一份运行状态；拆出去要显式传状态，属于设计改动 |
+
+判断标准：**搬代码不改设计才拆**。拆完要新增抽象、要给一批方法加参数、要在两个文件之间来回跳，就先放着——大本身不是问题，耦合才是。
