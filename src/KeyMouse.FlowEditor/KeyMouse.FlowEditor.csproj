@@ -50,4 +50,13 @@
     <ProjectReference Include="..\KeyMouse.Runner\KeyMouse.Runner.csproj" />
   </ItemGroup>
 
+  <!-- Capability namespaces used from here; the folder layout under src\KeyMouse.Core carries the same split. -->
+  <ItemGroup>
+    <Using Include="KeyMouse.Capture" />
+    <Using Include="KeyMouse.Product" />
+    <Using Include="KeyMouse.Flow" />
+    <Using Include="KeyMouse.Input" />
+    <Using Include="KeyMouse.Runtime" />
+    <Using Include="KeyMouse.Windowing" />
+  </ItemGroup>
 </Project>

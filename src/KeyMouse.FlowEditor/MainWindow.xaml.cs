@@ -83,7 +83,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         // 权限写进标题：开发构建（dotnet build）**不会**嵌入 requireAdministrator，
         // 只有发布产物（dotnet publish）才有——同一份代码两种权限，不写出来就要靠猜（实测踩过）。
         // 版本从程序集取（根 Directory.Build.props 的 ProductVersion），标题里不再写死数字。
-        Title = $"KeyMouse 流程编辑器 {KeyMouse.Commands.ProductVersion}（构建 {built} · {Elevation()}）";
+        Title = $"KeyMouse 流程编辑器 {Commands.ProductVersion}（构建 {built} · {Elevation()}）";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         try
@@ -162,7 +162,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             // 提示必须说出**当前形态**该去哪儿找，否则它只会把人引到更远的地方。
             string why = _tool is not null
                 ? "启动 serve 之后没能连上命名管道。"
-                : KeyMouse.ProductLayout.Environment == KeyMouse.ProductEnvironment.Development
+                : ProductLayout.Environment == ProductEnvironment.Development
                     ? "找不到 KeyMouse.exe。开发树里它由 tools\\build\\build.ps1（或 km d）产出到 artifacts\\cli\\。"
                     : "找不到 KeyMouse.exe。安装版里它应当在 <安装目录>\\cli\\ 下，重装一次可以修好。";
             Show("连不上 Runner",
@@ -964,7 +964,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        string path = KeyMouse.Scratch.PathFor("keymouse-record.json");
+        string path = Scratch.PathFor("keymouse-record.json");
         try { if (File.Exists(path)) File.Delete(path); }
         catch (IOException) { }
 

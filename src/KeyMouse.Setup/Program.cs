@@ -86,7 +86,7 @@ internal static class Program
 /// <summary>安装/卸载轨迹：%TEMP%\keymouse-setup.log（不可写时退到 %LOCALAPPDATA%\KeyMouse\tmp）。用户报"装不上"时先看它。</summary>
 internal static class Log
 {
-    internal static string File => KeyMouse.Scratch.PathFor("keymouse-setup.log");
+    internal static string File => Scratch.PathFor("keymouse-setup.log");
 
     internal static void Write(string line)
     {
@@ -110,7 +110,7 @@ internal static class Installer
     {
         get
         {
-            if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue) is { } gui
+            if (ProductRegistry.Read(ProductRegistry.GuiValue) is { } gui
                 && File.Exists(gui))
             {
                 return Path.GetDirectoryName(gui);
@@ -132,7 +132,7 @@ internal static class Installer
     /// <summary>这台机器上能用的命令行（注册表只认确实存在的文件）。</summary>
     internal static string? FindExistingCli(string installDirectory)
     {
-        if (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue) is { } registered && File.Exists(registered))
+        if (ProductRegistry.Read(ProductRegistry.CliValue) is { } registered && File.Exists(registered))
             return registered;
 
         string local = Path.Combine(installDirectory, "cli", "KeyMouse.exe");
@@ -185,9 +185,9 @@ internal static class Installer
             }
 
             string gui = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
-            KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.GuiValue, gui);
+            ProductRegistry.Write(ProductRegistry.GuiValue, gui);
             if (existing is not null && File.Exists(existing))
-                KeyMouse.ProductRegistry.Write(KeyMouse.ProductRegistry.CliValue, existing);
+                ProductRegistry.Write(ProductRegistry.CliValue, existing);
 
             progress?.Invoke("正在创建快捷方式…");
             Shortcut(directory);
@@ -220,7 +220,7 @@ internal static class Installer
             throw new InvalidOperationException("拒绝安装到磁盘根目录：" + directory);
 
         bool ours = File.Exists(Path.Combine(directory, "KeyMouse.FlowEditor.exe"))
-                    || (KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue) is { } gui
+                    || (ProductRegistry.Read(ProductRegistry.GuiValue) is { } gui
                         && Path.GetFullPath(gui).StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
 
         if (ours)
@@ -361,8 +361,8 @@ internal static class Installer
     internal static int Remove(Action<string>? progress)
     {
         int problems = 0;
-        string? gui = KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.GuiValue);
-        string? cli = KeyMouse.ProductRegistry.Read(KeyMouse.ProductRegistry.CliValue);
+        string? gui = ProductRegistry.Read(ProductRegistry.GuiValue);
+        string? cli = ProductRegistry.Read(ProductRegistry.CliValue);
 
         string? guiDirectory = gui is not null && Path.GetDirectoryName(gui) is { Length: > 0 } g ? g : null;
         if (guiDirectory is null && File.Exists(Path.Combine(FallbackDirectory, "KeyMouse.FlowEditor.exe")))
@@ -445,7 +445,7 @@ internal static class Installer
         }
 
         progress?.Invoke("清空注册表登记…");
-        KeyMouse.ProductRegistry.Clear();
+        ProductRegistry.Clear();
 
         progress?.Invoke(problems == 0 ? "已卸载。" : $"卸载完成，但有 {problems} 项没删掉（可能正被占用）。");
         Log.Write("uninstall done, problems=" + problems);
@@ -474,7 +474,7 @@ internal static class Installer
         {
             if (directory is null) return;
 
-            string script = KeyMouse.Scratch.PathFor("keymouse-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+            string script = Scratch.PathFor("keymouse-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
             File.WriteAllText(script, string.Join(Environment.NewLine,
                 "@echo off",
                 "ping 127.0.0.1 -n 3 >nul",
