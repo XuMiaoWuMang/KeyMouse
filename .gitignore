@@ -1,37 +1,41 @@
-# build output
-bin/
-obj/
+# ============================================================== 构建产物
+# 所有本地产物统一落在 artifacts/（目录约定见 docs/guide/environments.md）
+artifacts/
+# 旧布局的产物目录：已经废弃，留着这两行只是防止老工作区误提交
 dist/
 out/
+bin/
+obj/
 
-# IDE / editor
+# ============================================================== IDE
 .vs/
 .idea/
 *.user
 *.suo
 *.swp
 
-# OS
+# ============================================================== 操作系统
 Thumbs.db
 desktop.ini
 
-# local test artifacts
-__*.png
-
-# 证据归档：生成物、体积大，只留在本地（见 tests/evidence.ps1）
-tests/evidence/
-
-# 设计评审素材与本地备份：随手的截图与快照，不进版本库
-.impeccable/
-_session-backup/
-
-# 安装程序的载荷（由 tools\pack-release.ps1 生成）
+# ============================================================== 生成物
+# 安装程序的内嵌载荷（由 tools/build/pack-release.ps1 生成）
 tools/KeyMouse.Setup/Assets/*.zip
+src/KeyMouse.Setup/Assets/*.zip
 
-# 测试录制产物（录制会写 <流程>.json 与 <流程>.shots/）
+# 测试录制的临时流程与逐步截图（<流程>.json / <流程>.shots/）
 x.json
 x.shots/
 flow.json
+__*.png
 
-# 本地 GitHub token（clean-releases.ps1 读它，用完即删）
+# ============================================================== 只在本地保留
+# 设计评审素材与本地快照：随手的截图与备份，不进版本库
+.impeccable/
+_session-backup/
+# Windows 文件权限修复的恢复记录（含权限快照）
+.dsh-acl-repair-*/
+# 本机 DSH 预设 bundle 源（安装到 DSH profile，不属于本项目产物）
+.dsh-presets/
+# 本地 GitHub token（tools/release/clean-releases.ps1 读它，用完即删）
 .keymouse-github-token
