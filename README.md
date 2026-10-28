@@ -112,6 +112,10 @@ artifacts\                全部构建产物（不入库）
 
 分层理由：**src 出货、tools 帮开发、tests 验证**；三者不混放，脚本不再往根目录堆。
 
+`src\KeyMouse.Core` 内部按职责分六个目录（也是命名空间）：`Input\`（键名与事件注入）、`Windowing\`（窗口定位/闸门/钩子）、
+`Flow\`（流程模型、schema、运行器、录制）、`Capture\`（截屏与 OCR、区域、文字匹配）、`Runtime\`（命令分发与脚本执行）、
+`Product\`（开发树/安装版判定、注册表、`doctor`）。编辑器与测试目录同样按这六类分开。
+
 ## 开发
 
 ```powershell
