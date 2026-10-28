@@ -131,6 +131,19 @@ switch ($Verb) {
         Say '-> 编译编辑器（WinUI 3）'
         # -NoElevate：换成 app.unelevated.manifest，出来的编辑器是普通权限。
         # 只是调界面时用它——省掉每次启动的 UAC，也让普通权限的 KeyMouse 能点它。
+        # 清单是链接进 apphost 的，而 Windows App SDK 会把我们给的清单**再合并一次**到
+        # obj\…\Manifests\app.manifest；这两个产物都不会因为 -p:KeyMouseElevated 变了就重做，
+        # 于是会出现"改了参数、exe 里还是上一轮的权限"。先删掉它们再编。
+        $editorObj = Join-Path $root 'src\KeyMouse.FlowEditor\obj'
+        if (Test-Path $editorObj) {
+            Get-ChildItem $editorObj -Recurse -Filter 'app.manifest' -File -ErrorAction SilentlyContinue |
+                ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+        }
+        $editorExe = Join-Path $root 'src\KeyMouse.FlowEditor\bin\Release\net10.0-windows10.0.26100.0\win-x64\KeyMouse.FlowEditor.exe'
+        if (Test-Path $editorExe) {
+            try { Remove-Item $editorExe -Force }
+            catch { Say '   编辑器还开着（KeyMouse.FlowEditor.exe 被占用），先关掉它' }
+        }
         $editorArgs = @('build', $editorProject, '-c', 'Release', '--nologo', '-v:q')
         if ($Rest -contains '-NoElevate') {
             Say '   普通权限构建（app.unelevated.manifest）：录不到管理员窗口'
