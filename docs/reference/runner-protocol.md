@@ -2,7 +2,7 @@
 
 > 这份文档是**规范**，不是说明。机器可读的那份在
 > [`src/KeyMouse.Runner/runner-protocol.schema.json`](../../src/KeyMouse.Runner/runner-protocol.schema.json)，
-> 一致性由 [`tests/KeyMouse.Tests/RunnerProtocolTests.cs`](../../tests/KeyMouse.Tests/RunnerProtocolTests.cs) 强制
+> 一致性由 [`tests/KeyMouse.Tests/RunnerProtocolTests.cs`](../../tests/KeyMouse.Tests/Runner/RunnerProtocolTests.cs) 强制
 > （`dotnet run --project tests\KeyMouse.Tests -- --only protocol`）。
 >
 > **改协议的顺序是固定的**：先改 schema → 再改两侧代码 → 跑 `--only protocol`。测试红了就是你漏了其中一步。

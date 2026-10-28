@@ -22,7 +22,7 @@ KeyMouse 有两个入口（编辑器、命令行），而它们**在开发树里
 
 ## 程序怎么找对方
 
-只有一个实现：`src\KeyMouse.Core\ProductLayout.cs`。编辑器（`KeyMouseBridge.ResolveTool`）、
+只有一个实现：`src\KeyMouse.Core\Product\ProductLayout.cs`。编辑器（`KeyMouseBridge.ResolveTool`）、
 `KeyMouse flow edit`（`FlowEditorCommand`）都调它，谁都不许再各写一份搜索顺序——
 以前就是各写一份，两份很快分了叉，`flow edit` 只认一个谁都不存在的 `edit\` 子目录。
 

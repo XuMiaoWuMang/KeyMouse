@@ -58,7 +58,7 @@
 
 ### 开发树里没有 `cli\` 文件夹，正常吗？
 
-正常。开发树的命令行在 `artifacts\cli\`，安装版才在 `<安装目录>\cli\`。`km env` 就是用来一眼确认这件事的：它跑 `KeyMouse doctor`，把判定结果和每个候选位置都列出来（实现在 `src\KeyMouse.Core\ProductLayout.cs`）。
+正常。开发树的命令行在 `artifacts\cli\`，安装版才在 `<安装目录>\cli\`。`km env` 就是用来一眼确认这件事的：它跑 `KeyMouse doctor`，把判定结果和每个候选位置都列出来（实现在 `src\KeyMouse.Core\Product\ProductLayout.cs`）。
 
 ## 退出码
 

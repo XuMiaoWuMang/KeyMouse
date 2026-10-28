@@ -83,7 +83,7 @@ src\KeyMouse.FlowEditor\KeyMouse.FlowEditor.csproj
 
 ### 开发树还是安装版
 
-判定只在一个地方：`src\KeyMouse.Core\ProductLayout.cs`。它从 exe 往上找同时有 `KeyMouse.sln` 与 `Directory.Build.props` 的目录来认「开发树」，否则认「安装版」，并据此决定命令行在 `<仓库根>\artifacts\cli\KeyMouse.exe` 还是 `<安装目录>\cli\KeyMouse.exe`。`KeyMouse doctor`（也就是 `.\km env`）会把每个候选路径和判定结果按顺序列出来。
+判定只在一个地方：`src\KeyMouse.Core\Product\ProductLayout.cs`。它从 exe 往上找同时有 `KeyMouse.sln` 与 `Directory.Build.props` 的目录来认「开发树」，否则认「安装版」，并据此决定命令行在 `<仓库根>\artifacts\cli\KeyMouse.exe` 还是 `<安装目录>\cli\KeyMouse.exe`。`KeyMouse doctor`（也就是 `.\km env`）会把每个候选路径和判定结果按顺序列出来。
 
 开发树里没有 `cli` 文件夹是正常的：那是安装版的形状。候选顺序与症状表见 [environments.md](../guide/environments.md)。
 
@@ -244,17 +244,30 @@ pwsh tools\release\clean-releases.ps1 -Remove gui,v0.1.0 -Yes
 
 | 路径 | 内容 |
 | --- | --- |
-| `src\KeyMouse.Core\` | 能力层：命令、脚本执行、流程模型与运行器、感知、录制、窗口定位与聚焦、`ProductLayout`、`doctor` |
+| `src\KeyMouse.Core\` | 能力层，按职责分六个命名空间（见下表） |
 | `src\KeyMouse.Runner\` | 常驻进程：命名管道、作业、协议（`runner-protocol.schema.json`） |
 | `src\KeyMouse.Cli\` | 命令行入口：`Program`、流程编辑器的启动命令、Runner 客户端命令、`app.manifest` |
-| `src\KeyMouse.FlowEditor\` | WinUI 3 编辑器 |
-| `src\KeyMouse.Setup\` | 安装程序（载荷在 `Assets\`，由 `pack-release.ps1` 填充） |
-| `tests\KeyMouse.Tests\` | 单元测试（无框架、无依赖的控制台程序，入口 `TestEntry.cs`） |
+| `src\KeyMouse.FlowEditor\` | WinUI 3 编辑器：`MainWindow.*.cs` 五个 partial、`Themes\` 两本资源字典 |
+| `src\KeyMouse.Setup\` | 安装程序：`Program`（入口与参数）、`Log`（安装轨迹）、`Installer`（安装与卸载），载荷在 `Assets\` |
+| `tests\KeyMouse.Tests\` | 单元测试（无框架、无依赖的控制台程序，入口 `TestEntry.cs`，按领域分五个目录） |
 | `tests\KeyMouse.SmokeTarget\` | 冒烟用的靶子窗口 |
 | `tests\smoke\` | 桌面冒烟：`run.ps1`、`lib\common.ps1`、`modules\*.ps1` |
-| `tools\dev\` | `km.ps1`、`verify.ps1`、`check-docs.ps1`、`check-version.ps1` |
+| `tools\dev\` | `km.ps1`、`verify.ps1`、`check-docs.ps1`、`check-version.ps1`、`check-input.ps1` |
 | `tools\build\` | `build.ps1`、`pack-release.ps1` |
 | `tools\release\` | `release.ps1`、`release-notes.ps1`、`clean-releases.ps1` |
-| `tools\diagnostics\` | `evidence.ps1`、`window-levels.ps1` |
+| `tools\diagnostics\` | `evidence.ps1`、`window-levels.ps1`、`screenshot.ps1` |
 | `artifacts\` | 所有构建与测试产物（不进 git） |
 | `docs\` | 文档（本目录的约定见 [docs/README.md](../README.md)） |
+
+能力层目录就是它的命名空间（每个 csproj 用 `<Using Include="KeyMouse.X" />` 引进来，代码里不必写全名）：
+
+| 目录 | 命名空间 | 管什么 |
+| --- | --- | --- |
+| `Input\` | `KeyMouse.Input` | 键名与键码、`SendInput` 封装：把一条命令翻译成真实事件 |
+| `Windowing\` | `KeyMouse.Windowing` | 窗口枚举、定位、资格闸门、聚焦与还原、低级钩子 |
+| `Flow\` | `KeyMouse.Flow` | 流程 JSON 的模型、schema、计划、运行器、录制 |
+| `Capture\` | `KeyMouse.Capture` | 截屏与 OCR（`probe`）、区域、文字匹配、取证截图 |
+| `Runtime\` | `KeyMouse.Runtime` | 命令分发（`Commands.*`）、脚本文本执行（`ScriptRunner.*`）、用法与执行控制 |
+| `Product\` | `KeyMouse.Product` | 产品形态：`ProductLayout`、注册表、`Scratch`、`doctor` |
+
+大文件用 partial 按职责拆开，命名规律是"主文件 + `.职责.cs`"：`Commands.{Target,Mouse,Keyboard,Window,Parsing}.cs`、`ScriptRunner.{Parse,Report}.cs`、`Probe.{Target,Image,Engine,Report}.cs`、`MainWindow.{Document,Steps,Run,Record}.cs`。拆的时候只搬代码、不加抽象——类还是那一个类，调用点一行都不用改。
