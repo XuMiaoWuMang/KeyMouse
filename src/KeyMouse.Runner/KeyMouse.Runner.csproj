@@ -8,7 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>2.1.0</Version>
+    <!-- 引擎线版本：与 Core 同一个引擎版本号（根 Directory.Build.props）。 -->
+    <Version>$(EngineVersion)</Version>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 

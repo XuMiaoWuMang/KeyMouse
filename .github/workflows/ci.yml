@@ -1,5 +1,9 @@
 name: ci
 
+# 每次 push 与 PR 都跑"不需要桌面"的那部分关卡。
+# 桌面冒烟（tests/smoke/run.ps1）要一个真人登着的交互式会话，CI 里没有，所以发布前本地跑。
+# 这里跑的就是 tools\dev\verify.ps1 的前四道：构建、单测、文档链接、版本一致。
+
 on:
   push:
     branches: [main]
@@ -17,6 +21,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # 0 警告是底线：仓库自己的代码不许有警告，第三方库的警告不影响。
       - name: Build
         run: dotnet build KeyMouse.sln -c Release --nologo
 
@@ -24,9 +29,15 @@ jobs:
         run: dotnet run -c Release --project tests/KeyMouse.Tests/KeyMouse.Tests.csproj
 
       - name: Documentation links
-        run: pwsh -NoProfile -File tests/check-docs.ps1
+        run: pwsh -NoProfile -File tools/dev/check-docs.ps1
 
-      # tests/smoke.ps1 needs an interactive desktop (it drives Notepad), so it is
-      # deliberately not part of CI - run it locally before a release.
-      - name: Publish check (framework-dependent)
-        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo
+      - name: Version single source
+        run: pwsh -NoProfile -File tools/dev/check-version.ps1 -NoArtifact
+
+      # 打包能不能起来：单文件产物对 Windows App SDK / 单文件裁剪最敏感，
+      # 光"编译通过"不代表 exe 能跑。
+      - name: Publish (framework-dependent single file)
+        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/cli --nologo
+
+      - name: Published exe answers
+        run: ./artifacts/cli/KeyMouse.exe --version

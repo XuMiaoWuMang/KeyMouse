@@ -1,5 +1,11 @@
 name: release
 
+# 发布的动作只有两个：打标签推送（人或脚本），或者手动触发。
+# 两条发布线互不重叠：
+#   cli-v*  命令行，两个单文件
+#   gui-v*  编辑器 + 安装程序（安装程序里顺带带上命令行）
+# 版本号在 Directory.Build.props 里；标签上的版本号与它不一致时这一趟会红。
+
 on:
   push:
     tags:
@@ -28,31 +34,41 @@ jobs:
       - name: Unit tests (no desktop required)
         run: dotnet run -c Release --project tests/KeyMouse.Tests/KeyMouse.Tests.csproj
 
-      - name: Publish (framework-dependent, needs the .NET runtime)
-        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o out/fx --nologo
+      - name: Version single source
+        run: pwsh -NoProfile -File tools/dev/check-version.ps1 -NoArtifact
 
-      - name: Publish (self-contained, needs nothing)
-        run: dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o out/self --nologo
-
-      - name: Stage artifacts
+      # 标签说 0.2.2、项目里写 0.2.1——这种错必须在发布前炸，而不是等用户装上才发现。
+      - name: Tag matches ProductVersion
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item out/fx/KeyMouse.exe   dist/KeyMouse-fx-x64.exe
-          Copy-Item out/self/KeyMouse.exe dist/KeyMouse-x64.exe
-          Get-ChildItem dist | Format-Table Name, Length
+          [xml]$props = Get-Content Directory.Build.props -Raw
+          $version = @($props.Project.PropertyGroup.ProductVersion | Where-Object { $_ })[0]
+          if ($env:GITHUB_REF_NAME -notmatch [regex]::Escape($version)) {
+            throw "标签 $env:GITHUB_REF_NAME 与 Directory.Build.props 的 ProductVersion $version 不一致"
+          }
+          Write-Host "标签与版本一致：$version"
+
+      - name: Publish the CLI (cli-v* tag)
+        if: startsWith(github.ref, 'refs/tags/cli-')
+        run: |
+          dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/cli --nologo
+          dotnet publish src/KeyMouse.Cli/KeyMouse.Cli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o artifacts/cli-self --nologo
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          Copy-Item artifacts/cli/KeyMouse.exe artifacts/release/KeyMouse-fx-x64.exe
+          Copy-Item artifacts/cli-self/KeyMouse.exe artifacts/release/KeyMouse-x64.exe
+          Get-ChildItem artifacts/release | Format-Table Name, Length
 
       # gui 标签发布的是编辑器（含安装程序）：它要自包含的 WinUI 运行时，
       # 构造过程和本地打包完全一致——同一个脚本，少一条"CI 与本地不一致"的岔路。
-      - name: Pack the editor installer (gui-v* tag only)
+      - name: Pack the editor installer (gui-v* tag)
         if: startsWith(github.ref, 'refs/tags/gui-')
         shell: pwsh
-        run: ./tools/pack-release.ps1
+        run: ./tools/build/pack-release.ps1
 
       # 每次发布都带一份**精简清单**：由提交压成，作为 Release 正文（比 GitHub 自动笔记可读）。
       - name: Build release notes
         shell: pwsh
-        run: ./tools/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Out release-notes.md
+        run: ./tools/release/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Out release-notes.md
 
       - name: Show release notes
         shell: pwsh
@@ -66,15 +82,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/KeyMouse-fx-x64.exe
-            dist/KeyMouse-x64.exe
+            artifacts/release/KeyMouse-fx-x64.exe
+            artifacts/release/KeyMouse-x64.exe
           body_path: release-notes.md
 
       - name: Attach the editor installer (gui-v* tag)
         if: startsWith(github.ref, 'refs/tags/gui-')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/KeyMouseSetup-*.exe
+          files: artifacts/release/KeyMouseSetup-*.exe
           body_path: release-notes.md
 
       # 清单必须**在发布之后**写：发布之前 gh release edit 找不到 release，整步失败，

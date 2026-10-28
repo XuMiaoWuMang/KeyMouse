@@ -4,21 +4,27 @@ namespace KeyMouse;
 
 internal static class Commands
 {
-    /// <summary>引擎（Core）版本。产品版本是 0.2.0（见 Cli/编辑器 csproj），两者分开发。</summary>
-    internal const string Version = "2.1.0";
+    /// <summary>
+    /// 引擎（Core）版本：与产品版本分开发。取 Core 程序集版本，字面量只在根
+    /// Directory.Build.props 的 EngineVersion 里出现一次（tools\dev\check-version.ps1 把关）。
+    /// </summary>
+    internal static string Version => Format(typeof(Commands).Assembly.GetName().Version);
 
     /// <summary>
-    /// 产品版本，从入口程序集的版本取（CLI 的 csproj 里是 0.2.0）。
+    /// 产品版本，从入口程序集的版本取：CLI、编辑器、安装程序都是同一个 $(ProductVersion)。
     /// `--version` 以前只打印引擎版本（2.1.0），于是"我这是不是最新构建"根本看不出来。
     /// </summary>
     internal static string ProductVersion
     {
         get
         {
-            Version? v = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version;
-            return v is null ? Version : $"{v.Major}.{v.Minor}.{v.Build}";
+            System.Reflection.Assembly? entry = System.Reflection.Assembly.GetEntryAssembly();
+            return Format((entry ?? typeof(Commands).Assembly).GetName().Version);
         }
     }
+
+    private static string Format(System.Version? version) =>
+        version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
 
     /// <summary>打印流程格式的接口契约（前端照着它渲染；`schema 类型` 只看一种）。</summary>
     private static int Schema(string[] rest)
@@ -96,8 +102,12 @@ internal static class Commands
                     return Probe.Run(rest[1..], global);
                 case "region":
                     return RegionCommand.Run(rest[1..], global);
+                case "doctor":
+                    // 环境诊断：在开发树还是安装版、命令行与编辑器各自在哪找到的。
+                    // 它不做别的，所以哪怕别的都跑不起来，这条也应当能跑。
+                    return Doctor.Run(rest[1..]);
                 default:
-                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | record | flow | probe | region | help）");
+                    return Fail(2, $"未知命令组 '{rest[0]}'（可用：mouse | key | window | run | record | flow | probe | region | doctor | help）");
             }
         }
         catch (CommandFailure ex)

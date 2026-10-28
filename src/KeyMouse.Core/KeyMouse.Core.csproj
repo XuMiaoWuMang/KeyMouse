@@ -8,7 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>2.1.0</Version>
+    <!-- 引擎线版本：能力层与协议契约的号，跟产品版本分开发（根 Directory.Build.props）。 -->
+    <Version>$(EngineVersion)</Version>
     <InvariantGlobalization>true</InvariantGlobalization>
     <!-- The interactive region picker is the one capability that needs a UI toolkit; the manifest that
          pins DPI awareness belongs to an entry point that starts a process, not to this library. -->
@@ -28,6 +29,7 @@
     <InternalsVisibleTo Include="KeyMouse.Runner" />
     <InternalsVisibleTo Include="KeyMouse.Tests" />
     <InternalsVisibleTo Include="KeyMouse.FlowEditor" />
+    <InternalsVisibleTo Include="KeyMouseSetup" />
   </ItemGroup>
 
 </Project>

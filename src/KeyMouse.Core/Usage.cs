@@ -106,7 +106,7 @@ internal static class Usage
         new("流程（录制出来的 JSON，以及图形编辑器）", new[]
         {
             "用 WinUI 图形编辑器打开一个流程：左边是步骤列表，右边改参数，「从屏幕取区域」直接拉选区浮层，「试运行/播放」调用的还是 run 本身。",
-            "编辑器在 editor\\KeyMouse.FlowEditor，需要单独构建：dotnet build editor\\KeyMouse.FlowEditor -c Release",
+            "编辑器在 src\\KeyMouse.FlowEditor，需要单独构建：pwsh tools\\dev\\km.ps1 ba（km ba 同时会重新打包命令行）。",
         },
         [
             new("flow edit <流程.json>", ""),
@@ -179,6 +179,15 @@ internal static class Usage
             "KeyMouse window inspect --title \"记事本\"",
         }, []),
 
+        new("环境与排障", new[]
+        {
+            "开发树与安装版的目录形态不同：开发树里命令行在 artifacts\\cli\\KeyMouse.exe、编辑器在 src\\KeyMouse.FlowEditor\\bin\\…；",
+            "安装版里编辑器在 <安装目录>\\、命令行在 <安装目录>\\cli\\。doctor 会把这一次判定用的每一个候选位置都列出来。",
+        },
+        [
+            new("doctor", "打印环境判定、版本、权限、注册表，以及命令行/编辑器各自是在哪儿找到的"),
+        ]),
+
         new("退出码", new[]
         {
             "0 = 成功        1 = 运行时失败（例如 SendInput 被 UIPI 拦截）",
@@ -192,7 +201,7 @@ internal static class Usage
     {
         int width = ContentWidth();
         var sb = new System.Text.StringBuilder();
-        string title = "KeyMouse " + Commands.Version;
+        string title = "KeyMouse " + Commands.ProductVersion;
         sb.AppendLine(title + " " + new string('─', Math.Max(4, width - ConsoleText.DisplayWidth(title) - 1)));
         sb.AppendLine("在 Windows 上模拟真实的鼠标与键盘事件（执行一次即退出，无常驻进程）");
         sb.AppendLine();

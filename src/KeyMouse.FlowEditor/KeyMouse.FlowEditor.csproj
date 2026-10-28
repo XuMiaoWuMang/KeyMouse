@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>KeyMouse.FlowEditor</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <!-- 只有一份产物：否则 km ba（走解决方案，Platform=x64）写 bin\x64\Release，
+         而 km e（直接 dotnet build）写 bin\Release，于是同一个程序有两个 exe，
+         改完只重编一份、启动的却是另一份——这一轮已经因此白查了一次。 -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>KeyMouse.FlowEditor</AssemblyName>
+    <ApplicationTitle>KeyMouse 流程编辑器</ApplicationTitle>
+    <Version>$(ProductVersion)</Version>
+    <FileVersion>$(ProductVersion).0</FileVersion>
+    <Product>KeyMouse 流程编辑器</Product>
+    <Company>KeyMouse</Company>
+
+    <!-- Unpackaged, and self-contained: measured on this machine the only Windows App Runtime present
+         is the CBS (inbox) one, which the bootstrapper refuses (exit 0x80670016), while
+         WindowsAppSDKSelfContained starts fine. It also means the editor needs nothing installed. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+    <!-- 试过 <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages> 去掉 99 个语言目录：
+         结果是 resources.pri 一起没了，启动时 XamlParseException。宁可多 80 个目录，也不能起不来。 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+  </ItemGroup>
+
+  <!-- Three layers, one product: the editor is the UI entry point and talks to the capability layer
+       and the Runner through their assemblies. No schema is copied and no child process is spawned
+       per action any more - the Runner is a service the editor connects to. -->
+  <ItemGroup>
+    <ProjectReference Include="..\KeyMouse.Core\KeyMouse.Core.csproj" />
+    <ProjectReference Include="..\KeyMouse.Runner\KeyMouse.Runner.csproj" />
+  </ItemGroup>
+
+</Project>

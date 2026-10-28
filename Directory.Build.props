@@ -1,0 +1,27 @@
+<Project>
+
+  <!--
+    版本号的唯一来源。两个版本线，各有各的用途，谁也不许在别处再写一遍字面量：
+
+      ProductVersion  产品线：命令行、流程编辑器、安装程序 —— 用户看到的那个号
+      EngineVersion   引擎线：Core（能力层）与 Runner（常驻服务）—— 协议与能力契约的版本
+
+    改版本只改这里。以下三处会跟着动：
+      · 各 csproj 用 $(ProductVersion) / $(EngineVersion)
+      · 程序运行时从程序集版本读取，代码里没有 "0.2.1" 这种字面量
+      · tools\dev\check-version.ps1 把关（CI 与 verify.ps1 都跑它）
+
+    发版流程见 docs/guide/release.md：改这里 → 提交 → 打 cli-v* / gui-v* 标签。
+  -->
+  <PropertyGroup>
+    <ProductVersion>0.2.1</ProductVersion>
+    <EngineVersion>2.1.0</EngineVersion>
+  </PropertyGroup>
+
+  <!-- 所有项目共用的编译约定：语言版本与确定性构建。 -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+</Project>

@@ -3,9 +3,12 @@ using System.Diagnostics;
 namespace KeyMouse;
 
 /// <summary>
-/// `flow edit` - opens the WinUI editor on a flow. The editor ships separately (its own project under
-/// editor/), so this looks for it next to the tool first and then in a development checkout, and says
-/// what to build when it is nowhere to be found.
+/// `flow edit`：用图形编辑器打开一个流程。
+///
+/// 编辑器和命令行是同一份产品的两半，位置约定写在 <see cref="ProductLayout"/> 一个地方：
+/// 安装版里编辑器在 &lt;安装目录&gt;\、命令行在 &lt;安装目录&gt;\cli\，开发树里编辑器在
+/// src\KeyMouse.FlowEditor\bin\…、命令行在 artifacts\cli\。以前这里只认 `edit\` 子目录，
+/// 两种形态都不存在那个文件夹，于是这条命令永远是坏的。
 /// </summary>
 internal static class FlowEditorCommand
 {
@@ -19,48 +22,27 @@ internal static class FlowEditorCommand
         string path = Path.GetFullPath(args[1]);
         if (!File.Exists(path)) return Commands.Fail(2, $"没有这个文件：{path}");
 
-        // 查找图形编辑器
-        string? editor = ResolveEditor();
+        string? editor = ProductLayout.EditorPath;
         if (editor is null)
         {
-            return Commands.Fail(4,
-                "找不到编辑器 KeyMouse.FlowEditor.exe，它应当在相同目录下");
+            Console.Error.WriteLine("找不到编辑器 KeyMouse.FlowEditor.exe。找过这些地方：");
+            foreach (LayoutCandidate candidate in ProductLayout.EditorCandidates())
+            {
+                if (candidate.Path.Length == 0) continue;
+                Console.Error.WriteLine($"  {(candidate.Exists ? "有" : "无")} {candidate.Path}（{candidate.Why}）");
+            }
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("安装版请重新运行安装程序；开发树里先编一次：pwsh tools\\dev\\km.ps1 ba");
+            Console.Error.WriteLine("排障：KeyMouse doctor");
+            return 4;
         }
 
-        // 不打开shell, 直接启动编辑器
+        // 不用 ShellExecute：编辑器不需要 UAC，用 false 能直接把参数按数组传过去（标题里有空格也不怕）。
         var startInfo = new ProcessStartInfo(editor) { UseShellExecute = false };
         startInfo.ArgumentList.Add(path);
         Process.Start(startInfo);
         Console.WriteLine($"已打开编辑器 {editor}");
         Console.WriteLine($"  流程 {path}");
         return 0;
-    }
-
-    private static string? ResolveEditor()
-    {
-        string candidates ;
-        string here = AppContext.BaseDirectory;
-        candidates = Path.Combine(here, "edit\\KeyMouse.FlowEditor.exe");
-
-        // // A development checkout: walk up looking for the editor's build output.
-        // var directory = new DirectoryInfo(here);
-        // for (int i = 0; i < 6 && directory is not null; i++, directory = directory.Parent)
-        // {
-        //     foreach (string configuration in (string[])["Release", "Debug"])
-        //     {
-        //         candidates.Add(Path.Combine(directory.FullName, "editor", "KeyMouse.FlowEditor", "bin",
-        //             configuration, "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
-        //     }
-        // }
-        // candidates.Add(Path.Combine(Environment.CurrentDirectory, "editor", "KeyMouse.FlowEditor", "bin",
-        //     "Release", "net10.0-windows10.0.26100.0", "win-x64", "KeyMouse.FlowEditor.exe"));
-        // foreach (string candidate in candidates)
-        // {
-        //     if (File.Exists(candidate)) return candidate;
-        // }
-
-        // 不要自己遍历，浪费时间，约定好 KeyMouse.FlowEditor.exe 和 KeyMouse.exe 在同一目录下就行了
-        if (File.Exists(candidates)) return candidates;
-        else return null;
     }
 }

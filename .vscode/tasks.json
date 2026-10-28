@@ -2,134 +2,97 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "km: build CLI (fast)",
+      "label": "km: build CLI",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "b"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "b"],
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": "$msbuild"
     },
     {
       "label": "km: build all (+ editor)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "ba"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "ba"],
       "problemMatcher": "$msbuild"
     },
     {
-      "label": "km: test (all)",
+      "label": "km: test (all modules)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "t"
-      ],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "t"],
+      "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     },
     {
       "label": "km: test (pick module)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "t",
-        "${input:module}"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "t", "${input:module}"],
       "problemMatcher": []
     },
     {
       "label": "km: test (no rebuild)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "t",
-        "-n"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "t", "-n"],
       "problemMatcher": []
     },
     {
       "label": "km: watch (build + test on save)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "w"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "w"],
       "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "km: env (dev tree or installed?)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "env"],
       "problemMatcher": []
     },
     {
       "label": "km: smoke (needs unlocked desktop)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "s"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "s"],
       "problemMatcher": []
     },
     {
-      "label": "km: verify (4 gates)",
+      "label": "km: verify (all gates)",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "v"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "v"],
       "problemMatcher": []
     },
     {
-      "label": "km: dist (single file)",
+      "label": "km: publish artifacts\\cli",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "d"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "d"],
       "problemMatcher": []
     },
     {
       "label": "km: docs links",
       "type": "shell",
       "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}/km.ps1",
-        "docs"
-      ],
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/km.ps1", "docs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tools: check versions",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/dev/check-version.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tools: pack release",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/tools/build/pack-release.ps1"],
       "problemMatcher": []
     }
   ],
@@ -137,7 +100,7 @@
     {
       "id": "module",
       "type": "pickString",
-      "description": "测试模块",
+      "description": "单元测试模块（--list 看全部）",
       "options": [
         "parsing",
         "windows",
@@ -148,14 +111,13 @@
         "loops",
         "calls",
         "runner",
-        "protocol"
+        "protocol",
+        "newlines",
+        "wheel",
+        "stopkeys",
+        "timeline",
+        "nowindow"
       ]
-    },
-    {
-      "id": "kmArgs",
-      "type": "promptString",
-      "description": "传给 KeyMouse 的参数",
-      "default": "--help"
     }
   ]
 }
