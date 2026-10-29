@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
-import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // Tauri 的 dev 服务器：端口固定，免得 tauri.conf.json 与 vite 两处各写一个。
+// 预处理配置（TS）在 svelte.config.js —— svelte-check 也读那一份，只写一处。
 export default defineConfig({
-  // `<script lang="ts">` 要预处理，否则 Svelte 直接把 TS 当 JS 解析（ParseError）。
-  plugins: [svelte({ preprocess: vitePreprocess() })],
+  plugins: [svelte()],
   clearScreen: false,
   server: {
     port: 5183,

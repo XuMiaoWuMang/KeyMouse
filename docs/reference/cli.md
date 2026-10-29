@@ -340,6 +340,23 @@ KeyMouse window focus --process explorer --pick 3
 
 `3` / `4` / `5` / `6` 共享同一条承诺：**确定没有发出任何输入**，因此都可以安全重试（`--retry` 也只对它们生效）。
 
+## 输出编码
+
+默认跟随控制台的输出码页（中文 Windows 上是 cp936）——这是给终端里的人和 PowerShell 管道看的，
+`[Console]::OutputEncoding` 与它一致时不会乱码。
+
+要让输出变成 **UTF-8（无 BOM）**，设环境变量：
+
+```powershell
+$env:KEYMOUSE_OUTPUT_ENCODING = 'utf-8'
+KeyMouse --version
+```
+
+调用方需要自己解析输出时（编辑器外壳、Node/Python/Rust 脚本）**应当**设它：猜控制台码页对终端是对的，
+对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 0.2.1��� 2.1.0��`。
+
+设了这个变量就不再看控制台码页；不设则行为与以前完全一致。
+
 ## probe（读，不是发）
 
 `probe` 把窗口的一块区域读成文字。它**只报告看到什么，不做判断**——判断是调用方的事。

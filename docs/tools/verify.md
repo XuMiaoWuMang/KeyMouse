@@ -23,6 +23,7 @@ pwsh tools\dev\verify.ps1 -SkipPack    # 不打包（只想确认代码是好的
 | 构建 | `dotnet build KeyMouse.sln -c Release --nologo`（只显示最后 3 行） | 否 |
 | 单元测试 | `dotnet run -c Release --project tests\KeyMouse.Tests\KeyMouse.Tests.csproj` | 否 |
 | 文档链接 | `tools\dev\check-docs.ps1` | 否 |
+| 新外壳 | tools\dev\editor-ui.ps1 的 check 与 test：界面类型检查 + 外壳 Rust 单测 | 有 pnpm 与 cargo 才跑；缺哪个就在结论区写明跳过 |
 | 版本一致 | `tools\dev\check-version.ps1` | 否 |
 | 打包 | `tools\build\build.ps1` → `artifacts\cli\KeyMouse.exe` | 否 |
 | 桌面冒烟 | `tests\smoke\run.ps1` | 是（且要解锁） |

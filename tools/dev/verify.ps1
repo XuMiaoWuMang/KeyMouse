@@ -9,6 +9,7 @@
     六道关卡，全部自动，任何一道不过就以非 0 退出：
         构建       dotnet build KeyMouse.sln -c Release      （0 警告是底线）
         单元测试   tests\KeyMouse.Tests                       （不需要桌面）
+        新外壳     svelte-check + cargo test                    （需要 pnpm 与 cargo，缺了跳过）
         文档链接   tools\dev\check-docs.ps1                   （不需要桌面）
         版本一致   tools\dev\check-version.ps1                （唯一来源在 Directory.Build.props）
         打包       tools\build\build.ps1 → artifacts\cli      （单文件产物能不能起来）
@@ -106,6 +107,21 @@ try {
 
     Step '构建' { & dotnet build (Join-Path $root 'KeyMouse.sln') -c Release --nologo | Select-Object -Last 3 }
     Step '单元测试' { & dotnet run -c Release --project (Join-Path $root 'tests\KeyMouse.Tests\KeyMouse.Tests.csproj') | Select-Object -Last 2 }
+    # 新外壳（src\KeyMouse.EditorUI）是独立工具链：有 cargo 与 pnpm 才跑，没有就说清楚为什么跳过。
+    $shellApp = Join-Path $root 'src\KeyMouse.EditorUI'
+    $hasCargo = [bool](Get-Command cargo -ErrorAction SilentlyContinue)
+    $hasPnpm = [bool](Get-Command pnpm -ErrorAction SilentlyContinue)
+    if (-not (Test-Path $shellApp)) {
+        $skipped.Add('新外壳（仓库里没有 src\KeyMouse.EditorUI）')
+    }
+    elseif (-not $hasCargo -or -not $hasPnpm) {
+        $skipped.Add("新外壳（缺 $(if (-not $hasCargo) { 'cargo' } else { 'pnpm' })）")
+    }
+    else {
+        Step '新外壳：类型检查' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\editor-ui.ps1') check | Select-Object -Last 2 }
+        Step '新外壳：Rust 单测' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\editor-ui.ps1') test | Select-Object -Last 2 }
+    }
+
     Step '文档链接' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-docs.ps1') }
     Step '版本一致' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-version.ps1') }
 

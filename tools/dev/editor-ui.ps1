@@ -19,6 +19,7 @@
     dev      起开发窗口（vite + cargo run）
     build    只打前端产物（pnpm build）
     check    svelte-check 类型与模板检查
+    test     外壳的 Rust 单测（cargo test）
     icons    从 src-tauri\icons\source.png 重新生成整套图标
     clean    删 node_modules 与 src-tauri\target
 
@@ -32,7 +33,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('setup', 'dev', 'build', 'check', 'icons', 'clean')]
+    [ValidateSet('setup', 'dev', 'build', 'check', 'test', 'icons', 'clean')]
     [string]$Verb = 'dev',
 
     [string]$Registry = 'https://registry.npmmirror.com'
@@ -92,6 +93,20 @@ try {
 
         'check' {
             Invoke-Step '类型与模板检查（svelte-check）' { pnpm check }
+        }
+
+        'test' {
+            # 外壳自己也有逻辑（路径解析、读写文件），用 Rust 单测守住，不靠点界面。
+            $env:CARGO_HTTP_CHECK_REVOKE = 'false'
+            $env:CARGO_NET_RETRY = '5'
+            $env:CARGO_HTTP_TIMEOUT = '120'
+            Push-Location (Join-Path $app 'src-tauri')
+            try {
+                Invoke-Step '外壳单测（cargo test）' { cargo test }
+            }
+            finally {
+                Pop-Location
+            }
         }
 
         'icons' {

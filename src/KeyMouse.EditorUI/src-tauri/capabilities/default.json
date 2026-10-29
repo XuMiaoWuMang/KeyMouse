@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "编辑器主窗口默认能力：只要核心 API，不开文件系统/网络插件。",
+  "description": "编辑器主窗口默认能力：核心 API + 文件对话框。文件读写走自己的命令（files.rs），所以不开 fs 插件。",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:default"]
 }

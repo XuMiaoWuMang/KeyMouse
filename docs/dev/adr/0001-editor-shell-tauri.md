@@ -70,3 +70,4 @@ Avalonia 不是坏选择——如果目标只是"摆脱 WindowsAppSDK"。这里�
 2. 证据截图（PNG）怎么显示：`asset` 协议 + 作用域，还是 Rust 读成 base64 给前端。
 3. 单实例与"用命令行打开某个流程"（现在 `KeyMouse flow edit x.json`）：新壳要不要接受同样的参数。
 4. 崩溃日志落点：现在是 `Scratch`（TEMP→LOCALAPPDATA→程序目录），Rust 侧要复用同一套规则。
+- **关闭窗口时提醒未保存**：现在只有「打开/新建」会问，直接点 × 不问。要拦就得在外壳里处理 CloseRequested，再回来问界面（跨边界异步确认），P1b 处理。

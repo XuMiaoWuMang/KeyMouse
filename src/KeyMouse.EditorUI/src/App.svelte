@@ -1,59 +1,194 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
   import {
     childSteps,
     stepSummary,
     stepTitle,
-    targetLabel,
     type FlowStep,
     type FlowTarget,
   } from './lib/model';
 
-  /** 演示数据：与仓库里的 `samples\demo-flow.json` 逐字段一致，方便拿文件对照界面。 */
-  const steps: FlowStep[] = [
-    { type: 'focus', target: { process: 'notepad' }, note: '切到记事本' },
-    { type: 'type', text: '你好，{{name}}', intervalMs: 30 },
-    { type: 'key', combo: 'Ctrl+S' },
-    { type: 'sleep', ms: 300 },
-    {
-      type: 'click-text',
-      target: { process: 'notepad' },
-      region: { space: 'client', x: 0, y: 0, width: 420, height: 40 },
-      text: '保存',
-      match: 'contains',
-      maxErrors: 1,
-      timeoutMs: 8000,
-    },
-    { type: 'repeat', times: 3, steps: [{ type: 'wheel', delta: -120 }] },
-  ];
-
-  /** 真正打开流程之前，先把"打开的是哪个文件"说清楚：相对仓库根显示。 */
-  $: documentPath = runtime?.repoRoot ? `${runtime.repoRoot}\\samples\\demo-flow.json` : 'samples\\demo-flow.json';
-
-  let selected = 0;
-  let outputOpen = false;
-  let runtime: {
-    cliPath: string;
-    cliVersion: string;
-    environment: string;
-    repoRoot: string;
+  type RuntimeInfo = {
+    cliPath: string | null;
+    cliVersion: string | null;
+    environment: 'development' | 'installed' | 'unknown';
+    repoRoot: string | null;
     editorExe: string;
     elevated: boolean;
-  } | null = null;
+    /** 启动时点名要打开的流程；双击 .json 或命令行直接给路径时才有。 */
+    initialPath: string | null;
+  };
+
+  /** 一个流程文件：文档对象原样保留，界面只碰 steps。 */
+  type FlowDocument = {
+    format?: string;
+    version?: number;
+    recordedAt?: string;
+    variables?: Record<string, string>;
+    steps: FlowStep[];
+    [key: string]: unknown;
+  };
+
+  let runtime: RuntimeInfo | null = null;
+  let path: string | null = null;
+  let doc: FlowDocument | null = null;
+  let steps: FlowStep[] = [];
+  let selected = 0;
+  let dirty = false;
+  let outputOpen = false;
+  let jsonOpen = false;
+  let busy = false;
+  /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
+  let notice: { text: string; bad: boolean } | null = null;
 
   onMount(async () => {
     try {
-      runtime = await invoke('runtime_info');
+      runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
       runtime = null;
-      console.error(e);
+      note(String(e), true);
+      return;
     }
+    // 命令行/双击带进来的文件直接打开，省掉一次"再点一下打开"。
+    if (runtime.initialPath) await loadFrom(runtime.initialPath);
   });
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
-  $: current = steps[selected] ?? steps[0];
+  $: current = steps[selected] ?? null;
+  $: fileLabel = path ? baseName(path) : '还没有打开流程';
+  $: canSave = doc !== null && dirty;
+
+  /** 记一条"刚才发生了什么"。成功的消息只落到底部那行，失败了才把输出面板展开——
+   *  轻提醒优先：打开一个文件不该在屏幕上多出一块面板。 */
+  function note(text: string, bad = false) {
+    notice = { text, bad };
+    if (bad) outputOpen = true;
+  }
+
+  function baseName(full: string): string {
+    const cut = Math.max(full.lastIndexOf('\\'), full.lastIndexOf('/'));
+    return cut >= 0 ? full.slice(cut + 1) : full;
+  }
+
+  function emptyDocument(): FlowDocument {
+    return {
+      format: 'keymouse-flow',
+      version: 1,
+      recordedAt: new Date().toISOString(),
+      steps: [],
+    };
+  }
+
+  /** 只认 steps 是数组；别的字段原样留着，保存时一起写回去。 */
+  function adopt(json: unknown): FlowDocument {
+    if (!json || typeof json !== 'object') throw new Error('文件里不是 JSON 对象');
+    const candidate = json as FlowDocument;
+    if (!Array.isArray(candidate.steps)) throw new Error('这份文件没有 steps 数组，不像是流程');
+    return candidate;
+  }
+
+  function useDocument(next: FlowDocument, filePath: string | null) {
+    doc = next;
+    steps = next.steps;
+    path = filePath;
+    selected = 0;
+    dirty = filePath === null;
+  }
+
+  async function loadFrom(filePath: string) {
+    busy = true;
+    try {
+      const file = await invoke<{ path: string; text: string; json: unknown }>('open_flow', { path: filePath });
+      useDocument(adopt(file.json), file.path);
+      note(`打开 ${file.path}`);
+    } catch (e) {
+      note(String(e), true);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function newFlow() {
+    if (!(await confirmDiscard())) return;
+    useDocument(emptyDocument(), null);
+    dirty = true;
+    note('新建了一份空流程：先加一步，再保存');
+  }
+
+  async function openFlow() {
+    if (!(await confirmDiscard())) return;
+    try {
+      const picked = await open({ filters: [{ name: '流程', extensions: ['json'] }], multiple: false });
+      if (typeof picked === 'string') await loadFrom(picked);
+    } catch (e) {
+      note(String(e), true);
+    }
+  }
+
+  async function openSample() {
+    if (!(await confirmDiscard())) return;
+    const base = runtime?.repoRoot;
+    if (!base) {
+      note('安装版没有示例文件；示例只在仓库里（samples\\demo-flow.json）', true);
+      return;
+    }
+    await loadFrom(`${base}\\samples\\demo-flow.json`);
+  }
+
+  async function saveFlow(): Promise<void> {
+    if (!doc) return;
+    if (!path) {
+      await saveAs();
+      return;
+    }
+    busy = true;
+    try {
+      await invoke('save_flow', { path, text: serialize() });
+      dirty = false;
+      note(`已保存 ${path}`);
+    } catch (e) {
+      note(String(e), true);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function saveAs(): Promise<void> {
+    if (!doc) return;
+    try {
+      const picked = await save({
+        filters: [{ name: '流程', extensions: ['json'] }],
+        defaultPath: path ?? 'flow.json',
+      });
+      if (typeof picked !== 'string') return;
+      await invoke('save_flow', { path: picked, text: serialize() });
+      path = picked;
+      dirty = false;
+      note(`已保存 ${picked}`);
+    } catch (e) {
+      note(String(e), true);
+    }
+  }
+
+  /** 写盘用的文本：2 空格缩进 + 末尾换行，与命令行读写的格式一致。 */
+  function serialize(): string {
+    return JSON.stringify(doc, null, 2) + '\n';
+  }
+
+  /** 会丢东西的动作才问一句；别的一律写进底部输出。 */
+  async function confirmDiscard(): Promise<boolean> {
+    if (!dirty) return true;
+    const { ask } = await import('@tauri-apps/plugin-dialog');
+    return await ask('这份流程还没保存，继续会丢掉改动。', {
+      title: '还没保存',
+      kind: 'warning',
+      okLabel: '丢掉改动',
+      cancelLabel: '回去保存',
+    });
+  }
 
   function rowNumber(index: number): string {
     return String(index + 1);
@@ -66,6 +201,36 @@
   function requiredHint(step: FlowStep): string {
     return step.target ? '必填' : '可选';
   }
+
+  /** 改目标窗口的某个字段：空字符串就删掉这个键，别留一个空串在文件里。
+   *  收的是下标而不是步骤对象：模板里只写 `(e) => setTargetField(selected, …)`，
+   *  再把下标换成对象，模板里就不用做非空断言（模板表达式是纯 JS，没有 `!` 可用）。 */
+  function setTargetField(index: number, key: keyof FlowTarget, raw: string) {
+    const step = steps[index];
+    if (!step) return;
+    const value = raw.trim();
+    const next: FlowTarget = { ...(step.target ?? {}) };
+    if (value) (next as Record<string, unknown>)[key] = value;
+    else delete (next as Record<string, unknown>)[key];
+    if (Object.keys(next).length === 0) delete step.target;
+    else step.target = next;
+    touch();
+  }
+
+  function setNote(index: number, raw: string) {
+    const step = steps[index];
+    if (!step) return;
+    const text = raw.trim();
+    if (text) step.note = text;
+    else delete step.note;
+    touch();
+  }
+
+  function touch() {
+    dirty = true;
+    steps = steps;
+    doc = doc;
+  }
 </script>
 
 <div class="shell">
@@ -75,7 +240,17 @@
       <span class="product">KeyMouse</span>
       <span class="kind">流程编辑器</span>
     </div>
-    <div class="path" class:muted={!documentPath}>{documentPath || '还没有保存到文件'}</div>
+    <div class="doc">
+      <span class="name" class:warn={dirty}>{fileLabel}</span>
+      {#if dirty}<span class="unsaved">未保存</span>{/if}
+      {#if path}<span class="path" title={path}>{path}</span>{/if}
+    </div>
+    <div class="file-actions">
+      <button class="ghost" on:click={newFlow} disabled={busy}>新建</button>
+      <button class="ghost" on:click={openFlow} disabled={busy}>打开</button>
+      <button class="ghost" on:click={saveFlow} disabled={!canSave || busy}>保存</button>
+      <button class="ghost" on:click={saveAs} disabled={!doc || busy}>另存为</button>
+    </div>
   </header>
 
   <nav class="toolbar">
@@ -99,79 +274,117 @@
   </nav>
 
   <main class="body">
-    <section class="list" aria-label="步骤">
-      {#each steps as step, index}
-        <button
-          class="row"
-          class:selected={index === selected}
-          on:click={() => (selected = index)}
-        >
-          <span class="rail" aria-hidden="true"></span>
-          <span class="step-dot" aria-hidden="true"></span>
-          <span class="number">{rowNumber(index)}</span>
-          <span class="chip" aria-hidden="true"><StepIcon name={step.type} size={14} /></span>
-          <span class="text">
-            <span class="title">{stepTitle(step.type)}</span>
-            <span class="summary">{stepSummary(step)}</span>
-          </span>
-          {#if childSteps(step).length > 0}
-            <span class="count">{childSteps(step).length} 步</span>
-          {/if}
-        </button>
-
-        {#each childSteps(step) as child, childIndex}
-          <div class="row child">
+    {#if !doc}
+      <section class="empty">
+        <h2>还没有打开流程</h2>
+        <p>一条流程就是一串动作：切到某个窗口、点一下、输入文字、等屏幕上出现某段字。写好后可以先试运行，确认真能走通再播放。</p>
+        <div class="empty-actions">
+          <button class="primary" on:click={newFlow}>新建流程</button>
+          <button class="ghost outline" on:click={openFlow}>打开流程…</button>
+          <button class="ghost" on:click={openSample}>看看示例</button>
+        </div>
+        <p class="tips">流程文件是 JSON，命令行也能跑：<code>KeyMouse run 流程.json --dry-run</code> 先看每一步的窗口在不在。</p>
+      </section>
+    {:else}
+      <section class="list" aria-label="步骤">
+        {#each steps as step, index}
+          <button
+            class="row"
+            class:selected={index === selected}
+            on:click={() => (selected = index)}
+          >
             <span class="rail" aria-hidden="true"></span>
             <span class="step-dot" aria-hidden="true"></span>
-            <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
-            <span class="chip" aria-hidden="true"><StepIcon name={child.type} size={14} /></span>
+            <span class="number">{rowNumber(index)}</span>
+            <span class="chip" aria-hidden="true"><StepIcon name={step.type} size={14} /></span>
             <span class="text">
-              <span class="title">{stepTitle(child.type)}</span>
-              <span class="summary">{stepSummary(child)}</span>
+              <span class="title">{stepTitle(step.type)}</span>
+              <span class="summary">{stepSummary(step)}</span>
             </span>
-          </div>
+            {#if childSteps(step).length > 0}
+              <span class="count">{childSteps(step).length} 步</span>
+            {/if}
+          </button>
+
+          {#each childSteps(step) as child, childIndex}
+            <div class="row child">
+              <span class="rail" aria-hidden="true"></span>
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
+              <span class="chip" aria-hidden="true"><StepIcon name={child.type} size={14} /></span>
+              <span class="text">
+                <span class="title">{stepTitle(child.type)}</span>
+                <span class="summary">{stepSummary(child)}</span>
+              </span>
+            </div>
+          {/each}
         {/each}
-      {/each}
-    </section>
 
-    <aside class="side" aria-label="这一步的设置">
-      <div class="side-head">
-        <h2>目标窗口</h2>
-        <span class="hint">{requiredHint(current)}</span>
-      </div>
+        {#if steps.length === 0}
+          <p class="blank">这一步还没加。上面那排按钮各加一步，按顺序往下执行。</p>
+        {/if}
+      </section>
 
-      <label class="field">
-        <span class="label">进程名</span>
-        <input value={targetOf(current).process ?? ''} placeholder="notepad" />
-      </label>
-      <label class="field">
-        <span class="label">窗口类名</span>
-        <input value={targetOf(current).class ?? ''} placeholder="" />
-      </label>
-      <label class="field">
-        <span class="label">标题</span>
-        <input value={targetOf(current).title ?? ''} placeholder="" />
-      </label>
+      <aside class="side" aria-label="这一步的设置">
+        {#if current}
+          <div class="side-head">
+            <h2>目标窗口</h2>
+            <span class="hint">{requiredHint(current)}</span>
+          </div>
 
-      <h2 class="section">只在满足条件时执行</h2>
-      <div class="toggle-row">
-        <span class="switch" role="switch" aria-checked="false" tabindex="0"><span class="knob"></span></span>
-        <span>每次都执行</span>
-      </div>
+          <label class="field">
+            <span class="label">进程名</span>
+            <input
+              value={targetOf(current).process ?? ''}
+              placeholder="notepad"
+              on:input={(e) => setTargetField(selected, 'process', e.currentTarget.value)}
+            />
+          </label>
+          <label class="field">
+            <span class="label">窗口类名</span>
+            <input
+              value={targetOf(current).class ?? ''}
+              placeholder=""
+              on:input={(e) => setTargetField(selected, 'class', e.currentTarget.value)}
+            />
+          </label>
+          <label class="field">
+            <span class="label">标题</span>
+            <input
+              value={targetOf(current).title ?? ''}
+              placeholder=""
+              on:input={(e) => setTargetField(selected, 'title', e.currentTarget.value)}
+            />
+          </label>
 
-      <label class="field">
-        <span class="label">备注 <span class="info" title="只给人看，不影响回放">i</span></span>
-        <input value={current.note ?? ''} />
-      </label>
+          <h2 class="section">只在满足条件时执行</h2>
+          <div class="toggle-row">
+            <span class="switch" role="switch" aria-checked="false" tabindex="0"><span class="knob"></span></span>
+            <span>每次都执行</span>
+          </div>
 
-      <button class="disclosure">JSON <span aria-hidden="true">⌄</span></button>
-    </aside>
+          <label class="field">
+            <span class="label">备注 <span class="info" title="只给人看，不影响回放">i</span></span>
+            <input value={current.note ?? ''} on:input={(e) => setNote(selected, e.currentTarget.value)} />
+          </label>
+
+          <button class="disclosure" on:click={() => (jsonOpen = !jsonOpen)} aria-expanded={jsonOpen}>
+            JSON <span aria-hidden="true">{jsonOpen ? '⌃' : '⌄'}</span>
+          </button>
+          {#if jsonOpen}
+            <pre class="json">{JSON.stringify(current, null, 2)}</pre>
+          {/if}
+        {:else}
+          <p class="blank side-blank">左边还没有步骤。选中一步，这里显示它的设置。</p>
+        {/if}
+      </aside>
+    {/if}
   </main>
 
   <footer class="foot">
     <div class="status">
       {#if runtime}
-        <span class="status-dot" class:warn={runtime.elevated}></span>
+        <span class="status-dot" class:warn={runtime.elevated || !runtime.cliPath}></span>
         {#if runtime.cliPath}
           <span class="mono">{runtime.cliVersion || '（命令行没有回版本号）'}</span>
           <span class="dim">· {runtime.environment === 'development' ? '开发树' : '安装版'}</span>
@@ -180,6 +393,9 @@
         {/if}
       {:else}
         <span class="dim">外壳没连上（浏览器里预览时正常）</span>
+      {/if}
+      {#if notice}
+        <span class="notice" class:bad={notice.bad}>{notice.text}</span>
       {/if}
     </div>
     <button class="output-pill" on:click={() => (outputOpen = !outputOpen)}>
@@ -212,14 +428,14 @@
   .shell {
     height: 100%;
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto auto;
     position: relative;
   }
 
   /* ── 顶栏 ───────────────────────────────────────────── */
   .topbar {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     align-items: baseline;
     gap: var(--kp-gap-xl);
     padding: 14px var(--kp-gap-xl) 10px;
@@ -248,10 +464,47 @@
     font-size: var(--kp-fs-body);
   }
 
+  /* 打开的是哪个文件：名字在前、完整路径在后，路径可以被截断，名字不行 */
+  .doc {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .doc .name {
+    font-size: var(--kp-fs-body);
+    color: var(--kp-ink);
+    white-space: nowrap;
+  }
+
+  .doc .name.warn {
+    color: var(--kp-ink2);
+  }
+
+  .unsaved {
+    flex: none;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--kp-selected);
+    color: var(--kp-signal);
+    font-size: var(--kp-fs-small);
+  }
+
+  .file-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .file-actions .ghost:disabled {
+    opacity: 0.4;
+  }
+
   .path {
     font-family: var(--kp-font-mono);
     font-size: var(--kp-fs-small);
-    color: var(--kp-ink2);
+    color: var(--kp-ink3);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -351,6 +604,71 @@
     min-height: 0;
     padding: var(--kp-gap-lg) var(--kp-gap-xl);
     gap: var(--kp-gap-xl);
+  }
+
+  /* ── 空状态 ─────────────────────────────────────────── */
+  .empty {
+    grid-column: 1 / -1;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    padding: 40px 44px;
+    max-width: 760px;
+    align-self: start;
+  }
+
+  .empty h2 {
+    margin: 0 0 10px;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--kp-ink);
+  }
+
+  .empty p {
+    margin: 0 0 18px;
+    max-width: 56ch;
+    color: var(--kp-ink2);
+    line-height: 1.7;
+  }
+
+  .empty-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .empty .tips {
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--kp-rule);
+    font-size: var(--kp-fs-small);
+    color: var(--kp-ink3);
+  }
+
+  /* 行内代码不折断：`KeyMouse run 流程.json --dry-run` 从中间断行比换行还难读 */
+  .empty code {
+    font-family: var(--kp-font-mono);
+    font-size: 12px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: var(--kp-field);
+    color: var(--kp-ink2);
+    white-space: nowrap;
+  }
+
+  /* 列表为空 / 没有选中项时的一句话，不是错误，所以不用朱砂色 */
+  .blank {
+    margin: 0;
+    padding: 28px 20px;
+    color: var(--kp-ink3);
+    font-size: var(--kp-fs-small);
+    line-height: 1.8;
+  }
+
+  .side-blank {
+    padding: 0;
+    max-width: 40ch;
   }
 
   .list {
@@ -617,6 +935,35 @@
     letter-spacing: 0.04em;
   }
 
+  /* 这一步的原始 JSON：只读，给人核对用；不参与编辑 */
+  .json {
+    margin: 0 0 4px;
+    padding: 12px 14px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-field);
+    color: var(--kp-ink2);
+    font-family: var(--kp-font-mono);
+    font-size: 12px;
+    line-height: 1.65;
+    overflow: auto;
+    max-height: 260px;
+    user-select: text;
+  }
+
+  /* 底部那一行"刚才发生了什么"：正常是灰的，出问题是朱砂的 */
+  .notice {
+    margin-left: 6px;
+    color: var(--kp-ink3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notice.bad {
+    color: var(--kp-critical);
+  }
+
   /* ── 底部 ───────────────────────────────────────────── */
   .foot {
     display: flex;
@@ -674,15 +1021,17 @@
     color: var(--kp-ink);
   }
 
+  /* 运行输出是页面的一部分，不是浮层：它出现时把上面两栏压缩，而不是盖住列表。
+     浮层在窄窗口里会把内容挡掉一半，而这一块恰恰是出问题时最需要看的地方。 */
   .output {
-    position: absolute;
-    right: var(--kp-gap-xl);
-    bottom: 58px;
-    width: min(760px, calc(100% - 96px));
+    grid-row: 5;
+    margin: 0 var(--kp-gap-xl) 12px;
     border: 1px solid var(--kp-rule);
     border-radius: var(--kp-radius-panel);
     background: var(--kp-card);
     padding: 14px 16px 16px;
+    max-height: 40vh;
+    overflow: auto;
   }
 
   .output header {

@@ -59,13 +59,18 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - 图标是一套自绘的 16×16 描边图形（`src/lib/StepIcon.svelte`），按"这一步在做什么"画，不按字段画。
 - 底部状态行显示 `KeyMouse 0.2.1（引擎 2.1.0）· 开发树`，来自 `runtime_info`——也就是它真的找到了命令行；
   找不到时显示一行"没找到命令行 KeyMouse.exe"。
-- 演示数据与仓库里的 [`samples/demo-flow.json`](../../samples/demo-flow.json) 逐字段一致，拿文件对照界面即可。
 - 界面进程不提权：状态行那颗点是朱砂色（普通权限）；提权时会变成警示色。
+- **能打开真实流程**（P1a）：`新建` / `打开` / `保存` / `另存为`，文件对话框走 Tauri 的 dialog 插件；
+  命令行点名 `keymouse-editor.exe 流程.json` 时启动即载入。
+- **能改字段**：检查器里的进程名 / 窗口类名 / 标题 / 备注写回文档，改动后顶栏出现「未保存」，
+  `保存` 变为可用；会丢东西的动作（关掉未保存的文档）才弹确认框，其余都写进底部那行。
+- 底部那行提示是"轻提醒"：普通的成功只更新一行字，只有失败才展开「运行输出」面板；
+  那个面板是页面的一部分（占一行），不是浮层——浮层在窄窗口里正好盖住出问题的列表。
 
-还没有的（P1 起）：
+还没有的：
 
-- 打开/保存真实流程文件、编辑步骤、检查器真的能改字段——现在是只读的样板数据。
-- 录制、试运行、播放的按钮接线。
+- 加/删/上下移步骤、拖拽排序（P1b），试运行/播放/停止接线（P1c）。
+- `validate_flow` / `run_flow` 两条命令（契约已写，实现待 P1c）。
 - 自绘标题栏（现在用系统标题栏）。
 
 
@@ -82,13 +87,17 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 ## 与命令行的接口
 
-界面不读文件系统、不调 Core（那是 P1 才做的契约层）。目前只有一个命令：
+界面不碰文件、不起进程；跨过去只有四个命令，参数与错误码都写在
+[编辑器接口契约](../reference/editor-ipc.md)：
 
 | 命令 | 入参 | 出参 |
 | --- | --- | --- |
-| `runtime_info` | — | `{ cli_path, cli_version, environment, repo_root, editor_exe, elevated }` |
+| `runtime_info` | — | `{ cliPath, cliVersion, environment, repoRoot, editorExe, elevated, initialPath }` |
+| `open_flow` | `path` | `{ path, text, json }`；JSON 不合法报 `flow.invalid-json` |
+| `save_flow` | `path`, `text` | —（会自己建父目录） |
+| 对话框 | 前端直接调 `@tauri-apps/plugin-dialog` | 取消返回 `null`，不算失败 |
 
-`cli_path` 的查找顺序与 `ProductLayout.CliCandidates()` 一致：`KEYMOUSE_CLI` → `<仓库>\artifacts\cli` →
+`cliPath` 的查找顺序与 `ProductLayout.CliCandidates()` 一致：`KEYMOUSE_CLI` → `<仓库>\artifacts\cli` →
 `src\KeyMouse.Cli\bin\Release\net10.0-windows` → 自己目录 → 自己目录\cli → PATH。
 `environment` 是 `development` / `installed`，判定规则见 [开发树与安装版](../guide/environments.md)。
 

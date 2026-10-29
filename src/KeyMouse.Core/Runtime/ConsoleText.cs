@@ -22,11 +22,23 @@ internal static class ConsoleText
     ///
     /// With no console attached (CI, a plain pipe) GetConsoleOutputCP returns 0 and .NET's
     /// UTF-8 default is already the right answer, so nothing is changed.
+    ///
+    /// Callers that are not a terminal - the editor shell, any program parsing our output -
+    /// set <c>KEYMOUSE_OUTPUT_ENCODING=utf-8</c> to opt out: guessing the console code page is
+    /// right for a terminal and wrong for everything else. This is the one switch in this file
+    /// that changes behaviour, and it is documented in docs/reference/cli.md.
     /// </summary>
     public static void ConfigureOutputEncoding()
     {
         try
         {
+            if (IsUtf8Requested())
+            {
+                // No BOM: the reader on the other side is a program, not Notepad.
+                Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+                return;
+            }
+
             uint codePage = GetConsoleOutputCP();
             if (codePage == 0 || codePage == Console.OutputEncoding.CodePage) return;
 
@@ -40,6 +52,13 @@ internal static class ConsoleText
             // Display encoding is never worth taking the program down for; the default stays.
         }
     }
+
+    /// <summary>True when the caller asked for UTF-8 by setting KEYMOUSE_OUTPUT_ENCODING=utf-8.</summary>
+    private static bool IsUtf8Requested() =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("KEYMOUSE_OUTPUT_ENCODING"),
+            "utf-8",
+            StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Width of the string in terminal cells (CJK counts as two).</summary>
     public static int DisplayWidth(string text)

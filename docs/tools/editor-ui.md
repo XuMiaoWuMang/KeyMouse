@@ -16,7 +16,7 @@
 
 | 参数 | 说明 |
 | --- | --- |
-| `-Verb`（位置参数） | `setup` / `dev` / `build` / `check` / `icons` / `clean`，默认 `dev` |
+| `-Verb`（位置参数） | `setup` / `dev` / `build` / `check` / `test` / `icons` / `clean`，默认 `dev` |
 | `-Registry` | 装依赖用的 npm 源，默认 `https://registry.npmmirror.com` |
 
 ## 动词
@@ -27,6 +27,7 @@
 | `dev` | 起 vite + `cargo run`，打开窗口 | 日志写 `artifacts\tests\editor-ui\dev-<时间戳>.log` |
 | `build` | 只打前端 | `src\KeyMouse.EditorUI\dist\`，打印总体积 |
 | `check` | `svelte-check`：类型与模板 | 只读，0 error 才算过 |
+| `test` | `cargo test`：外壳自己的 Rust 单测（路径解析、读写文件、错误码） | 只读 |
 | `icons` | 从 `src-tauri\icons\source.png` 铺开整套尺寸 | `src-tauri\icons\`（顺手删掉 android/ios 两套） |
 | `clean` | 删 `node_modules`、`src-tauri\target`、`dist` | — |
 
