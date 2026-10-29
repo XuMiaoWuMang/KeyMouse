@@ -1,0 +1,3 @@
+# esbuild 的 postinstall 只是把平台二进制挑出来；不批准它，vite 起不来。
+allowBuilds:
+  esbuild: true

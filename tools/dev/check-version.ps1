@@ -66,6 +66,26 @@ foreach ($relative in $expected.Keys) {
     } else { Ok "$relative 用 $want" }
 }
 
+# ---- 2.5 新外壳（Tauri）的三份清单也得跟着产品版本走 ------------------------------
+# 这三处 Tauri 自己会用（窗口标题托盘、安装包文件名、crate 版本），漏一处就会出现
+# "程序里写着 0.2.1、包名却是 0.1.9"的情况，所以一起查。
+$shellFiles = @(
+    @{ Path = 'src\KeyMouse.EditorUI\package.json';            Pattern = '"version"\s*:\s*"([^"]+)"' }
+    @{ Path = 'src\KeyMouse.EditorUI\src-tauri\tauri.conf.json'; Pattern = '"version"\s*:\s*"([^"]+)"' }
+    @{ Path = 'src\KeyMouse.EditorUI\src-tauri\Cargo.toml';    Pattern = '(?m)^version\s*=\s*"([^"]+)"' }
+)
+
+foreach ($file in $shellFiles) {
+    $path = Join-Path $root $file.Path
+    if (-not (Test-Path $path)) { Ok "$($file.Path) 不存在（新外壳还没建）"; continue }
+    $text = Get-Content $path -Raw
+    $match = [regex]::Match($text, $file.Pattern)
+    if (-not $match.Success) { Fail "$($file.Path) 里找不到版本号"; continue }
+    if ($match.Groups[1].Value -ne $product) {
+        Fail "$($file.Path) 的版本是 $($match.Groups[1].Value)，应与产品版本 $product 一致"
+    } else { Ok "$($file.Path) = $product" }
+}
+
 # ---- 3. 不许有内联字面量 ------------------------------------------------------------
 $literals = Get-ChildItem -Path (Join-Path $root 'src') -Recurse -File -Include *.csproj,*.props,*.targets |
     Select-String -Pattern '<(ProductVersion|EngineVersion|Version)>\s*\d+\.\d+'

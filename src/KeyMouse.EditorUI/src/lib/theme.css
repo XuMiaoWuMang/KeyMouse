@@ -1,0 +1,85 @@
+/* 工程纸（Engineering Paper）—— 与 KeyMouse.FlowEditor/Themes/Palette.xaml 同一套 token。
+   纸、墨、朱砂，三样东西。没有第四样：
+     · 纸面是暖白，卡片是它的提亮，不是另一种灰；
+     · 墨色三档都是同一个暖黑；
+     · 朱砂只有一个用法：当前与可动（主操作、选中、未保存、报错除外）。
+   控件 4px、面板 8px；没有投影；线只有 1px 一种。 */
+
+:root {
+  --kp-paper: #faf7f2;
+  --kp-card: #ffffff;
+  --kp-ink: #17140f;
+  --kp-ink2: #6a655c;
+  --kp-ink3: #a39c90;
+  --kp-rule: #e6e1d8;
+  --kp-field: #f5f1e9;
+  --kp-selected: #f2ece2;
+  --kp-signal: #c2410c;
+  --kp-signal-hover: #a83709;
+  --kp-signal-pressed: #8e2e06;
+  --kp-signal-off: #efe7da;
+  --kp-critical: #b3261e;
+
+  --kp-radius-control: 4px;
+  --kp-radius-panel: 8px;
+
+  --kp-font: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', system-ui, sans-serif;
+  --kp-font-mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+
+  --kp-fs-small: 12px;
+  --kp-fs-body: 14px;
+  --kp-fs-row-title: 15px;
+  --kp-fs-title: 21px;
+  --kp-fs-hero: 26px;
+
+  --kp-gap: 8px;
+  --kp-gap-lg: 16px;
+  --kp-gap-xl: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--kp-paper);
+  color: var(--kp-ink);
+  font: var(--kp-fs-body) / 1.55 var(--kp-font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: default;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* 焦点环：键盘走查时看得见，鼠标点不出现（:focus-visible）。 */
+:focus-visible {
+  outline: 2px solid var(--kp-signal);
+  outline-offset: 1px;
+}
+
+::selection {
+  background: var(--kp-signal-off);
+}

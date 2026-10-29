@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "编辑器主窗口默认能力：只要核心 API，不开文件系统/网络插件。",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

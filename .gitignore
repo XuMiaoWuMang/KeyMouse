@@ -39,3 +39,8 @@ _session-backup/
 .dsh-presets/
 # 本地 GitHub token（tools/release/clean-releases.ps1 读它，用完即删）
 .keymouse-github-token
+# 前端外壳（Tauri + Vite）：依赖、构建、Rust 中间物
+node_modules/
+src/KeyMouse.EditorUI/dist/
+src/KeyMouse.EditorUI/src-tauri/target/
+src/KeyMouse.EditorUI/src-tauri/gen/

@@ -20,6 +20,8 @@
 | `release.ps1` | `tools\release\release.ps1` | 建/撤销 GitHub Release 并上传产物 | 打标签之后真正发版 |
 | `release-notes.ps1` | `tools\release\release-notes.ps1` | 按 git 历史生成发版说明 | 需要发版正文，或想预览这次改了什么 |
 | `clean-releases.ps1` | `tools\release\clean-releases.ps1` | 清掉遗留的 Release 与旧命名标签 | 命名规则变更后收拾旧账 |
+| `editor-ui.ps1` | `tools\dev\editor-ui.ps1` | 新编辑器外壳（Tauri）装依赖、起开发窗口、打前端、查类型 | 动 `src\KeyMouse.EditorUI` 时 |
+| `make-icon.py` | `tools\build\make-icon.py` | 画编辑器图标源图（朱砂底、三条横条） | 改图标或重新生成整套尺寸 |
 
 ## 日常
 
@@ -33,6 +35,11 @@
 ## 构建
 
 - [`build.ps1` 与 `pack-release.ps1`](build.md) —— 单文件产物、编辑器发布目录、安装程序载荷。
+
+## 新编辑器外壳
+
+- [`editor-ui.ps1`](editor-ui.md) —— Tauri 外壳的装依赖、开发窗口、前端产物、类型检查。
+- [`make-icon.py`](make-icon.md) —— 图标源图（朱砂底 + 三条横条），改完再铺一套尺寸。
 
 ## 发布
 

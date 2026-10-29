@@ -7,7 +7,7 @@
     不需要构建，所以 CI 每次 push 都跑。
 
     跳过这些目录，它们不是文档：
-        bin obj artifacts .git .vs evidence
+        bin obj artifacts .git .vs evidence node_modules target
     evidence 是本地取证归档：里面的 summary.md 会复述 OCR 读到的东西，而 OCR 读到的
     文本长得跟 markdown 链接一模一样（实测：样例里的「[是](3)[取消]」被当成指向 3 的断链）。
 
@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path $Root).Path
 
 $files = Get-ChildItem -Path $root -Filter *.md -Recurse -File |
-    Where-Object { $_.FullName -notmatch '\\(bin|obj|artifacts|\.git|\.vs|evidence)\\' }
+    Where-Object { $_.FullName -notmatch '\\(bin|obj|artifacts|\.git|\.vs|evidence|node_modules|target)\\' }
 
 $checked = 0
 $broken = 0
