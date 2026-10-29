@@ -1,0 +1,44 @@
+/**
+ * 对步骤列表的四种改动：插入、删除、上移、下移。
+ *
+ * 都是纯函数、都返回新数组：界面把它们的结果塞回文档，单测可以直接调。
+ * 不做"带副作用"的原地改——撤销栈就是先把文档序列化一份存起来，原地改会让快照
+ * 和数组指向同一份对象。
+ */
+
+import type { FlowStep } from './model';
+
+/** 在 `index` 之后插入；`index` 为 -1 时放到最前面。 */
+export function insertAfter(steps: readonly FlowStep[], index: number, step: FlowStep): FlowStep[] {
+  const next = [...steps];
+  next.splice(index + 1, 0, step);
+  return next;
+}
+
+/** 删掉第 `index` 步。下标越界时原样返回，不抛错——界面上的按钮不该因为竞态炸掉。 */
+export function removeAt(steps: readonly FlowStep[], index: number): FlowStep[] {
+  if (index < 0 || index >= steps.length) return [...steps];
+  return steps.filter((_, i) => i !== index);
+}
+
+/** 上移一位；已经在最前面就不动。 */
+export function moveUp(steps: readonly FlowStep[], index: number): FlowStep[] {
+  if (index <= 0 || index >= steps.length) return [...steps];
+  const next = [...steps];
+  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+  return next;
+}
+
+/** 下移一位；已经在最后就不动。 */
+export function moveDown(steps: readonly FlowStep[], index: number): FlowStep[] {
+  if (index < 0 || index >= steps.length - 1) return [...steps];
+  const next = [...steps];
+  [next[index + 1], next[index]] = [next[index], next[index + 1]];
+  return next;
+}
+
+/** 删除之后选中项应该落在哪：优先保持原位置，删的是最后一步就往前收一格。 */
+export function selectionAfterRemove(index: number, length: number): number {
+  if (length <= 0) return 0;
+  return Math.min(Math.max(index, 0), length - 1);
+}

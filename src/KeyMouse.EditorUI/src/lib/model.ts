@@ -38,6 +38,15 @@ export interface FlowStep {
   maxErrors?: number;
   timeoutMs?: number;
   intervalMs?: number;
+  durationMs?: number;
+  confirm?: number;
+  button?: 'left' | 'right' | 'middle';
+  into?: string;
+  'in'?: string;
+  flow?: string;
+  vars?: Record<string, unknown>;
+  export?: Record<string, string>;
+  when?: string;
   ms?: number;
   delta?: number;
   combo?: string;

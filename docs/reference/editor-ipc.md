@@ -75,7 +75,21 @@ type FlowFile = {
 把界面的文本原样写回文件（UTF-8，无 BOM，LF）。写之前不校验——校验是界面的按钮，
 不是保存的前置条件（用户有权保存一份还没写完的流程）。
 
-### 对话框
+### 关窗
+
+外壳不解析流程内容，所以它自己不知道"脏了没有"。界面每次改动后推一次标记，外壳只在
+用户点 × 时用它决定"直接关"还是"先问一句"。
+
+| 命令 | 入参 | 出参 |
+| --- | --- | --- |
+| `set_dirty` | `dirty: boolean` | — |
+| `close_window` | — | —（`destroy()`，不再走 `CloseRequested`） |
+
+事件：`shell://close-requested`（无负载）。外壳拦住关窗后发一次，界面确认可以关就调 `close_window`。
+
+那为什么不直接在界面里 `getCurrentWindow().close()`：它会让 `CloseRequested` 再走一遍，
+脏标记还在就会被拦回来，于是窗口永远关不掉。
+## 对话框
 
 文件对话框走 Tauri 官方 `dialog` 插件，用法是标准 API：
 

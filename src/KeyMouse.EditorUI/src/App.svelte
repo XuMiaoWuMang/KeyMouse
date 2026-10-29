@@ -1,14 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { listen } from '@tauri-apps/api/event';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
+  import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
     stepSummary,
     stepTitle,
     type FlowStep,
     type FlowTarget,
+    type StepType,
   } from './lib/model';
 
   type RuntimeInfo = {
@@ -40,9 +44,20 @@
   let dirty = false;
   let outputOpen = false;
   let jsonOpen = false;
+  let moreOpen = false;
   let busy = false;
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
+
+  /**
+   * 撤销栈存的是"改动之前那份文档"的 JSON。
+   *
+   * 为什么是 JSON 而不是对象引用：步骤编辑里到处是原地改字段，对象引用会被后续
+   * 修改悄悄改掉，撤销就成了"撤到一半"。序列化一份 10 KB 的文本，比追踪引用安全得多。
+   */
+  const undoStack: string[] = [];
+  const redoStack: string[] = [];
+  const HISTORY_LIMIT = 50;
 
   onMount(async () => {
     try {
@@ -55,6 +70,20 @@
     // 命令行/双击带进来的文件直接打开，省掉一次"再点一下打开"。
     if (runtime.initialPath) await loadFrom(runtime.initialPath);
   });
+
+  // 关闭窗口时外壳会问界面一句"能关吗"：脏了就先确认，再让它关。
+  onMount(() => {
+    let stop: (() => void) | undefined;
+    void listen('shell://close-requested', async () => {
+      if (await confirmDiscard()) await invoke('close_window').catch(() => undefined);
+    }).then((unlisten) => {
+      stop = unlisten;
+    });
+    return () => stop?.();
+  });
+
+  // 外壳不知道界面里发生了什么，脏标记得推给它；它只负责在关窗前问一句。
+  $: syncDirty(dirty);
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
   $: current = steps[selected] ?? null;
@@ -198,8 +227,173 @@
     return step.target ?? {};
   }
 
-  function requiredHint(step: FlowStep): string {
-    return step.target ? '必填' : '可选';
+  /** 「+ 更多」里按用途分组列出剩下的步骤种类；常用四种已经在工具栏上。 */
+  $: moreGroups = [...new Set(STEP_TEMPLATES.map((t) => t.group))].filter((g) => g !== '常用');
+
+  function syncDirty(value: boolean) {
+    void invoke('set_dirty', { dirty: value }).catch(() => undefined);
+  }
+
+  // ── 撤销 / 重做 ────────────────────────────────────────
+
+  /** 记一份"改之前的文档"。任何会改 steps 的动作都先调它。 */
+  function snapshot() {
+    if (!doc) return;
+    undoStack.push(JSON.stringify(doc));
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+  }
+
+  /**
+   * 输入框是逐字触发 on:input 的。每敲一个字都记一份快照，撤销就会退回一个字，
+   * 而人期望的是"退回改之前"。所以同一个字段 800ms 内的连续修改只记一次。
+   */
+  let lastEditKey = '';
+  let lastEditAt = 0;
+  function snapshotEdit(key: string) {
+    const now = Date.now();
+    if (key === lastEditKey && now - lastEditAt < 800) {
+      lastEditAt = now;
+      return;
+    }
+    snapshot();
+    lastEditKey = key;
+    lastEditAt = now;
+  }
+
+  function restore(json: string) {
+    const next = JSON.parse(json) as FlowDocument;
+    doc = next;
+    steps = next.steps ?? [];
+    selected = Math.min(selected, Math.max(steps.length - 1, 0));
+    dirty = true;
+  }
+
+  function undo() {
+    const previous = undoStack.pop();
+    if (previous === undefined || !doc) return;
+    redoStack.push(JSON.stringify(doc));
+    restore(previous);
+    note('撤销了一步');
+  }
+
+  function redo() {
+    const next = redoStack.pop();
+    if (next === undefined || !doc) return;
+    undoStack.push(JSON.stringify(doc));
+    restore(next);
+    note('重做了一步');
+  }
+
+  $: canUndo = undoStack.length > 0;
+  $: canRedo = redoStack.length > 0;
+
+  // ── 步骤的增删与排序 ───────────────────────────────────
+
+  function applySteps(next: FlowStep[]) {
+    if (!doc) return;
+    snapshot();
+    doc = { ...doc, steps: next };
+    steps = next;
+    touch();
+  }
+
+  /** 在选中步之后插一步；没有选中（空文档）就放到最前面。 */
+  function addStep(type: StepType) {
+    if (!doc) return;
+    const at = steps.length === 0 ? -1 : selected;
+    applySteps(insertAfter(steps, at, makeStep(type)));
+    selected = at + 1;
+    moreOpen = false;
+    note(`加了「${stepTitle(type)}」${missingOf(makeStep(type)).length > 0 ? '：右边补齐还没填的项' : ''}`);
+  }
+
+  function deleteStep(index = selected) {
+    if (!doc || steps.length === 0) return;
+    const next = removeAt(steps, index);
+    applySteps(next);
+    selected = selectionAfterRemove(index, next.length);
+    note('删了一步（Ctrl+Z 可以反悔）');
+  }
+
+  function stepUp(index = selected) {
+    if (!doc || index <= 0) return;
+    applySteps(moveUp(steps, index));
+    selected = index - 1;
+  }
+
+  function stepDown(index = selected) {
+    if (!doc || index >= steps.length - 1) return;
+    applySteps(moveDown(steps, index));
+    selected = index + 1;
+  }
+
+  /** 快捷键。输入框里只认 Ctrl+S / Ctrl+O / Ctrl+N / Ctrl+Z，别抢打字。 */
+  function onKeydown(event: KeyboardEvent) {
+    const element = event.target as HTMLElement | null;
+    const typing = element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA';
+    const mod = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
+
+    if (mod && key === 's') {
+      event.preventDefault();
+      void saveFlow();
+      return;
+    }
+    if (mod && key === 'o') {
+      event.preventDefault();
+      void openFlow();
+      return;
+    }
+    if (mod && key === 'n') {
+      event.preventDefault();
+      void newFlow();
+      return;
+    }
+    if (mod && key === 'z') {
+      event.preventDefault();
+      if (event.shiftKey) redo();
+      else undo();
+      return;
+    }
+    if (mod && key === 'y') {
+      event.preventDefault();
+      redo();
+      return;
+    }
+
+    // Esc 先把那张「+ 更多」卡片收起来：它在视觉上压住了列表。
+    if (key === 'escape') {
+      moreOpen = false;
+      return;
+    }
+
+    if (typing || !doc) return;
+
+    if (event.altKey && event.key === 'ArrowUp') {
+      event.preventDefault();
+      stepUp();
+      return;
+    }
+    if (event.altKey && event.key === 'ArrowDown') {
+      event.preventDefault();
+      stepDown();
+      return;
+    }
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      deleteStep();
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      selected = Math.min(selected + 1, Math.max(steps.length - 1, 0));
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      selected = Math.max(selected - 1, 0);
+    }
   }
 
   /** 改目标窗口的某个字段：空字符串就删掉这个键，别留一个空串在文件里。
@@ -208,6 +402,7 @@
   function setTargetField(index: number, key: keyof FlowTarget, raw: string) {
     const step = steps[index];
     if (!step) return;
+    snapshotEdit(`target:${index}:${key}`);
     const value = raw.trim();
     const next: FlowTarget = { ...(step.target ?? {}) };
     if (value) (next as Record<string, unknown>)[key] = value;
@@ -220,6 +415,7 @@
   function setNote(index: number, raw: string) {
     const step = steps[index];
     if (!step) return;
+    snapshotEdit(`note:${index}`);
     const text = raw.trim();
     if (text) step.note = text;
     else delete step.note;
@@ -232,6 +428,8 @@
     doc = doc;
   }
 </script>
+
+<svelte:window on:keydown={onKeydown} />
 
 <div class="shell">
   <header class="topbar">
@@ -246,6 +444,9 @@
       {#if path}<span class="path" title={path}>{path}</span>{/if}
     </div>
     <div class="file-actions">
+      <button class="ghost icon-only" on:click={undo} disabled={!canUndo} aria-label="撤销" title="撤销（Ctrl+Z）">↶</button>
+      <button class="ghost icon-only" on:click={redo} disabled={!canRedo} aria-label="重做" title="重做（Ctrl+Shift+Z）">↷</button>
+      <span class="sep" aria-hidden="true"></span>
       <button class="ghost" on:click={newFlow} disabled={busy}>新建</button>
       <button class="ghost" on:click={openFlow} disabled={busy}>打开</button>
       <button class="ghost" on:click={saveFlow} disabled={!canSave || busy}>保存</button>
@@ -255,11 +456,32 @@
 
   <nav class="toolbar">
     <div class="palette">
-      <button class="palette-item"><StepIcon name="click" />点击</button>
-      <button class="palette-item"><StepIcon name="type" />输入文字</button>
-      <button class="palette-item"><StepIcon name="wait-text" />等文字出现</button>
-      <button class="palette-item"><StepIcon name="click-text" />找字并点它</button>
-      <button class="palette-item more">+ 更多</button>
+      {#each QUICK_TYPES as type}
+        <button class="palette-item" on:click={() => addStep(type)} disabled={!doc}>
+          <StepIcon name={type} />{stepTitle(type)}
+        </button>
+      {/each}
+      <button
+        class="palette-item more"
+        class:open={moreOpen}
+        on:click={() => (moreOpen = !moreOpen)}
+        disabled={!doc}
+        aria-expanded={moreOpen}
+      >+ 更多</button>
+
+      {#if moreOpen}
+        <div class="more-menu" role="menu">
+          {#each moreGroups as group}
+            <p class="more-group">{group}</p>
+            {#each STEP_TEMPLATES.filter((item) => item.group === group) as item}
+              <button class="more-item" role="menuitem" on:click={() => addStep(item.type)}>
+                <StepIcon name={item.type} size={14} />{stepTitle(item.type)}
+              </button>
+            {/each}
+          {/each}
+          <p class="more-tip">新加的一步是半成品：右边补齐还没填的项才算能用。</p>
+        </div>
+      {/if}
     </div>
 
     <div class="actions">
@@ -288,23 +510,36 @@
     {:else}
       <section class="list" aria-label="步骤">
         {#each steps as step, index}
-          <button
-            class="row"
-            class:selected={index === selected}
-            on:click={() => (selected = index)}
-          >
-            <span class="rail" aria-hidden="true"></span>
-            <span class="step-dot" aria-hidden="true"></span>
-            <span class="number">{rowNumber(index)}</span>
-            <span class="chip" aria-hidden="true"><StepIcon name={step.type} size={14} /></span>
-            <span class="text">
-              <span class="title">{stepTitle(step.type)}</span>
-              <span class="summary">{stepSummary(step)}</span>
+          <div class="row-wrap">
+            <button
+              class="row"
+              class:selected={index === selected}
+              on:click={() => {
+                selected = index;
+                moreOpen = false;
+              }}
+            >
+              <span class="rail" aria-hidden="true"></span>
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="number">{rowNumber(index)}</span>
+              <span class="chip" aria-hidden="true"><StepIcon name={step.type} size={14} /></span>
+              <span class="text">
+                <span class="title">{stepTitle(step.type)}</span>
+                <span class="summary">{stepSummary(step)}</span>
+              </span>
+              {#if childSteps(step).length > 0}
+                <span class="count">{childSteps(step).length} 步</span>
+              {/if}
+              {#if missingOf(step).length > 0}
+                <span class="todo" title={missingHint(step)}>待补</span>
+              {/if}
+            </button>
+            <span class="row-actions">
+              <button class="tiny" on:click={() => stepUp(index)} disabled={index === 0} aria-label="上移" title="上移（Alt+↑）">↑</button>
+              <button class="tiny" on:click={() => stepDown(index)} disabled={index === steps.length - 1} aria-label="下移" title="下移（Alt+↓）">↓</button>
+              <button class="tiny" on:click={() => deleteStep(index)} aria-label="删除" title="删除（Delete）">×</button>
             </span>
-            {#if childSteps(step).length > 0}
-              <span class="count">{childSteps(step).length} 步</span>
-            {/if}
-          </button>
+          </div>
 
           {#each childSteps(step) as child, childIndex}
             <div class="row child">
@@ -329,7 +564,7 @@
         {#if current}
           <div class="side-head">
             <h2>目标窗口</h2>
-            <span class="hint">{requiredHint(current)}</span>
+            <span class="hint" class:warn={missingOf(current).length > 0}>{missingHint(current)}</span>
           </div>
 
           <label class="field">
@@ -706,6 +941,131 @@
     border-bottom: 0;
   }
 
+  /* 行本身是按钮（整行可点选中），行尾的上移/下移/删除是另一组按钮：
+     按 HTML 规则按钮不能套按钮，所以外面再包一层，悬停/选中时才浮出来。 */
+  .row-wrap {
+    position: relative;
+  }
+
+  .row-actions {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 2px;
+    padding: 2px;
+    border-radius: 6px;
+    background: var(--kp-card);
+  }
+
+  .row-wrap:hover .row-actions,
+  .row-wrap:focus-within .row-actions {
+    display: flex;
+  }
+
+  .tiny {
+    width: 22px;
+    height: 22px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--kp-ink3);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .tiny:hover:not(:disabled) {
+    border-color: var(--kp-rule);
+    color: var(--kp-ink);
+  }
+
+  .tiny:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* 待补：这一步还缺必填项。比一个红色错误标温和，比什么都不说清楚。 */
+  .todo {
+    font-size: var(--kp-fs-small);
+    color: var(--kp-signal);
+    border: 1px solid rgb(194 65 12 / 0.25);
+    border-radius: 999px;
+    padding: 1px 7px;
+  }
+
+  .hint.warn {
+    color: var(--kp-signal);
+  }
+
+  .sep {
+    width: 1px;
+    height: 16px;
+    margin: 0 6px;
+    background: var(--kp-rule);
+  }
+
+  /* 「+ 更多」：一张小卡片，按用途分组。刻意不做成系统菜单——它只是四个常用按钮的补充。 */
+  .palette {
+    position: relative;
+  }
+
+  .palette-item.open {
+    background: var(--kp-field);
+    color: var(--kp-ink);
+  }
+
+  .more-menu {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    z-index: 20;
+    width: 260px;
+    padding: 8px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    box-shadow: 0 10px 30px rgb(23 20 15 / 0.08);
+  }
+
+  .more-group {
+    margin: 6px 0 2px;
+    padding: 0 8px;
+    font-size: var(--kp-fs-small);
+    color: var(--kp-ink3);
+  }
+
+  .more-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 28px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--kp-ink);
+    font: inherit;
+    font-size: var(--kp-fs-body);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .more-item:hover {
+    background: var(--kp-field);
+  }
+
+  .more-tip {
+    margin: 8px 0 2px;
+    padding: 6px 8px 0;
+    border-top: 1px solid var(--kp-rule);
+    font-size: var(--kp-fs-small);
+    color: var(--kp-ink3);
+  }
+
   .row:hover {
     background: var(--kp-field);
   }
@@ -846,7 +1206,7 @@
 
   .hint {
     font-size: var(--kp-fs-small);
-    color: var(--kp-signal);
+    color: var(--kp-ink3);
   }
 
   .field {

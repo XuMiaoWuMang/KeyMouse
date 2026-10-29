@@ -19,7 +19,7 @@
     dev      起开发窗口（vite + cargo run）
     build    只打前端产物（pnpm build）
     check    svelte-check 类型与模板检查
-    test     外壳的 Rust 单测（cargo test）
+    test     前端单测（vitest）与外壳单测（cargo test）
     icons    从 src-tauri\icons\source.png 重新生成整套图标
     clean    删 node_modules 与 src-tauri\target
 
@@ -96,7 +96,9 @@ try {
         }
 
         'test' {
-            # 外壳自己也有逻辑（路径解析、读写文件），用 Rust 单测守住，不靠点界面。
+            # 两层各守一段：步骤编辑是纯函数（vitest），路径解析与读写落盘是外壳（cargo test）。
+            Invoke-Step '前端单测（vitest）' { pnpm test:unit }
+
             $env:CARGO_HTTP_CHECK_REVOKE = 'false'
             $env:CARGO_NET_RETRY = '5'
             $env:CARGO_HTTP_TIMEOUT = '120'

@@ -9,14 +9,59 @@
 mod files;
 mod layout;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+use tauri::{Emitter, WindowEvent};
+
+/// 界面里有没有未保存的改动。
+///
+/// 外壳不解析流程内容，所以它自己判断不了"脏了没有"——界面每次改动后推过来一个布尔值，
+/// 外壳只在用户点 × 时用它决定"直接关"还是"先问一句"。
+struct ShellState {
+    dirty: Arc<AtomicBool>,
+}
+
+/// 界面推来的脏标记。
+#[tauri::command]
+fn set_dirty(state: tauri::State<'_, ShellState>, dirty: bool) {
+    state.dirty.store(dirty, Ordering::Relaxed);
+}
+
+/// 界面确认"可以关"之后，让外壳真的关窗。
+///
+/// 为什么不在界面里直接 `getCurrentWindow().close()`：那条路会再走一遍
+/// `CloseRequested`，脏标记还在的话又会被拦回来，于是永远关不掉。
+#[tauri::command]
+fn close_window(window: tauri::Window) -> Result<(), String> {
+    window.destroy().map_err(|e| e.to_string())
+}
+
 fn main() {
+    let dirty = Arc::new(AtomicBool::new(false));
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .manage(ShellState {
+            dirty: Arc::clone(&dirty),
+        })
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
             files::open_flow,
             files::save_flow,
+            set_dirty,
+            close_window,
         ])
+        .on_window_event(move |window, event| {
+            // 只拦"用户想关窗"这一种；销毁走 destroy()，不会回到这里。
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                if !dirty.load(Ordering::Relaxed) {
+                    return;
+                }
+                api.prevent_close();
+                let _ = window.emit("shell://close-requested", ());
+            }
+        })
         .run(tauri::generate_context!())
         .expect("启动失败：Tauri 外壳起不来多半是 WebView2 或资源缺失，看 docs/dev/editor-ui.md");
 }

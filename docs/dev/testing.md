@@ -13,6 +13,8 @@ KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证�
 
 **有产物的两层，每次运行都在 `artifacts\tests\` 下新建一个带时间戳的目录**，互不覆盖、可以并排比较，也不污染别处。这条约定见下文「写新测试的规矩」。
 
+新编辑器外壳（`src\KeyMouse.EditorUI`）不在这三层里，它有自己的两套：前端 `vitest`（纯函数：步骤增删排序、撤销后选中项、缺必填项判断）与外壳 `cargo test`（路径解析、读写流程、错误码）。两边由 `tools\dev\editor-ui.ps1 test` 一起跑，`verify.ps1` 的「新外壳」一关会调它；界面本身靠截图核对，不做端到端点击模拟。
+
 ## 单元测试
 
 一个普通控制台程序，**故意不用任何测试框架**：零依赖、离线可跑、`dotnet run` 就能执行，非零退出码即失败。入口是 `tests\KeyMouse.Tests\TestEntry.cs`（类名不叫 `Program`，是为了让命名空间里的 `Program` 仍然解析到 CLI 的 `Program`——runner 测试要直接调它）。
