@@ -89,11 +89,14 @@
 [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
 '@
 
-    $pickedProcess = Get-Process KeyMouse.SmokeTarget | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-    $pickedHandle = $pickedProcess.MainWindowHandle
-    # 选择器按"这个点下面是谁"算窗口，所以靶子必须真在最前面：终端窗口盖在它上面时，
+    # 用工具自己的窗口清单取句柄：Process.MainWindowHandle 在有多个顶层窗口时不一定是屏幕上那个（实测差过一次，7 条断言全红而产品没错）。
+    $pickedLine = & $Exe window list --process KeyMouse.SmokeTarget 2>&1 | Where-Object { $_ -match '^0x' } | Select-Object -First 1
+    $pickedHandle = [IntPtr]([Convert]::ToInt64((($pickedLine -split '\s+')[0]), 16))
     # --rect 会如实报告终端（实测过一次，5 条断言全红但产品没错）。
     $null = & $Exe window focus @target
+    # 终端窗口常常盖在靶子上，而 pick 报的是"这个点下面是谁"——先让靶子真的在最上层。
+    $null = Set-TargetTopmost $true
+    Start-Sleep -Milliseconds 400
     Start-Sleep -Milliseconds 400
     $windowRect = New-Object KeyMouseRegion.Win+RECT
     $null = [KeyMouseRegion.Win]::GetWindowRect($pickedHandle, [ref]$windowRect)
@@ -106,6 +109,8 @@
     $clientHeight = $clientRect.B - $clientRect.T
     $handleText = '0x{0:X}' -f $pickedHandle.ToInt64()
 
+    # 挡住选区的窗口（编辑器、终端、本工具界面）先藏起来，测完还原。
+    $hiddenWindow = Hide-WindowAt ($clientOrigin.X + 60) ($clientOrigin.Y + 60)
     $pickJson = (& $Exe region pick --rect "$($clientOrigin.X + 60),$($clientOrigin.Y + 60),200,30" --json 2>&1) -join "`n"
     $pickExit = $LASTEXITCODE
     $pick = $null
@@ -127,6 +132,8 @@
     Check '...and the suggested command says so' `
         ($null -ne $titlePick -and $titlePick.probe -match '--space window --region 40,5,200,20') "probe=$($titlePick.probe)"
 
+    Restore-Window $hiddenWindow
+    $hiddenWindow = [IntPtr]::Zero
     $null = & $Exe region pick --rect '0,0,0,5' 2>&1
     Check 'a zero-sized rectangle is exit 2' ($LASTEXITCODE -eq 2) "exit=$LASTEXITCODE"
     $null = & $Exe region pick --rect '0,0,10,10' --title 'x' 2>&1

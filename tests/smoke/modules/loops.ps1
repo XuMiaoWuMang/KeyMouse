@@ -26,7 +26,9 @@
     # line, this sampling would see more than one KeyMouse process.
     $loopReport = Join-Path $RunDir 'keymouse-smoke-loop-report.json'
     Remove-Item $loopReport -Force -ErrorAction SilentlyContinue
-    $proc = Start-Process -FilePath $Exe -ArgumentList 'run', "`"$loopScript`"", '--report', "`"$loopReport`"" -PassThru
+    # -NoNewWindow 是必须的：不带它 Start-Process 会走 ShellExecute，这台机器上会弹
+    # "打开文件 - 安全警告（无法验证发布者）" 把整轮冒烟卡在那儿等人点。
+    $proc = Start-Process -FilePath $Exe -ArgumentList 'run', "`"$loopScript`"", '--report', "`"$loopReport`"" -NoNewWindow -PassThru
     $counts = @()
     while (-not $proc.HasExited) {
         $counts += @(Get-Process KeyMouse -ErrorAction SilentlyContinue | ForEach-Object {

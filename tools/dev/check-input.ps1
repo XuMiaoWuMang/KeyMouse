@@ -71,7 +71,7 @@ try {
 
     Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 300
-    $started = Start-Process -FilePath $TargetExe -PassThru
+    $started = Start-Process -FilePath $TargetExe -NoNewWindow -PassThru
     Start-Sleep -Milliseconds 1200
 
     # 靶子必须在前台：注入落到哪个窗口，取决于那一刻谁是前台。

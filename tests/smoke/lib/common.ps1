@@ -15,6 +15,51 @@
 
 $ErrorActionPreference = 'Stop'
 
+# ---- 助手：把靶子临时钉在最上层 ------------------------------------------------------
+# region 模块要断言"选中的是谁"。冒烟跑在终端里，终端窗口通常正好盖在靶子上，
+# 而 region pick --rect 报的是"这个点下面是谁"。最小化终端没用：Windows Terminal 下
+# GetConsoleWindow 拿到的是幕后的 ConPTY 假窗口，不是屏幕上那个。所以让靶子自己置顶。
+
+
+# ---- 先让本进程看得懂真实像素 -------------------------------------------------------
+# 这台机器是 150% 缩放。PowerShell 宿主默认不是 DPI 感知的，GetWindowRect / ClientToScreen 报的是被
+# 虚拟化过的坐标（1707x960），而 KeyMouse 是 DPI 感知的、用物理像素（2560x1440）——两边算出来的"同一个点"
+# 差着一次缩放，region pick --rect 因此会选到别的窗口（实测：选到的是本工具自己的界面）。
+if (-not $script:SmokeDpiReady) {
+    Add-Type -Namespace KmSmoke -Name Dpi -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();' -ErrorAction SilentlyContinue
+    $null = [KmSmoke.Dpi]::SetProcessDPIAware()
+    $script:SmokeDpiReady = $true
+}
+# ---- 助手：暂时藏起挡住某一点的窗口 ------------------------------------------------
+# region pick --rect 报的是"这个点下面是谁"。开发时有别的窗口（编辑器、终端、本工具自己的界面）
+# 常常正好盖在靶子上；把那个窗口藏起来做检查，结束后原样还原，比要求跑测试的人先手动挪窗口可靠。
+function Hide-WindowAt([int]$X, [int]$Y) {
+    Add-Type -Namespace KmSmoke -Name Z -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags); [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(long point); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);' -ErrorAction SilentlyContinue
+    $point = [long]$X -bor ([long]$Y -shl 32)
+    $handle = [KmSmoke.Z]::WindowFromPoint($point)
+    if ($handle -eq [IntPtr]::Zero) { return [IntPtr]::Zero }
+    $null = [KmSmoke.Z]::ShowWindow($handle, 0)
+    Start-Sleep -Milliseconds 200
+    return $handle
+}
+
+function Restore-Window([IntPtr]$Handle) {
+    if ($Handle -eq [IntPtr]::Zero) { return }
+    $null = [KmSmoke.Z]::ShowWindow($Handle, 9)
+    Start-Sleep -Milliseconds 200
+}
+function Set-TargetTopmost([bool]$On) {
+    Add-Type -Namespace KmSmoke -Name Top -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);' -ErrorAction SilentlyContinue
+    $line = & $Exe window list --process KeyMouse.SmokeTarget 2>&1 | Where-Object { $_ -match '^0x' } | Select-Object -First 1
+    if (-not $line) { return $false }
+    $handle = [IntPtr]([Convert]::ToInt64((($line -split '\s+')[0]), 16))
+    # -1 = HWND_TOPMOST，-2 = HWND_NOTOPMOST，0x0003 = NOMOVE|NOSIZE
+    $after = [IntPtr]$(if ($On) { -1 } else { -2 })
+    $null = [KmSmoke.Top]::SetWindowPos($handle, $after, 0, 0, 0, 0, 0x0003)
+    Start-Sleep -Milliseconds 250
+    return $true
+}
+
 # 单独跑某个模块调试时没有 run.ps1 给的目录，退回系统临时目录。
 if (-not $RunDir) { $RunDir = $env:TEMP }
 
@@ -55,7 +100,7 @@ function Wait-ForWindow([string]$Pattern, [int]$TimeoutMs = 8000, [int]$SettleMs
 # ---- 基建：冒烟靶子 ---------------------------------------------------------------
 # 每个模块都可能要驱动它，所以放在公共部分；entry 模块只负责断言它能起来。
 Get-Process KeyMouse.SmokeTarget -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Process -FilePath $TargetExe
+Start-Process -FilePath $TargetExe -NoNewWindow
 $deadline = (Get-Date).AddSeconds(20)
 do {
     Start-Sleep -Milliseconds 300
