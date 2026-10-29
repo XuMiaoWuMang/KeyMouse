@@ -78,6 +78,8 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 12 个模块（按顺序跑，共享同一个靶子与桌面）：
 
 > **每个模块自己负责把舞台摆好。** 模块之间共享一个靶子窗口，"上一个模块把窗口最小化了""光标不在文本框里""终端窗口盖在靶子上"都是会真实发生的事。写新模块时按三条自检：要键盘就先点一下正文（`mouse click left -wx 120 -wy 60`），要判层序就先 `window focus`，要看某一步的过程就加 `run … --report <文件>` 把每条命令的退出码记下来。
+>
+> 还有一个环境坑：**PowerShell 宿主默认不是 DPI 感知的**。150% 缩放的机器上它报的窗口坐标是虚拟化的（1707×960），而 KeyMouse 用物理像素（2560×1440），两边算出的"同一个点"差着一次缩放，`region pick --rect` 就会选到别的窗口。`common.ps1` 载入时先调 `SetProcessDPIAware()`；自己写脚本用 P/Invoke 取坐标时也要先做这一步。
 
 | 模块 | 覆盖 |
 | --- | --- |
