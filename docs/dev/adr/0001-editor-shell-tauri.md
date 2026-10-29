@@ -69,8 +69,11 @@ Avalonia 不是坏选择——如果目标只是"摆脱 WindowsAppSDK"。这里�
 
 1. 文件对话框走 `tauri-plugin-dialog` 还是自绘（要统一视觉）。**现状**：官方对话框（P1a 起），视觉是系统的。
 2. 证据截图（PNG）怎么显示：`asset` 协议 + 作用域，还是 Rust 读成 base64 给前端。
+   **现状**：Rust 读成字节、前端造 `Blob` URL（比 base64 省一次膨胀，也不需要 `asset` 作用域），
+   打开大图走 `tauri-plugin-opener`。
 3. 单实例与"用命令行打开某个流程"（现在 `KeyMouse flow edit x.json`）：新壳要不要接受同样的参数。
-   **现状**：新壳接受 `keymouse-editor.exe 流程.json`（`RuntimeInfo.initialPath`），单实例还没做。
+   **现状**：新壳接受 `keymouse-editor.exe 流程.json`（`RuntimeInfo.initialPath`）；单实例做了
+   （第二次启动转 `shell://open-external` 给已在跑的进程）。
 4. 崩溃日志落点：现在是 `Scratch`（TEMP→LOCALAPPDATA→程序目录），Rust 侧要复用同一套规则。
 5. **录制的权限路线**（P2 起）：现在按外壳的权限录，提权窗口上的点击录不到，命令行会在输出里说明，
    要录那些窗口得手敲 `KeyMouse --elevate record`。可选路线：外壳自提权（界面也跟着提权，

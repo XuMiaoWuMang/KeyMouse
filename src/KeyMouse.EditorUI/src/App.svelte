@@ -58,6 +58,13 @@
   let progress: RunProgress | null = null;
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
+  /**
+   * 已经取到的证据图，键是步骤里记的那个相对路径。
+   *
+   * 图是**按需**从外壳读字节再造 Blob URL 的：界面不需要知道流程文件在哪一层目录，
+   * 也不需要给 WebView 开文件系统权限。同一张图只读一次，读不到就记住原因，别反复试。
+   */
+  let shots: Record<string, { url?: string; error?: string }> = {};
 
   /**
    * 撤销栈存的是"改动之前那份文档"的 JSON。
@@ -156,6 +163,9 @@
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
   $: current = steps[selected] ?? null;
+  $: currentShot = current?.shot ?? null;
+  // 选中带证据的步骤时才去读那张图；没存过盘就没有可比对的相对路径。
+  $: if (currentShot && path) void ensureShot(currentShot);
   $: fileLabel = path ? baseName(path) : '还没有打开流程';
   $: canSave = doc !== null && dirty;
 
@@ -164,6 +174,35 @@
   function note(text: string, bad = false) {
     notice = { text, bad };
     if (bad) outputOpen = true;
+  }
+
+  /**
+   * 取这一步的证据图。只读到字节，URL 由这里造：见 `shots` 的注释。
+   *
+   * 先占位再请求，避免同一张图被连续两次 reactive 触发时读两遍。
+   */
+  async function ensureShot(shot: string) {
+    if (shots[shot] || !path) return;
+    shots = { ...shots, [shot]: {} };
+    try {
+      const bytes = await invoke<ArrayBuffer>('read_shot', { flowPath: path, shot });
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
+      shots = { ...shots, [shot]: { url } };
+    } catch (e) {
+      shots = { ...shots, [shot]: { error: String(e) } };
+    }
+  }
+
+  /** 用系统看图程序打开 / 在资源管理器里定位。路径由外壳算，这里不拼。 */
+  async function openShot(shot: string, reveal: boolean) {
+    try {
+      const { openPath, revealItemInDir } = await import('@tauri-apps/plugin-opener');
+      const full = await invoke<string>('shot_file', { flowPath: path, shot });
+      if (reveal) await revealItemInDir(full);
+      else await openPath(full);
+    } catch (e) {
+      note(`打不开证据图：${String(e)}`, true);
+    }
   }
 
   function baseName(full: string): string {
@@ -731,6 +770,11 @@
               {#if missingOf(step).length > 0}
                 <span class="todo" title={missingHint(step)}>待补</span>
               {/if}
+              {#if step.shot}
+                <!-- 行里只给一个"有图"的记号，不放大图：一行里塞缩略图会让列表变噪，
+                     而且按钮里不能再套按钮。图在右边检查器最下方，选中这一步就能看到。 -->
+                <span class="shot-mark" title={`这一步有录制时的证据图：${step.shot}`} aria-label="有证据图">▣</span>
+              {/if}
             </button>
             <span class="row-actions">
               <button class="tiny" on:click={() => stepUp(index)} disabled={index === 0} aria-label="上移" title="上移（Alt+↑）">↑</button>
@@ -800,6 +844,28 @@
             <span class="label">备注 <span class="info" title="只给人看，不影响回放">i</span></span>
             <input value={current.note ?? ''} on:input={(e) => setNote(selected, e.currentTarget.value)} />
           </label>
+
+          {#if currentShot}
+            <h2 class="section">证据</h2>
+            <figure class="shot">
+              {#if shots[currentShot]?.url}
+                <button class="shot-frame" on:click={() => openShot(currentShot, false)} title="用系统看图程序打开">
+                  <img src={shots[currentShot].url} alt="这一步当时的样子" />
+                </button>
+              {:else if shots[currentShot]?.error}
+                <p class="shot-hint">读不到这张图：{shots[currentShot].error}</p>
+              {:else}
+                <p class="shot-hint">正在读…</p>
+              {/if}
+              <figcaption>
+                <span class="shot-name">{currentShot.split(/[\\/]/).pop()}</span>
+                <span class="shot-actions">
+                  <button class="linkish" on:click={() => openShot(currentShot, false)}>看大图</button>
+                  <button class="linkish" on:click={() => openShot(currentShot, true)}>在文件夹里看</button>
+                </span>
+              </figcaption>
+            </figure>
+          {/if}
 
           <button class="disclosure" on:click={() => (jsonOpen = !jsonOpen)} aria-expanded={jsonOpen}>
             JSON <span aria-hidden="true">{jsonOpen ? '⌃' : '⌄'}</span>
@@ -1523,6 +1589,93 @@
     color: var(--kp-ink2);
     font-size: var(--kp-fs-small);
     letter-spacing: 0.04em;
+  }
+
+  /* 证据图：录制时留下的那一张。图本身就是内容，所以只给一条细边，
+     不套卡片阴影——它不该比步骤列表更抢眼。 */
+  .shot {
+    margin: 12px 0 4px;
+  }
+
+  /* 框跟着图走，不铺满整列：铺满的话右边会留一条空白米色，看着像图没加载完 */
+  .shot-frame {
+    display: inline-block;
+    padding: 0;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-field);
+    cursor: zoom-in;
+    overflow: hidden;
+  }
+
+  .shot-frame img {
+    display: block;
+    max-width: 100%;
+    /* 140px 是"一眼认得出来是哪个窗口"的最小值；再大就把检查器的其它字段挤到滚动外面。
+       看细节点这张图。 */
+    max-height: 140px;
+  }
+
+  .shot figcaption {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    color: var(--kp-ink3);
+    font-size: var(--kp-fs-small);
+  }
+
+  .shot-name {
+    font-family: var(--kp-font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .shot-actions {
+    display: flex;
+    gap: 12px;
+    flex: none;
+  }
+
+  /* 有证据的行：一个安静的记号，不抢标题的位置 */
+  .shot-mark {
+    flex: none;
+    color: var(--kp-ink3);
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .row.selected .shot-mark {
+    color: var(--kp-signal);
+  }
+
+  /* 文字按钮：像链接一样安静，但有按钮的点击区与焦点环 */
+  .linkish {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--kp-ink2);
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--kp-rule);
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .linkish:hover {
+    color: var(--kp-signal);
+    text-decoration-color: currentColor;
+  }
+
+  .shot-hint {
+    margin: 0;
+    padding: 14px;
+    border: 1px dashed var(--kp-rule);
+    border-radius: var(--kp-radius-control);
+    color: var(--kp-ink3);
+    font-size: var(--kp-fs-small);
   }
 
   /* 这一步的原始 JSON：只读，给人核对用；不参与编辑 */

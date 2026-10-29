@@ -4,7 +4,7 @@
 //! 改这里的任何一条，先去改那份文档。
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
@@ -56,6 +56,51 @@ pub fn save_flow(path: String, text: String) -> Result<(), ShellError> {
     }
     fs::write(&path, text.as_bytes())
         .map_err(|e| ShellError::new("shell.io", format!("写不了 {path}：{e}")))
+}
+
+/// 读一张证据图。`shot` 是流程里记录的那个相对路径（`<流程>.shots/0001-click.png`）。
+///
+/// 三道检查缺一不可：只认 `.png`、解析后必须真的在**流程文件所在目录**里（`..` 与软链接都拦）、
+/// 并且文件确实存在。界面拿字节自己造 Blob URL，**不走 asset 协议**——这样 WebView 永远不需要
+/// 读懂文件系统路径，能被读到的范围就等于这里放行过的那些。
+#[tauri::command]
+pub fn read_shot(flow_path: String, shot: String) -> Result<tauri::ipc::Response, ShellError> {
+    let real = resolve_shot(&flow_path, &shot)?;
+    let bytes = fs::read(&real)
+        .map_err(|e| ShellError::new("shell.io", format!("读不了证据图 {shot}：{e}")))?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
+/// 证据图的绝对路径。界面要"用系统看图程序打开"或"在资源管理器里看"时需要它——
+/// 界面自己拼不出 PATH 分隔符与绝对路径，也不该拼。
+#[tauri::command]
+pub fn shot_file(flow_path: String, shot: String) -> Result<String, ShellError> {
+    Ok(resolve_shot(&flow_path, &shot)?.display().to_string())
+}
+
+/// 三道检查缺一不可：只认 `.png`、解析后必须真的在**流程文件所在目录**里
+/// （`..` 与软链接都拦）、并且文件确实存在。
+fn resolve_shot(flow_path: &str, shot: &str) -> Result<PathBuf, ShellError> {
+    let root = Path::new(flow_path)
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from("."));
+    if !Path::new(shot)
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("png"))
+    {
+        return Err(ShellError::new("shot.not-png", format!("证据只认 PNG：{shot}")));
+    }
+
+    // 先拿真实路径再比前缀：只比字面路径的话，`sub/../x.png` 和软链接都能绕出去
+    let real_root = fs::canonicalize(&root)
+        .map_err(|e| ShellError::new("shell.io", format!("定位不了流程目录 {}：{e}", root.display())))?;
+    let real = fs::canonicalize(root.join(shot))
+        .map_err(|e| ShellError::new("shot.missing", format!("读不到证据图 {shot}：{e}")))?;
+    if !real.starts_with(&real_root) {
+        return Err(ShellError::new("shot.outside", format!("证据图不在流程文件旁边：{shot}")));
+    }
+    Ok(real)
 }
 
 fn short(path: &str) -> String {
@@ -127,6 +172,73 @@ mod tests {
         let error = open_flow(path.display().to_string()).expect_err("应当失败");
 
         assert_eq!(error.code, "shell.io");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// 一张最小的 PNG（1×1，透明）：只要字节对，界面那边怎么解都是它自己的事。
+    const TINY_PNG: &[u8] = &[
+        0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, b'I', b'H', b'D', b'R',
+        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+        0x89, 0x00, 0x00, 0x00, 0x0a, b'I', b'D', b'A', b'T', 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+        0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, b'I', b'E', b'N', b'D', 0xae,
+        0x42, 0x60, 0x82,
+    ];
+
+    #[test]
+    fn read_shot_serves_a_png_next_to_the_flow() {
+        let dir = scratch("shot-ok");
+        let flow = dir.join("flow.json");
+        fs::write(&flow, "{}").unwrap();
+        let shots = dir.join("flow.shots");
+        fs::create_dir_all(&shots).unwrap();
+        fs::write(shots.join("0001-click.png"), TINY_PNG).unwrap();
+
+        let served = read_shot(flow.display().to_string(), "flow.shots/0001-click.png".to_string());
+
+        assert!(served.is_ok(), "同一目录下的证据应当读得到：{:?}", served.err().map(|e| e.code));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn read_shot_refuses_anything_but_png() {
+        let dir = scratch("shot-txt");
+        let flow = dir.join("flow.json");
+        fs::write(&flow, "{}").unwrap();
+        fs::write(dir.join("notes.txt"), "秘密").unwrap();
+
+        let error = read_shot(flow.display().to_string(), "notes.txt".to_string()).err().expect("应当拒绝");
+
+        assert_eq!(error.code, "shot.not-png");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn read_shot_refuses_paths_outside_the_flow_directory() {
+        let dir = scratch("shot-escape");
+        let inner = dir.join("inner");
+        fs::create_dir_all(&inner).unwrap();
+        let flow = inner.join("flow.json");
+        fs::write(&flow, "{}").unwrap();
+        // 真实存在、但不在流程旁边：只比字面路径的实现会把它放出去
+        fs::write(dir.join("outside.png"), TINY_PNG).unwrap();
+
+        let error = read_shot(flow.display().to_string(), "../outside.png".to_string()).err().expect("应当拒绝");
+
+        assert_eq!(error.code, "shot.outside");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn read_shot_reports_a_missing_file() {
+        let dir = scratch("shot-missing");
+        let flow = dir.join("flow.json");
+        fs::write(&flow, "{}").unwrap();
+
+        let error = read_shot(flow.display().to_string(), "flow.shots/0001-click.png".to_string())
+            .err()
+            .expect("应当失败");
+
+        assert_eq!(error.code, "shot.missing");
         let _ = fs::remove_dir_all(&dir);
     }
 }

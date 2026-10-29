@@ -75,6 +75,25 @@ type FlowFile = {
 把界面的文本原样写回文件（UTF-8，无 BOM，LF）。写之前不校验——校验是界面的按钮，
 不是保存的前置条件（用户有权保存一份还没写完的流程）。
 
+### `read_shot(flow_path, shot) -> ArrayBuffer`
+
+读一张录制留下的证据图，返回**原始字节**（界面自己造 `Blob` URL 显示）。
+
+`shot` 就是步骤里 `shot` 字段那一串（相对流程文件，如 `flow.shots/0001-click.png`）。
+外壳做三道检查，缺一不可：只认 `.png`；解析后的真实路径必须落在**流程文件所在目录**里
+（`..` 和软链接都拦）；文件确实存在。
+
+> 为什么返回字节而不是给 WebView 开文件系统或 asset 协议：这样界面永远不需要懂路径，
+> 能被读到的范围就等于"这里放行过的那几张图"。
+
+### `shot_file(flow_path, shot) -> string`
+
+同一张图的**绝对路径**。界面要"用系统看图程序打开"或"在资源管理器里定位"时用它——
+界面自己拼不出 PATH 分隔符，也不该拼。检查与 `read_shot` 完全相同。
+
+打开动作本身用 `tauri-plugin-opener` 的 `openPath` / `revealItemInDir`，
+能力写在 `src-tauri/capabilities/default.json`（`opener:allow-open-path`、`opener:allow-reveal-item-in-dir`）。
+
 ### 单实例与"又一次双击"
 
 外壳只允许一个进程。第二次启动（双击另一个流程文件、或者从命令行再开一次）不会开新窗口：
@@ -194,6 +213,9 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 | `shell.spawn` | 起 `KeyMouse.exe` 失败 | 原样显示，并提示跑 `doctor` |
 | `flow.invalid-json` | 文件不是合法 JSON | 显示行列号 |
 | `flow.no-cli` | 需要命令行却没找到 | 显示"没找到命令行"卡片（不是弹窗，见下） |
+| `shot.not-png` | 证据图不是 PNG | 显示"这张证据不是 PNG"，不弹窗 |
+| `shot.missing` | 证据图不在了（被删或搬走） | 显示"图不在了"，文件名照旧显示 |
+| `shot.outside` | 证据图不在流程文件旁边 | 同上，并说明"只认流程文件旁边的 `*.shots/`" |
 
 ## 界面约定（给写界面的人）
 

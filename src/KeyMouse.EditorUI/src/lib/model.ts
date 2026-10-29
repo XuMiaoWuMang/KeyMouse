@@ -53,6 +53,12 @@ export interface FlowStep {
   count?: number;
   times?: number;
   steps?: FlowStep[];
+  /**
+   * 录制留下的证据图，路径**相对流程文件**（`flow.shots/0001-click.png`）。
+   *
+   * 只有录制会写它，回放不会重拍——所以界面上这张图永远是"录这一遍时它长什么样"。
+   */
+  shot?: string;
 }
 
 export interface FlowDocument {

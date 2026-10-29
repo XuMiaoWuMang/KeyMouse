@@ -68,6 +68,8 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        // 证据图要"在资源管理器里看一下"：交给系统默认程序，而不是自己写一个看图窗。
+        .plugin(tauri_plugin_opener::init())
         .manage(ShellState {
             dirty: Arc::clone(&dirty),
         })
@@ -76,6 +78,8 @@ fn main() {
             layout::runtime_info,
             files::open_flow,
             files::save_flow,
+            files::read_shot,
+            files::shot_file,
             run::validate_flow,
             run::run_flow,
             run::run_cancel,
