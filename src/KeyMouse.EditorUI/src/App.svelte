@@ -5,6 +5,7 @@
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
   import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { runConclusion, runHint, runIsBad } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
@@ -46,6 +47,10 @@
   let jsonOpen = false;
   let moreOpen = false;
   let busy = false;
+  /** 正在跑的那条子进程。停止按钮据此出现，播放按钮据此让位。 */
+  let running = false;
+  /** 运行输出：命令行的每一行原样收下，错误的行标红。 */
+  let lines: { stream: string; line: string }[] = [];
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
 
@@ -73,13 +78,32 @@
 
   // 关闭窗口时外壳会问界面一句"能关吗"：脏了就先确认，再让它关。
   onMount(() => {
-    let stop: (() => void) | undefined;
-    void listen('shell://close-requested', async () => {
-      if (await confirmDiscard()) await invoke('close_window').catch(() => undefined);
-    }).then((unlisten) => {
-      stop = unlisten;
-    });
-    return () => stop?.();
+    const stops: (() => void)[] = [];
+    const keep = (p: Promise<() => void>) =>
+      void p.then((unlisten) => stops.push(unlisten)).catch(() => undefined);
+
+    keep(
+      listen('shell://close-requested', async () => {
+        if (await confirmDiscard()) await invoke('close_window').catch(() => undefined);
+      }),
+    );
+
+    // 命令行的输出是一行一行来的：每行都收进面板，不在这里做解释。
+    keep(
+      listen<{ stream: string; line: string }>('shell://run-output', (event) => {
+        lines = [...lines, event.payload];
+      }),
+    );
+
+    keep(
+      listen<{ code: number | null; cancelled: boolean }>('shell://run-exit', (event) => {
+        running = false;
+        const { code, cancelled } = event.payload;
+        note(runConclusion(code, cancelled), runIsBad(code, cancelled));
+      }),
+    );
+
+    return () => stops.forEach((stop) => stop());
   });
 
   // 外壳不知道界面里发生了什么，脏标记得推给它；它只负责在关窗前问一句。
@@ -217,6 +241,59 @@
       okLabel: '丢掉改动',
       cancelLabel: '回去保存',
     });
+  }
+
+  /**
+   * 试运行与播放。
+   *
+   * 两条路都要求"已经存成文件"：命令行读的是磁盘上的 JSON，界面里改到一半的东西
+   * 它看不见。与其在后台偷偷写一份临时文件、让报错里的行号对不上界面，不如直接说清楚。
+   */
+  async function startRun(dryRun: boolean): Promise<void> {
+    if (!doc) {
+      note('先打开或新建一个流程', true);
+      return;
+    }
+    if (!path) {
+      note('先保存（Ctrl+S）再跑：命令行要读一个文件', true);
+      return;
+    }
+    if (busy || running) return;
+
+    lines = [];
+    outputOpen = true;
+
+    if (dryRun) {
+      busy = true;
+      note(runHint(true));
+      try {
+        const result = await invoke<{ code: number | null; cancelled: boolean }>('validate_flow', {
+          path,
+        });
+        note(runConclusion(result.code, result.cancelled), runIsBad(result.code, result.cancelled));
+      } catch (e) {
+        note(`试运行没起来：${e}`, true);
+      } finally {
+        busy = false;
+      }
+      return;
+    }
+
+    try {
+      await invoke('run_flow', { path });
+      running = true;
+      note(runHint(false));
+    } catch (e) {
+      note(`播放没起来：${e}`, true);
+    }
+  }
+
+  async function stopRun(): Promise<void> {
+    try {
+      await invoke('run_cancel');
+    } catch (e) {
+      note(`停不下来：${e}`, true);
+    }
   }
 
   function rowNumber(index: number): string {
@@ -362,8 +439,10 @@
       return;
     }
 
-    // Esc 先把那张「+ 更多」卡片收起来：它在视觉上压住了列表。
+    // Esc 分两件事：跑着的时候它是"停止"（这是玩流程时手指最自然的位置），
+    // 否则把那张「+ 更多」卡片收起来——它在视觉上压住了列表。
     if (key === 'escape') {
+      if (running) void stopRun();
       moreOpen = false;
       return;
     }
@@ -486,11 +565,18 @@
 
     <div class="actions">
       <button class="ghost"><span class="rec-dot" aria-hidden="true"></span>录制</button>
-      <button class="ghost">试运行</button>
-      <button class="primary" disabled={false}>
-        <svg viewBox="0 0 16 16" aria-hidden="true" class="play"><path d="M5 3.5 12 8l-7 4.5z" /></svg>
-        播放
-      </button>
+      <button class="ghost" on:click={() => startRun(true)} disabled={busy || running}>试运行</button>
+      {#if running}
+        <button class="stop" on:click={stopRun}>
+          <svg viewBox="0 0 16 16" aria-hidden="true" class="play"><rect x="4.5" y="4.5" width="7" height="7" rx="1" /></svg>
+          停止
+        </button>
+      {:else}
+        <button class="primary" on:click={() => startRun(false)} disabled={busy}>
+          <svg viewBox="0 0 16 16" aria-hidden="true" class="play"><path d="M5 3.5 12 8l-7 4.5z" /></svg>
+          播放
+        </button>
+      {/if}
       <button class="ghost icon-only" aria-label="更多操作">···</button>
     </div>
   </nav>
@@ -643,10 +729,18 @@
     <section class="output" aria-label="运行输出">
       <header>
         <h2>运行输出</h2>
-        <button class="ghost small" on:click={() => (outputOpen = false)}>收起</button>
+        <div class="output-actions">
+          {#if lines.length}
+            <button class="ghost small" on:click={() => (lines = [])}>清空</button>
+          {/if}
+          <button class="ghost small" on:click={() => (outputOpen = false)}>收起</button>
+        </div>
       </header>
+      {#if lines.length}
+        <pre class="run">{#each lines as item}<span class:err={item.stream === 'err'}>{item.line}{'\n'}</span>{/each}</pre>
+      {/if}
       {#if runtime}
-        <pre>环境：{runtime.environment}
+        <pre class="environment">环境：{runtime.environment}
 命令行：{runtime.cliPath || '（没找到）'}
 版本：{runtime.cliVersion || '（没回版本号）'}
 外壳：{runtime.editorExe}
@@ -1390,7 +1484,7 @@
     border-radius: var(--kp-radius-panel);
     background: var(--kp-card);
     padding: 14px 16px 16px;
-    max-height: 40vh;
+    max-height: 36vh;
     overflow: auto;
   }
 
@@ -1410,6 +1504,51 @@
   .ghost.small {
     height: 26px;
     font-size: var(--kp-fs-small);
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  /* 命令行那一行行原样收着：它是证据，不重排、不截断。 */
+  .output pre.run {
+    margin-bottom: 10px;
+  }
+
+  .output pre.run .err {
+    color: var(--kp-critical);
+  }
+
+  /* 环境那几行是"关于这次运行的前提"，比输出淡一档，免得抢走失败原因的注意力。 */
+  .output pre.environment {
+    color: var(--kp-ink2);
+    background: transparent;
+    border: 1px dashed var(--kp-rule);
+    font-size: var(--kp-fs-tiny, 12px);
+  }
+
+  /* 停止是"跑着的时候才有"的动作：朱砂实心会让人以为它在吸引你去点，用细边就够。 */
+  .stop {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    white-space: nowrap;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--kp-radius-control);
+    border: 1px solid rgb(179 38 30 / 0.45);
+    color: var(--kp-critical);
+    background: var(--kp-card);
+  }
+
+  .stop:hover {
+    background: rgb(179 38 30 / 0.06);
+  }
+
+  .stop .play {
+    fill: currentColor;
   }
 
   .output pre {

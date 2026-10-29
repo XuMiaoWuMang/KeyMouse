@@ -8,6 +8,7 @@
 
 mod files;
 mod layout;
+mod run;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -45,10 +46,14 @@ fn main() {
         .manage(ShellState {
             dirty: Arc::clone(&dirty),
         })
+        .manage(run::RunState::default())
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
             files::open_flow,
             files::save_flow,
+            run::validate_flow,
+            run::run_flow,
+            run::run_cancel,
             set_dirty,
             close_window,
         ])

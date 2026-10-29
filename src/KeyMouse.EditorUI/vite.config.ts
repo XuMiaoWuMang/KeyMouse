@@ -10,7 +10,11 @@ export default defineConfig({
     port: 5183,
     strictPort: true,
     // Rust 的 target/ 一直在写，watcher 会撞上 EBUSY 把 dev 服务器带崩。
-    watch: { ignored: ['**/src-tauri/**', '**/node_modules/**'] },
+    // 编辑器保存文件时会在旁边落一个 `.<名字>.<pid>.<guid>.tmpdir` 的临时目录，
+    // 里面那个 .tmp 一写入就被锁——同样会把 watcher 带崩，一并忽略。
+    watch: {
+      ignored: ['**/src-tauri/**', '**/node_modules/**', '**/.*.tmpdir/**', '**/*.tmp'],
+    },
   },
   build: { target: 'chrome110', outDir: 'dist', emptyOutDir: true },
 });

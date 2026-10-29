@@ -89,6 +89,40 @@ type FlowFile = {
 
 那为什么不直接在界面里 `getCurrentWindow().close()`：它会让 `CloseRequested` 再走一遍，
 脏标记还在就会被拦回来，于是窗口永远关不掉。
+
+## 跑流程
+
+界面**不判断**流程对不对、窗口在不在——那是 `src\KeyMouse.Core` 的事。外壳只负责起一条
+`KeyMouse.exe run <流程> [--dry-run]`，把输出按行转成事件，并在需要时把它掐掉。
+
+| 命令 | 入参 | 出参 |
+| --- | --- | --- |
+| `validate_flow` | `path` | `RunExit`（同步，跑完才返回） |
+| `run_flow` | `path` | —（立刻返回，结果走事件） |
+| `run_cancel` | — | `boolean`：有没有东西被掐掉 |
+
+```ts
+type RunExit = { code: number | null; cancelled: boolean };
+type RunLine = { stream: 'out' | 'err'; line: string };
+```
+
+事件：
+
+- `shell://run-output`（`RunLine`）：每一行原样转发，不裁剪、不改写。
+- `shell://run-exit`（`RunExit`）：`cancelled` 为真表示这次是被"停止"掐掉的，
+  界面据此说「已停止」而不是「失败」。
+
+两条约定：
+
+1. **要有文件才能跑**。命令行读的是磁盘上的 JSON，界面里没保存的改动它看不见；
+   与其偷偷写临时文件让报错行号对不上界面，不如直接提示先保存。
+2. **一次只跑一条**。已经在跑时 `run_flow` 返回错误，不排队、不覆盖。
+   停止用 `taskkill /T /F` 杀整棵子树——`run` 可能已经拉起 runner 或外部 OCR 引擎。
+
+为什么不用常驻的 `KeyMouse serve`：那个进程要提权（录制要看见被提权的窗口），
+而界面刻意不提权（见 [开发 · 新编辑器外壳](../dev/editor-ui.md)）。一次性子进程的权限
+跟着外壳走，行为与在终端里手敲一致，出问题也能拿同一条命令复现。
+
 ## 对话框
 
 文件对话框走 Tauri 官方 `dialog` 插件，用法是标准 API：
