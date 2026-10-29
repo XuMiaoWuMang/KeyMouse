@@ -39,7 +39,15 @@ internal readonly record struct LayoutCandidate(string Path, string Why)
 internal static class ProductLayout
 {
     internal const string CliName = "KeyMouse.exe";
-    internal const string EditorName = "KeyMouse.FlowEditor.exe";
+
+    /// <summary>新外壳（Tauri）在本仓库里的名字；用户已定：它叫 KeyMouse.Editor.exe。</summary>
+    internal const string EditorName = "KeyMouse.Editor.exe";
+
+    /// <summary>老外壳（WinUI）的名字。两套并存期间仍然认它，退役那天删掉这一行就行。</summary>
+    internal const string LegacyEditorName = "KeyMouse.FlowEditor.exe";
+
+    /// <summary>找编辑器时按这个顺序试名字：新的在前，老的后备。</summary>
+    private static readonly string[] EditorNames = [EditorName, LegacyEditorName];
 
     /// <summary>产品自己的覆盖开关，测试与排障用：指哪儿用哪儿。</summary>
     internal const string CliOverride = "KEYMOUSE_CLI";
@@ -75,18 +83,46 @@ internal static class ProductLayout
         (OnPath(CliName), "PATH"),
     ]);
 
-    /// <summary>编辑器可能在哪，按优先级排。</summary>
-    internal static IReadOnlyList<LayoutCandidate> EditorCandidates() => Build(
-    [
-        (System.Environment.GetEnvironmentVariable(EditorOverride), $"环境变量 {EditorOverride}"),
-        (Path.Combine(Here, EditorName), @"自己所在目录（安装版：编辑器与命令行同在 <安装目录>\ 时）"),
-        (Path.Combine(Parent(Here), EditorName), @"上一级（从 <安装目录>\cli\ 回头看编辑器）"),
-        (DevEditor("Release"), @"开发树：src\KeyMouse.FlowEditor\bin\Release\…\win-x64"),
-        (DevEditor("Debug"), @"开发树：src\KeyMouse.FlowEditor\bin\Debug\…\win-x64"),
-        (ProductRegistry.Read(ProductRegistry.GuiValue) is { } gui ? Path.Combine(gui, EditorName) : null,
-            @"注册表 HKCU\Software\KeyMouse 的 GuiPath"),
-        (OnPath(EditorName), "PATH"),
-    ]);
+    /// <summary>编辑器可能在哪，按优先级排。同一个位置先找新外壳、再找老外壳。</summary>
+    internal static IReadOnlyList<LayoutCandidate> EditorCandidates()
+    {
+        var raw = new List<(string? Path, string Why)>
+        {
+            (System.Environment.GetEnvironmentVariable(EditorOverride), $"环境变量 {EditorOverride}"),
+        };
+
+        raw.AddRange(In(Here, @"自己所在目录（安装版：编辑器与命令行同在 <安装目录>\ 时）"));
+        raw.AddRange(In(Parent(Here), @"上一级（从 <安装目录>\cli\ 回头看编辑器）"));
+
+        // 开发树：新外壳的产物是 src\KeyMouse.EditorUI\src-tauri\target\release\KeyMouse.Editor.exe，
+        // 老外壳是 src\KeyMouse.FlowEditor\bin\Release\<tfm>\win-x64\KeyMouse.FlowEditor.exe。
+        // 两者都在各自的 bin 里，所以按"名字"在树里找，不写死中间那几层目录名。
+        raw.Add((DevEditor("release"), @"开发树：src\KeyMouse.EditorUI\src-tauri\target\release"));
+        raw.Add((DevEditor("debug"), @"开发树：src\KeyMouse.EditorUI\src-tauri\target\debug"));
+        raw.Add((DevLegacyEditor("Release"), @"开发树：src\KeyMouse.FlowEditor\bin\Release\…\win-x64"));
+        raw.Add((DevLegacyEditor("Debug"), @"开发树：src\KeyMouse.FlowEditor\bin\Debug\…\win-x64"));
+
+        if (ProductRegistry.Read(ProductRegistry.GuiValue) is { } gui)
+        {
+            raw.AddRange(In(gui, @"注册表 HKCU\Software\KeyMouse 的 GuiPath"));
+        }
+
+        foreach (string name in EditorNames)
+        {
+            raw.Add((OnPath(name), "PATH"));
+        }
+
+        return Build([.. raw]);
+    }
+
+    /// <summary>同一个目录里，按"新壳优先、老壳后备"展开成若干候选。</summary>
+    private static IEnumerable<(string? Path, string Why)> In(string directory, string why)
+    {
+        foreach (string name in EditorNames)
+        {
+            yield return (Path.Combine(directory, name), name == EditorName ? why : $"{why}（老外壳）");
+        }
+    }
 
     internal static string? CliPath => First(CliCandidates());
     internal static string? EditorPath => First(EditorCandidates());
@@ -155,8 +191,8 @@ internal static class ProductLayout
     private static string? First(IReadOnlyList<LayoutCandidate> candidates) =>
         candidates.Where(c => c.Exists).Select(c => c.Path).FirstOrDefault();
 
-    /// <summary>编辑器在开发树里的位置：TFM 与 RID 目录名由 csproj 决定，不在这里写死。</summary>
-    private static string? DevEditor(string configuration)
+    /// <summary>老外壳在开发树里的位置：TFM 与 RID 目录名由 csproj 决定，不在这里写死。</summary>
+    private static string? DevLegacyEditor(string configuration)
     {
         if (Repository.Value is not { } repo) return null;
         string bin = Path.Combine(repo, "src", "KeyMouse.FlowEditor", "bin", configuration);
@@ -165,12 +201,37 @@ internal static class ProductLayout
         try
         {
             // 新版在前：换了 TargetPlatformVersion 之后旧目录还在，但人们想看的是刚编的那份。
-            return Directory.EnumerateFiles(bin, EditorName, SearchOption.AllDirectories)
+            return Directory.EnumerateFiles(bin, LegacyEditorName, SearchOption.AllDirectories)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
                 .FirstOrDefault();
         }
         catch (IOException) { return null; }
         catch (UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>
+    /// 新外壳在开发树里的位置：cargo 把 exe 直接放在 target\&lt;profile&gt;\ 下。
+    ///
+    /// 名字对不上就找另一份：`cargo build` 与 `pnpm tauri build` 各写一个目录，
+    /// 而人在开发时往往只有一份是新的。宁可列出一个旧一点的候选，也不要返回"找不到"。
+    /// </summary>
+    private static string? DevEditor(string profile)
+    {
+        if (Repository.Value is not { } repo) return null;
+
+        string[] folders =
+        [
+            Path.Combine(repo, "src", "KeyMouse.EditorUI", "src-tauri", "target", profile),
+            Path.Combine(repo, "src", "KeyMouse.EditorUI", "src-tauri", "target", profile == "release" ? "debug" : "release"),
+        ];
+
+        foreach (string folder in folders)
+        {
+            string candidate = Path.Combine(folder, EditorName);
+            if (File.Exists(candidate)) return candidate;
+        }
+
+        return null;
     }
 
     private static string? FindRepository()

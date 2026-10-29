@@ -13,6 +13,7 @@ internal static class TestEntry
     private static readonly (string Name, string What, Action Run)[] Sections =
     [
         ("parsing", "命令行解析、脚本语法与循环", ParsingTests.Run),
+        ("layout", "安装布局：编辑器名字、查找顺序与理由", LayoutTests.Run),
         ("windows", "窗口选择、候选偏好与资格判定", WindowTests.Run),
         ("probe", "读屏共识、引擎调用与预处理", ProbeTests.Run),
         ("locator", "文字定位：框、并集与容错", LocatorTests.Run),

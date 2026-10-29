@@ -21,9 +21,26 @@ internal static class Installer
             }
 
             // 注册表被清过但文件还在的情形：认目录也算装过。
-            if (File.Exists(Path.Combine(FallbackDirectory, "KeyMouse.FlowEditor.exe"))) return FallbackDirectory;
+            if (EditorIn(FallbackDirectory) is not null) return FallbackDirectory;
             return null;
         }
+    }
+
+    /// <summary>
+    /// 目录里装着的编辑器：新壳在前、老壳后备。
+    ///
+    /// 过渡期两套并存，所以"有没有装过"不能用某一个固定文件名来判断——今天还写着
+    /// `KeyMouse.FlowEditor.exe`，等老壳退役那天这里只剩一个名字。
+    /// </summary>
+    internal static string? EditorIn(string directory)
+    {
+        foreach (string name in new[] { "KeyMouse.Editor.exe", "KeyMouse.FlowEditor.exe" })
+        {
+            string candidate = Path.Combine(directory, name);
+            if (File.Exists(candidate)) return candidate;
+        }
+
+        return null;
     }
 
     internal static bool IsFirstInstall => InstalledDirectory is null;
@@ -72,7 +89,12 @@ internal static class Installer
             Replace(directory, progress);
 
             progress?.Invoke("正在安装编辑器…");
+            // 新外壳（Tauri）：一个 exe，界面资源已经编在里面。
+            Extract("editorui.zip", directory, progress);
+            // 老外壳（WinUI）：过渡期一起装，退役时删掉这一行与 flowedit.zip。
             Extract("flowedit.zip", directory, progress);
+
+            WebView2(directory, progress);
 
             string cli = Path.Combine(directory, "cli", "KeyMouse.exe");
             string? existing = FindExistingCli(directory);
@@ -88,7 +110,8 @@ internal static class Installer
                 progress?.Invoke("保留已有的命令行：" + (existing ?? cli));
             }
 
-            string gui = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+            // 新壳在前：注册表里写的应该是以后一直用的那个。
+            string gui = EditorIn(directory) ?? Path.Combine(directory, "KeyMouse.Editor.exe");
             ProductRegistry.Write(ProductRegistry.GuiValue, gui);
             if (existing is not null && File.Exists(existing))
                 ProductRegistry.Write(ProductRegistry.CliValue, existing);
@@ -123,7 +146,7 @@ internal static class Installer
         if (full.Length <= 3)
             throw new InvalidOperationException("拒绝安装到磁盘根目录：" + directory);
 
-        bool ours = File.Exists(Path.Combine(directory, "KeyMouse.FlowEditor.exe"))
+        bool ours = EditorIn(directory) is not null
                     || (ProductRegistry.Read(ProductRegistry.GuiValue) is { } gui
                         && Path.GetFullPath(gui).StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
 
@@ -203,6 +226,49 @@ internal static class Installer
         }
     }
 
+    /// <summary>
+    /// 新外壳靠系统的 WebView2 运行时画界面（Tauri 不自带浏览器）。
+    ///
+    /// 只查、不装：装运行时要么联网下引导器、要么把 100 MB 的离线包装进安装包，两者都
+    /// 该由用户决定。Windows 11 与更新过的 Windows 10 都已经带着它，所以这里大多数时候
+    /// 只是走过场；真缺了，要说清楚"去哪装"，而不是让编辑器双击后一声不响地退出。
+    /// </summary>
+    private static void WebView2(string directory, Action<string>? progress)
+    {
+        try
+        {
+            const string clients = @"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}";
+            object? version = null;
+            foreach (Microsoft.Win32.RegistryKey root in new[] { Microsoft.Win32.Registry.LocalMachine, Microsoft.Win32.Registry.CurrentUser })
+            {
+                using Microsoft.Win32.RegistryKey? key = root.OpenSubKey(clients);
+                version ??= key?.GetValue("pv");
+            }
+
+            if (version is not null)
+            {
+                Log.Write("webview2 " + version);
+                return;
+            }
+
+            // 没装运行时：把说明写到安装目录里，安装照常完成——命令行不受影响。
+            progress?.Invoke("提示：没找到 WebView2 运行时，编辑器需要它");
+            string note = Path.Combine(directory, "先读我-需要-WebView2.txt");
+            File.WriteAllText(note,
+                "编辑器外壳（KeyMouse.Editor.exe）需要系统的 Microsoft Edge WebView2 运行时。\r\n" +
+                "这台机器上没有找到它。装一个就能用了（免费，约 2 MB 在线安装）：\r\n\r\n" +
+                "  https://developer.microsoft.com/microsoft-edge/webview2/\r\n\r\n" +
+                "命令行（cli\\KeyMouse.exe）不需要 WebView2，随时可用。\r\n",
+                new System.Text.UTF8Encoding(false));
+            Log.Write("webview2 missing");
+        }
+        catch (Exception ex)
+        {
+            // 查不到就当有：别因为一条探测把安装搞失败。
+            Log.Write("webview2 probe failed: " + ex.Message);
+        }
+    }
+
     /// <summary>开始菜单里放一个快捷方式。COM 调用失败不算安装失败——文件已经到位了。</summary>
     private static void Shortcut(string directory)
     {
@@ -213,11 +279,15 @@ internal static class Installer
             Type? shell = Type.GetTypeFromProgID("WScript.Shell");
             if (shell is null) return;
 
+            string target = Path.Combine(directory, File.Exists(Path.Combine(directory, "KeyMouse.Editor.exe"))
+                ? "KeyMouse.Editor.exe"
+                : "KeyMouse.FlowEditor.exe");
+
             dynamic wsh = Activator.CreateInstance(shell)!;
             dynamic shortcut = wsh.CreateShortcut(link);
-            shortcut.TargetPath = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+            shortcut.TargetPath = target;
             shortcut.WorkingDirectory = directory;
-            shortcut.IconLocation = Path.Combine(directory, "KeyMouse.FlowEditor.exe") + ",0";
+            shortcut.IconLocation = target + ",0";
             shortcut.Save();
         }
         catch (Exception)
@@ -269,10 +339,16 @@ internal static class Installer
         string? cli = ProductRegistry.Read(ProductRegistry.CliValue);
 
         string? guiDirectory = gui is not null && Path.GetDirectoryName(gui) is { Length: > 0 } g ? g : null;
-        if (guiDirectory is null && File.Exists(Path.Combine(FallbackDirectory, "KeyMouse.FlowEditor.exe")))
+        if (guiDirectory is null && EditorIn(FallbackDirectory) is not null)
             guiDirectory = FallbackDirectory;
 
-        foreach (string process in new[] { "KeyMouse.FlowEditor", "KeyMouse" })
+        // 卸载程序自己就住在安装目录里：登记没写成（被策略挡住、被人清理过）时，
+        // 这个位置比任何登记都可靠。仍然要求目录里真的躺着我们的编辑器，才敢整棵删。
+        string selfDirectory = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+        if (guiDirectory is null && selfDirectory.Length > 3 && EditorIn(selfDirectory) is not null)
+            guiDirectory = selfDirectory;
+
+        foreach (string process in new[] { "KeyMouse.Editor", "KeyMouse.FlowEditor", "KeyMouse" })
         {
             try
             {

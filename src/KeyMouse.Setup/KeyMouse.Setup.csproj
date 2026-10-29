@@ -30,7 +30,10 @@
     <ProjectReference Include="..\KeyMouse.Core\KeyMouse.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="Exists('Assets\flowedit.zip') And Exists('Assets\cli.zip')">
+  <!-- 载荷由 tools\build\pack-release.ps1 生成，不进版本库（见 .gitignore 的 Assets\*.zip）。
+       条件里要求三份都在：缺一份就等于做出一个残缺的安装包，不如让构建失败。 -->
+  <ItemGroup Condition="Exists('Assets\editorui.zip') And Exists('Assets\flowedit.zip') And Exists('Assets\cli.zip')">
+    <EmbeddedResource Include="Assets\editorui.zip" />
     <EmbeddedResource Include="Assets\flowedit.zip" />
     <EmbeddedResource Include="Assets\cli.zip" />
   </ItemGroup>

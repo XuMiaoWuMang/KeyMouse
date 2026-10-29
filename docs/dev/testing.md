@@ -20,7 +20,7 @@ KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证�
 一个普通控制台程序，**故意不用任何测试框架**：零依赖、离线可跑、`dotnet run` 就能执行，非零退出码即失败。入口是 `tests\KeyMouse.Tests\TestEntry.cs`（类名不叫 `Program`，是为了让命名空间里的 `Program` 仍然解析到 CLI 的 `Program`——runner 测试要直接调它）。
 
 ```pwsh
-.\km t                    # 全部 15 个模块
+.\km t                    # 全部 16 个模块
 .\km t parsing flow       # 只跑改到的模块，可写多个
 .\km tl                   # 列出模块
 .\km t -n flow            # 不重新编译，直接跑
@@ -34,11 +34,12 @@ dotnet run --project tests\KeyMouse.Tests -- --only loops
 tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 ```
 
-15 个模块与各自的覆盖：
+16 个模块与各自的覆盖：
 
 | 模块 | 覆盖 |
 | --- | --- |
 | `parsing` | 命令行解析、脚本语法与循环 |
+| `layout` | 安装布局：编辑器名字、查找顺序与理由 |
 | `windows` | 窗口选择、候选偏好与资格判定 |
 | `probe` | 读屏共识、引擎调用与预处理 |
 | `locator` | 文字定位：框、并集与容错 |
@@ -56,7 +57,7 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 
 断言只有一个极小的 Harness（`tests\KeyMouse.Tests\Harness.cs`）：`Check(说明, 条件, 细节)`、`Equal`、`Sequence`、`Throws`，末尾打印 `N passed, M failed`，有失败就返回退出码 1。每个模块包在 `Section` 里跑，某个模块抛异常会被记成一条失败并继续跑后面的模块，不会让整轮测试中断。
 
-最近一次全跑：15 个模块 **666 passed, 0 failed**（0 警告）。
+最近一次全跑：16 个模块 **677 passed, 0 failed**（0 警告）。
 
 **什么时候必须跑**：动了参数解析、窗口选择、流程编译/执行、Runner 协议、录制格式中的任何一处，跑对应模块；发布前跑全部。单测不需要桌面，所以在 CI 里也照跑。
 

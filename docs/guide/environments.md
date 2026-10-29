@@ -10,11 +10,12 @@ KeyMouse 有两个入口（编辑器、命令行），而它们**在开发树里
 
 | | 开发树（git 检出的仓库） | 安装版（`KeyMouseSetup-<版本>.exe` 装出来） |
 | --- | --- | --- |
-| 编辑器 | `src\KeyMouse.FlowEditor\bin\Release\net10.0-windows10.0.26100.0\win-x64\KeyMouse.FlowEditor.exe` | `<安装目录>\KeyMouse.FlowEditor.exe` |
+| 编辑器（新壳，Tauri） | `src\KeyMouse.EditorUI\src-tauri\target\release\KeyMouse.Editor.exe`（`pnpm tauri build --no-bundle` 或 `pnpm tauri dev`） | `<安装目录>\KeyMouse.Editor.exe` |
+| 编辑器（老壳，WinUI） | `src\KeyMouse.FlowEditor\bin\Release\net10.0-windows10.0.26100.0\win-x64\KeyMouse.FlowEditor.exe` | 过渡期保留 `<安装目录>\KeyMouse.FlowEditor.exe` |
 | 命令行 | `artifacts\cli\KeyMouse.exe`（`tools\build\build.ps1` 或 `km d` 的产物） | `<安装目录>\cli\KeyMouse.exe` |
 | 版本号来源 | 根目录 `Directory.Build.props` | 同左（编进 exe 里） |
 | 注册表 | 一般不写 | `HKCU\Software\KeyMouse`：`GuiPath`、`CliPath` |
-| 权限 | 编辑器与安装版一致，都**要求管理员**（清单在 build 阶段就编进 exe）；只调界面时用 `km e -NoElevate` 编一份普通权限的 | **要求管理员**（`requireAdministrator`，不这样录不到管理员窗口） |
+| 权限 | 新壳**永不提权**；老壳走清单（build 阶段就编进 exe），只调界面时用 `km e -NoElevate` | 新壳 `asInvoker`、老壳 `requireAdministrator`、命令行 `asInvoker` |
 | 有没有 `cli` 文件夹 | **没有**，这是正常的 | 有 |
 
 开发树里没有 `cli\` 是设计的结果，不是缺东西：编辑器在开发时会去找 `artifacts\cli\KeyMouse.exe`。
@@ -41,7 +42,10 @@ KeyMouse 有两个入口（编辑器、命令行），而它们**在开发树里
 8. `PATH`
 
 **编辑器的候选位置**：`KEYMOUSE_EDITOR` → 自己所在目录 → 上一级目录（从 `cli\` 回头看）→
-开发树的 `bin\Release\…\win-x64` → Debug → 注册表 `GuiPath` → `PATH`。
+开发树的新壳 `target\release` / `target\debug` → 老壳的 `bin\Release\…\win-x64` / `bin\Debug` →
+注册表 `GuiPath` → `PATH`。同一个位置里**先找 `KeyMouse.Editor.exe`（新壳）、再找
+`KeyMouse.FlowEditor.exe`（老壳）**——过渡期两套并存，退役那天只要把老名字从
+`ProductLayout.EditorNames` 里删掉。
 
 顺序里"离自己最近的在前、注册表与 PATH 在最后"是刻意的：开发时注册表里往往写着上一次装的旧版本，
 如果让它优先，新编辑器会拉起旧命令行，旧命令行不认识新参数，报出来的错和编辑器本身毫无关系——

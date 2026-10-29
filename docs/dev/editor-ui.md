@@ -62,7 +62,7 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   找不到时显示一行"没找到命令行 KeyMouse.exe"。
 - 界面进程不提权：状态行那颗点是朱砂色（普通权限）；提权时会变成警示色。
 - **能打开真实流程**（P1a）：`新建` / `打开` / `保存` / `另存为`，文件对话框走 Tauri 的 dialog 插件；
-  命令行点名 `keymouse-editor.exe 流程.json` 时启动即载入。
+  命令行点名 `KeyMouse.Editor.exe 流程.json` 时启动即载入。
 - **能改字段**：检查器里的进程名 / 窗口类名 / 标题 / 备注写回文档，改动后顶栏出现「未保存」，
   `保存` 变为可用；会丢东西的动作（关掉未保存的文档）才弹确认框，其余都写进底部那行。
 - 底部那行提示是"轻提醒"：普通的成功只更新一行字，只有失败才展开「运行输出」面板；
@@ -99,6 +99,29 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - 右键菜单与步骤复制粘贴。
 - 自绘标题栏（现在用系统标题栏）。
 
+## P3：它已经进安装包了
+
+新壳叫 **`KeyMouse.Editor.exe`**，和老的 `KeyMouse.FlowEditor.exe` 并列装在同一个目录里，谁也不改名、
+谁也不覆盖谁。`ProductLayout` 找编辑器时**同一个目录先找新壳、找不到再看老壳**；注册表 `GuiPath`
+记的是实际存在的那一份（新壳优先），开始菜单快捷方式也指向它。等哪天老壳退役，删掉 `flowedit.zip`、
+从 `ProductLayout` 的编辑器名字列表里去掉那个名字就行，别的不用动。
+
+打包链路（`pack-release.ps1` → 安装程序）：`pnpm tauri build --no-bundle` → `target\release\KeyMouse.Editor.exe`
+（约 3 MB，界面资源已内嵌）→ `artifacts\editor-ui\` → 单条目 `editorui.zip` → 安装时解到 `<安装目录>\`。
+
+**WebView2 是唯一的系统依赖**：Tauri 不自带浏览器内核。安装程序会查注册表里的
+`EdgeUpdate\Clients\{F3017226-…}`，缺了就在安装目录写一份 `先读我-需要-WebView2.txt`，安装照常完成
+（命令行不受影响）。它**只查不装**：把 100 MB 的离线包装进安装包，或者偷偷联网下引导器，都不是安装程序
+该替用户决定的事。
+
+**顺带修的一处卸载缺陷**：以前卸载只认注册表与一个固定的用户目录；注册表没写成（被策略挡了、被清理过）
+时，`uninstall.exe` 会"成功"退出却一个文件都不删。现在它会先看自己所在目录——它本来就住在安装目录里，
+那里有 `KeyMouse.Editor.exe` 或 `KeyMouse.FlowEditor.exe` 就敢整棵删。
+
+**本会话没能验证的一件事**：装到仓库外面（`%LOCALAPPDATA%\…`）在本机被 ACL 沙箱挡住，所以"安装版布局"
+（编辑器在 `<安装目录>\`、命令行在 `<安装目录>\cli\`）只验证到"候选里有这两条"（`layout` 单元测试）与
+"装在仓库里时仍按开发树解析"。真机验证要在正常权限下装一次。
+
 
 ## 界面与老外壳的关系
 
@@ -131,7 +154,7 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 | 路径 | 是什么 |
 | --- | --- |
-| `src\KeyMouse.FlowEditor\` | 现有的 WinUI 3 编辑器（C#/XAML），完整功能，界面进程提权 |
-| `src\KeyMouse.EditorUI\` | 新的 Tauri 外壳（Rust + Svelte），P0 阶段只有界面与环境信息，不提权 |
+| `src\KeyMouse.FlowEditor\` | 老外壳：WinUI 3（C#/XAML），完整功能，界面进程提权，产物 `KeyMouse.FlowEditor.exe` |
+| `src\KeyMouse.EditorUI\` | 新外壳：Tauri + Svelte（Rust），不提权，产物 `KeyMouse.Editor.exe` |
 
-`km e` 编的是前者；后者用 pnpm 与 cargo。等 P3 打包接上之后再看要不要给 `km` 加动词。
+`km e` 编的是前者；后者用 `pwsh tools\dev\editor-ui.ps1 build`（底层是 pnpm 与 cargo）。

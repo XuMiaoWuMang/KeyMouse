@@ -74,6 +74,19 @@ KeyMouse doctor
 
 查找顺序的完整说明在[开发树与安装版](environments.md)。
 
+## 编辑器起不来：缺 WebView2 运行时（新外壳）
+
+**症状**：双击 `<安装目录>\KeyMouse.Editor.exe`，进程起来一瞬间就退了，没有窗口、没有报错框。
+
+**为什么**：新外壳（Tauri）不自带浏览器内核，界面靠系统的 **Microsoft Edge WebView2 运行时**。Windows 11 与更新过的 Windows 10 都自带；精简系统、长期没联网更新的机器可能没有。
+
+**怎么办**：
+
+1. 看安装目录里有没有 `先读我-需要-WebView2.txt`——安装程序发现缺运行时会放这份说明（它**不会**让安装失败，命令行也不受影响）。
+2. 装一次运行时，免费、在线安装包约 2 MB：[developer.microsoft.com/microsoft-edge/webview2](https://developer.microsoft.com/microsoft-edge/webview2/)。
+3. 不想装运行时也行：同一目录里的 `KeyMouse.FlowEditor.exe`（老外壳，自包含）功能一样全。
+4. 确认到底有没有：注册表 `HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}` 的 `pv` 值就是版本号；安装程序的日志里也会写一行 `webview2 <版本>`。
+
 ## 编辑器起不来：XamlParseException / 缺 .pri
 
 **症状**：双击编辑器没有窗口，或者窗口一闪就没了；错误信息里有 `XamlParseException`。手动从命令行启动会看到异常文本：

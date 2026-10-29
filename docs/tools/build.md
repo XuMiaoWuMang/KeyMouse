@@ -36,28 +36,32 @@ pwsh tools\build\pack-release.ps1 -SkipCli        # 编辑器 + 安装程序
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `-SkipEditor` | 关 | 跳过编辑器 publish；但语言目录清理与 `.pri` 补齐不受它管，只要 `artifacts\editor` 已存在就照样执行 |
+| `-SkipEditor` | 关 | 跳过两个编辑器的发布（老壳 publish + 新壳 `tauri build`）；但语言目录清理与 `.pri` 补齐不受它管，只要 `artifacts\editor` 已存在就照样执行 |
 | `-SkipCli` | 关 | 跳过两个命令行产物 |
 
 版本号不在这里写死：从 [Directory.Build.props](../../Directory.Build.props) 读 `ProductVersion`，读不到直接 `throw`。执行顺序：
 
-1. 发布编辑器：`--self-contained true -p:WindowsAppSDKSelfContained=true` → `artifacts\editor`。
-2. 清理 `artifacts\editor`：删掉用不到的语言目录、`*.pdb`、`createdump.exe`。
-3. 从 Release 构建目录把 `*.pri` 复制进 `artifacts\editor`。
-4. 发布命令行两次：自包含单文件 → `artifacts\cli-self`；框架依赖单文件 → `artifacts\cli`。
-5. 复制成最终名字：`KeyMouse-x64.exe`（自包含）、`KeyMouse-fx-x64.exe`（框架依赖）。
-6. 把编辑器目录压成 `flowedit.zip`、把自包含 exe 压成单条目 `cli.zip`，都落 `src\KeyMouse.Setup\Assets\`（这两个 zip 已 gitignore）。
-7. 发布安装程序（自包含单文件）→ `KeyMouseSetup.exe` → 复制成 `KeyMouseSetup-<版本>.exe`。最后打印 `artifacts\release\` 的文件表。
+1. 发布编辑器（老壳，WinUI）：`--self-contained true -p:WindowsAppSDKSelfContained=true` → `artifacts\editor`。
+2. 发布编辑器（新壳，Tauri）：在 `src\KeyMouse.EditorUI` 里 `pnpm tauri build --no-bundle`，把 `src-tauri\target\release\KeyMouse.Editor.exe`（约 3 MB，界面已内嵌）拷进 `artifacts\editor-ui`。
+3. 清理 `artifacts\editor`：删掉用不到的语言目录、`*.pdb`、`createdump.exe`。
+4. 从 Release 构建目录把 `*.pri` 复制进 `artifacts\editor`。
+5. 发布命令行两次：自包含单文件 → `artifacts\cli-self`；框架依赖单文件 → `artifacts\cli`。
+6. 复制成最终名字：`KeyMouse-x64.exe`（自包含）、`KeyMouse-fx-x64.exe`（框架依赖）。
+7. 把两份编辑器压成 `editorui.zip`（单个 exe）、`flowedit.zip`（目录），把自包含命令行压成单条目 `cli.zip`，都落 `src\KeyMouse.Setup\Assets\`（这三个 zip 已 gitignore）。
+8. 发布安装程序（自包含单文件）→ `KeyMouseSetup.exe` → 复制成 `KeyMouseSetup-<版本>.exe`。最后打印 `artifacts\release\` 的文件表。
 
 产物一览：
 
 | 目录 | 内容 |
 | --- | --- |
-| `artifacts\editor\` | 编辑器自包含发布目录 |
+| `artifacts\editor\` | 老壳（WinUI）自包含发布目录 |
+| `artifacts\editor-ui\` | 新壳（Tauri）单个 exe |
 | `artifacts\cli\` | 框架依赖单文件（开发树里编辑器用的就是它） |
 | `artifacts\cli-self\` | 自包含单文件 |
 | `artifacts\setup\` | 安装程序发布目录 |
 | `artifacts\release\` | 最终三件：`KeyMouseSetup-<版本>.exe`、`KeyMouse-x64.exe`、`KeyMouse-fx-x64.exe` |
+
+老壳为什么还要单独补 `.pri`：`dotnet publish` 不会把 WinUI 的 `KeyMouse.FlowEditor.pri` 带进输出目录，缺了它一启动就 `XamlParseException`（实测）。新壳没有这个问题——它只有一个 exe。
 
 ## 自包含与框架依赖
 

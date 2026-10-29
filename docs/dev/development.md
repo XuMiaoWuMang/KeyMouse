@@ -247,13 +247,14 @@ pwsh tools\release\clean-releases.ps1 -Remove gui,v0.1.0 -Yes
 | `src\KeyMouse.Core\` | 能力层，按职责分六个命名空间（见下表） |
 | `src\KeyMouse.Runner\` | 常驻进程：命名管道、作业、协议（`runner-protocol.schema.json`） |
 | `src\KeyMouse.Cli\` | 命令行入口：`Program`、流程编辑器的启动命令、Runner 客户端命令、`app.manifest` |
-| `src\KeyMouse.FlowEditor\` | WinUI 3 编辑器：`MainWindow.*.cs` 五个 partial、`Themes\` 两本资源字典 |
+| `src\KeyMouse.FlowEditor\` | 老外壳：WinUI 3，`MainWindow.*.cs` 五个 partial、`Themes\` 两本资源字典，产物 `KeyMouse.FlowEditor.exe` |
+| `src\KeyMouse.EditorUI\` | 新外壳：Tauri + Svelte（`src\lib\*.ts` 纯逻辑带单测、`src-tauri\src\*.rs` 三个文件），产物 `KeyMouse.Editor.exe` |
 | `src\KeyMouse.Setup\` | 安装程序：`Program`（入口与参数）、`Log`（安装轨迹）、`Installer`（安装与卸载），载荷在 `Assets\` |
 | `tests\KeyMouse.Tests\` | 单元测试（无框架、无依赖的控制台程序，入口 `TestEntry.cs`，按领域分五个目录） |
 | `tests\KeyMouse.SmokeTarget\` | 冒烟用的靶子窗口 |
 | `tests\smoke\` | 桌面冒烟：`run.ps1`、`lib\common.ps1`、`modules\*.ps1` |
-| `tools\dev\` | `km.ps1`、`verify.ps1`、`check-docs.ps1`、`check-version.ps1`、`check-input.ps1` |
-| `tools\build\` | `build.ps1`、`pack-release.ps1` |
+| `tools\dev\` | `km.ps1`、`verify.ps1`、`check-docs.ps1`、`check-version.ps1`、`check-input.ps1`、`editor-ui.ps1` |
+| `tools\build\` | `build.ps1`、`pack-release.ps1`、`make-icon.py` |
 | `tools\release\` | `release.ps1`、`release-notes.ps1`、`clean-releases.ps1` |
 | `tools\diagnostics\` | `evidence.ps1`、`window-levels.ps1`、`screenshot.ps1` |
 | `artifacts\` | 所有构建与测试产物（不进 git） |

@@ -29,23 +29,26 @@
 - **安装**：装完可以顺手打开编辑器。
 - **取消**：什么都不做。
 
-安装程序本身**不要求管理员**（它只写当前用户的目录和 `HKCU`）。但装出来的编辑器带 `requireAdministrator`，**启动时会弹一次 UAC**——不发一次提权，录不到、也点不动以管理员身份运行的程序。
+安装程序本身**不要求管理员**（它只写当前用户的目录和 `HKCU`）。装出来的东西各有各的权限：新编辑器是普通权限，老编辑器（WinUI 那份）带 `requireAdministrator`、启动时会弹一次 UAC。
 
 装完的东西（`<安装目录>` 就是上面选的那个目录）：
 
 | 位置 | 是什么 |
 | --- | --- |
-| `<安装目录>\KeyMouse.FlowEditor.exe` | 编辑器本体（自包含 WinUI，装完即用） |
+| `<安装目录>\KeyMouse.Editor.exe` | 编辑器本体（新外壳，3 MB 左右；界面靠系统的 WebView2 运行时） |
+| `<安装目录>\KeyMouse.FlowEditor.exe` | 老编辑器（WinUI 3，自包含）。过渡期一起装着，等新壳补齐功能再删 |
 | `<安装目录>\cli\KeyMouse.exe` | 命令行（自包含单文件，不需要另装 .NET） |
 | `<安装目录>\uninstall.exe` | 卸载程序（安装程序复制自己而来） |
-| 开始菜单 → `KeyMouse 流程编辑器` | 指向编辑器的快捷方式 |
+| 开始菜单 → `KeyMouse 流程编辑器` | 指向 `KeyMouse.Editor.exe` 的快捷方式 |
 | `HKCU\Software\KeyMouse` | `GuiPath`、`CliPath` 两个 REG_SZ |
+
+**WebView2**：新编辑器不自带浏览器内核，用的是系统里的 Microsoft Edge WebView2 运行时。Windows 11 与更新过的 Windows 10 都已经带着它；万一没有，安装程序不会让安装失败，而是往安装目录里放一份 `先读我-需要-WebView2.txt`，照着里面那一行链接装一次就好。命令行不受影响。
 
 关于注册表这两条，值得知道三件事：它们**只登记确实存在的文件**（登记的路径被删了就等于没登记，`doctor` 会显示「（无）」）；`GuiPath` 与 `CliPath` 可以指向不同目录（命令行允许装在别处）；编辑器找命令行时先看自己身边，再看 `<安装目录>\cli\`，最后才轮到注册表和 `PATH`——完整顺序见[开发树与安装版](environments.md)。
 
 覆盖安装时目录怎么处理：
 
-- 目标目录里已经有 `KeyMouse.FlowEditor.exe`（或者注册表说这个目录归 KeyMouse）→ **整体清空再解出**，旧版本文件不会残留；
+- 目标目录里已经有 `KeyMouse.Editor.exe` 或 `KeyMouse.FlowEditor.exe`（或者注册表说这个目录归 KeyMouse）→ **整体清空再解出**，旧版本文件不会残留；
 - 目标是你自己的目录（比如 `D:\Tools`）→ 只删它认识的名字：`KeyMouse.*`、`cli\`、`uninstall.exe`、旧版的 `卸载.cmd`，别的东西不动。
 
 ### 静默安装

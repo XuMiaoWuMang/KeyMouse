@@ -40,6 +40,7 @@ if (-not $version) { throw 'Directory.Build.props 里没有 ProductVersion' }
 
 $artifacts = Join-Path $root 'artifacts'
 $editorOut = Join-Path $artifacts 'editor'
+$editorUiOut = Join-Path $artifacts 'editor-ui'
 $cliOut = Join-Path $artifacts 'cli'
 $cliSelfOut = Join-Path $artifacts 'cli-self'
 $setupOut = Join-Path $artifacts 'setup'
@@ -52,10 +53,29 @@ try {
     Say "-> 版本 $version"
 
     if (-not $SkipEditor) {
-        Say '-> 发布编辑器（自包含）'
+        Say '-> 发布编辑器（老壳，WinUI 自包含）'
         dotnet publish src\KeyMouse.FlowEditor\KeyMouse.FlowEditor.csproj -c Release -r win-x64 `
             --self-contained true -p:WindowsAppSDKSelfContained=true -o $editorOut --nologo | Out-Null
         if ($LASTEXITCODE -ne 0) { throw '编辑器发布失败' }
+
+        # 新壳（Tauri）：一个 exe，界面已经编在里面，不需要 .pri、语言目录、bootstrapper。
+        # 它要的是系统的 WebView2 运行时，安装程序会检查并提示（见 Installer.WebView2）。
+        Say '-> 发布编辑器（新壳，Tauri release）'
+        Push-Location 'src\KeyMouse.EditorUI'
+        try {
+            $env:CARGO_HTTP_CHECK_REVOKE = 'false'
+            $env:CARGO_NET_RETRY = '5'
+            $env:CARGO_HTTP_TIMEOUT = '120'
+            pnpm tauri build --no-bundle 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw '新壳构建失败（先跑一次 pnpm install）' }
+        }
+        finally {
+            Pop-Location
+        }
+
+        if (Test-Path $editorUiOut) { Remove-Item $editorUiOut -Recurse -Force }
+        New-Item -ItemType Directory -Force -Path $editorUiOut | Out-Null
+        Copy-Item 'src\KeyMouse.EditorUI\src-tauri\target\release\KeyMouse.Editor.exe' $editorUiOut -Force
     }
 
     # dotnet publish 不会把 WinUI 的 KeyMouse.FlowEditor.pri 带进输出目录，
@@ -107,17 +127,21 @@ try {
     Say '-> 打包安装载荷'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     foreach ($pair in @(
+        @{ From = $editorUiOut; To = 'editorui.zip' },
         @{ From = $editorOut; To = 'flowedit.zip' },
         @{ From = (Join-Path $cliSelfOut 'KeyMouse.exe'); To = 'cli.zip' }
     )) {
         $zip = Join-Path $assets $pair.To
         if (Test-Path $zip) { Remove-Item $zip -Force }
         # cli.zip 只放单个 exe：安装时直接解到 <dir>\cli\KeyMouse.exe
-        if ($pair.To -eq 'cli.zip') {
+        # editorui.zip 同理：新壳就是一个 exe，解到 <安装目录>\KeyMouse.Editor.exe
+        if ($pair.To -in @('cli.zip', 'editorui.zip')) {
+            $name = if ($pair.To -eq 'cli.zip') { 'KeyMouse.exe' } else { 'KeyMouse.Editor.exe' }
+            $from = if ($pair.From.EndsWith('.exe')) { $pair.From } else { Join-Path $pair.From $name }
             $stream = [System.IO.File]::Create($zip)
             $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compression.ZipArchiveMode]::Create)
             [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-                $archive, $pair.From, 'KeyMouse.exe',
+                $archive, $from, $name,
                 [System.IO.Compression.CompressionLevel]::SmallestSize) | Out-Null
             $archive.Dispose()
             $stream.Dispose()
