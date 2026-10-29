@@ -8,6 +8,7 @@
 
 mod crashlog;
 mod files;
+mod mini;
 mod layout;
 mod record;
 mod run;
@@ -74,6 +75,7 @@ fn main() {
             dirty: Arc::clone(&dirty),
         })
         .manage(run::RunState::default())
+        .manage(mini::MiniState::default())
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
             files::open_flow,
@@ -85,6 +87,8 @@ fn main() {
             run::run_cancel,
             record::record_flow,
             record::record_stop,
+            mini::enter_mini,
+            mini::leave_mini,
             set_dirty,
             close_window,
             log_error,

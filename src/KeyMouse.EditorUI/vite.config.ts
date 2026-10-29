@@ -16,5 +16,11 @@ export default defineConfig({
       ignored: ['**/src-tauri/**', '**/node_modules/**', '**/.*.tmpdir/**', '**/*.tmp'],
     },
   },
-  build: { target: 'chrome110', outDir: 'dist', emptyOutDir: true },
+  build: {
+    target: 'chrome110',
+    outDir: 'dist',
+    emptyOutDir: true,
+    // 只有一个入口：录制时的"够得着停止"改成把主窗口缩成细带（src-tauri/src/mini.rs），
+    // 不再另开一整块 webview 窗口，所以没有第二个 html。
+  },
 });

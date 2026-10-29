@@ -45,13 +45,19 @@ pub fn record_flow(
     duration_ms: u64,
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
-    spawn_streaming(&app, record_args(&out_path, duration_ms, ignore))
+    spawn_streaming(&app, record_args(&out_path, duration_ms, ignore))?;
+    // 迷你模式由界面自己进出（它更清楚"这一轮录制结束了没有"），
+    // 这里不再碰窗口形态。
+    Ok(())
 }
 
 /// 按 `Ctrl+Alt+Q` 让命令行自己收尾（它会写文件、打印摘要）。
 ///
 /// 按键走的是同一个命令行、同一套注入：录制本身靠的就是这套注入，能录就能停。
-/// 1.5 秒还没退出就杀进程——宁可丢这一次录制，也不要让界面卡在"录制中"。
+/// 3 秒还没退出就杀进程——宁可丢这一次录制，也不要让界面卡在"录制中"。
+///
+/// 这 3 秒是留给它写文件的：收到停止键之后，它要把录到的东西落盘、打印摘要、退出。
+/// 太短会在最不该打断的时刻打断（写了一半的 json）。
 #[tauri::command]
 pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let cli = crate::run::cli_path_of(&app)?;
@@ -66,7 +72,7 @@ pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
         .map_err(|e| format!("发停止键失败：{e}"))?;
 
     let started = Instant::now();
-    while started.elapsed() < Duration::from_millis(1500) {
+    while started.elapsed() < Duration::from_millis(3000) {
         if !is_running(&app) {
             return Ok("stopped");
         }

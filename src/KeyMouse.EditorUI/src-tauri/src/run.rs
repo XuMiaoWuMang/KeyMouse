@@ -149,6 +149,7 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         };
 
         let cancelled = state.cancelled.swap(false, std::sync::atomic::Ordering::Relaxed);
+        // 不管这一趟是录制还是播放，子进程一退，悬浮停止球就没有理由留在屏幕上。
         let _ = wait_handle.emit("shell://run-exit", RunExit { code, cancelled });
     });
 

@@ -52,6 +52,12 @@
   let running = false;
   /** 正在录制的那个目标文件。非空就表示"这一轮是录制，不是播放"。 */
   let recordingPath: string | null = null;
+  // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
+  // 编辑器那两栏只会挡路；而工具栏一旦被盖住，「停止」就摸不到了。
+  let mini = false;
+  let miniSince = 0;
+  let miniElapsed = 0;
+  let ticker: ReturnType<typeof setInterval> | null = null;
   /** 运行输出：命令行的每一行原样收下，错误的行标红。 */
   let lines: { stream: string; line: string }[] = [];
   /** 跑到第几步了；命令行没报编号时保持 null（不猜）。 */
@@ -129,6 +135,7 @@
         if (recordingPath) {
           const target = recordingPath;
           recordingPath = null;
+          void exitMini();
           if (cancelled) note('这次录制被掐掉了，没有落盘', true);
           else void adoptRecording(target);
           return;
@@ -376,6 +383,7 @@
   async function stopRun(): Promise<void> {
     // 录制不是"杀进程"能收尾的：得让它自己走到写文件那一步，所以先发停止键，
     // 外壳里 1.5 秒还没退才兜底杀（见 record.rs）。
+    void exitMini();
     try {
       if (recordingPath) await invoke('record_stop');
       else await invoke('run_cancel');
@@ -418,9 +426,53 @@
       await invoke('record_flow', { outPath: target, durationMs: 0 });
       recordingPath = target;
       running = true;
+      await enterMini();
       note('开始录了：去操作你要录的窗口，按 Esc 或点「停止」结束');
     } catch (e) {
       note(`录制没起来：${e}`, true);
+    }
+  }
+
+  /**
+   * 缩成一条细带（外壳负责改窗口，界面只负责换一屏）。
+   *
+   * 收不起来不算录制失败：那条带子是本轮的"顺手"，录制本身还在跑，
+   * 所以只写一行提示。
+   */
+  async function enterMini(): Promise<void> {
+    miniSince = Date.now();
+    miniElapsed = 0;
+    mini = true;
+    if (ticker) clearInterval(ticker);
+    ticker = setInterval(() => {
+      miniElapsed = Math.floor((Date.now() - miniSince) / 1000);
+    }, 500);
+    try {
+      await invoke('enter_mini');
+    } catch (e) {
+      note(`窗口缩不小：${e}（「停止」还在工具栏上）`, true);
+    }
+  }
+
+  /** 拖动细带：交给外壳挪窗口，界面自己不改位置。 */
+  async function dragMini(event: PointerEvent): Promise<void> {
+    event.preventDefault();
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    await getCurrentWindow().startDragging();
+  }
+
+  /** 还原成两栏。录制结束、用户主动停止、或录制进程自己退出时都要走一遍。 */
+  async function exitMini(): Promise<void> {
+    if (!mini) return;
+    mini = false;
+    if (ticker) {
+      clearInterval(ticker);
+      ticker = null;
+    }
+    try {
+      await invoke('leave_mini');
+    } catch {
+      // 还原失败（极少数：窗口已被关掉）不算问题，下次进入时会重新记原样。
     }
   }
 
@@ -653,6 +705,26 @@
 
 <svelte:window on:keydown={onKeydown} />
 
+{#if mini}
+  <!-- 录制期间的一屏：只留"正在录 + 多久 + 停止"。
+       窗口本身被外壳缩成一条细带并置顶，所以这一屏就是那条细带的内容。 -->
+  <div class="mini" role="region" aria-label="正在录制">
+    <span
+      class="mini-drag"
+      role="presentation"
+      title="按住可以拖动窗口"
+      on:pointerdown={dragMini}
+    />
+    <span class="rec-dot on" aria-hidden="true" />
+    <span class="mini-title">正在录制</span>
+    <span class="mini-clock">已录 {miniElapsed} 秒</span>
+    <span class="mini-hint">操作要录的窗口，Esc 或按钮结束</span>
+    <button class="mini-stop" on:click={() => void stopRun()}>
+      <span class="square" aria-hidden="true" />
+      停止
+    </button>
+  </div>
+{:else}
 <div class="shell">
   <header class="topbar">
     <div class="brand">
@@ -932,7 +1004,8 @@
       {/if}
     </section>
   {/if}
-</div>
+  </div>
+{/if}
 
 <style>
   .shell {
@@ -1726,6 +1799,87 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* 录制期间的细带。窗口被外壳缩成 420×52，这里只排一行。 */
+  .mini {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+    padding: 0 8px 0 4px;
+    background: var(--kp-paper);
+    border: 1px solid var(--kp-rule);
+    border-radius: 8px;
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  /* 抓手：整条都能拖（外壳按 HTCAPTION 处理不了 webview，所以左端给一块明确区域） */
+  .mini-drag {
+    flex: none;
+    width: 14px;
+    align-self: stretch;
+    border-radius: 4px 0 0 4px;
+    background-image: radial-gradient(var(--kp-ink3) 1px, transparent 1px);
+    background-size: 4px 4px;
+    background-position: 3px 50%;
+    background-repeat: repeat-y;
+    cursor: grab;
+  }
+
+  .mini-title {
+    flex: none;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--kp-ink);
+  }
+
+  .mini-clock {
+    flex: none;
+    white-space: nowrap;
+    font-family: var(--kp-mono);
+    font-size: 12px;
+    color: var(--kp-ink2);
+  }
+
+  .mini-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--kp-ink3);
+  }
+
+  .mini-stop {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid var(--kp-signal);
+    border-radius: 999px;
+    background: var(--kp-signal);
+    color: var(--kp-paper);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .mini-stop:hover {
+    background: #a8380a;
+    border-color: #a8380a;
+  }
+
+  .mini-stop .square {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--kp-paper);
   }
 
   .status-dot {
