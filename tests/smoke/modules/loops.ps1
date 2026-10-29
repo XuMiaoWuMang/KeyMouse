@@ -5,6 +5,11 @@
 #>
 
     Write-Host "`n== loops, and one process from start to finish =="
+    # 先把光标放进靶子的文本框：`window focus` 只把窗口提到前台，不保证里面的控件拿到键盘焦点。
+    # 上一次全跑时这个模块的键盘全落空（文档里还是 features 模块留下的字），而单独敲 ctrl+a/c 又能成——
+    # 差别就在"谁拿着插入符"。点一下正文区域，后面的事才有意义。
+    $null = & $Exe mouse click left -wx 120 -wy 60 @target
+    Start-Sleep -Milliseconds 250
     $loopScript = Join-Path $RunDir 'keymouse-smoke-loop.txt'
     @(
         'sleep 300'
@@ -19,7 +24,9 @@
 
     # The runner dispatches every command in its own process. If it ever spawned one per
     # line, this sampling would see more than one KeyMouse process.
-    $proc = Start-Process -FilePath $Exe -ArgumentList 'run', "`"$loopScript`"" -PassThru
+    $loopReport = Join-Path $RunDir 'keymouse-smoke-loop-report.json'
+    Remove-Item $loopReport -Force -ErrorAction SilentlyContinue
+    $proc = Start-Process -FilePath $Exe -ArgumentList 'run', "`"$loopScript`"", '--report', "`"$loopReport`"" -PassThru
     $counts = @()
     while (-not $proc.HasExited) {
         $counts += @(Get-Process KeyMouse -ErrorAction SilentlyContinue | ForEach-Object {
@@ -37,9 +44,20 @@
     $null = & $Exe key combo ctrl+c @target
     Start-Sleep -Milliseconds 300
     $looped = Get-Clipboard -Raw
-    Check 'the loop wrote its first iteration' ($looped -match 'loop line 0') "got [$looped]"
-    Check 'the loop wrote its last iteration' ($looped -match 'loop line 3') "got [$looped]"
-    Check 'the loop stopped at the requested count' ($looped -notmatch 'loop line 4') "got [$looped]"
+    # 上一次全跑时这两条红了，读到的却是上一个模块（features）留在靶子里的文字：
+    # 说明"清空 + 循环里的键盘"一个字都没到靶子，而不是循环写错了内容。把靶子里的内容
+    # 和报告一起打出来，下次红的时候能直接看出是"没清掉"还是"没敲进去"。
+    $loopDiagnostics = ''
+    if ($looped -notmatch 'loop line 0' -and (Test-Path $loopReport)) {
+        try {
+            $report = Get-Content $loopReport -Raw | ConvertFrom-Json
+            $loopDiagnostics = ' :: ' + (($report.commands | Select-Object -First 6 |
+                ForEach-Object { "$($_.command)=$($_.exitCode)" }) -join ' ')
+        } catch { }
+    }
+    Check 'the loop wrote its first iteration' ($looped -match 'loop line 0') "got [$looped]$loopDiagnostics"
+    Check 'the loop wrote its last iteration' ($looped -match 'loop line 3') "got [$looped]$loopDiagnostics"
+    Check 'the loop stopped at the requested count' ($looped -notmatch 'loop line 4') "got [$looped]$loopDiagnostics"
 
     # Structure is checked in full before the first command, so a broken loop sends nothing.
     @('repeat 3', 'key press f24') | Set-Content -Path $loopScript -Encoding utf8

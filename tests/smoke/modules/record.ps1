@@ -31,9 +31,11 @@
     Check 'it recorded the click' ($flowTypes -contains 'click') "types=$($flowTypes -join ',')"
     Check 'it recorded the typing' ($flowTypes -contains 'type') "types=$($flowTypes -join ',')"
     $clickStep = $flow.steps | Where-Object { $_.type -eq 'click' } | Select-Object -First 1
-    Check 'the click is client-relative' ($clickStep.at.space -eq 'client') "space=$($clickStep.at.space)"
-    Check 'steps name the window they happened in' `
-        (@($flow.steps | Where-Object { $_.target.process -eq 'KeyMouse.SmokeTarget' }).Count -gt 0) 'no step names the target process'
+    # 录制的契约（8b0fbe9 起）：坐标记屏幕像素，不把每一步绑到窗口——复刻的是"你按在屏幕哪个点"。
+    # 代价是窗口挪了位回放就不准，这条差异写在 docs\reference\cli.md 的录制一节。
+    Check 'the click is recorded in screen coordinates' ($clickStep.at.space -eq 'screen') "space=$($clickStep.at.space)"
+    Check 'the click has absolute coordinates' `
+        ($clickStep.at.x -ge 0 -and $clickStep.at.y -ge 0) "at=$($clickStep.at.x),$($clickStep.at.y)"
 
     $dry = & $Exe run $flowPath --dry-run 2>&1
     Check 'replaying the recording dry-runs clean' ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE :: $($dry -join ' / ')"

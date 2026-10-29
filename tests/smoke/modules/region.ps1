@@ -91,6 +91,10 @@
 
     $pickedProcess = Get-Process KeyMouse.SmokeTarget | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
     $pickedHandle = $pickedProcess.MainWindowHandle
+    # 选择器按"这个点下面是谁"算窗口，所以靶子必须真在最前面：终端窗口盖在它上面时，
+    # --rect 会如实报告终端（实测过一次，5 条断言全红但产品没错）。
+    $null = & $Exe window focus @target
+    Start-Sleep -Milliseconds 400
     $windowRect = New-Object KeyMouseRegion.Win+RECT
     $null = [KeyMouseRegion.Win]::GetWindowRect($pickedHandle, [ref]$windowRect)
     $clientRect = New-Object KeyMouseRegion.Win+RECT
