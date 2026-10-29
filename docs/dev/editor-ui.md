@@ -122,6 +122,18 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 （编辑器在 `<安装目录>\`、命令行在 `<安装目录>\cli\`）只验证到"候选里有这两条"（`layout` 单元测试）与
 "装在仓库里时仍按开发树解析"。真机验证要在正常权限下装一次。
 
+## P4：收尾
+
+- **单实例**：`tauri-plugin-single-instance` 必须作为**第一个**插件注册（后注册的话，第二个实例在它拦下之前
+  就已经跑起来了）。第二次启动不再开新窗口：把已有窗口 `unminimize` + `set_focus`，再把点名的文件用
+  `shell://open-external` 交给界面打开。实测 `KeyMouse.Editor.exe a.json` 已在跑，再启动 `… b.json`：
+  只剩一个进程，窗口里已经是 `b.json`。
+- **崩溃日志**：`src-tauri\src\crashlog.rs` 把 Rust panic 与界面里没接住的异常都追加到
+  `%LOCALAPPDATA%\KeyMouse\editor-crash.log`——和老外壳同一个路径，用户那句"看那个日志"仍然成立。
+  时间戳手写（UTC、固定 20 字符，字典序即时间序），不为此引第三方库。
+- 还没做的（写在 ADR 的未决问题里）：证据截图在界面里怎么显示、录制的提权路线、悬浮停止按钮、
+  拖拽排序、行内"跑到第几步"高亮。
+
 
 ## 界面与老外壳的关系
 

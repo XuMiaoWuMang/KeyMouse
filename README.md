@@ -81,6 +81,8 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 .\km d                      # → artifacts\cli\KeyMouse.exe（框架依赖单文件）
 .\km d -s                   # → artifacts\cli-self\KeyMouse.exe（自带运行时）
 .\km e                      # 编编辑器，并把命令行重新打到 artifacts\cli（编辑器读它）
+.\km u                      # 起新编辑器外壳（Tauri）的开发模式
+.\km ub                     # 打新外壳的发布版
 ```
 
 想全局调用，把 `artifacts\cli` 加进 PATH：

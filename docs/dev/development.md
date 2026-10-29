@@ -36,9 +36,12 @@ pwsh tools\dev\km.ps1 b
 | `e` / `editor` | 编编辑器，并把 CLI 发布到 `artifacts\cli`（编辑器连的就是它） | 编辑器 XAML + ~5 s |
 | `e -NoCli` | 只编编辑器，不碰 `artifacts` | 同上 |
 | `e -NoElevate` | 普通权限构建编辑器（换用 `app.unelevated.manifest`，不弹 UAC） | 同上 |
+| `u` / `ui` | 起新编辑器外壳（Tauri + Svelte）的开发模式，等价于 `editor-ui.ps1 dev` | 首次编 Rust 数分钟 |
+| `ub` / `ui-build` | 打新外壳的发布版（`pnpm build` + `cargo build --release`） | 分钟级 |
+| `ut` / `ui-test` | 新外壳的两层测试（vitest + cargo test） | 十几秒 |
 | `t` / `test` | 单元测试，全部模块（不需要桌面） | ~1 s |
 | `t parsing` | 只跑指定模块，可写多个：`t parsing flow` | ~1 s |
-| `tl` / `test-list` | 列出 15 个单元测试模块 | 瞬时 |
+| `tl` / `test-list` | 列出 16 个单元测试模块 | 瞬时 |
 | `t -n flow` | 不重新编译，直接跑 | ~0.2 s |
 | `s` / `smoke` | 桌面冒烟（需要解锁的桌面） | 数分钟 |
 | `v` / `verify` | 六道关卡（构建 / 单测 / 文档 / 版本 / 打包 / 冒烟） | 取决于是否冒烟 |

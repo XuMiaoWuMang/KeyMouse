@@ -93,6 +93,15 @@
       }),
     );
 
+    // 第二次启动（双击另一个流程文件）会被外壳拦下，转成这个事件：
+    // 有未保存的改动就先问一句，问完再打开——和点「打开」走同一条路。
+    keep(
+      listen<string>('shell://open-external', async (event) => {
+        if (!(await confirmDiscard())) return;
+        await loadFrom(event.payload);
+      }),
+    );
+
     // 命令行的输出是一行一行来的：每行都收进面板，不在这里做解释。
     keep(
       listen<{ stream: string; line: string }>('shell://run-output', (event) => {
@@ -123,6 +132,23 @@
     );
 
     return () => stops.forEach((stop) => stop());
+  });
+
+  // 界面里没接住的异常不该只留在 DevTools 里：推给外壳记进 editor-crash.log，
+  // 用户报"它崩了"时至少有一条时间线可看。
+  onMount(() => {
+    const push = (what: string, detail: string) =>
+      void invoke('log_error', { message: `${what}: ${detail}` }).catch(() => undefined);
+
+    const onError = (event: ErrorEvent) => push('error', `${event.message} @ ${event.filename}:${event.lineno}`);
+    const onRejection = (event: PromiseRejectionEvent) => push('unhandled', String(event.reason));
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection);
+    };
   });
 
   // 外壳不知道界面里发生了什么，脏标记得推给它；它只负责在关窗前问一句。

@@ -7,6 +7,9 @@
         .\km e            编译编辑器，并把 CLI 发到 artifacts\cli（编辑器连它）
         .\km e -NoCli     只编译编辑器，不碰 artifacts
         .\km e -NoElevate 普通权限构建编辑器（调界面用：不弹 UAC，也能被普通权限的 KeyMouse 点）
+        .\km u            起新编辑器外壳（Tauri + Svelte）的开发模式
+        .\km ub           打新外壳的发布版
+        .\km ut           跑新外壳的两层测试（vitest + cargo test）
         .\km t            单元测试（全部，不需要桌面，跑已编译的 exe）      ~1s
         .\km t parsing    只跑改到的模块（可写多个）                        ~1s
         .\km tl           列出测试模块
@@ -157,6 +160,26 @@ switch ($Verb) {
             PublishCli
         }
         break
+    }
+
+    { $_ -in 'u', 'ui' } {
+        # 新外壳（Tauri）。真正的逻辑在 tools\dev\editor-ui.ps1——那里还要处理 cargo 的
+        # 证书吊销、vite 的 watch 忽略等环境坑，不适合搬进 km。
+        Say '-> 新编辑器外壳（Tauri）'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'editor-ui.ps1') dev
+        exit $LASTEXITCODE
+    }
+
+    { $_ -in 'ub', 'ui-build' } {
+        Say '-> 新编辑器外壳：打包（pnpm build + cargo build --release）'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'editor-ui.ps1') build
+        exit $LASTEXITCODE
+    }
+
+    { $_ -in 'ut', 'ui-test' } {
+        Say '-> 新编辑器外壳：两层测试（vitest + cargo test）'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'editor-ui.ps1') test
+        exit $LASTEXITCODE
     }
 
     { $_ -in 't', 'test' } {

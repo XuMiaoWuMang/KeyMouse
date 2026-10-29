@@ -11,6 +11,9 @@
 .\km e                # 编译编辑器，并把 CLI 发到 artifacts\cli
 .\km e -NoCli         # 只编译编辑器，不碰 artifacts
 .\km e -NoElevate     # 普通权限构建编辑器：不弹 UAC，也能被普通权限的 KeyMouse 点
+.\km u               # 起新编辑器外壳（Tauri + Svelte）的开发模式，等价于 editor-ui.ps1 dev
+.\km ub              # 打新外壳的发布版（pnpm build + cargo build --release）
+.\km ut              # 跑新外壳的两层测试（vitest + cargo test）
 .\km t                # 全部单元测试（不需要桌面）              ~1s
 .\km t parsing flow   # 只跑指定模块（可写多个）
 .\km t -n             # 不重新编译，直接跑                      ~0.2s
