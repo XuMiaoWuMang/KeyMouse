@@ -20,7 +20,8 @@ use tauri::{AppHandle, Emitter, Manager};
 /// 它被 `Mutex` 包着是因为：读输出在后台线程，而"停止"来自界面线程。
 #[derive(Default)]
 pub struct RunState {
-    child: Mutex<Option<Child>>,
+    /// 录制那边要问「还在跑吗」，所以对本 crate 可见。
+    pub(crate) child: Mutex<Option<Child>>,
     /// 这一次结束是不是被"停止"掐掉的：界面据此说"已停止"而不是"失败（退出码 1）"。
     cancelled: std::sync::atomic::AtomicBool,
 }
@@ -51,7 +52,7 @@ fn run_args(path: &str, dry_run: bool) -> Vec<String> {
 
 #[tauri::command]
 pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
-    let cli = cli_path(&app)?;
+    let cli = cli_path_of(&app)?;
     let output = Command::new(&cli)
         .args(run_args(&path, true))
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
@@ -75,7 +76,15 @@ pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
 
 #[tauri::command]
 pub fn run_flow(app: AppHandle, path: String) -> Result<(), String> {
-    let cli = cli_path(&app)?;
+    spawn_streaming(&app, run_args(&path, false)).map_err(|e| e.to_string())
+}
+
+/// 起一条命令行的子进程，把它的输出按行转成事件，并把句柄留在槽位里等"停止"。
+///
+/// 播放与录制共用这一段：两者的差别只在参数，收尾方式一模一样
+/// （界面按下停止 → `run_cancel` → 杀整棵子树）。
+pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), String> {
+    let cli = cli_path_of(app)?;
     let state = app.state::<RunState>();
     {
         let mut slot = state.child.lock().unwrap();
@@ -83,7 +92,7 @@ pub fn run_flow(app: AppHandle, path: String) -> Result<(), String> {
             return Err("已经在跑了；先停止再开始下一次".to_string());
         }
         let mut child = Command::new(&cli)
-            .args(run_args(&path, false))
+            .args(args)
             .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -185,7 +194,7 @@ fn emit_line(app: &AppHandle, stream: &'static str, line: &str) {
 
 /// 命令行位置由 `layout::runtime_info` 已经算过一遍；这里再问一次而不是缓存，
 /// 是为了让"换了 KEYMOUSE_CLI 重开窗口"这种操作立刻生效。
-fn cli_path(_app: &AppHandle) -> Result<std::path::PathBuf, String> {
+pub(crate) fn cli_path_of(_app: &AppHandle) -> Result<std::path::PathBuf, String> {
     let info = crate::layout::runtime_info();
     info.cli_path
         .map(std::path::PathBuf::from)

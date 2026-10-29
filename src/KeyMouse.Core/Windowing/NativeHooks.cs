@@ -150,7 +150,11 @@ internal static class NativeHooks
     [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(POINT point);
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
     [DllImport("user32.dll")] private static extern int GetWindowThreadProcessId(IntPtr window, out int pid);
-    [DllImport("user32.dll")] private static extern int GetWindowTextW(IntPtr window, [Out] char[] text, int count);
+    // CharSet 必须写死 Unicode：不写就按 ANSI 编排，char[] 会被当成字节数组写，
+    // 于是中文标题读出来是「蛻刧y橆v觺刧」这种两字节错位的乱码（实测报错过一次）。
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern int GetWindowTextW(IntPtr window, [Out] char[] text, int count);
+
     [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(int access, bool inherit, int pid);
     [DllImport("advapi32.dll", SetLastError = true)] private static extern bool OpenProcessToken(IntPtr process, int access, out IntPtr token);
     [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr handle);

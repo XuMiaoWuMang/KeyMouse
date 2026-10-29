@@ -5,6 +5,7 @@
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
   import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { runConclusion, runHint, runIsBad } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
@@ -49,8 +50,12 @@
   let busy = false;
   /** 正在跑的那条子进程。停止按钮据此出现，播放按钮据此让位。 */
   let running = false;
+  /** 正在录制的那个目标文件。非空就表示"这一轮是录制，不是播放"。 */
+  let recordingPath: string | null = null;
   /** 运行输出：命令行的每一行原样收下，错误的行标红。 */
   let lines: { stream: string; line: string }[] = [];
+  /** 跑到第几步了；命令行没报编号时保持 null（不猜）。 */
+  let progress: RunProgress | null = null;
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
 
@@ -92,13 +97,27 @@
     keep(
       listen<{ stream: string; line: string }>('shell://run-output', (event) => {
         lines = [...lines, event.payload];
+        // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
+        progress = parseRunProgress(event.payload.line) ?? progress;
       }),
     );
 
     keep(
       listen<{ code: number | null; cancelled: boolean }>('shell://run-exit', (event) => {
         running = false;
+        progress = null;
         const { code, cancelled } = event.payload;
+
+        // 录制共用同一条子进程通道：结束时该做的是"把刚录出来的文件打开"，
+        // 而不是用播放的结论去解释一次录制。
+        if (recordingPath) {
+          const target = recordingPath;
+          recordingPath = null;
+          if (cancelled) note('这次录制被掐掉了，没有落盘', true);
+          else void adoptRecording(target);
+          return;
+        }
+
         note(runConclusion(code, cancelled), runIsBad(code, cancelled));
       }),
     );
@@ -261,6 +280,7 @@
     if (busy || running) return;
 
     lines = [];
+    progress = null;
     outputOpen = true;
 
     if (dryRun) {
@@ -289,10 +309,68 @@
   }
 
   async function stopRun(): Promise<void> {
+    // 录制不是"杀进程"能收尾的：得让它自己走到写文件那一步，所以先发停止键，
+    // 外壳里 1.5 秒还没退才兜底杀（见 record.rs）。
     try {
-      await invoke('run_cancel');
+      if (recordingPath) await invoke('record_stop');
+      else await invoke('run_cancel');
     } catch (e) {
       note(`停不下来：${e}`, true);
+    }
+  }
+
+  /**
+   * 录制。
+   *
+   * 不在这里自我提权：钩子看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到，
+   * 命令行会把这句话原样写进输出里。要录那些窗口，用命令行 `KeyMouse --elevate record`。
+   *
+   * 停止走产品自己的停止键（Ctrl+Alt+Q），不另开一条后门——它和录制用的是同一套注入，
+   * 能录就能停。
+   */
+  async function startRecord(): Promise<void> {
+    if (!runtime?.cliPath) {
+      note('这台机器上没找到命令行 KeyMouse.exe', true);
+      return;
+    }
+    if (busy || running) {
+      note('正在跑一条流程，先停止再录', true);
+      return;
+    }
+
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const target = await save({
+      title: '把这次录制存到哪',
+      defaultPath: path ? path.replace(/\.json$/i, '-录制.json') : '录制.json',
+      filters: [{ name: '流程', extensions: ['json'] }],
+    });
+    if (!target) return;
+
+    lines = [];
+    progress = null;
+    outputOpen = true;
+    try {
+      await invoke('record_flow', { outPath: target, durationMs: 0 });
+      recordingPath = target;
+      running = true;
+      note('开始录了：去操作你要录的窗口，按 Esc 或点「停止」结束');
+    } catch (e) {
+      note(`录制没起来：${e}`, true);
+    }
+  }
+
+  /** 录制结束后把文件读进来；读不出来就把原因摆出来，别让人对着一份空流程猜。 */
+  async function adoptRecording(target: string): Promise<void> {
+    try {
+      const file = await invoke<{ path: string; text: string; json: unknown }>('open_flow', {
+        path: target,
+      });
+      useDocument(adopt(file.json), file.path);
+      // 刚录出来的文件就是它本来的样子，没有未保存的改动。
+      dirty = false;
+      note(`录了 ${steps.length} 步，已经打开`);
+    } catch (e) {
+      note(`录制结束了，但没读到文件：${e}`, true);
     }
   }
 
@@ -564,7 +642,15 @@
     </div>
 
     <div class="actions">
-      <button class="ghost"><span class="rec-dot" aria-hidden="true"></span>录制</button>
+      <button
+        class="ghost"
+        class:on={recordingPath !== null}
+        on:click={startRecord}
+        disabled={busy || running}
+        title="按当前权限录制：提权窗口上的点击录不到，命令行会说明"
+      >
+        <span class="rec-dot" aria-hidden="true"></span>{recordingPath ? '录制中' : '录制'}
+      </button>
       <button class="ghost" on:click={() => startRun(true)} disabled={busy || running}>试运行</button>
       {#if running}
         <button class="stop" on:click={stopRun}>
@@ -714,6 +800,9 @@
         {/if}
       {:else}
         <span class="dim">外壳没连上（浏览器里预览时正常）</span>
+      {/if}
+      {#if running && progressText(progress)}
+        <span class="dim">· 跑到 {progressText(progress)}</span>
       {/if}
       {#if notice}
         <span class="notice" class:bad={notice.bad}>{notice.text}</span>
@@ -894,6 +983,27 @@
     height: 8px;
     border-radius: 50%;
     border: 1.5px solid currentColor;
+  }
+
+  /* 录制中：按钮变成朱砂，圆点实心并慢慢呼吸——不看文字也知道还在录 */
+  .ghost.on {
+    color: var(--kp-signal);
+    border-color: var(--kp-signal);
+    background: color-mix(in srgb, var(--kp-signal) 8%, transparent);
+  }
+
+  .ghost.on .rec-dot {
+    background: var(--kp-signal);
+    animation: rec-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes rec-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ghost.on .rec-dot { animation: none; }
   }
 
   .primary {

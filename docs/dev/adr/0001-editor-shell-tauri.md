@@ -1,6 +1,7 @@
 # ADR 0001：编辑器外壳换成 Tauri，界面进程不再持有管理员权限
 
-- 状态：**已采纳**（P0 外壳已跑通：界面与老版本并排一致、状态行读得到命令行版本、进程不提权；P1 起在推进）
+- 状态：**已采纳**（P0 外壳跑通、P1 契约层与增删排序、P2 录制与试运行/播放在新壳上跑通；
+  界面进程始终不提权。P3 打包与 P4 收尾未开始）
 - 日期：2026-10-29
 - 相关：[开发树与安装版](../../guide/environments.md)、[开发](../../dev/development.md)、[runner 协议](../../reference/runner-protocol.md)
 
@@ -66,8 +67,18 @@ Avalonia 不是坏选择——如果目标只是"摆脱 WindowsAppSDK"。这里�
 
 ## 未决问题
 
-1. 文件对话框走 `tauri-plugin-dialog` 还是自绘（要统一视觉）。
+1. 文件对话框走 `tauri-plugin-dialog` 还是自绘（要统一视觉）。**现状**：官方对话框（P1a 起），视觉是系统的。
 2. 证据截图（PNG）怎么显示：`asset` 协议 + 作用域，还是 Rust 读成 base64 给前端。
 3. 单实例与"用命令行打开某个流程"（现在 `KeyMouse flow edit x.json`）：新壳要不要接受同样的参数。
+   **现状**：新壳接受 `keymouse-editor.exe 流程.json`（`RuntimeInfo.initialPath`），单实例还没做。
 4. 崩溃日志落点：现在是 `Scratch`（TEMP→LOCALAPPDATA→程序目录），Rust 侧要复用同一套规则。
-- **关闭窗口时提醒未保存**：现在只有「打开/新建」会问，直接点 × 不问。要拦就得在外壳里处理 CloseRequested，再回来问界面（跨边界异步确认），P1b 处理。
+5. **录制的权限路线**（P2 起）：现在按外壳的权限录，提权窗口上的点击录不到，命令行会在输出里说明，
+   要录那些窗口得手敲 `KeyMouse --elevate record`。可选路线：外壳自提权（界面也跟着提权，
+   与"界面永不提权"冲突）、录制交给常驻 `KeyMouse serve`（要 UAC 起一次常驻）、或不处理（现状）。
+6. **悬浮停止按钮**：老外壳在录制时留一个可拖的悬浮球；新壳现在只有工具栏的「停止」和 `Esc`，
+   录制期间最小化窗口就够不着了——要不要复用 `NativeIsland`，还是要一个 WebView 内的浮层。
+
+已解决：
+
+- **关闭窗口时提醒未保存**（原第 5 条）：P1b 已做——外壳拦 `CloseRequested`、发
+  `shell://close-requested`、界面答完再 `close_window`。

@@ -8,6 +8,7 @@
 
 mod files;
 mod layout;
+mod record;
 mod run;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -54,6 +55,8 @@ fn main() {
             run::validate_flow,
             run::run_flow,
             run::run_cancel,
+            record::record_flow,
+            record::record_stop,
             set_dirty,
             close_window,
         ])

@@ -135,36 +135,28 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 - 另存：`save({ filters: [{ name: '流程', extensions: ['json'] }], defaultPath })`
 - 两者取消时返回 `null`，界面**不**当作错误。
 
-## 校验与运行（P1-3 落地，先写下来）
+## 录制
 
-### `validate_flow(path: string) -> ValidationReport`
+| 命令 | 参数 | 返回 |
+| --- | --- | --- |
+| `record_flow` | `outPath`, `durationMs`（0 = 一直录到停） | —（立刻返回，结果走事件） |
+| `record_stop` | — | `"stopped" \| "killed" \| "idle"` |
 
-起 `KeyMouse.exe run <path> --dry-run`，把它的人话输出按行收集。
+录制与播放**共用**同一条子进程通道（同一个 `RunState`、同样的事件 `shell://run-output`
+与 `shell://run-exit`），所以界面上"已经在跑"与"正在录"互斥——一次只做一件事。
 
-```ts
-type ValidationReport = {
-  exitCode: number;      // 0 = 每一步的窗口都在；3 = 有窗口找不到；其它见命令行参考
-  ok: boolean;           // exitCode === 0
-  lines: string[];       // 原样输出（中文），界面只负责显示
-};
-```
+四条约定：
 
-### `run_flow(path: string, mode: 'dry' | 'play') -> RunHandle`
-
-- `dry`：`KeyMouse.exe run <path> --dry-run`
-- `play`：`KeyMouse.exe run <path>`
-
-输出通过事件流回界面，事件名 `run://output`：
-
-```ts
-type RunEvent =
-  | { kind: 'line'; text: string }
-  | { kind: 'exit'; exitCode: number };
-```
-
-### `run_cancel() -> void`
-
-请求停止（杀掉外壳记住的那个子进程）。界面上的「停止」按钮只调这一条。
+1. **不自我提权**。钩子只看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到；
+   命令行会把这件事写进输出（"这些窗口的权限比 KeyMouse 高"），界面原样显示。
+   要录那些窗口，用命令行 `KeyMouse --elevate record --out …`。
+2. **把自己排除掉**。外壳传 `--ignore-window 0x<hwnd>`（自己的窗口句柄），
+   否则"点一下编辑器"也会被录成一步。
+3. **停止用产品自己的停止键**：`record_stop` 发一次 `KeyMouse key combo ctrl+alt+q`，
+   让录制自己走到"写文件、打印摘要"那一步；1.5 秒还没退出才 `run_cancel` 兜底杀进程
+   （代价是这一次录制不落盘，界面会如实说"被掐掉了"）。
+4. **结束即打开**：`shell://run-exit` 到达后，若这一轮是录制，外壳读那个文件并切换过去，
+   不让用户自己去"打开"。读不出来就说明原因，别让人对着一份空流程猜。
 
 ## 错误码
 
