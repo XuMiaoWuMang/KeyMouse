@@ -24,7 +24,8 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 ## 架构：一个产品，两个入口，三层
 
 ```
-  图形编辑器（src\KeyMouse.FlowEditor，WinUI 3）        命令行（src\KeyMouse.Cli → KeyMouse.exe）
+  图形编辑器（src\KeyMouse.EditorUI，Tauri + Svelte）    命令行（src\KeyMouse.Cli → KeyMouse.exe）
+  老外壳（src\KeyMouse.FlowEditor，WinUI 3）仍随安装包一起装着
                  │ 命名管道 + JSON 行：run/record/pick-region/ocr/validate/cancel/pause/resume/status
                  ▼
   常驻 Runner（src\KeyMouse.Runner，KeyMouse serve）
@@ -53,7 +54,7 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 | **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
 | **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令 |
 | **录制** | `record` 全局监听键鼠（只观察、不拦截），把一次操作写成可回放的 JSON：屏幕坐标、抽稀后的轨迹、关键步骤截图 |
-| **图形编辑器** | `KeyMouse flow edit 流程.json` 打开 WinUI 3 编辑器：账本式步骤列表、按契约渲染的参数检视器、浮层取点/取块、试运行与播放、运行态逐步回写、录制 |
+| **图形编辑器** | 新外壳 `KeyMouse.Editor.exe`（Tauri + Svelte，界面进程不提权）：账本式步骤列表、按契约渲染的参数检视器、打开/保存、增删排序与撤销、试运行与播放、停止、录制；老外壳 `KeyMouse.FlowEditor.exe`（WinUI 3）同期保留，`KeyMouse flow edit 流程.json` 仍打开它 |
 | **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提 |
 | **循环与变量** | 流程可以带 `variables`、用 `{{名字}}` 传值、用 `repeat` / `foreach` 循环；`read-text` 把屏幕内容读进变量 |
 | **子流程** | 一个流程可以 `call` 另一个流程文件：内联执行、变量作用域链式、`export` 回传；成环、缺文件、超过 8 层在加载时就被拒 |
@@ -71,6 +72,10 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 
 安装版把编辑器放在 `<安装目录>\`、命令行放在 `<安装目录>\cli\`，并写
 `HKCU\Software\KeyMouse`（`GuiPath` / `CliPath`）。细节见 **[docs/guide/install.md](docs/guide/install.md)**。
+
+两个编辑器并列装着，谁也不覆盖谁：**`KeyMouse.Editor.exe`**（新外壳，Tauri，界面进程不提权）与
+**`KeyMouse.FlowEditor.exe`**（老外壳，WinUI 3，自包含）。新外壳需要系统的 WebView2 运行时
+（Windows 11 自带）；缺了安装程序会留一份说明，老外壳仍可直接用。
 
 > 自包含产物体积主要来自交互式选区浮层需要的 WinForms（36 MB → 49 MB 实测），
 > 不用选区的命令一行代码也没变重。见 [docs/dev/design.md](docs/dev/design.md)。
