@@ -1,5 +1,5 @@
 /**
- * 对步骤列表的四种改动：插入、删除、上移、下移。
+ * 对步骤列表的五种改动：插入、删除、上移、下移、复制。
  *
  * 都是纯函数、都返回新数组：界面把它们的结果塞回文档，单测可以直接调。
  * 不做"带副作用"的原地改——撤销栈就是先把文档序列化一份存起来，原地改会让快照
@@ -21,6 +21,19 @@ export function removeAt(steps: readonly FlowStep[], index: number): FlowStep[] 
   return steps.filter((_, i) => i !== index);
 }
 
+/**
+ * 复制第 `index` 步，副本插在它后面（老外壳的「复制这一步」）。
+ *
+ * 深拷贝一份：直接放同一个对象引用的话，改副本会连带改原件——撤销栈是序列化快照，
+ * 两份"看起来一样"的步骤共用一个对象时，那条历史就说不清了。
+ */
+export function duplicateAt(steps: readonly FlowStep[], index: number): FlowStep[] {
+  if (index < 0 || index >= steps.length) return [...steps];
+  const copy = JSON.parse(JSON.stringify(steps[index])) as FlowStep;
+  const next = [...steps];
+  next.splice(index + 1, 0, copy);
+  return next;
+}
 /** 上移一位；已经在最前面就不动。 */
 export function moveUp(steps: readonly FlowStep[], index: number): FlowStep[] {
   if (index <= 0 || index >= steps.length) return [...steps];

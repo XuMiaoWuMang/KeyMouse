@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './edit';
+
+import { duplicateAt, insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
 import { missingHint, missingOf } from './steps';
 
@@ -95,5 +96,27 @@ describe('missingOf / missingHint', () => {
 
   it('repeat 的空子步骤算缺', () => {
     expect(missingOf({ type: 'repeat', times: 3, steps: [] })).toEqual(['steps']);
+  });
+});
+
+describe('duplicateAt', () => {
+  const steps: FlowStep[] = [{ type: 'sleep', ms: 100 }, { type: 'sleep', ms: 200 }];
+
+  it('副本插在原件后面', () => {
+    const next = duplicateAt(steps, 0);
+    expect(next.map((s) => s.ms)).toEqual([100, 100, 200]);
+  });
+
+  it('副本是深拷贝，改它不影响原件', () => {
+    // duplicateAt(steps, 1) 把第 2 步的副本插在它后面，所以副本在下标 2。
+    const next = duplicateAt(steps, 1) as { type: string; ms: number }[];
+    next[2].ms = 999;
+    expect(steps[1].ms).toBe(200);
+    expect(next[2].ms).toBe(999);
+  });
+
+  it('越界原样返回', () => {
+    expect(duplicateAt(steps, 5)).toEqual(steps);
+    expect(duplicateAt(steps, -1)).toEqual(steps);
   });
 });

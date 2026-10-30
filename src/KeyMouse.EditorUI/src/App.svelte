@@ -7,7 +7,7 @@
   import Inspector from './lib/Inspector.svelte';
   import { schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
-  import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { duplicateAt, insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { parseStepResult, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
@@ -82,6 +82,8 @@
    */
   let results: Record<number, StepResult> = {};
 
+  /** 右键菜单：在哪个行、屏幕上的哪个点。`null` 表示没开。 */
+  let rowMenu: { index: number; x: number; y: number } | null = null;
   /** 这份流程里有没有分组步（repeat / foreach / call）。有的话行上就不能标编号结果。 */
   $: flatRun = steps.every((step) => !['repeat', 'foreach', 'call'].includes(step.type));
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
@@ -183,11 +185,19 @@
     const onError = (event: ErrorEvent) => push('error', `${event.message} @ ${event.filename}:${event.lineno}`);
     const onRejection = (event: PromiseRejectionEvent) => push('unhandled', String(event.reason));
 
+
+    /*
+      右键菜单：WebView2 自带一张"返回/刷新/打印"的原生菜单，不拦住就会盖在
+      我们的菜单上面。应用里没有需要浏览器原生菜单的地方（粘贴走 Ctrl+V）。
+    */
+    const blockNativeMenu = (event: MouseEvent) => event.preventDefault();
+    document.addEventListener('contextmenu', blockNativeMenu);
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onRejection);
     return () => {
       window.removeEventListener('error', onError);
       window.removeEventListener('unhandledrejection', onRejection);
+      document.removeEventListener('contextmenu', blockNativeMenu);
     };
   });
 
@@ -628,6 +638,56 @@
     note(`加了「${stepTitle(type)}」${missingOf(makeStep(type)).length > 0 ? '：右边补齐还没填的项' : ''}`);
   }
 
+  /** 复制这一步（右键菜单里的一项）。副本插在原件后面，并选中副本。 */
+  function duplicateStep(index: number) {
+    const next = duplicateAt(steps, index);
+    if (next.length === steps.length) return;
+    applySteps(next);
+    selected = index + 1;
+    note('复制了一步');
+  }
+
+  /**
+   * 菜单里的四件事。写成无参函数是因为模板里写 `rowMenu!.index` 过不了编译
+   * （Svelte 的模板不是 TypeScript），而且这几个动作都要"先收起菜单再动手"。
+   */
+  function menuDuplicate() {
+    if (!rowMenu) return;
+    const index = rowMenu.index;
+    rowMenu = null;
+    duplicateStep(index);
+  }
+
+  function menuUp() {
+    if (!rowMenu) return;
+    const index = rowMenu.index;
+    rowMenu = null;
+    stepUp(index);
+  }
+
+  function menuDown() {
+    if (!rowMenu) return;
+    const index = rowMenu.index;
+    rowMenu = null;
+    stepDown(index);
+  }
+
+  function menuDelete() {
+    if (!rowMenu) return;
+    const index = rowMenu.index;
+    rowMenu = null;
+    deleteStep(index);
+  }
+  /** 右键一行：选中它，然后在鼠标位置开一张小菜单。 */
+  function openRowMenu(index: number, event: MouseEvent) {
+    event.preventDefault();
+    selected = index;
+    moreOpen = false;
+                rowMenu = null;
+                rowMenu = null;
+    rowMenu = { index, x: event.clientX, y: event.clientY };
+  }
+
   function deleteStep(index = selected) {
     if (!doc || steps.length === 0) return;
     const next = removeAt(steps, index);
@@ -685,6 +745,10 @@
     // Esc 分两件事：跑着的时候它是"停止"（这是玩流程时手指最自然的位置），
     // 否则把那张「+ 更多」卡片收起来——它在视觉上压住了列表。
     if (key === 'escape') {
+      if (rowMenu) {
+        rowMenu = null;
+        return;
+      }
       if (running) void stopRun();
       moreOpen = false;
       return;
@@ -951,9 +1015,11 @@
             <button
               class="row"
               class:selected={index === selected}
+              on:contextmenu={(event) => openRowMenu(index, event)}
               on:click={() => {
                 selected = index;
                 moreOpen = false;
+                rowMenu = null;
               }}
             >
               <span class="rail" aria-hidden="true"></span>
@@ -1019,6 +1085,16 @@
           <p class="blank">这一步还没加。上面那排按钮各加一步，按顺序往下执行。</p>
         {/if}
       </section>
+
+      {#if rowMenu}
+        <!-- 右键菜单：与老外壳同一组动作。位置用鼠标点，所以是 fixed + 页面坐标。 -->
+        <div class="row-menu" style="left: {rowMenu.x}px; top: {rowMenu.y}px" role="menu">
+          <button role="menuitem" on:click={menuDuplicate}>复制这一步</button>
+          <button role="menuitem" disabled={rowMenu.index === 0} on:click={menuUp}>上移</button>
+          <button role="menuitem" disabled={rowMenu.index === steps.length - 1} on:click={menuDown}>下移</button>
+          <button role="menuitem" on:click={menuDelete}>删除这一步</button>
+        </div>
+      {/if}
 
       <aside class="side" aria-label="这一步的设置">
         {#if current}
@@ -1607,6 +1683,44 @@
     background: var(--kp-field);
   }
 
+  /* 右键菜单：跟着鼠标点出现，所以用 fixed 定位，坐标即 clientX/clientY。 */
+  .row-menu {
+    position: fixed;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    min-width: 132px;
+    padding: 4px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    box-shadow: 0 8px 24px rgba(23, 20, 15, 0.14);
+  }
+
+  .row-menu button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--kp-ink);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .row-menu button:hover:not(:disabled) {
+    background: var(--kp-selected);
+  }
+
+  .row-menu button:disabled {
+    color: var(--kp-ink3);
+    cursor: default;
+  }
+
+  .row-menu button + button {
+    margin-top: 1px;
+  }
   .more-tip {
     margin: 8px 0 2px;
     padding: 6px 8px 0;
