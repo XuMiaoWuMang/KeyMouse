@@ -130,6 +130,9 @@ try {
     Step '示例流程没被改坏' {
         $sample = Join-Path $root 'samples\demo-flow.json'
         $out = & (Join-Path $root 'artifacts\cli\KeyMouse.exe') run $sample --dry-run 2>&1 | Out-String
+        # 这一步只关心"流程本身还是不是八步"：窗口在不在是环境的事，--dry-run
+        # 找不到 notepad 时退出码非 0，那不是这道关卡要管的东西。
+        $global:LASTEXITCODE = 0
         if ($out -notmatch '8 步') { throw "samples\demo-flow.json 展开后应当是 8 步，实际：$($out -split "`n" | Select-Object -First 2)" }
     }
 
