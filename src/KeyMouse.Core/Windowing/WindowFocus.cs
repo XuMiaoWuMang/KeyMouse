@@ -73,6 +73,7 @@ internal static class WindowFocus
                      "；若目标以管理员身份运行，请同样以管理员身份运行 KeyMouse（UIPI 会挡住前台切换与输入注入）"
         };
     }
+
 }
 
 // 一个带退出码的自定义异常类

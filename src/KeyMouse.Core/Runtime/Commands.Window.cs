@@ -75,7 +75,12 @@ internal static partial class Commands
             case "focus":
             {
                 var target = PrepareTarget(g) ?? throw new CommandFailure(2, "window focus 需要一个窗口选择器");
-                Console.WriteLine($"已聚焦 {target.Describe()}");
+                // 这条命令的全部意义就是把窗口提到前台：与其它命令不同，它不看 --focus-policy。
+                // （默认策略是 never——普通命令只拿窗口换算坐标，不抢焦点；但 focus 不抢焦点等于什么都没做。）
+                FocusResult focus = WindowFocus.Focus(target.Handle, g.FocusAttempts);
+                if (!focus.Ok)
+                    throw new CommandFailure(5, $"无法聚焦「{target.Title}」：{focus.Detail}");
+                Console.WriteLine($"已聚焦 {target.Describe()}（{focus.Detail}）");
                 return 0;
             }
 

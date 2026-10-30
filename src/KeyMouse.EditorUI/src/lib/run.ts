@@ -15,14 +15,21 @@ const CODE_HINTS: Record<number, string> = {
   6: '读屏没读出东西',
 };
 
-export function runConclusion(code: number | null, cancelled: boolean): string {
+export function runConclusion(code: number | null, cancelled: boolean, dryRun = false): string {
   if (cancelled) return '已停止。';
 
-  if (code === null) return '跑完了，但没拿到退出码——这通常意味着进程被杀掉了。';
-  if (code === 0) return '跑完了，每一步都成功。';
+  // 试运行和播放的输出长得一模一样，唯一区别是它**没有真的发输入**。
+  // 所以这里必须把"检查过了"和"做完了"分开说，否则用户会对着空白的记事本
+  // 看到"每一步都成功"。
+  const only = dryRun ? '（试运行只检查，没有真的执行）' : '';
+
+  if (code === null) return `跑完了，但没拿到退出码——这通常意味着进程被杀掉了。${only}`;
+  if (code === 0) {
+    return dryRun ? `检查通过：每一步都找得到窗口。${only}` : '跑完了，每一步都成功。';
+  }
 
   const hint = CODE_HINTS[code];
-  return hint ? `没跑通（退出码 ${code}）：${hint}。` : `没跑通（退出码 ${code}）。`;
+  return hint ? `没跑通（退出码 ${code}）：${hint}。${only}` : `没跑通（退出码 ${code}）。${only}`;
 }
 
 /** 结束时的语气是不是"坏消息"：只有真的失败才把底部那行标红。 */
@@ -44,6 +51,8 @@ export interface StepResult {
   ok: boolean;
   /** 命令行给的描述，例如 `等 6000 ms`、`退出码 3：窗口不满足条件`。 */
   text: string;
+  /** 这一行是试运行那一轮的结果：界面上要标"检查"，否则和真跑长得一模一样。 */
+  dry?: boolean;
 }
 
 /**

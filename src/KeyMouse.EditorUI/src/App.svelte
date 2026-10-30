@@ -81,6 +81,8 @@
    * 执行顺序和显示顺序才是同一件事。分组流程仍旧看底部的「跑到第 n/N 步」。
    */
   let results: Record<number, StepResult> = {};
+  /** 这一轮是不是试运行：行上的结果要标出来，否则和真跑长得一模一样。 */
+  let runIsDry = false;
 
   /** 右键菜单：在哪个行、屏幕上的哪个点。`null` 表示没开。 */
   let rowMenu: { index: number; x: number; y: number } | null = null;
@@ -153,7 +155,7 @@ ull = 没在拖）。 */
         // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
         progress = parseRunProgress(event.payload.line) ?? progress;
         const result = parseStepResult(event.payload.line);
-        if (result && flatRun) results = { ...results, [result.index - 1]: result };
+        if (result && flatRun) results = { ...results, [result.index - 1]: { ...result, dry: runIsDry } };
       }),
     );
 
@@ -416,6 +418,7 @@ ull = 没在拖）。 */
     results = {};
     progress = null;
     outputOpen = true;
+    runIsDry = dryRun;
 
     if (dryRun) {
       busy = true;
@@ -424,7 +427,7 @@ ull = 没在拖）。 */
         const result = await invoke<{ code: number | null; cancelled: boolean }>('validate_flow', {
           path,
         });
-        note(runConclusion(result.code, result.cancelled), runIsBad(result.code, result.cancelled));
+        note(runConclusion(result.code, result.cancelled, true), runIsBad(result.code, result.cancelled));
       } catch (e) {
         note(`试运行没起来：${e}`, true);
       } finally {
@@ -1075,7 +1078,7 @@ ull = 没在拖）。 */
               {#if results[index]}
                 <!-- 一步的结果写在行上（老外壳也这样）：编号即执行序号，只对没有分组步的流程成立。 -->
                 <span class="result" class:bad={!results[index].ok} title={results[index].text}>
-                  {results[index].ok ? '✓' : '✗'} <span class="result-text">{results[index].text}</span>
+                  {results[index].ok ? '✓' : '✗'} {#if results[index].dry}<span class="dry-tag">检查</span>{/if}<span class="result-text">{results[index].text}</span>
                 </span>
               {/if}
               {#if childSteps(step).length > 0}
@@ -1877,6 +1880,15 @@ ull = 没在拖）。 */
   }
 
   /* 行上的结果：成功用弱色（它只是"跑过了"的痕迹），失败才用警示色。 */
+  /* 试运行的行上结果：多一个"检查"标签，免得和真跑混为一谈。 */
+  .dry-tag {
+    margin-right: 2px;
+    padding: 0 4px;
+    border: 1px solid var(--kp-rule);
+    border-radius: 3px;
+    color: var(--kp-ink3);
+    font-size: 11px;
+  }
   .result {
     display: inline-flex;
     align-items: baseline;

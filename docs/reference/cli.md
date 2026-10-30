@@ -135,6 +135,10 @@ KeyMouse key type "hello"                   # 打给当前焦点所在的窗口
 | `--focus-policy gentle` | `SetForegroundWindow` → 回读 `GetForegroundWindow` 验证 → 最多 3 次 |
 | `--focus-policy none` | 目标必须**已经**是前台窗口，否则拒绝 |
 | `--focus-attempts <n>` | 温和模式的尝试次数（默认 3） |
+
+**`window focus` 不看 `--focus-policy`**：这条命令的全部意义就是把窗口提到前台，所以它总是走
+gentle 那条路，并把焦点验证结果写进输出（`已聚焦 …（经过 1 次尝试（含线程输入附着）后成为前台窗口）`）。
+验证不过就退出码 5，不会假装成功。
 | `--allow-restore` | 允许自动还原最小化窗口（默认拒绝） |
 | `-wx <cx> -wy <cy>` | 客户区坐标；必须成对出现且必须带选择器。`mouse drag` 里它是**起点**，终点用 `--wx2 <cx2> --wy2 <cy2>`（四个必须一起给，不允许与四个位置参数混用） |
 | `--strict-point` | 额外要求该屏幕点下方的窗口就是目标本身（对拖拽的起止点都检查） |
