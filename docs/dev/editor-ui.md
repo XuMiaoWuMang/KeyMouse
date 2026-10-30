@@ -184,6 +184,10 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 "返回 / 刷新 / 另存为 / 打印 / 更多工具"盖住列表）。所以 `onMount` 里在 `document` 上挂了
 一个 `contextmenu` 的 `preventDefault()`——应用里没有需要浏览器原生菜单的地方，粘贴走 Ctrl+V。
 
+拖拽排序：把一行拖到另一行的位置上（HTML5 dragstart/dragover/drop，逻辑在 lib/edit.ts 的
+moveTo，单测覆盖越界与原地不动）。自动化里用注入的鼠标发不出浏览器的拖放手势，所以这条
+是按单测 + 人工点击验证的；行内 ↑↓ 与右键菜单是它的等价替代。
+
 行上结果：跑完一步，那一行右侧写 `✓ 等 200 ms` 或 `✗ 退出码 3：…`。命令行的编号是**执行序号**
 （分组会展开、子流程会内联），所以只有"整个流程没有分组步"时（`flatRun`）才把它换算成行下标；
 有分组就只写在输出面板里，宁可不显示也不写错行。

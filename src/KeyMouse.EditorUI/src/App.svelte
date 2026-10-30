@@ -7,7 +7,7 @@
   import Inspector from './lib/Inspector.svelte';
   import { schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
-  import { duplicateAt, insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { parseStepResult, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
@@ -84,6 +84,11 @@
 
   /** 右键菜单：在哪个行、屏幕上的哪个点。`null` 表示没开。 */
   let rowMenu: { index: number; x: number; y: number } | null = null;
+
+  /** 拖拽排序：正在拖第几行、鼠标当前压在第几行上（
+ull = 没在拖）。 */
+  let dragFrom: number | null = null;
+  let dragOver: number | null = null;
   /** 这份流程里有没有分组步（repeat / foreach / call）。有的话行上就不能标编号结果。 */
   $: flatRun = steps.every((step) => !['repeat', 'foreach', 'call'].includes(step.type));
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
@@ -678,6 +683,33 @@
     rowMenu = null;
     deleteStep(index);
   }
+  /** 拖起一行。用 HTML5 的拖放：行是按钮，但拖放事件挂在外面那层 row-wrap 上。 */
+  function startDrag(index: number, event: DragEvent) {
+    dragFrom = index;
+    rowMenu = null;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      // 有些浏览器不给 dataTransfer 设点东西就不发 drop。
+      event.dataTransfer.setData('text/plain', String(index));
+    }
+  }
+
+  /** 模板里不能写类型标注：用函数工厂给每一行造一个 dragstart 处理器。 */
+  function dragStarter(index: number) {
+    return (event: DragEvent) => startDrag(index, event);
+  }
+
+  function dropOn(index: number) {
+    const from = dragFrom;
+    dragFrom = null;
+    dragOver = null;
+    if (from === null || from === index) return;
+    const next = moveTo(steps, from, index);
+    if (next === steps) return;
+    applySteps(next);
+    selected = index;
+    note(`把第 ${from + 1} 步挪到了第 ${index + 1} 位`);
+  }
   /** 右键一行：选中它，然后在鼠标位置开一张小菜单。 */
   function openRowMenu(index: number, event: MouseEvent) {
     event.preventDefault();
@@ -1011,7 +1043,17 @@
     {:else}
       <section class="list" aria-label="步骤">
         {#each steps as step, index}
-          <div class="row-wrap" class:grouped={childSteps(step).length > 0}>
+          <div class="row-wrap" role="listitem"
+              draggable="true"
+              class:grouped={childSteps(step).length > 0}
+              class:dragging={dragFrom === index}
+              class:drop-target={dragOver === index && dragFrom !== null && dragFrom !== index}
+              on:dragstart={dragStarter(index)}
+              on:dragover|preventDefault={() => (dragOver = index)}
+              on:dragleave={() => { if (dragOver === index) dragOver = null; }}
+              on:drop|preventDefault={() => dropOn(index)}
+              on:dragend={() => { dragFrom = null; dragOver = null; }}
+            >
             <button
               class="row"
               class:selected={index === selected}
@@ -1551,6 +1593,21 @@
 
   /* 行本身是按钮（整行可点选中），行尾的上移/下移/删除是另一组按钮：
      按 HTML 规则按钮不能套按钮，所以外面再包一层，悬停/选中时才浮出来。 */
+  /* 拖拽排序：拖起来的那行淡下去，鼠标压住的那行左边亮一道线。 */
+  .row-wrap.dragging {
+    opacity: 0.45;
+  }
+
+  .row-wrap.drop-target::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: -1px;
+    height: 2px;
+    background: var(--kp-signal);
+    border-radius: 2px;
+  }
   .row-wrap {
     position: relative;
   }

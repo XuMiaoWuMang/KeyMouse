@@ -51,6 +51,20 @@ export function moveDown(steps: readonly FlowStep[], index: number): FlowStep[] 
 }
 
 /** 删除之后选中项应该落在哪：优先保持原位置，删的是最后一步就往前收一格。 */
+/**
+ * 把第 `from` 步挪到第 `to` 个位置（拖拽排序用）。目标位置按"挪完之后的下标"算。
+ * 越界或原地不动时原样返回，调用方可以据此判断"没发生什么"。
+ */
+export function moveTo(steps: readonly FlowStep[], from: number, to: number): FlowStep[] {
+  if (from === to) return steps.slice();
+  if (from < 0 || from >= steps.length) return steps.slice();
+  if (to < 0 || to >= steps.length) return steps.slice();
+  const next = steps.slice();
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
 export function selectionAfterRemove(index: number, length: number): number {
   if (length <= 0) return 0;
   return Math.min(Math.max(index, 0), length - 1);

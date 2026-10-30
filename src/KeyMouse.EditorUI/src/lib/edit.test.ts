@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { duplicateAt, insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './edit';
+import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
 import { missingHint, missingOf } from './steps';
 
@@ -119,4 +119,23 @@ describe('duplicateAt', () => {
     expect(duplicateAt(steps, 5)).toEqual(steps);
     expect(duplicateAt(steps, -1)).toEqual(steps);
   });
+});
+
+it('drag: moveTo 把一步挪到目标位置', () => {
+  const steps: FlowStep[] = [{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }, { type: 'sleep', ms: 3 }];
+  const next = moveTo(steps, 0, 2);
+  expect(next.map((step) => step.ms)).toEqual([2, 3, 1]);
+});
+
+it('drag: moveTo 原地、越界都原样返回', () => {
+  const steps: FlowStep[] = [{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }];
+  expect(moveTo(steps, 1, 1)).toEqual(steps);
+  expect(moveTo(steps, -1, 0)).toEqual(steps);
+  expect(moveTo(steps, 0, 9)).toEqual(steps);
+});
+
+it('drag: moveTo 不改原数组', () => {
+  const steps: FlowStep[] = [{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }];
+  moveTo(steps, 1, 0);
+  expect(steps.map((step) => step.ms)).toEqual([1, 2]);
 });
