@@ -211,6 +211,10 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 新增调用点时别直接写 `Command::new(cli)`，从 `cli_command` 走。
 
+外壳自己也不能是控制台程序：`main.rs` 第一行是
+`#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]`——去掉它，release 版每次
+启动都会先弹一个黑框（class 为 `ConsoleWindowClass`，标题就是 exe 路径）。
+
 窗口的置顶只有"录制细带"会临时打开（`mini.rs` 里存原值、退出时还回去）；`main.rs` 的
 `.setup()` 里还会显式 `set_always_on_top(false)` 一次，避免上一轮被强杀留下的置顶被带进来。
 ## 与命令行的接口

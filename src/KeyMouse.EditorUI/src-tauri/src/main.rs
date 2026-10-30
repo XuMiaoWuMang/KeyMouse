@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 //! 新编辑器外壳（Tauri）的入口。
 //!
 //! 它只做界面做不到的事：开窗口、文件对话框、读写文件、起 `KeyMouse.exe`。
