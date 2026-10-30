@@ -5,7 +5,7 @@
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
   import Inspector from './lib/Inspector.svelte';
-  import { schemaFrom, type FlowSchema } from './lib/schema';
+  import { fieldsOf, schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
   import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
@@ -59,6 +59,8 @@
   let recordMode: 'self' | 'elevated' | null = null;
   /** 「录制」旁边那个 ⌄ 的小菜单开着没有（两个录制方式选一个）。 */
   let recordMenuOpen = false;
+  /** 工具栏最右那个 ··· 菜单（打开/保存/另存为/从屏幕取区域）。 */
+  let opsOpen = false;
   /** 流程格式的契约；拿到之前检查器只显示"正在读契约"。 */
   let schema: FlowSchema | null = null;
 
@@ -845,9 +847,19 @@ ull = 没在拖）。 */
         rowMenu = null;
         return;
       }
+      if (opsOpen) {
+        opsOpen = false;
+        return;
+      }
       if (running) void stopRun();
       moreOpen = false;
       recordMenuOpen = false;
+      return;
+    }
+
+    if (event.ctrlKey && event.shiftKey && key === 'a') {
+      event.preventDefault();
+      moreOpen = true;
       return;
     }
 
@@ -963,6 +975,36 @@ ull = 没在拖）。 */
     } catch (e) {
       note(`取点失败：${String(e)}`, true);
     }
+  }
+
+  /**
+   * 工具栏「从屏幕取区域…」：不看用户点了哪个字段，直接问契约这一步吃不吃坐标。
+   *
+   * 老外壳是同一套判断：这一步有 `region` 就写区域，否则写 `at` 这个点。两者都没有
+   * （比如「等待时间」）就如实说，别默默什么都不做。
+   */
+  async function pickForSelected() {
+    const step = steps[selected];
+    if (!step) {
+      note('先在左边选中一步', true);
+      return;
+    }
+    if (!schema) {
+      note('还没读到流程格式的契约，先试运行一次', true);
+      return;
+    }
+    const fields = [...fieldsOf(schema, String(step.type)), ...(schema.common ?? [])];
+    const region = fields.find((field) => field.name === 'region' && field.kind === 'region');
+    if (region) {
+      await pickField('region', 'region');
+      return;
+    }
+    const point = fields.find((field) => field.name === 'at' && field.kind === 'point');
+    if (point) {
+      await pickField('point', 'at');
+      return;
+    }
+    note('这一步没有坐标可填（它不需要屏幕上的位置）', true);
   }
 
   /** 拿一次契约：命令行是唯一的真相，界面只照它渲染。 */
@@ -1096,7 +1138,28 @@ ull = 没在拖）。 */
           播放
         </button>
       {/if}
-      <button class="ghost icon-only" aria-label="更多操作">···</button>
+      <div class="ops-group">
+        <button
+          class="ghost icon-only"
+          aria-label="更多操作"
+          aria-expanded={opsOpen}
+          title="更多操作"
+          on:click={() => (opsOpen = !opsOpen)}
+        >
+          ···
+        </button>
+        {#if opsOpen}
+          <div class="ops-menu" role="menu">
+            <button role="menuitem" disabled={busy} on:click={() => { opsOpen = false; void openFlow(); }}>打开…</button>
+            <button role="menuitem" disabled={busy || !doc || !dirty} on:click={() => { opsOpen = false; void saveFlow(); }}>保存</button>
+            <button role="menuitem" disabled={busy || !doc} on:click={() => { opsOpen = false; void saveAs(); }}>另存为…</button>
+            <hr />
+            <button role="menuitem" disabled={busy || running || !current} on:click={() => { opsOpen = false; void pickForSelected(); }}>
+              从屏幕取区域…
+            </button>
+          </div>
+        {/if}
+      </div>
     </div>
   </nav>
 
@@ -2277,6 +2340,52 @@ ull = 没在拖）。 */
     background: var(--kp-paper);
   }
 
+  .ops-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .ops-menu {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    min-width: 190px;
+    padding: 5px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    box-shadow: 0 10px 26px rgba(23, 20, 15, 0.16);
+  }
+
+  .ops-menu button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--kp-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ops-menu button:hover {
+    background: var(--kp-selected);
+  }
+
+  .ops-menu button:disabled {
+    color: var(--kp-ink3);
+    cursor: default;
+  }
+
+  .ops-menu hr {
+    margin: 4px 6px;
+    border: 0;
+    border-top: 1px solid var(--kp-rule);
+  }
   .record-group {
     position: relative;
     display: flex;
