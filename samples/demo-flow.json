@@ -10,8 +10,8 @@
       "type": "focus"
     },
     {
-      "type": "type",
-      "intervalMs": 30
+      "intervalMs": 30,
+      "type": "type"
     },
     {
       "combo": "Ctrl+S",

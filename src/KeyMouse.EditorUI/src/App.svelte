@@ -944,7 +944,12 @@ ull = 没在拖）。 */
     const step = steps[selected];
     if (!step) return;
     snapshotEdit(`field:${selected}:${path}`);
-    writePath(step, path, value);
+    // 必须换一份数组/对象：Svelte 只认赋值，原地改字段列表那行不会重画——
+    // 表现就是"我改了输入文字，左边还显示旧的"（用户报过这个）。
+    const next = [...steps];
+    next[selected] = writePath(step, path, value) as unknown as FlowStep;
+    doc = { ...doc!, steps: next };
+    steps = next;
     touch();
   }
 
@@ -969,16 +974,21 @@ ull = 没在拖）。 */
         return;
       }
       snapshotEdit(`pick:${selected}:${path}`);
-      writePath(step, path, {
+      // 同上：换成新对象再一次性替换，否则列表那行不跟着变。
+      let next = writePath(step, path, {
         space: picked.space,
         x: picked.x,
         y: picked.y,
         ...(kind === 'region' ? { width: picked.width, height: picked.height } : {}),
       });
       if (picked.process) {
-        writePath(step, 'target.process', picked.process);
-        if (picked.title) writePath(step, 'target.title', picked.title);
+        next = writePath(next, 'target.process', picked.process);
+        if (picked.title) next = writePath(next, 'target.title', picked.title);
       }
+      const replaced = [...steps];
+      replaced[selected] = next as unknown as FlowStep;
+      doc = { ...doc!, steps: replaced };
+      steps = replaced;
       touch();
       const where =
         picked.space === 'client' ? '客户区' : picked.space === 'window' ? '窗口' : '屏幕';
