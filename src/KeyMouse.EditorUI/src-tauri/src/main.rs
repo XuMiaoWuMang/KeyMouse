@@ -108,6 +108,7 @@ fn main() {
             run::run_flow,
             run::run_cancel,
             record::record_flow,
+            record::record_flow_elevated,
             record::record_stop,
             schema::flow_schema,
             pick::pick_region,

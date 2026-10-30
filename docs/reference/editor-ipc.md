@@ -220,6 +220,7 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 | 命令 | 参数 | 返回 |
 | --- | --- | --- |
 | `record_flow` | `outPath`, `durationMs`（0 = 一直录到停） | —（立刻返回，结果走事件） |
+| `record_flow_elevated` | 同上 | —（同上；UAC 里点「是」之后才开始录） |
 | `record_stop` | — | `"stopped" \| "killed" \| "idle"` |
 
 录制与播放**共用**同一条子进程通道（同一个 `RunState`、同样的事件 `shell://run-output`
@@ -227,9 +228,9 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 
 四条约定：
 
-1. **不自我提权**。钩子只看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到；
+1. **默认不自我提权**。钩子只看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到；
    命令行会把这件事写进输出（"这些窗口的权限比 KeyMouse 高"），界面原样显示。
-   要录那些窗口，用命令行 `KeyMouse --elevate record --out …`。
+   要录那些窗口，走 `record_flow_elevated`（下面第 5 条）。
 2. **把自己排除掉**。外壳传 `--ignore-window 0x<hwnd>`（自己的窗口句柄），
    否则"点一下编辑器"也会被录成一步。
 3. **停止用产品自己的停止键**：`record_stop` 发一次 `KeyMouse key combo ctrl+alt+q`，
@@ -238,6 +239,15 @@ import { open, save } from '@tauri-apps/plugin-dialog';
    停止键到达之后它要写文件、打印摘要、退出，太短会在写了一半的 json 上打断。
 4. **结束即打开**：`shell://run-exit` 到达后，若这一轮是录制，外壳读那个文件并切换过去，
    不让用户自己去"打开"。读不出来就说明原因，别让人对着一份空流程猜。
+5. **提权录制是另一条路，代价要写在脸上**。`record_flow_elevated` 起的是
+   `KeyMouse --elevate record …`：命令行自己用 `runas` 起管理员进程并等它结束，
+   所以外壳拿到的仍然是"子进程退出码"（UAC 被拒 = `1223`，录制本身失败 = `1/2/3`）。
+   但那个提权进程的权限比外壳高，于是：
+
+   - **停不了**：`record_stop` 送不进键（UIPI）、`run_cancel` 也杀不掉。界面必须自己
+     说明"按 `Ctrl+Alt+Q`，或连按两次 `Esc`"，**不要**摆一个按了没用的「停止」；
+   - **不进迷你模式**：那条细带上的「停止」同样无效，摆着就是骗人；
+   - **结束靠两件事**：`shell://run-exit` 到达，以及那个文件开始存在。
 
 ## 窗口形态
 

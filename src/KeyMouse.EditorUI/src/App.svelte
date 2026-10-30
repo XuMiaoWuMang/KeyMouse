@@ -55,6 +55,10 @@
   let running = false;
   /** 正在录制的那个目标文件。非空就表示"这一轮是录制，不是播放"。 */
   let recordingPath: string | null = null;
+  /** self = 当前权限录；levated = 管理员权限录（外壳停不了，只能用户按键）。 */
+  let recordMode: 'self' | 'elevated' | null = null;
+  /** 「录制」旁边那个 ⌄ 的小菜单开着没有（两个录制方式选一个）。 */
+  let recordMenuOpen = false;
   /** 流程格式的契约；拿到之前检查器只显示"正在读契约"。 */
   let schema: FlowSchema | null = null;
 
@@ -169,9 +173,14 @@ ull = 没在拖）。 */
         // 而不是用播放的结论去解释一次录制。
         if (recordingPath) {
           const target = recordingPath;
+          const elevated = recordMode === 'elevated';
           recordingPath = null;
+          recordMode = null;
           void exitMini();
+          // 提权录制时我们只拿到"启动器"的退出码：UAC 被拒是 1223，录制本身出错是 1/2/3。
           if (cancelled) note('这次录制被掐掉了，没有落盘', true);
+          else if (elevated && code === 1223) note('UAC 被拒绝了，这一轮什么都没录', true);
+          else if (elevated && code !== 0) note(`提权录制以退出码 ${code} 结束，没有落盘`, true);
           else void adoptRecording(target);
           return;
         }
@@ -447,8 +456,14 @@ ull = 没在拖）。 */
 
   async function stopRun(): Promise<void> {
     // 录制不是"杀进程"能收尾的：得让它自己走到写文件那一步，所以先发停止键，
-    // 外壳里 1.5 秒还没退才兜底杀（见 record.rs）。
+    // 外壳里 3 秒还没退才兜底杀（见 record.rs）。
     void exitMini();
+    // 提权录制：那个进程的权限比外壳高，UIPI 不许我们往里送键，也杀不掉它。
+    // 这里只能如实告诉用户按什么，别假装停下来了。
+    if (recordingPath && recordMode === 'elevated') {
+      note('提权录制只能你自己停：按 Ctrl+Alt+Q，或连按两次 Esc。', true);
+      return;
+    }
     try {
       if (recordingPath) await invoke('record_stop');
       else await invoke('run_cancel');
@@ -460,8 +475,8 @@ ull = 没在拖）。 */
   /**
    * 录制。
    *
-   * 不在这里自我提权：钩子看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到，
-   * 命令行会把这句话原样写进输出里。要录那些窗口，用命令行 `KeyMouse --elevate record`。
+   * 默认不自我提权：钩子看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到，
+   * 命令行会把这句话原样写进输出里。要录那些窗口，用 [`startRecordElevated`]。
    *
    * 停止走产品自己的停止键（Ctrl+Alt+Q），不另开一条后门——它和录制用的是同一套注入，
    * 能录就能停。
@@ -491,11 +506,57 @@ ull = 没在拖）。 */
     try {
       await invoke('record_flow', { outPath: target, durationMs: 0 });
       recordingPath = target;
+      recordMode = 'self';
       running = true;
       await enterMini();
       note('开始录了：去操作你要录的窗口，按 Esc 或点「停止」结束');
     } catch (e) {
       note(`录制没起来：${e}`, true);
+    }
+  }
+
+  /**
+   * 以管理员权限录一轮。
+   *
+   * UAC 里点「是」之后，录制在提权进程里跑——那些窗口上的点击才录得到。代价写在这儿：
+   * 提权进程的权限比外壳高，外壳既杀不掉它也送不进停止键，所以
+   *
+   * - 界面**不做**迷你模式（那细带上的「停止」按了也不会生效，摆着就是骗人）；
+   * - 界面上写清楚停法：`Ctrl+Alt+Q`，或连按两次 `Esc`；
+   * - 结束与否靠命令行退出 + 文件出现来判断（`shell://run-exit` 照常会来）。
+   */
+  async function startRecordElevated(): Promise<void> {
+    if (!runtime?.cliPath) {
+      note('这台机器上没找到命令行 KeyMouse.exe', true);
+      return;
+    }
+    if (busy || running) {
+      note('正在跑一条流程，先停止再录', true);
+      return;
+    }
+
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const target = await save({
+      title: '这次提权录制存到哪',
+      defaultPath: path ? path.replace(/\.json$/i, '-录制.json') : '录制.json',
+      filters: [{ name: '流程', extensions: ['json'] }],
+    });
+    if (!target) return;
+
+    lines = [];
+    results = {};
+    progress = null;
+    outputOpen = true;
+    try {
+      await invoke('record_flow_elevated', { outPath: target, durationMs: 0 });
+      recordingPath = target;
+      recordMode = 'elevated';
+      running = true;
+      note('UAC 里点「是」之后开始录：结束时按 Ctrl+Alt+Q，或连按两次 Esc');
+    } catch (e) {
+      recordingPath = null;
+      recordMode = null;
+      note(`提权录制没起来：${e}`, true);
     }
   }
 
@@ -786,6 +847,7 @@ ull = 没在拖）。 */
       }
       if (running) void stopRun();
       moreOpen = false;
+      recordMenuOpen = false;
       return;
     }
 
@@ -990,15 +1052,38 @@ ull = 没在拖）。 */
     </div>
 
     <div class="actions">
-      <button
-        class="ghost"
-        class:on={recordingPath !== null}
-        on:click={startRecord}
-        disabled={busy || running}
-        title="按当前权限录制：提权窗口上的点击录不到，命令行会说明"
-      >
-        <span class="rec-dot" aria-hidden="true"></span>{recordingPath ? '录制中' : '录制'}
-      </button>
+      <div class="record-group">
+        <button
+          class="ghost"
+          class:on={recordingPath !== null}
+          on:click={startRecord}
+          disabled={busy || running}
+          title="按当前权限录制：提权窗口上的点击录不到，命令行会说明"
+        >
+          <span class="rec-dot" aria-hidden="true"></span>{recordingPath ? '录制中' : '录制'}
+        </button>
+        <button
+          class="ghost rec-caret"
+          on:click={() => (recordMenuOpen = !recordMenuOpen)}
+          disabled={busy || running}
+          aria-label="更多录制方式"
+          aria-expanded={recordMenuOpen}
+          title="更多录制方式"
+        >
+          ▾
+        </button>
+        {#if recordMenuOpen}
+          <div class="record-menu" role="menu">
+            <button role="menuitem" on:click={() => { recordMenuOpen = false; void startRecord(); }}>
+              录制（当前权限）
+            </button>
+            <button role="menuitem" on:click={() => { recordMenuOpen = false; void startRecordElevated(); }}>
+              以管理员权限录制（会弹 UAC）
+            </button>
+            <p class="record-tip">提权窗口上的点击只有提权录制才录得到；那一轮要自己按 Ctrl+Alt+Q 结束。</p>
+          </div>
+        {/if}
+      </div>
       <button class="ghost" on:click={() => startRun(true)} disabled={busy || running}>试运行</button>
       {#if running}
         <button class="stop" on:click={stopRun}>
@@ -2192,6 +2277,64 @@ ull = 没在拖）。 */
     background: var(--kp-paper);
   }
 
+  .record-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .record-group .ghost:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .record-group .rec-caret {
+    padding: 0 7px;
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    font-size: 10px;
+    color: var(--kp-ink3);
+  }
+
+  .record-menu {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    min-width: 248px;
+    padding: 5px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    box-shadow: 0 10px 26px rgba(23, 20, 15, 0.16);
+  }
+
+  .record-menu button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--kp-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .record-menu button:hover {
+    background: var(--kp-selected);
+  }
+
+  .record-tip {
+    margin: 6px 8px 3px;
+    max-width: 230px;
+    color: var(--kp-ink3);
+    font-size: 11px;
+    line-height: 1.5;
+  }
   .status-dot {
     width: 6px;
     height: 6px;
