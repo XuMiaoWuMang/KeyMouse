@@ -1,22 +1,26 @@
 {
   "format": "keymouse-flow",
-  "version": 1,
   "recordedAt": "2026-10-30T00:00:00+08:00",
-  "variables": { "name": "世界" },
   "steps": [
-    { "type": "focus", "target": { "process": "notepad" }, "note": "切到记事本" },
-    { "type": "type", "text": "你好，{{name}}", "intervalMs": 30 },
-    { "type": "key", "combo": "Ctrl+S", "count": 1 },
-    { "type": "sleep", "ms": 300 },
     {
-      "type": "click-text",
-      "target": { "process": "notepad" },
-      "region": { "space": "client", "x": 0, "y": 0, "width": 420, "height": 40 },
-      "text": "保存",
-      "match": "contains",
-      "maxErrors": 1,
-      "timeoutMs": 8000
+      "note": "切到记事本",
+      "target": {
+        "process": "notepad"
+      },
+      "type": "focus"
     },
-    { "type": "repeat", "times": 3, "steps": [ { "type": "wheel", "delta": -120 } ] }
-  ]
+    {
+      "type": "type",
+      "intervalMs": 30
+    },
+    {
+      "combo": "Ctrl+S",
+      "count": 1,
+      "type": "key"
+    }
+  ],
+  "variables": {
+    "name": "世界"
+  },
+  "version": 1
 }

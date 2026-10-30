@@ -180,11 +180,25 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 | `validate_flow` | `path` | `RunExit`（同步，跑完才返回） |
 | `run_flow` | `path` | —（立刻返回，结果走事件） |
 | `run_cancel` | — | `boolean`：有没有东西被掐掉 |
+| `write_scratch_flow` | `text` | `string`：临时副本的完整路径 |
 
 ```ts
 type RunExit = { code: number | null; cancelled: boolean };
 type RunLine = { stream: 'out' | 'err'; line: string };
 ```
+
+### 没保存也要能跑
+
+命令行只认文件，但"加两步试试"不该被逼着先存盘。所以界面在**没有路径**或**改过没保存**时，
+先把当前编辑内容交给 `write_scratch_flow`，拿回临时副本的路径再去 `validate_flow` /
+`run_flow`；跑的是副本，磁盘上正在编辑的那个文件一个字都不动（写回是 `save_flow` 的事）。
+
+三条约定：
+
+- 临时副本固定在 `%LOCALAPPDATA%\KeyMouse\tmp\editor-run.json`——每次覆盖同一个文件，
+  用户想去翻也翻得到；拿不到 LOCALAPPDATA 时退到程序所在目录。
+- 底部输出必须说明白"跑的是临时副本"，否则用户会以为文件已经跑过了。
+- 已保存且没有改动时**不要**写副本：直接跑原文件，行上的编号才对得上。
 
 事件：
 

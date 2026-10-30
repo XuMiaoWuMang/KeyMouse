@@ -102,6 +102,7 @@ fn main() {
             layout::runtime_info,
             files::open_flow,
             files::save_flow,
+            files::write_scratch_flow,
             files::read_shot,
             files::shot_file,
             run::validate_flow,

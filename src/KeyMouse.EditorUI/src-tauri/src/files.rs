@@ -58,6 +58,39 @@ pub fn save_flow(path: String, text: String) -> Result<(), ShellError> {
         .map_err(|e| ShellError::new("shell.io", format!("写不了 {path}：{e}")))
 }
 
+/// 外壳自己的工作目录：`%LOCALAPPDATA%\KeyMouse\tmp`，拿不到变量就退到程序目录。
+///
+/// 与命令行那边的 `Scratch`（TEMP → LOCALAPPDATA → 程序目录）不是同一份实现，但**同一套
+/// 意思**：临时文件总得有个写得进去的地方。这里不先试 `%TEMP%`，是因为外壳只需要一个
+/// 稳定位置（"那一份临时副本"每次覆盖同一个文件，用户想找也找得到）。
+fn scratch_dir() -> Result<PathBuf, ShellError> {
+    let base = std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::current_exe()
+                .ok()
+                .and_then(|exe| exe.parent().map(Path::to_path_buf))
+                .unwrap_or_else(|| PathBuf::from("."))
+        });
+    let dir = base.join("KeyMouse").join("tmp");
+    fs::create_dir_all(&dir)
+        .map_err(|e| ShellError::new("shell.io", format!("建不了临时目录 {}：{e}", dir.display())))?;
+    Ok(dir)
+}
+
+/// 把当前编辑内容写到临时副本，返回那个路径——**给"还没保存就想试运行/播放"用**。
+///
+/// 为什么要有它：命令行只认文件。老外壳遇到未保存的改动就是这么做的（写一份临时文件去跑），
+/// 新外壳此前直接拒绝（"先保存再跑"），于是"加两步试试"这条最自然的用法走不通。
+/// 绝不写回用户正在编辑的那个文件——那是 `save_flow` 的事。
+#[tauri::command]
+pub fn write_scratch_flow(text: String) -> Result<String, ShellError> {
+    let path = scratch_dir()?.join("editor-run.json");
+    fs::write(&path, text.as_bytes())
+        .map_err(|e| ShellError::new("shell.io", format!("写不了临时文件 {}：{e}", path.display())))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 /// 读一张证据图。`shot` 是流程里记录的那个相对路径（`<流程>.shots/0001-click.png`）。
 ///
 /// 三道检查缺一不可：只认 `.png`、解析后必须真的在**流程文件所在目录**里（`..` 与软链接都拦）、

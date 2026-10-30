@@ -89,6 +89,8 @@
   let results: Record<number, StepResult> = {};
   /** 这一轮是不是试运行：行上的结果要标出来，否则和真跑长得一模一样。 */
   let runIsDry = false;
+  /** 这一轮跑的是临时副本（改动没保存）：结束提示时要说清楚，免得人以为文件已经被跑过。 */
+  let scratchRun = false;
 
   /** 右键菜单：在哪个行、屏幕上的哪个点。`null` 表示没开。 */
   let rowMenu: { index: number; x: number; y: number } | null = null;
@@ -419,11 +421,20 @@ ull = 没在拖）。 */
       note('先打开或新建一个流程', true);
       return;
     }
-    if (!path) {
-      note('先保存（Ctrl+S）再跑：命令行要读一个文件', true);
-      return;
-    }
     if (busy || running) return;
+
+    // 命令行只认文件，但"加两步试试"不该被逼着先存盘：没路径或改过没保存时，
+    // 把当前编辑内容写成临时副本去跑（老外壳也是这么做的），绝不覆盖正在编辑的文件。
+    let target = path;
+    const scratch = !path || dirty;
+    if (scratch) {
+      try {
+        target = await invoke<string>('write_scratch_flow', { text: serialize() });
+      } catch (e) {
+        note(`写不了临时副本：${e}`, true);
+        return;
+      }
+    }
 
     lines = [];
     results = {};
@@ -433,10 +444,10 @@ ull = 没在拖）。 */
 
     if (dryRun) {
       busy = true;
-      note(runHint(true));
+      note(runHint(true) + (scratch ? '（跑的是临时副本，磁盘上的文件没动）' : ''));
       try {
         const result = await invoke<{ code: number | null; cancelled: boolean }>('validate_flow', {
-          path,
+          path: target,
         });
         note(runConclusion(result.code, result.cancelled, true), runIsBad(result.code, result.cancelled));
       } catch (e) {
@@ -448,9 +459,10 @@ ull = 没在拖）。 */
     }
 
     try {
-      await invoke('run_flow', { path });
+      await invoke('run_flow', { path: target });
       running = true;
-      note(runHint(false));
+      scratchRun = scratch;
+      note(runHint(false) + (scratch ? '（跑的是临时副本，磁盘上的文件没动）' : ''));
     } catch (e) {
       note(`播放没起来：${e}`, true);
     }
@@ -700,7 +712,9 @@ ull = 没在拖）。 */
   }
 
   /** 在选中步之后插一步；没有选中（空文档）就放到最前面。 */
-  function addStep(type: StepType) {
+  async function addStep(type: StepType) {
+    // 起始页上点快捷按钮也应该有反应：没有文档就先建一份空的（老外壳同样不会静默吞掉这一下）。
+    if (!doc) await newFlow();
     if (!doc) return;
     const at = steps.length === 0 ? -1 : selected;
     applySteps(insertAfter(steps, at, makeStep(type)));
@@ -1066,7 +1080,7 @@ ull = 没在拖）。 */
   <nav class="toolbar">
     <div class="palette">
       {#each QUICK_TYPES as type}
-        <button class="palette-item" on:click={() => addStep(type)} disabled={!doc}>
+        <button class="palette-item" on:click={() => void addStep(type)}>
           <StepIcon name={type} />{stepTitle(type)}
         </button>
       {/each}
@@ -1074,7 +1088,6 @@ ull = 没在拖）。 */
         class="palette-item more"
         class:open={moreOpen}
         on:click={() => (moreOpen = !moreOpen)}
-        disabled={!doc}
         aria-expanded={moreOpen}
       >+ 更多</button>
 
@@ -1223,6 +1236,7 @@ ull = 没在拖）。 */
                 <span class="title">{stepTitle(step.type)}</span>
                 <span class="summary">{stepSummary(step)}</span>
               </span>
+              <span class="tags">
               {#if results[index]}
                 <!-- 一步的结果写在行上（老外壳也这样）：编号即执行序号，只对没有分组步的流程成立。 -->
                 <span class="result" class:bad={!results[index].ok} title={results[index].text}>
@@ -1240,6 +1254,7 @@ ull = 没在拖）。 */
                      而且按钮里不能再套按钮。图在右边检查器最下方，选中这一步就能看到。 -->
                 <span class="shot-mark" title={`这一步有录制时的证据图：${step.shot}`} aria-label="有证据图">▣</span>
               {/if}
+              </span>
             </button>
             <span class="row-actions">
               {#if childSteps(step).length > 0}
@@ -1824,6 +1839,13 @@ ull = 没在拖）。 */
   }
 
   /* 待补：这一步还缺必填项。比一个红色错误标温和，比什么都不说清楚。 */
+  .tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
   .todo {
     font-size: var(--kp-fs-small);
     color: var(--kp-signal);
