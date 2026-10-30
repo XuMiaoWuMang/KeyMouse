@@ -125,6 +125,14 @@ try {
     Step '文档链接' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-docs.ps1') }
     Step '版本一致' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-version.ps1') }
 
+    # 示例流程被"打开 → 顺手保存"改坏过两次（步骤被删、文字丢了），而它正好是
+    # 用户第一眼看的东西。这里钉住它的形状：6 步、展开后 8 次执行。
+    Step '示例流程没被改坏' {
+        $sample = Join-Path $root 'samples\demo-flow.json'
+        $out = & (Join-Path $root 'artifacts\cli\KeyMouse.exe') run $sample --dry-run 2>&1 | Out-String
+        if ($out -notmatch '8 步') { throw "samples\demo-flow.json 展开后应当是 8 步，实际：$($out -split "`n" | Select-Object -First 2)" }
+    }
+
     if ($SkipPack) {
         $skipped.Add('打包产物（-SkipPack）')
     }
