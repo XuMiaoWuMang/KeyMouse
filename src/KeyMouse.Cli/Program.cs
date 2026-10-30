@@ -35,6 +35,8 @@ internal static class Program
                     return FlowEditorCommand.Run(args[1..]);
             }
         }
+        // 每次启动都挂一个"可以被按停"的命名事件（名字带自己的 pid，外壳按 pid 找得到）。
+        using PauseControl? pause = PauseControl.Install(Environment.ProcessId);
         return Commands.Execute(args);
     }
 

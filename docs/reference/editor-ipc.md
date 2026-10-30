@@ -181,6 +181,11 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 | `run_flow` | `path` | —（立刻返回，结果走事件） |
 | `run_cancel` | — | `boolean`：有没有东西被掐掉 |
 | `write_scratch_flow` | `text` | `string`：临时副本的完整路径 |
+| `pause_flow` | `paused: boolean` | `boolean`：确实有在跑的东西被按了 |
+
+`pause_flow` 只是**置上/清掉**子进程的那个命名事件（`Local\KeyMouse-pause-<pid>`，见
+[`cli.md`](cli.md#暂停与继续)）：停点由命令行决定，永远落在两步之间。外壳不自己挂起线程——
+挂起会把半个组合键留在键盘上。录制期间不给暂停（那一轮的主语是用户的鼠标，不是流程）。
 
 ```ts
 type RunExit = { code: number | null; cancelled: boolean };

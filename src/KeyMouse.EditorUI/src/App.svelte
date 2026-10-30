@@ -170,6 +170,7 @@ ull = 没在拖）。 */
     keep(
       listen<{ code: number | null; cancelled: boolean }>('shell://run-exit', (event) => {
         running = false;
+        paused = false;
         progress = null;
         const { code, cancelled } = event.payload;
 
@@ -461,10 +462,25 @@ ull = 没在拖）。 */
     try {
       await invoke('run_flow', { path: target });
       running = true;
+      paused = false;
       scratchRun = scratch;
       note(runHint(false) + (scratch ? '（跑的是临时副本，磁盘上的文件没动）' : ''));
     } catch (e) {
       note(`播放没起来：${e}`, true);
+    }
+  }
+
+  /** 暂停中：命令行停在下一步之前（命名事件 `Local\KeyMouse-pause-<pid>`），按钮因此变成「继续」。 */
+  let paused = false;
+
+  /** 暂停/继续。真正的停点在命令行那边，这里只按一下那个开关。 */
+  async function togglePause(): Promise<void> {
+    try {
+      await invoke('pause_flow', { paused: !paused });
+      paused = !paused;
+      note(paused ? '已暂停：下一步还没发出去。' : '继续。');
+    } catch (e) {
+      note(`暂停不了：${e}`, true);
     }
   }
 
@@ -1151,6 +1167,12 @@ ull = 没在拖）。 */
       </div>
       <button class="ghost" on:click={() => startRun(true)} disabled={busy || running}>试运行</button>
       {#if running}
+        {#if !recordingPath}
+          <!-- 暂停是"停在下一步之前"：命令行每一步前问一次命名事件，见 PauseControl.cs。 -->
+          <button class="ghost" on:click={() => void togglePause()} disabled={busy}>
+            {paused ? '继续' : '暂停'}
+          </button>
+        {/if}
         <button class="stop" on:click={stopRun}>
           <svg viewBox="0 0 16 16" aria-hidden="true" class="play"><rect x="4.5" y="4.5" width="7" height="7" rx="1" /></svg>
           停止

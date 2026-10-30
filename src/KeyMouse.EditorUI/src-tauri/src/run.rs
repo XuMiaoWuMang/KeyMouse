@@ -24,6 +24,8 @@ pub struct RunState {
     pub(crate) child: Mutex<Option<Child>>,
     /// 这一次结束是不是被"停止"掐掉的：界面据此说"已停止"而不是"失败（退出码 1）"。
     cancelled: std::sync::atomic::AtomicBool,
+    /// 子进程 pid：暂停/继续要按它去开那个命名事件（名字里带着它）。
+    pub(crate) pid: Mutex<Option<u32>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -103,6 +105,7 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         // 先把管子取走，再把句柄放进槽位：读线程不持有句柄，"停止"才能立刻 kill。
         let stdout = child.stdout.take();
         let stderr = child.stderr.take();
+        *state.pid.lock().unwrap() = Some(child.id());
         *slot = Some(child);
 
         let out_handle = app.clone();
@@ -154,6 +157,39 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
     });
 
     Ok(())
+}
+
+/// 暂停/继续正在跑的那一条：置上/清掉 `Local\KeyMouse-pause-<pid>` 这个命名事件。
+///
+/// 命令行在建进程时就把事件建好了（见 `src\KeyMouse.Core\Runtime\PauseControl.cs`），
+/// 它每一步之前问一次——所以暂停点永远落在两步之间，不会把半个组合键留在键盘上。
+/// 返回 true 表示"确实有在跑的东西被按了"，界面据此切换按钮文案。
+#[tauri::command]
+pub fn pause_flow(app: AppHandle, paused: bool) -> Result<bool, String> {
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use windows_sys::Win32::System::Threading::{OpenEventW, ResetEvent, SetEvent, EVENT_MODIFY_STATE};
+
+    let state = app.state::<RunState>();
+    let pid = *state.pid.lock().unwrap();
+    let Some(pid) = pid else {
+        return Err("现在没有在跑的流程".to_string());
+    };
+
+    let mut name: Vec<u16> = format!("Local\\KeyMouse-pause-{pid}").encode_utf16().collect();
+    name.push(0);
+    // SAFETY: name 以 0 结尾、只有本进程在写这块内存；句柄用完立刻关。
+    unsafe {
+        let handle: HANDLE = OpenEventW(EVENT_MODIFY_STATE, 0, name.as_ptr());
+        if handle.is_null() {
+            return Err(format!("找不到 pid {pid} 的暂停开关（它可能已经跑完了）"));
+        }
+        let ok = if paused { SetEvent(handle) } else { ResetEvent(handle) };
+        CloseHandle(handle);
+        if ok == 0 {
+            return Err("改不了暂停开关".to_string());
+        }
+    }
+    Ok(true)
 }
 
 #[tauri::command]

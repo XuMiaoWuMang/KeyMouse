@@ -209,11 +209,8 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 | --- | --- | --- |
 | `···` 菜单：打开… / 保存 / 另存为… / 从屏幕取区域… | 一样 | 「从屏幕取区域…」不问用户点了哪个字段，直接问契约：这一步有 `region` 就写区域，否则写 `at`，两样都没有就如实说 |
 | `Ctrl+Shift+A` 打开全部类型 | 一样 | 省得去点 `+ 更多` |
-| 暂停 / 继续 | **没有** | 老外壳的暂停走常驻 `KeyMouse serve`（`RunnerClient.PauseAsync`），执行停在场内；新外壳刻意用一次性 `KeyMouse run` 子进程，没有控制通道。要补得先给命令行加一条控制通道（stdin 指令或热键），属于产品改动，不是界面改动 |
+| 暂停 / 继续 | 有（暂停时工具栏按钮变「继续」） | 命令行每次启动都建命名事件 `Local\KeyMouse-pause-<pid>`，`FlowRunner` 本来就在每一步之前问一次 `IExecutionControl.BetweenSteps`，`PauseControl` 就挂在那条缝上；外壳只负责 `SetEvent`/`ResetEvent`（`run.rs` 的 `pause_flow`）。停点永远落在两步之间，不会把半个组合键留在键盘上 |
 | 录制按外壳权限 | 多了「以管理员权限录制」 | 见 `docs/reference/editor-ipc.md` 录制第 5 条：按需 UAC、停不了也杀不掉 |
-
-暂停这一格是**已知缺口**，写在这儿免得下次有人以为忘了做。
-
 
 ## 起命令行的方式：`process.rs`
 
