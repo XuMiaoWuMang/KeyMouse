@@ -159,6 +159,11 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- **行上结果**：命令行每跑完一步写 `[ 3/8] ok …` / `[ 3/8] exit 3 …`，`src/lib/run.ts`
+  的 `parseStepResult` 读出来，按"行下标 = 执行序号 − 1"标到行上。这条换算只在**没有分组步**
+  （`repeat` / `foreach` / `call`）时成立：分组会展开、子流程会内联，一次播放的 3 号可能
+  不是第 3 行。所以 `App.svelte` 用 `flatRun` 守住这个前提，分组流程仍旧只看底部
+  「跑到第 n/N 步」——宁可少显示，不要显示错的一行。
 - `src-tauri/src/store.rs`：界面自己的账本（最近打开 8 条、上次窗口尺寸），落在
   `%LOCALAPPDATA%\KeyMouse\editor-settings.json`。读写都吞错——账本坏了就当没有。
   窗口尺寸在 `.setup()` 里恢复（不是界面调 API）：那时窗口还没显示，不会先闪一下默认大小。

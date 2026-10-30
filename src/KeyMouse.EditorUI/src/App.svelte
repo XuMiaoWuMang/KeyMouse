@@ -9,7 +9,7 @@
   import { writePath } from './lib/fieldpath';
   import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
-  import { runConclusion, runHint, runIsBad } from './lib/run';
+  import { parseStepResult, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
@@ -73,6 +73,17 @@
   let lines: { stream: string; line: string }[] = [];
   /** 跑到第几步了；命令行没报编号时保持 null（不猜）。 */
   let progress: RunProgress | null = null;
+
+  /**
+   * 每一步跑成什么样，按**行下标**存（只有"没有分组步"的流程才敢这么存）。
+   * 命令行的编号是执行序号：分组步会展开、子流程会内联，一次播放的 3 号可能不是第 3 行。
+   * 所以这里只在流程里没有 repeat / foreach / call 时才把结果标到行上——那种流程里
+   * 执行顺序和显示顺序才是同一件事。分组流程仍旧看底部的「跑到第 n/N 步」。
+   */
+  let results: Record<number, StepResult> = {};
+
+  /** 这份流程里有没有分组步（repeat / foreach / call）。有的话行上就不能标编号结果。 */
+  $: flatRun = steps.every((step) => !['repeat', 'foreach', 'call'].includes(step.type));
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
   /**
@@ -134,6 +145,8 @@
         lines = [...lines, event.payload];
         // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
         progress = parseRunProgress(event.payload.line) ?? progress;
+        const result = parseStepResult(event.payload.line);
+        if (result && flatRun) results = { ...results, [result.index - 1]: result };
       }),
     );
 
@@ -385,6 +398,7 @@
     if (busy || running) return;
 
     lines = [];
+    results = {};
     progress = null;
     outputOpen = true;
 
@@ -453,6 +467,7 @@
     if (!target) return;
 
     lines = [];
+    results = {};
     progress = null;
     outputOpen = true;
     try {
@@ -949,6 +964,12 @@
                 <span class="title">{stepTitle(step.type)}</span>
                 <span class="summary">{stepSummary(step)}</span>
               </span>
+              {#if results[index]}
+                <!-- 一步的结果写在行上（老外壳也这样）：编号即执行序号，只对没有分组步的流程成立。 -->
+                <span class="result" class:bad={!results[index].ok} title={results[index].text}>
+                  {results[index].ok ? '✓' : '✗'} <span class="result-text">{results[index].text}</span>
+                </span>
+              {/if}
               {#if childSteps(step).length > 0}
                 <span class="count">{childSteps(step).length} 步</span>
               {/if}
@@ -1684,6 +1705,25 @@
     white-space: nowrap;
   }
 
+  /* 行上的结果：成功用弱色（它只是"跑过了"的痕迹），失败才用警示色。 */
+  .result {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 220px;
+    font-size: 11px;
+    color: var(--kp-ink3);
+    white-space: nowrap;
+  }
+
+  .result.bad {
+    color: var(--kp-critical);
+  }
+
+  .result-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .count {
     font-size: var(--kp-fs-small);
     color: var(--kp-ink3);

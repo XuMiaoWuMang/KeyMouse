@@ -36,3 +36,43 @@ export function runHint(dryRun: boolean): string {
     ? '试运行：只做资格检查，不发送任何输入。'
     : '播放：会真的操作鼠标键盘，跑的时候别抢窗口。';
 }
+
+/** 命令行报告的一步结果。 */
+export interface StepResult {
+  /** 命令行的执行序号，从 1 开始（不是界面里的行号，见 `parseStepResult` 的说明）。 */
+  index: number;
+  ok: boolean;
+  /** 命令行给的描述，例如 `等 6000 ms`、`退出码 3：窗口不满足条件`。 */
+  text: string;
+}
+
+/**
+ * 从一行输出里读"这一步怎么样了"。
+ *
+ * 命令行打完一步会写 `[  3/8] ok 等 6000 ms` 或 `[  3/8] exit 3 ...`。注意这个编号是
+ * **执行序号**：分组步会展开、子流程会内联，于是它和界面里的行号不是一回事。界面只在
+ * "流程里没有分组步"时拿它当场标（见 `App.svelte` 的 `flatRun`）。
+ */
+export function parseStepResult(line: string): StepResult | null {
+  const head = /^\s*\[\s*(\d+)\s*\/\s*(\d+)\s*\]\s*(.*)$/.exec(line);
+  if (!head) return null;
+
+  const index = Number(head[1]);
+  const total = Number(head[2]);
+  if (!Number.isFinite(index) || index < 1) return null;
+  if (!Number.isFinite(total) || total < 1) return null;
+
+  const body = head[3].trim();
+  const okMatch = /^ok\b\s*(.*)$/.exec(body);
+  if (okMatch) return { index, ok: true, text: okMatch[1].trim() };
+
+  const exitMatch = /^exit\s+(-?\d+)\s*:?\s*(.*)$/.exec(body);
+  if (exitMatch) {
+    const code = exitMatch[1];
+    const detail = exitMatch[2].trim();
+    return { index, ok: false, text: detail ? `退出码 ${code}：${detail}` : `退出码 ${code}` };
+  }
+
+  return null;
+}
+
