@@ -53,7 +53,7 @@ fn run_args(path: &str, dry_run: bool) -> Vec<String> {
 #[tauri::command]
 pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
     let cli = cli_path_of()?;
-    let output = Command::new(&cli)
+    let output = crate::process::cli_command(&cli)
         .args(run_args(&path, true))
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
         .stdin(Stdio::null())
@@ -91,7 +91,7 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         if slot.is_some() {
             return Err("已经在跑了；先停止再开始下一次".to_string());
         }
-        let mut child = Command::new(&cli)
+        let mut child = crate::process::cli_command(&cli)
             .args(args)
             .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
             .stdin(Stdio::null())

@@ -11,6 +11,7 @@ mod files;
 mod mini;
 mod layout;
 mod pick;
+mod process;
 mod record;
 mod run;
 mod schema;
@@ -76,6 +77,13 @@ fn main() {
         // 证据图要"在资源管理器里看一下"：交给系统默认程序，而不是自己写一个看图窗。
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+        /*
+          窗口必须是普通窗口：迷你模式会临时置顶，但退出迷你时已经还回去了；
+          这里再明确设一次 false，免得"上一轮别人的置顶"被操作系统带进来。
+        */
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.set_always_on_top(false);
+        }
             // 窗口大小在壳里恢复，不交给界面：界面要等 webview 起来才有机会说话，
             // 那时窗口已经在屏幕上以默认大小闪了一下。这里在窗口显示前就改好。
             if let (Some(window), Some(size)) = (app.get_webview_window("main"), store::window_size()) {

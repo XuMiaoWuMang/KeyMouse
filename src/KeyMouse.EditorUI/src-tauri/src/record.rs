@@ -9,7 +9,7 @@
 //! 1. 命令行自己的停止键 `Ctrl+Alt+Q`：外壳再发一次这个组合键（就是 `KeyMouse key combo`）。
 //! 2. 发键失败/没反应时兜底 `run_cancel`，杀进程——代价是这一次录制不落盘。
 
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Manager};
@@ -62,7 +62,7 @@ pub fn record_flow(
 pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let cli = crate::run::cli_path_of()?;
 
-    Command::new(&cli)
+    crate::process::cli_command(&cli)
         .args(["key", "combo", "ctrl+alt+q"])
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
         .stdin(Stdio::null())

@@ -4,7 +4,6 @@
 //! 所以走命令行要一份 `KeyMouse schema` 的 JSON。多一次进程启动，换来的是
 //! **契约只有一份**：命令行加了字段，界面下次打开就有，不需要两边同步改代码。
 
-use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
@@ -32,7 +31,7 @@ pub fn flow_schema() -> Result<SchemaPayload, String> {
         });
     }
 
-    let output = Command::new(&cli)
+    let output = crate::process::cli_command(&cli)
         .arg("schema")
         // 与 run.rs 同一个理由：让命令行吐 UTF-8，而不是跟着控制台码页走。
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")

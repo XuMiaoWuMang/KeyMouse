@@ -203,6 +203,16 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 配色与间距取的是 `src/KeyMouse.FlowEditor/Themes/Palette.xaml` 的同一套 token，`theme.css` 里以 `--kp-*` 变量落地。
 
+## 起命令行的方式：`process.rs`
+
+外壳起的每一个命令行附属进程都走 `src-tauri/src/process.rs` 的 `cli_command()`——它给
+`Command` 加 `CREATE_NO_WINDOW`。理由很朴素：`KeyMouse.exe` 是控制台程序，界面打开文件、
+取点、跑流程、读契约都要起它，不隐藏窗口就会每次闪一个黑框。
+
+新增调用点时别直接写 `Command::new(cli)`，从 `cli_command` 走。
+
+窗口的置顶只有"录制细带"会临时打开（`mini.rs` 里存原值、退出时还回去）；`main.rs` 的
+`.setup()` 里还会显式 `set_always_on_top(false)` 一次，避免上一轮被强杀留下的置顶被带进来。
 ## 与命令行的接口
 
 界面不碰文件、不起进程；跨过去只有这些命令，参数与错误码都写在

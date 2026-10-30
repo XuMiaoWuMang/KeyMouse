@@ -4,7 +4,6 @@
 //! `KeyMouse.Core` 的 `region pick` 里，而且已经有一堆实测结论（客户区 / 窗口 / 屏幕三种空间、
 //! 标题栏那种边上情况）。壳再实现一遍，就是第二份会走样的规矩。
 
-use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
@@ -90,7 +89,7 @@ pub async fn pick_region(point: bool) -> Result<Option<PickResult>, String> {
     let args = pick_args(point);
     let picked = tauri::async_runtime::spawn_blocking(move || {
         let cli = cli_path_of()?;
-        let output = Command::new(&cli)
+        let output = crate::process::cli_command(&cli)
             .args(&args)
             .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
             .output()

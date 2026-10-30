@@ -5,7 +5,6 @@
 
 use std::env;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use serde::Serialize;
 
@@ -37,7 +36,7 @@ pub fn runtime_info() -> RuntimeInfo {
     let version = cli
         .as_ref()
         .and_then(|path| {
-            Command::new(path)
+            crate::process::cli_command(path)
                 .arg("--version")
                 // 我们要解析这段文字，不是在终端里看它：让命令行别去猜控制台码页。
                 .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
