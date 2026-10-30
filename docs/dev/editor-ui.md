@@ -255,3 +255,14 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 | `src\KeyMouse.EditorUI\` | 新外壳：Tauri + Svelte（Rust），不提权，产物 `KeyMouse.Editor.exe` |
 
 `km e` 编的是前者；后者用 `pwsh tools\dev\editor-ui.ps1 build`（底层是 pnpm 与 cargo）。
+## 没保存也能跑，起始页也能加步骤
+
+两条都来自同一个约束：命令行只认文件。
+
+- **加步骤不再要求先有文档**：工具栏按钮原来带 `disabled={!doc}`，`addStep` 里也有
+  `if (!doc) return`，于是在起始页点「点击」什么都不发生。现在没有文档就先建一份空的
+  （`newFlow()`），再按工具栏顺序插入——起始页不是"死的介绍页"。
+- **试运行/播放不再逼人先存盘**：没有路径或改过没保存时，先把当前内容写进
+  `%LOCALAPPDATA%\KeyMouse\tmp\editor-run.json`（外壳命令 `write_scratch_flow`），再拿这个
+  路径去跑。磁盘上正在编辑的文件一个字都不动，底部输出会写明"跑的是临时副本，磁盘上的
+  文件没动"。已保存且无改动时仍直接跑原文件。
