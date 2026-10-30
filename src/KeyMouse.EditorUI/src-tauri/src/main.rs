@@ -10,8 +10,10 @@ mod crashlog;
 mod files;
 mod mini;
 mod layout;
+mod pick;
 mod record;
 mod run;
+mod schema;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -87,6 +89,8 @@ fn main() {
             run::run_cancel,
             record::record_flow,
             record::record_stop,
+            schema::flow_schema,
+            pick::pick_region,
             mini::enter_mini,
             mini::leave_mini,
             set_dirty,

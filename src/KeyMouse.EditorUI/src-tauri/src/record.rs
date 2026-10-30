@@ -60,7 +60,7 @@ pub fn record_flow(
 /// 太短会在最不该打断的时刻打断（写了一半的 json）。
 #[tauri::command]
 pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
-    let cli = crate::run::cli_path_of(&app)?;
+    let cli = crate::run::cli_path_of()?;
 
     Command::new(&cli)
         .args(["key", "combo", "ctrl+alt+q"])

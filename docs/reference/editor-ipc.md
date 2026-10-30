@@ -110,6 +110,39 @@ type FlowFile = {
 为什么用事件而不是在 Rust 里直接读文件：读文件、判断 JSON 合法性、切换文档是界面的事，
 Rust 只搬一句话。真正读盘还是 `open_flow`。
 
+## 契约与取点
+
+界面里"这一步有哪些字段、哪个必填、枚举有哪些值"不写在前端：`KeyMouse schema` 就是唯一
+来源，老外壳（WinUI）和新外壳读的是同一份。取点/取块同理，浮层与坐标换算都在命令行的
+`region pick` 里，外壳不问路径、不算坐标。
+
+### `flow_schema() -> SchemaPayload`
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `json` | `string` | `KeyMouse schema` 的原始输出（整份契约，见 [`interface.md`](interface.md)） |
+| `cliPath` | `string` | 是从哪个 `KeyMouse.exe` 问出来的 |
+
+外壳缓存整份 JSON，界面自己解析（`src/lib/schema.ts`）。**不要**在 Rust 里挑字段转发：
+契约加一个字段就得改一次壳，等于把"改契约不用改界面"这件事废掉。
+
+### `pick_region(point: bool) -> PickResult | null`
+
+跑 `KeyMouse region pick [--point] --json`，把结果翻译成界面能直接写进步骤的形状。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `space` | `'client' \| 'window' \| 'screen'` | 坐标在哪个空间里 |
+| `x` `y` `width` `height` | `number` | 区域；取点时宽高也可能是 0 |
+| `process` `title` `class` `handle` | `string \| null` | 选中的窗口（取点也算选中了窗口） |
+
+`Ok(None)` 表示**用户按了 Esc**（命令行退出码 3），不是错误——界面安静地把这次当成"什么
+都没发生"。其它非 0 退出码才是错，带命令行原话回给界面。
+
+界面拿到结果后做三件事：写坐标字段、把 `process`/`title` 一并填进这一步的 `target`
+（只有坐标不知道是哪块屏幕，回放到别的窗口上就偏了）、底部写一句"取了客户区上的
+120,64（notepad）"这类人话。
+
 ## 关窗
 
 外壳不解析流程内容，所以它自己不知道"脏了没有"。界面每次改动后推一次标记，外壳只在

@@ -52,7 +52,7 @@ fn run_args(path: &str, dry_run: bool) -> Vec<String> {
 
 #[tauri::command]
 pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
-    let cli = cli_path_of(&app)?;
+    let cli = cli_path_of()?;
     let output = Command::new(&cli)
         .args(run_args(&path, true))
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
@@ -84,7 +84,7 @@ pub fn run_flow(app: AppHandle, path: String) -> Result<(), String> {
 /// 播放与录制共用这一段：两者的差别只在参数，收尾方式一模一样
 /// （界面按下停止 → `run_cancel` → 杀整棵子树）。
 pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), String> {
-    let cli = cli_path_of(app)?;
+    let cli = cli_path_of()?;
     let state = app.state::<RunState>();
     {
         let mut slot = state.child.lock().unwrap();
@@ -195,7 +195,7 @@ fn emit_line(app: &AppHandle, stream: &'static str, line: &str) {
 
 /// 命令行位置由 `layout::runtime_info` 已经算过一遍；这里再问一次而不是缓存，
 /// 是为了让"换了 KEYMOUSE_CLI 重开窗口"这种操作立刻生效。
-pub(crate) fn cli_path_of(_app: &AppHandle) -> Result<std::path::PathBuf, String> {
+pub(crate) fn cli_path_of() -> Result<std::path::PathBuf, String> {
     let info = crate::layout::runtime_info();
     info.cli_path
         .map(std::path::PathBuf::from)

@@ -148,20 +148,38 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - 还没做的（写在 ADR 的未决问题里）：录制的提权路线、拖拽排序、行内"跑到第几步"高亮。
 
 
+## 检查器由契约画出来（P5）
+
+老外壳的检查器是"读 `flow.schema.json` 再按 kind 选控件"，新外壳照做，字段一个都不写死：
+
+- `src/lib/schema.ts` 解析 `KeyMouse schema` 的输出（`FieldContract` / `StepContract` / `ShapeContract`）。
+  形状是 `{ comment, fields }` 而不是数组——第一版按数组写，运行时炸在
+  `shapeFields(...).every is not a function`，这条教训留在函数注释里。
+- `src/lib/Inspector.svelte` 按 kind 渲染：`text`/`multiline`/`int`/`bool`/`enum`/`target`/
+  `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
+  契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
+  证据图有自己的块。
+- `src/lib/fieldpath.ts` 负责按 `when.timeoutMs` 这种点号路径读写：写空值等于删键，删空的
+  嵌套对象连父键一起去掉，返回新对象（撤销栈是序列化快照，原地改会让快照跟着变）。
+- 老的"待补"判定（`lib/steps.ts`）还在，用于快速加步骤时给个提醒；检查器里的必填标来自契约的
+  `required`。
+- 取点/取块走 `pick_region`（`src-tauri/src/pick.rs`）：外壳只把结果写成坐标 + 顺手填
+  `target.process`，浮层与坐标换算仍在命令行的 `region pick` 里。
+
 ## 界面与老外壳的关系
 
 P0 的目标是"两屏并排看不出这是两个程序"：
 
 - 顶栏：`▞` 标记 + `KeyMouse` + `流程编辑器` + 当前文件路径（居中，省略号在左侧）。
 - 工具栏：常用步骤四个（点击、输入文字、等文字出现、找字并点它）+ `+ 更多`；右侧 `录制`（圆点）/`试运行`/`播放`（朱砂实心）/`···`。
-- 两栏：左侧步骤列表（序号、图标片、标题、一行摘要、分组步的步数、子步骤 `6.1`），右侧检查器（目标窗口、必填标、三字段、条件开关、备注、JSON 折叠）。
+- 两栏：左侧步骤列表（序号、图标片、标题、一行摘要、分组步的步数、子步骤 `6.1`），右侧检查器（按契约渲染：目标窗口、这一步、前提条件、备注、证据、JSON 折叠）。
 - 底部：状态行 + 输出胶囊；点开是等宽字体的运行输出。
 
 配色与间距取的是 `src/KeyMouse.FlowEditor/Themes/Palette.xaml` 的同一套 token，`theme.css` 里以 `--kp-*` 变量落地。
 
 ## 与命令行的接口
 
-界面不碰文件、不起进程；跨过去只有四个命令，参数与错误码都写在
+界面不碰文件、不起进程；跨过去只有这些命令，参数与错误码都写在
 [编辑器接口契约](../reference/editor-ipc.md)：
 
 | 命令 | 入参 | 出参 |
@@ -169,6 +187,8 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 | `runtime_info` | — | `{ cliPath, cliVersion, environment, repoRoot, editorExe, elevated, initialPath }` |
 | `open_flow` | `path` | `{ path, text, json }`；JSON 不合法报 `flow.invalid-json` |
 | `save_flow` | `path`, `text` | —（会自己建父目录） |
+| `flow_schema` | — | `{ json, cliPath }`：整份契约 |
+| `pick_region` | `point` | `{ space, x, y, width, height, process, title }` 或 `null`（用户取消） |
 | 对话框 | 前端直接调 `@tauri-apps/plugin-dialog` | 取消返回 `null`，不算失败 |
 
 `cliPath` 的查找顺序与 `ProductLayout.CliCandidates()` 一致：`KEYMOUSE_CLI` → `<仓库>\artifacts\cli` →

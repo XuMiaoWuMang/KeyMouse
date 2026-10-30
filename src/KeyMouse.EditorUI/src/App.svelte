@@ -4,6 +4,9 @@
   import { listen } from '@tauri-apps/api/event';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
+  import Inspector from './lib/Inspector.svelte';
+  import { schemaFrom, type FlowSchema } from './lib/schema';
+  import { writePath } from './lib/fieldpath';
   import { insertAfter, moveDown, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { runConclusion, runHint, runIsBad } from './lib/run';
@@ -52,6 +55,8 @@
   let running = false;
   /** 正在录制的那个目标文件。非空就表示"这一轮是录制，不是播放"。 */
   let recordingPath: string | null = null;
+  /** 流程格式的契约；拿到之前检查器只显示"正在读契约"。 */
+  let schema: FlowSchema | null = null;
   // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
   // 编辑器那两栏只会挡路；而工具栏一旦被盖住，「停止」就摸不到了。
   let mini = false;
@@ -83,6 +88,7 @@
   const HISTORY_LIMIT = 50;
 
   onMount(async () => {
+    void loadSchema();
     try {
       runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
@@ -701,6 +707,70 @@
     steps = steps;
     doc = doc;
   }
+
+  /** 检查器推来的一次改动：路径是点号写法（`when.timeoutMs`），值已经按契约的类型转好。
+   *  走 `writePath` 而不是就地赋值——空值要删键、删空的嵌套对象要连父键一起删，
+   *  这些规矩写在一处（lib/fieldpath.ts），模板里就不用各个记得。 */
+  function applyField(path: string, value: unknown) {
+    const step = steps[selected];
+    if (!step) return;
+    snapshotEdit(`field:${selected}:${path}`);
+    writePath(step, path, value);
+    touch();
+  }
+
+  /** 「取点」「取一块」：屏幕上的事交给命令行（浮层与坐标换算都在它那儿），
+   *  这里只把结果写回字段。选中窗口一并填进 target.process——老外壳也这么做：
+   *  只有坐标不知道是哪块屏幕，回放到别的窗口上就偏了。 */
+  async function pickField(kind: 'point' | 'region', path: string) {
+    const step = steps[selected];
+    if (!step) return;
+    try {
+      const picked = await invoke<{
+        space: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        process?: string | null;
+        title?: string | null;
+      } | null>('pick_region', { point: kind === 'point' });
+      if (!picked) {
+        note('取点取消了');
+        return;
+      }
+      snapshotEdit(`pick:${selected}:${path}`);
+      writePath(step, path, {
+        space: picked.space,
+        x: picked.x,
+        y: picked.y,
+        ...(kind === 'region' ? { width: picked.width, height: picked.height } : {}),
+      });
+      if (picked.process) {
+        writePath(step, 'target.process', picked.process);
+        if (picked.title) writePath(step, 'target.title', picked.title);
+      }
+      touch();
+      const where =
+        picked.space === 'client' ? '客户区' : picked.space === 'window' ? '窗口' : '屏幕';
+      note(
+        '取了 ' + where + '上的 ' + picked.x + ',' + picked.y +
+          (picked.process ? '（' + picked.process + '）' : ''),
+      );
+    } catch (e) {
+      note(`取点失败：${String(e)}`, true);
+    }
+  }
+
+  /** 拿一次契约：命令行是唯一的真相，界面只照它渲染。 */
+  async function loadSchema() {
+    try {
+      const payload = await invoke<{ json: string }>('flow_schema');
+      schema = schemaFrom(payload.json);
+    } catch (e) {
+      note(`读不到流程格式的契约：${String(e)}（检查器先只显示目标窗口）`, true);
+    }
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -876,46 +946,7 @@
 
       <aside class="side" aria-label="这一步的设置">
         {#if current}
-          <div class="side-head">
-            <h2>目标窗口</h2>
-            <span class="hint" class:warn={missingOf(current).length > 0}>{missingHint(current)}</span>
-          </div>
-
-          <label class="field">
-            <span class="label">进程名</span>
-            <input
-              value={targetOf(current).process ?? ''}
-              placeholder="notepad"
-              on:input={(e) => setTargetField(selected, 'process', e.currentTarget.value)}
-            />
-          </label>
-          <label class="field">
-            <span class="label">窗口类名</span>
-            <input
-              value={targetOf(current).class ?? ''}
-              placeholder=""
-              on:input={(e) => setTargetField(selected, 'class', e.currentTarget.value)}
-            />
-          </label>
-          <label class="field">
-            <span class="label">标题</span>
-            <input
-              value={targetOf(current).title ?? ''}
-              placeholder=""
-              on:input={(e) => setTargetField(selected, 'title', e.currentTarget.value)}
-            />
-          </label>
-
-          <h2 class="section">只在满足条件时执行</h2>
-          <div class="toggle-row">
-            <span class="switch" role="switch" aria-checked="false" tabindex="0"><span class="knob"></span></span>
-            <span>每次都执行</span>
-          </div>
-
-          <label class="field">
-            <span class="label">备注 <span class="info" title="只给人看，不影响回放">i</span></span>
-            <input value={current.note ?? ''} on:input={(e) => setNote(selected, e.currentTarget.value)} />
-          </label>
+          <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />
 
           {#if currentShot}
             <h2 class="section">证据</h2>
@@ -1365,9 +1396,6 @@
     padding: 1px 7px;
   }
 
-  .hint.warn {
-    color: var(--kp-signal);
-  }
 
   .sep {
     width: 1px;
@@ -1545,6 +1573,9 @@
 
   /* ── 右栏 ───────────────────────────────────────────── */
   .side {
+    /* 网格子项默认 min-height:auto 会撑到内容那么高，overflow:auto 就永远不触发；
+       显式给 0 才真的在这里滚。 */
+    min-height: 0;
     overflow: auto;
     border: 1px solid var(--kp-rule);
     border-radius: var(--kp-radius-panel);
@@ -1552,13 +1583,6 @@
     padding: 18px 20px 24px;
   }
 
-  .side-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--kp-rule);
-  }
 
   h2 {
     margin: 0;
@@ -1573,83 +1597,15 @@
     border-bottom: 1px solid var(--kp-rule);
   }
 
-  .hint {
-    font-size: var(--kp-fs-small);
-    color: var(--kp-ink3);
-  }
 
-  .field {
-    display: grid;
-    grid-template-columns: 92px 1fr;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-  }
 
-  .label {
-    justify-self: end;
-    color: var(--kp-ink2);
-    font-size: var(--kp-fs-body);
-  }
 
-  .info {
-    display: inline-grid;
-    place-items: center;
-    width: 15px;
-    height: 15px;
-    margin-left: 2px;
-    border: 1px solid var(--kp-ink3);
-    border-radius: 50%;
-    color: var(--kp-ink3);
-    font-size: 10px;
-    line-height: 1;
-    transform: translateY(-1px);
-  }
 
-  input {
-    height: 34px;
-    padding: 0 10px;
-    border: 1px solid var(--kp-rule);
-    border-radius: var(--kp-radius-control);
-    background: var(--kp-field);
-    user-select: text;
-  }
 
-  input::placeholder {
-    color: var(--kp-ink3);
-  }
 
-  input:focus {
-    outline: none;
-    border-color: var(--kp-signal);
-    background: #fff;
-  }
 
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-  }
 
-  .switch {
-    position: relative;
-    width: 40px;
-    height: 20px;
-    border: 1px solid var(--kp-rule);
-    border-radius: 999px;
-    background: var(--kp-ink3);
-  }
 
-  .switch .knob {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #fff;
-  }
 
   .disclosure {
     display: flex;
