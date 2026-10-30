@@ -57,6 +57,12 @@
   let recordingPath: string | null = null;
   /** 流程格式的契约；拿到之前检查器只显示"正在读契约"。 */
   let schema: FlowSchema | null = null;
+
+  /** 哪些分组步是展开的。不在表里 = 收起（老外壳的默认也是收起）。 */
+  let expanded: Record<number, boolean> = {};
+
+  /** 最近打开过的流程（新在前，只含还存在的文件）。空状态里列出来，省一次"打开"对话框。 */
+  let recent: string[] = [];
   // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
   // 编辑器那两栏只会挡路；而工具栏一旦被盖住，「停止」就摸不到了。
   let mini = false;
@@ -89,6 +95,7 @@
 
   onMount(async () => {
     void loadSchema();
+    void loadRecent();
     try {
       runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
@@ -248,12 +255,32 @@
     dirty = filePath === null;
   }
 
+  /** 把路径记进"最近打开"，失败就算了——记不住不该挡住干活。 */
+  /** 读一次"最近打开"。外壳打不开账本时安静地空着，空状态里就不显示这一块。 */
+  async function loadRecent() {
+    try {
+      recent = await invoke<string[]>('recent_files');
+    } catch {
+      recent = [];
+    }
+  }
+
+
+  async function rememberPath(filePath: string) {
+    try {
+      recent = await invoke<string[]>('remember_recent', { path: filePath });
+    } catch {
+      /* 账本写不进去不是用户的问题 */
+    }
+  }
+
   async function loadFrom(filePath: string) {
     busy = true;
     try {
       const file = await invoke<{ path: string; text: string; json: unknown }>('open_flow', { path: filePath });
       useDocument(adopt(file.json), file.path);
       note(`打开 ${file.path}`);
+      void rememberPath(file.path);
     } catch (e) {
       note(String(e), true);
     } finally {
@@ -885,11 +912,27 @@
           <button class="ghost" on:click={openSample}>看看示例</button>
         </div>
         <p class="tips">流程文件是 JSON，命令行也能跑：<code>KeyMouse run 流程.json --dry-run</code> 先看每一步的窗口在不在。</p>
+        {#if recent.length > 0}
+          <!-- 最近打开：老外壳的空页也有这一块。文件名在前、目录在后，因为同一目录下的文件名更容易区分。 -->
+          <div class="recent">
+            <h3>最近</h3>
+            <ul>
+              {#each recent.slice(0, 5) as item}
+                <li>
+                  <button class="recent-item" on:click={() => loadFrom(item)} title={item}>
+                    <span class="recent-name">{item.split(/[\\/]/).pop()}</span>
+                    <span class="recent-dir">{item}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
       </section>
     {:else}
       <section class="list" aria-label="步骤">
         {#each steps as step, index}
-          <div class="row-wrap">
+          <div class="row-wrap" class:grouped={childSteps(step).length > 0}>
             <button
               class="row"
               class:selected={index === selected}
@@ -919,24 +962,36 @@
               {/if}
             </button>
             <span class="row-actions">
+              {#if childSteps(step).length > 0}
+                <!-- 展开/收起放在行外：行本身是 button，里面不能再套 button。 -->
+                <button
+                  class="tiny caret"
+                  on:click={() => (expanded = { ...expanded, [index]: !expanded[index] })}
+                  aria-label={expanded[index] ? '收起这一步的子步骤' : '展开这一步的子步骤'}
+                  aria-expanded={expanded[index] ?? false}
+                  title={expanded[index] ? '收起子步骤' : '展开子步骤'}
+                >{expanded[index] ? '▾' : '▸'}</button>
+              {/if}
               <button class="tiny" on:click={() => stepUp(index)} disabled={index === 0} aria-label="上移" title="上移（Alt+↑）">↑</button>
               <button class="tiny" on:click={() => stepDown(index)} disabled={index === steps.length - 1} aria-label="下移" title="下移（Alt+↓）">↓</button>
               <button class="tiny" on:click={() => deleteStep(index)} aria-label="删除" title="删除（Delete）">×</button>
             </span>
           </div>
 
-          {#each childSteps(step) as child, childIndex}
-            <div class="row child">
-              <span class="rail" aria-hidden="true"></span>
-              <span class="step-dot" aria-hidden="true"></span>
-              <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
-              <span class="chip" aria-hidden="true"><StepIcon name={child.type} size={14} /></span>
-              <span class="text">
-                <span class="title">{stepTitle(child.type)}</span>
-                <span class="summary">{stepSummary(child)}</span>
-              </span>
-            </div>
-          {/each}
+          {#if expanded[index]}
+            {#each childSteps(step) as child, childIndex}
+              <div class="row child">
+                <span class="rail" aria-hidden="true"></span>
+                <span class="step-dot" aria-hidden="true"></span>
+                <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
+                <span class="chip" aria-hidden="true"><StepIcon name={child.type} size={14} /></span>
+                <span class="text">
+                  <span class="title">{stepTitle(child.type)}</span>
+                  <span class="summary">{stepSummary(child)}</span>
+                </span>
+              </div>
+            {/each}
+          {/if}
         {/each}
 
         {#if steps.length === 0}
@@ -1242,6 +1297,62 @@
   }
 
   /* ── 空状态 ─────────────────────────────────────────── */
+  /* 最近打开：一行一个文件，名字用正文色，目录用弱色（它只是提醒"在哪"）。 */
+  .recent {
+    margin-top: 22px;
+    max-width: 520px;
+  }
+
+  .recent h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--kp-ink3);
+    letter-spacing: 0.04em;
+  }
+
+  .recent ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .recent-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: var(--kp-r-sm);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .recent-item:hover {
+    background: var(--kp-field);
+  }
+
+  .recent-name {
+    flex: none;
+    font-size: 13px;
+    color: var(--kp-ink);
+  }
+
+  .recent-dir {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--kp-mono);
+    font-size: 11px;
+    color: var(--kp-ink3);
+  }
   .empty {
     grid-column: 1 / -1;
     border: 1px solid var(--kp-rule);
@@ -1362,6 +1473,26 @@
   .row-wrap:hover .row-actions,
   .row-wrap:focus-within .row-actions {
     display: flex;
+  }
+
+  /* 分组行总是露着展开箭头：老外壳也是这么做的——收起时看不到箭头就不知道里面有东西。 */
+  /* 分组行的操作区常驻，得给行右侧留出位置，否则「1 步」被盖住。 */
+  .row-wrap.grouped .row {
+    padding-right: 132px;
+  }
+
+  .row-wrap.grouped .row-actions {
+    display: flex;
+  }
+
+  .tiny.caret {
+    width: 18px;
+    color: var(--kp-ink3);
+  }
+
+  .tiny.caret:hover {
+    color: var(--kp-ink);
+    background: transparent;
   }
 
   .tiny {

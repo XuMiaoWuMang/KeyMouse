@@ -159,6 +159,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- `src-tauri/src/store.rs`：界面自己的账本（最近打开 8 条、上次窗口尺寸），落在
+  `%LOCALAPPDATA%\KeyMouse\editor-settings.json`。读写都吞错——账本坏了就当没有。
+  窗口尺寸在 `.setup()` 里恢复（不是界面调 API）：那时窗口还没显示，不会先闪一下默认大小。
 - `src/lib/fieldpath.ts` 负责按 `when.timeoutMs` 这种点号路径读写：写空值等于删键，删空的
   嵌套对象连父键一起去掉，返回新对象（撤销栈是序列化快照，原地改会让快照跟着变）。
 - 老的"待补"判定（`lib/steps.ts`）还在，用于快速加步骤时给个提醒；检查器里的必填标来自契约的

@@ -14,6 +14,7 @@ mod pick;
 mod record;
 mod run;
 mod schema;
+mod store;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -40,6 +41,7 @@ fn set_dirty(state: tauri::State<'_, ShellState>, dirty: bool) {
 /// `CloseRequested`，脏标记还在的话又会被拦回来，于是永远关不掉。
 #[tauri::command]
 fn close_window(window: tauri::Window) -> Result<(), String> {
+    store::remember_size(&window);
     window.destroy().map_err(|e| e.to_string())
 }
 
@@ -73,6 +75,14 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         // 证据图要"在资源管理器里看一下"：交给系统默认程序，而不是自己写一个看图窗。
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            // 窗口大小在壳里恢复，不交给界面：界面要等 webview 起来才有机会说话，
+            // 那时窗口已经在屏幕上以默认大小闪了一下。这里在窗口显示前就改好。
+            if let (Some(window), Some(size)) = (app.get_webview_window("main"), store::window_size()) {
+                let _ = window.set_size(tauri::LogicalSize::new(size.width, size.height));
+            }
+            Ok(())
+        })
         .manage(ShellState {
             dirty: Arc::clone(&dirty),
         })
@@ -93,6 +103,10 @@ fn main() {
             pick::pick_region,
             mini::enter_mini,
             mini::leave_mini,
+            store::recent_files,
+            store::remember_recent,
+            store::window_size,
+            store::save_window_size,
             set_dirty,
             close_window,
             log_error,
@@ -101,6 +115,8 @@ fn main() {
             // 只拦"用户想关窗"这一种；销毁走 destroy()，不会回到这里。
             if let WindowEvent::CloseRequested { api, .. } = event {
                 if !dirty.load(Ordering::Relaxed) {
+                    // 真要走，先把窗口大小记下来：下次开还是这个大小。
+                    store::remember_size(window);
                     return;
                 }
                 api.prevent_close();
