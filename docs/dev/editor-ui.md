@@ -7,6 +7,11 @@
 功能对照（含每一项怎么验证）写在 [使用指南 → 两个编辑器现在差在哪](../guide/editor.md#两个编辑器现在差在哪)；
 接口契约在 [编辑器 IPC](../reference/editor-ipc.md)。
 
+## 右键菜单作用在"点的那一行"
+
+`rowMenu` 里除了位置还记一个可选 `child`：右键点在分组里的子步骤上时它是子下标，四个动作（复制 / 上移 / 下移 / 删除）就都走组内版本（`duplicateChildAt` / `moveChild` / `removeChildAt`），不动外层那一组；点在顶层行上时 `child` 是 `undefined`，走原来的 `duplicateAt` / `moveUp` / `moveDown` / `removeAt`。
+
+上移/下移的可用性由 `canMenuUp()` / `canMenuDown()` 算：有 `child` 时看组内位置，否则看顶层位置——同一个按钮两种含义，靠菜单打开时记下的那个 `child` 区分。
 ## 列表过滤（`lib/filter.ts`）
 
 左栏超过四步时给一个过滤框。三条规则各写成一个纯函数并单测（`filter.test.ts`）：

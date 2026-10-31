@@ -108,6 +108,22 @@ export function removeChildAt(steps: readonly FlowStep[], index: number, child: 
 }
 
 /** 组内上下挪一位；边界处原样返回。 */
+/**
+ * 组里某一步的副本，插在原件后面。
+ *
+ * 和 `duplicateAt` 一样深拷贝：坐标、文字都是值，但 `vars`/`when` 是对象，
+ * 共用引用会让"改了副本"顺手改了原件。
+ */
+export function duplicateChildAt(steps: FlowStep[], index: number, child: number): FlowStep[] {
+  const group = steps[index];
+  if (!group || !Array.isArray(group.steps) || child < 0 || child >= group.steps.length) {
+    return steps.slice();
+  }
+  const copy = JSON.parse(JSON.stringify(group.steps[child])) as FlowStep;
+  const children = group.steps.slice();
+  children.splice(child + 1, 0, copy);
+  return steps.map((step, at) => (at === index ? { ...step, steps: children } : step));
+}
 export function moveChild(steps: readonly FlowStep[], index: number, from: number, to: number): FlowStep[] {
   if (index < 0 || index >= steps.length) return [...steps];
   const group = steps[index];

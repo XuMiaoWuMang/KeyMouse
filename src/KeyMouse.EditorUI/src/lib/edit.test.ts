@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { removeChildAt, moveChild, appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
+import { appendChild, duplicateAt, duplicateChildAt, insertAfter, moveChild, moveDown, moveTo, moveUp, removeAt, removeChildAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
 import { missingHint, missingOf } from './steps';
 
@@ -212,5 +212,25 @@ describe('child steps', () => {
     expect(moveChild(steps, 1, 0, -1)).toEqual(steps);
     expect(moveChild(steps, 1, 1, 2)).toEqual(steps);
     expect(moveChild(steps, 0, 0, 1)).toEqual(steps);
+  });
+});
+
+describe('duplicateChildAt', () => {
+  const group = (): FlowStep[] => [
+    { type: 'repeat', times: 2, steps: [{ type: 'sleep', ms: 100 }, { type: 'wheel', delta: -120 }] },
+  ];
+
+  it('副本插在原件后面，且是深拷贝', () => {
+    const next = duplicateChildAt(group(), 0, 0);
+    expect(next[0].steps).toHaveLength(3);
+    expect(next[0].steps?.[1]).toEqual({ type: 'sleep', ms: 100 });
+    expect(next[0].steps?.[1]).not.toBe(next[0].steps?.[0]);
+  });
+
+  it('越界或不是分组时原样返回', () => {
+    const steps = group();
+    expect(duplicateChildAt(steps, 0, 9)).toEqual(steps);
+    expect(duplicateChildAt(steps, 3, 0)).toEqual(steps);
+    expect(duplicateChildAt([{ type: 'sleep', ms: 1 }], 0, 0)).toEqual([{ type: 'sleep', ms: 1 }]);
   });
 });

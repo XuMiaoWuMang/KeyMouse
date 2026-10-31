@@ -10,6 +10,7 @@
   import {
   appendChild,
   duplicateAt,
+  duplicateChildAt,
   insertAfter,
   moveChild,
   moveDown,
@@ -113,7 +114,7 @@
   let scratchRun = false;
 
   /** 右键菜单：在哪个行、屏幕上的哪个点。`null` 表示没开。 */
-  let rowMenu: { index: number; x: number; y: number } | null = null;
+  let rowMenu: { index: number; x: number; y: number; child?: number } | null = null;
 
   /** 拖拽排序：正在拖第几行、鼠标当前压在第几行上（
 ull = 没在拖）。 */
@@ -849,35 +850,57 @@ $: syncTitle(doc, path, dirty);
   }
 
   /**
+  /**
    * 菜单里的四件事。写成无参函数是因为模板里写 `rowMenu!.index` 过不了编译
    * （Svelte 的模板不是 TypeScript），而且这几个动作都要"先收起菜单再动手"。
+   *
+   * 右键点在分组里的一行上时，`child` 有值：这时四个动作都只作用在那个子步骤上，
+   * 不要顺手动到外层那一组——用户点的是里面那一行。
    */
+  /** 菜单里的"上移/下移"能不能点：作用在子步骤上时看组内位置，否则看顶层位置。 */
+  function canMenuUp(): boolean {
+    if (!rowMenu) return false;
+    const { index, child } = rowMenu;
+    if (child === undefined) return index > 0;
+    return child > 0;
+  }
+
+  function canMenuDown(): boolean {
+    if (!rowMenu) return false;
+    const { index, child } = rowMenu;
+    if (child === undefined) return index < steps.length - 1;
+    return child < childSteps(steps[index]).length - 1;
+  }
   function menuDuplicate() {
     if (!rowMenu) return;
-    const index = rowMenu.index;
+    const { index, child } = rowMenu;
     rowMenu = null;
-    duplicateStep(index);
+    if (child === undefined) duplicateStep(index);
+    else duplicateChildStep(index, child);
   }
 
   function menuUp() {
     if (!rowMenu) return;
-    const index = rowMenu.index;
+    const { index, child } = rowMenu;
     rowMenu = null;
-    stepUp(index);
+    if (child === undefined) stepUp(index);
+    else moveChildStep(index, child, -1);
   }
 
   function menuDown() {
     if (!rowMenu) return;
-    const index = rowMenu.index;
+    const { index, child } = rowMenu;
     rowMenu = null;
-    stepDown(index);
+    if (child === undefined) stepDown(index);
+    else moveChildStep(index, child, 1);
   }
 
   function menuDelete() {
     if (!rowMenu) return;
-    const index = rowMenu.index;
+    const { index, child } = rowMenu;
     rowMenu = null;
-    deleteStep(index);
+    if (child === undefined) deleteStep(index);
+    else deleteChildStep(index, child);
   }
   /** 拖起一行。用 HTML5 的拖放：行是按钮，但拖放事件挂在外面那层 row-wrap 上。 */
   function startDrag(index: number, event: DragEvent) {
@@ -907,14 +930,41 @@ $: syncTitle(doc, path, dirty);
     note(`把第 ${from + 1} 步挪到了第 ${index + 1} 位`);
   }
   /** 右键一行：选中它，然后在鼠标位置开一张小菜单。 */
-  function openRowMenu(index: number, event: MouseEvent) {
+  function openRowMenu(index: number, event: MouseEvent, child?: number) {
     event.preventDefault();
     selected = index;
     moreOpen = false;
                 rowMenu = null;
-    rowMenu = { index, x: event.clientX, y: event.clientY };
+    rowMenu = { index, x: event.clientX, y: event.clientY, child };
   }
 
+  /**
+   * 右键菜单专用的三个子步骤动作。
+   *
+   * 和 `deleteStep`/`stepUp` 分开写：那几个函数吃 `childSel`（"当前选中的子步骤"），
+   * 而右键点的行不一定已经被选中——用参数把"点的是谁"说清楚，别去改选中状态再动手。
+   */
+  function deleteChildStep(index: number, child: number) {
+    if (!doc) return;
+    applySteps(removeChildAt(steps, index, child));
+    if (selected === index && childSel === child) childSel = null;
+    note('删了组里的一步（Ctrl+Z 可以反悔）');
+  }
+
+  function moveChildStep(index: number, child: number, delta: number) {
+    if (!doc) return;
+    applySteps(moveChild(steps, index, child, child + delta));
+  }
+
+  function duplicateChildStep(index: number, child: number) {
+    if (!doc) return;
+    const kids = childSteps(steps[index]);
+    applySteps(duplicateChildAt(steps, index, child));
+    expanded = { ...expanded, [index]: true };
+    selected = index;
+    childSel = Math.min(child + 1, kids.length);
+    note('复制了组里的一步');
+  }
   /** 删掉选中的那一步：选的是组里的子步骤就只删它，不动整组。 */
   function deleteStep(index = selected) {
     if (!doc || steps.length === 0) return;
@@ -1619,6 +1669,7 @@ $: syncTitle(doc, path, dirty);
               <!-- 子步骤也能选中：不选中的话它自己的参数（循环体里那一步的文字、坐标）就只能去 JSON 里改。 -->
               <button
                 class="row child"
+                on:contextmenu={(event) => openRowMenu(index, event, childIndex)}
                 class:selected={index === selected && childIndex === childSel}
                 on:click={() => selectChild(index, childIndex)}
               >
