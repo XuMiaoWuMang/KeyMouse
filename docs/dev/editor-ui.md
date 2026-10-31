@@ -189,6 +189,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **`···` 菜单的四件事之外还多两项**：「在文件夹里看这个流程」（走 `revealItemInDir`）与
   「键盘与版本…」——后者是一张就地卡片（键位表 + 当前命令行路径 / 版本 / 环境），
   不打开文档也能回答"我现在连的是哪一个 KeyMouse"。`Esc` 会先收这张卡片。
+- **播放前先查必填项**：`firstIncomplete()` 用 `lib/steps.ts` 的 `missingOf`（与检查器右上角那句同源）
+  找第一条缺项的步骤，缺就选中它并在底部说清楚，不放行——否则命令行会在中途报同样的错，
+  而且是在已经发出一半输入之后。试运行不拦：它就是拿来看错的。
 - **窗口标题跟着文件和脏标记走**：`syncTitle()` 把标题写成「文件名 · KeyMouse 流程编辑器」，
   未保存时前面加 `•`。任务栏上光看「流程编辑器」分不出开的是哪一份。`setTitle` 要
   `core:window:allow-set-title` 能力（`src-tauri/capabilities/default.json`），没有它调用会

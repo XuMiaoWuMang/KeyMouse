@@ -13,6 +13,15 @@ internal static class FlowTests
     {
         Harness.Group("flow: steps compile to command lines");
 
+        // Regression: a type step that lost its text compiled to an empty argument, the command
+        // happily reported "已输入 0 个字符", and --dry-run called the flow green.
+        var emptyTyping = new FlowStep { Type = "type" };
+        Harness.Sequence("a type step without text still compiles to an empty argument",
+            ["key", "type", ""],
+            FlowDocument.ToArguments(emptyTyping));
+        Harness.Equal("and the command refuses it instead of typing nothing",
+            2, KeyMouse.Runtime.Commands.Execute(["key", "type", ""]));
+
         var clientClick = new FlowStep
         {
             Type = "click",

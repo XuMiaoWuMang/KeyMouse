@@ -75,6 +75,9 @@ internal static partial class Commands
                 EnsureTarget();
                 if (pos.Count == 0) return Fail(2, "用法：KeyMouse key type <文本> [--interval 毫秒]");
                 string text = string.Join(' ', pos);
+                // 空串不是"什么都不做"，是流程里漏了 text——让它在这里就红，
+                // 别等到跑完才让人对着"已输入 0 个字符"发愣（试运行走的也是这条）。
+                if (text.Length == 0) return Fail(2, "要输入的文字是空的：检查流程里这一步的 text");
                 NativeInput.TypeText(text, IntOr(opt, "interval", IntOr(opt, "i", 15)));
                 Console.WriteLine($"已输入 {text.Length} 个字符");
                 return 0;

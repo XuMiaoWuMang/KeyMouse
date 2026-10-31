@@ -449,11 +449,53 @@ $: syncTitle(doc, path, dirty);
    * 它看不见。与其在后台偷偷写一份临时文件、让报错里的行号对不上界面，不如直接说清楚。
    */
   async function startRun(dryRun: boolean): Promise<void> {
+  /**
+   * 第一条缺必填项的步骤（顶层与分组里的都算）。播放前用它拦一下，别让命令行去报错。
+   * 判据是 missingOf（lib/steps.ts），与检查器右上角那句「还缺 …」同源。
+   */
+  function firstIncomplete(): { origin: string; label: string; missing: string[] } | null {
+    for (let index = 0; index < steps.length; index++) {
+      const step = steps[index];
+      const own = missingOf(step);
+      if (own.length > 0) {
+        return { origin: String(index + 1), label: stepTitle(step.type), missing: own };
+      }
+      const children = childSteps(step);
+      for (let child = 0; child < children.length; child++) {
+        const lack = missingOf(children[child]);
+        if (lack.length > 0) {
+          return {
+            origin: `${index + 1}.${child + 1}`,
+            label: stepTitle(children[child].type),
+            missing: lack,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
     if (!doc) {
       note('先打开或新建一个流程', true);
       return;
     }
     if (busy || running) return;
+
+    // 缺必填项时播放必然中途失败，先在这里说清楚，并把那一行选中。
+    // 试运行不拦——它就是拿来试的，命令行会把缺哪一项原样报出来。
+    if (!dryRun) {
+      const incomplete = firstIncomplete();
+      if (incomplete) {
+        note(
+          `第 ${incomplete.origin} 步（${incomplete.label}）还缺 ${incomplete.missing.join('、')}：补齐再播放，或者先按 Ctrl+F5 试运行看看`,
+          true,
+        );
+        const [row, child] = incomplete.origin.split('.');
+        selected = Number(row) - 1;
+        childSel = child === undefined ? null : Number(child) - 1;
+        return;
+      }
+    }
 
     // 命令行只认文件，但"加两步试试"不该被逼着先存盘：没路径或改过没保存时，
     // 把当前编辑内容写成临时副本去跑（老外壳也是这么做的），绝不覆盖正在编辑的文件。

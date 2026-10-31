@@ -42,7 +42,7 @@ KeyMouse <group> <command> [参数] [选项]
 | `key press <key> [-n COUNT] [-i MS]` | 敲击，可连按（默认间隔 60ms） |
 | `key down <key>` / `key up <key>` | 按下 / 抬起 |
 | `key combo <k1+k2+...> [--hold MS]` | 组合键，如 `ctrl+shift+s`、`win+r`、`alt+f4`；修饰键先按、反序释放 |
-| `key type <text> [--interval MS]` | 输入文本；Unicode 注入，**不依赖输入法/键盘布局**，中文直接打；默认 15ms/字，`--interval 0` 最快但可能丢字 |
+| `key type <text> [--interval MS]` | 输入文本；Unicode 注入，**不依赖输入法/键盘布局**，中文直接打；默认 15ms/字，`--interval 0` 最快但可能丢字。文本为空会被拒（退出码 2）——那通常说明流程里漏了 `text` |
 
 ### 按键名
 
