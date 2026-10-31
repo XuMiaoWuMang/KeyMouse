@@ -488,6 +488,12 @@ CLI（KeyMouse.exe）──┘
 
 `KeyMouse flow edit 流程.json` 打开一个 WinUI 3 编辑器。三条设计决定：
 
+> **后来者注**：图形编辑器正在换成 `src\KeyMouse.EditorUI`（Tauri + Svelte，见
+> [`adr/0001-editor-shell-tauri.md`](adr/0001-editor-shell-tauri.md)）。`flow edit` 现在先找
+> 新外壳 `KeyMouse.Editor.exe`，找不到才退到本文描述的 WinUI 外壳。下面三条设计决定
+> ——"一份 schema 两个消费者""编辑不执行""不越权猜字段"——在新外壳里同样成立，只是换成了
+> `KeyMouse schema` 输出的 JSON 契约（见 [`../reference/editor-ipc.md`](../reference/editor-ipc.md)）。
+
 1. **一份 schema，两个消费者。** 编辑器不重新实现 `keymouse-flow`：它直接 `ProjectReference`
    引用 Core（`InternalsVisibleTo` 让内部类型对它可见），`FlowModel` / `FlowSchema` / `TextPredicate`
    在进程里就是同一份代码，schema 从 `src\KeyMouse.Core\flow.schema.json`（随程序集嵌入）读。

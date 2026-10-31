@@ -619,7 +619,7 @@ KeyMouse runner stop                # 请它退出
 ## flow（图形编辑器）
 
 ```
-KeyMouse flow edit flow.json                    # 用 WinUI 编辑器打开一个流程
+KeyMouse flow edit flow.json                    # 用默认编辑器打开一个流程（先新外壳，退老外壳）
 ```
 
 编辑器在 `src\KeyMouse.FlowEditor`（独立项目，**要单独构建**：

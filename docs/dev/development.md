@@ -93,7 +93,7 @@ src\KeyMouse.FlowEditor\KeyMouse.FlowEditor.csproj
 ## 编辑器开发流程
 
 1. `.\km e` —— 编编辑器（WinUI 3），随后把 CLI 重新发布到 `artifacts\cli`。
-2. 运行 `src\KeyMouse.FlowEditor\bin\Release\net10.0-windows10.0.26100.0\win-x64\KeyMouse.FlowEditor.exe`，或从命令行 `KeyMouse flow edit 流程.json` 打开。
+2. 运行 `src\KeyMouse.FlowEditor\bin\Release\net10.0-windows10.0.26100.0\win-x64\KeyMouse.FlowEditor.exe`，或从命令行 `KeyMouse flow edit 流程.json` 打开（`ProductLayout` 先找新外壳 `KeyMouse.Editor.exe`，找不到才退到老外壳）。
 
 第 1 步里那 5 秒不是可选的：**开发树的编辑器连的是 `artifacts\cli\KeyMouse.exe` 这个独立进程**（常驻 Runner 由编辑器拉起，再借它跑流程、开选区浮层）。只重建 `bin` 而不重新发布，编辑器里跑的还是旧引擎——实测踩过：换行输入的解析明明改了，编辑器里跑出来仍然把整段当成一行。改引擎（Core / Runner / CLI）之后必须让 `km e` 把 CLI 也发一遍；只改界面可以 `km e -NoCli` 省掉这 5 秒。
 

@@ -7,7 +7,7 @@ KeyMouse 流程编辑器是一屏图形前端：把一条流程（一串"切窗�
 | 文件 | 是什么 | 权限 |
 | --- | --- | --- |
 | `KeyMouse.Editor.exe` | 新外壳（Tauri + Svelte），开始菜单快捷方式指向它 | 普通权限（界面不提权） |
-| `KeyMouse.FlowEditor.exe` | 老外壳（WinUI 3），`KeyMouse flow edit 流程.json` 打开的是它 | 启动时提权 |
+| `KeyMouse.FlowEditor.exe` | 老外壳（WinUI 3），过渡期保留；`KeyMouse flow edit` 默认开的是新外壳，找不到它才退到老外壳 | 启动时提权 |
 
 新外壳需要系统的 WebView2 运行时（Windows 11 自带；缺了怎么办见[故障排查](troubleshooting.md)）。除权限与启动方式外，两边能做的事相同，本文的描述对两者都适用。
 它只负责编辑与观察——录制、取区域、读屏、回放都在命令行那边，编辑器通过常驻的 Runner 调它们（连不上就是这种情况，见[故障排查](troubleshooting.md)）。
