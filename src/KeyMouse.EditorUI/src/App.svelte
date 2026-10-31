@@ -1012,6 +1012,36 @@ $: syncTitle(doc, path, dirty);
    * 把"当前选中的那一步"换成 `next`。选中的可能是顶层一行，也可能是某一行里的子步骤——
    * 后者要顺着 `steps[parent].steps[child]` 换，别把整棵树摊平（摊平会把分组丢掉）。
    */
+  /**
+   * 「体检（doctor）」：跑一次命令行的环境自检，把它的输出原样贴进输出面板。
+   *
+   * 界面不自己判断环境——那套判断只在命令行里有一份。用户遇到"找不到命令行""编辑器开错版本"
+   * 之类的问题时，点这一下就能把一段可以整段粘给作者的诊断拿出来。
+   */
+  async function runDoctor() {
+    outputOpen = true;
+    lines = [...lines, { stream: 'err', line: '— 体检（KeyMouse doctor）—' }];
+    try {
+      const text = await invoke<string>('run_doctor');
+      const extra = text.replace(/\r/g, '').split('\n').filter((line) => line.length > 0);
+      lines = [...lines, ...extra.map((line) => ({ stream: 'out' as const, line }))];
+      note('体检跑完了，结果在下面的输出里');
+    } catch (e) {
+      note(`体检没跑起来：${String(e)}`, true);
+    }
+  }
+
+  /** 「看崩溃日志」：文件通常不存在，先问外壳拿路径再交给系统打开。 */
+  async function openCrashLog() {
+    try {
+      const target = await invoke<string>('crash_log_path');
+      const { openPath } = await import('@tauri-apps/plugin-opener');
+      await openPath(target);
+    } catch (e) {
+      note(`打不开崩溃日志：${String(e)}`, true);
+    }
+  }
+
   /** 在资源管理器里定位当前流程文件（`···` 菜单里那一项）。 */
   async function revealFlow() {
     if (!path) {
@@ -1310,6 +1340,13 @@ $: syncTitle(doc, path, dirty);
             </button>
             <button role="menuitem" on:click={() => { opsOpen = false; helpOpen = true; }}>
               键盘与版本…
+            </button>
+            <hr />
+            <button role="menuitem" disabled={busy} on:click={() => { opsOpen = false; void runDoctor(); }}>
+              体检（doctor）
+            </button>
+            <button role="menuitem" on:click={() => { opsOpen = false; void openCrashLog(); }}>
+              看崩溃日志
             </button>
           </div>
         {/if}

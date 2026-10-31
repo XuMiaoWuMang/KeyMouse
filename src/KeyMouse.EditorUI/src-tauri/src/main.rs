@@ -100,6 +100,8 @@ fn main() {
         .manage(mini::MiniState::default())
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
+            layout::run_doctor,
+            crashlog::crash_log_path,
             files::open_flow,
             files::save_flow,
             files::write_scratch_flow,

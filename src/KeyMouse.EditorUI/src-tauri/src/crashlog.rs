@@ -23,6 +23,13 @@ fn log_path() -> PathBuf {
     directory.join("editor-crash.log")
 }
 
+/// 日志文件的绝对路径（界面要拿它去"在文件夹里看"或直接打开）。
+/// 每次调用都会确保目录存在，所以拿到路径之后直接打开不会因为文件还没建而失败。
+#[tauri::command]
+pub fn crash_log_path() -> String {
+    log_path().to_string_lossy().to_string()
+}
+
 /// 追加一行（带本地时间）。
 pub fn write(line: &str) {
     let path = log_path();

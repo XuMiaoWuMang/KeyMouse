@@ -179,6 +179,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- **体检与日志也是"搬话"**：`run_doctor` 跑一次命令行的 `doctor` 把整段输出带回来（环境判断只在
+  命令行里有一份，界面复制那套迟早会分叉）；`crash_log_path` 让「看崩溃日志」能直接打开
+  `editor-crash.log`。两条都点在 `···` 菜单里。
 - **`···` 菜单的四件事之外还多两项**：「在文件夹里看这个流程」（走 `revealItemInDir`）与
   「键盘与版本…」——后者是一张就地卡片（键位表 + 当前命令行路径 / 版本 / 环境），
   不打开文档也能回答"我现在连的是哪一个 KeyMouse"。`Esc` 会先收这张卡片。

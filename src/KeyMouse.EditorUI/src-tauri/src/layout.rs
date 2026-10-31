@@ -26,6 +26,26 @@ pub struct RuntimeInfo {
     pub initial_path: Option<String>,
 }
 
+/// 跑一次 `KeyMouse doctor`，把它的输出整段拿回来。
+///
+/// 界面不自己判断环境——那套判断只在命令行里有一份（`ProductLayout` / `Doctor`）。
+/// 这里只负责"跑它、把话带回来"，出问题的时候用户点一下就能把诊断贴给作者。
+#[tauri::command]
+pub fn run_doctor() -> Result<String, String> {
+    let cli = crate::run::cli_path_of()?;
+    let output = crate::process::cli_command(&cli)
+        .arg("doctor")
+        .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
+        .output()
+        .map_err(|e| format!("起不来 {}：{e}", cli.display()))?;
+    let mut text = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !stderr.trim().is_empty() {
+        text.push_str(&stderr);
+    }
+    Ok(text)
+}
+
 #[tauri::command]
 pub fn runtime_info() -> RuntimeInfo {
     let exe = env::current_exe().unwrap_or_default();
