@@ -159,6 +159,12 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- **窗口标题跟着文件和脏标记走**：`syncTitle()` 把标题写成「文件名 · KeyMouse 流程编辑器」，
+  未保存时前面加 `•`。任务栏上光看「流程编辑器」分不出开的是哪一份。`setTitle` 要
+  `core:window:allow-set-title` 能力（`src-tauri/capabilities/default.json`），没有它调用会
+  被 ACL 静默拒掉——界面里 `.catch` 吞掉错误，看起来就是"标题不变"。
+- **脏标记不是"改过"而是"和上次存盘不一样"**：`savedJson` 记住载入/保存时的序列化快照，
+  撤销回到那一刻自动清掉 `•`，关窗也不再问"要保存吗"。
 - **行上结果**：命令行带 `--report` 跑，报告里每步都有 `origin`（`3` 表示第三个顶层步、
   `6.1` 表示第六步的第一个子步），`src/lib/run.ts` 的 `resultsFromReport` 把它读成
   「行位置 → 结果」的字典，`App.svelte` 用 `originOf(index, childIndex)` 取同一个键。

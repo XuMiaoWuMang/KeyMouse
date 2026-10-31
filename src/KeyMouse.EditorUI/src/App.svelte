@@ -49,6 +49,8 @@
   /** 选中的是分组里第几个子步骤；null = 选中的是顶层那一行。 */
   let childSel: number | null = null;
   let dirty = false;
+  /** 上一次保存（或刚打开）时的序列化快照：撤销回到这一刻就不该再显示未保存。 */
+  let savedJson = '';
   let outputOpen = false;
   let jsonOpen = false;
   let moreOpen = false;
@@ -243,6 +245,12 @@ function originOf(index: number, childIndex: number | null): string {
   // 外壳不知道界面里发生了什么，脏标记得推给它；它只负责在关窗前问一句。
   $: syncDirty(dirty);
 
+/**
+ * 窗口标题跟着文件和脏标记走：任务栏上光看「KeyMouse 流程编辑器」分不出开的是哪一份，
+ * 切换窗口时更要紧。标题里不放完整路径——路径已经在上方那一行显示着。
+ */
+$: syncTitle(doc, path, dirty);
+
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
   $: current = childSel === null ? steps[selected] ?? null : steps[selected]?.steps?.[childSel] ?? null;
   $: currentShot = current?.shot ?? null;
@@ -315,6 +323,7 @@ function originOf(index: number, childIndex: number | null): string {
     path = filePath;
     selected = 0;
     dirty = filePath === null;
+    savedJson = JSON.stringify(next);
   }
 
   /** 把路径记进"最近打开"，失败就算了——记不住不该挡住干活。 */
@@ -387,6 +396,7 @@ function originOf(index: number, childIndex: number | null): string {
     try {
       await invoke('save_flow', { path, text: serialize() });
       dirty = false;
+      savedJson = JSON.stringify(doc);
       note(`已保存 ${path}`);
     } catch (e) {
       note(String(e), true);
@@ -406,6 +416,7 @@ function originOf(index: number, childIndex: number | null): string {
       await invoke('save_flow', { path: picked, text: serialize() });
       path = picked;
       dirty = false;
+      savedJson = JSON.stringify(doc);
       note(`已保存 ${picked}`);
     } catch (e) {
       note(String(e), true);
@@ -713,7 +724,9 @@ function originOf(index: number, childIndex: number | null): string {
     doc = next;
     steps = next.steps ?? [];
     selected = Math.min(selected, Math.max(steps.length - 1, 0));
-    dirty = true;
+    // 撤销回到保存那一刻，脏标记就该跟着消失——否则用户明明回到了存盘状态，
+    // 关窗还要被问一句要不要保存。
+    dirty = json !== savedJson;
   }
 
   function undo() {
@@ -897,6 +910,14 @@ function originOf(index: number, childIndex: number | null): string {
       redo();
       return;
     }
+    // F5 跑一遍，Ctrl+F5 是试运行（只做资格检查）。老外壳的按钮上写着 F5，
+    // 用惯了会直接按；跑着的时候什么都不做，免得把正在跑的那条顶掉。
+    if (key === 'f5') {
+      event.preventDefault();
+      if (running) return;
+      void startRun(mod);
+      return;
+    }
 
     // Esc 分两件事：跑着的时候它是"停止"（这是玩流程时手指最自然的位置），
     // 否则把那张「+ 更多」卡片收起来——它在视觉上压住了列表。
@@ -991,6 +1012,19 @@ function originOf(index: number, childIndex: number | null): string {
     childSel = childIndex;
     moreOpen = false;
     rowMenu = null;
+  }
+
+  /** 把标题写成「文件名 · KeyMouse 流程编辑器」，未保存时前面加个 `•`。 */
+  function syncTitle(document: FlowDocument | null, filePath: string | null, unsaved: boolean) {
+    const name = filePath ? (filePath.split(/[\\/]/).pop() ?? '') : document ? '未命名流程' : '';
+    const title = name
+      ? `${unsaved ? '• ' : ''}${name} · KeyMouse 流程编辑器`
+      : 'KeyMouse 流程编辑器';
+    void import('@tauri-apps/api/window')
+      .then(({ getCurrentWindow }) => getCurrentWindow().setTitle(title))
+      .catch(() => {
+        // 设不了标题不该影响编辑：浏览器里跑（vite 单开）时本来就没有窗口可设。
+      });
   }
 
   function replaceCurrent(next: FlowStep) {
