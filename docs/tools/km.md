@@ -78,3 +78,11 @@
 - `km clean` 连 `artifacts\` 一起删，之后第一次 `km s` / `km e` 需要重新打包。
 - `km r` 转发的是 `bin\Release\net10.0-windows\KeyMouse.exe`；要跑单文件产物就直接调 `artifacts\cli\KeyMouse.exe`。
 - 参数与行为以 [km.ps1](../../tools/dev/km.ps1) 为准；本页只写它真实存在的分支。
+
+## `km.cmd` 只能是 ASCII
+
+根目录的 `km.cmd` 里**一个非 ASCII 字节都不能有**。cmd 是按控制台代码页（简中是 936）逐字节解析
+`.cmd` 的，UTF-8 写的中文注释会被拆成一段乱码命令，然后在你敲 `.\km push` 之前先报两行
+`'xx' is not recognized as an internal or external command`——功能不受影响，但每次用都会看见这句鬼话
+（这个 bug 真的发出去过一次）。中文说明写在 `.ps1` 里，或者写在本页。
+
