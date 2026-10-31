@@ -1,35 +1,55 @@
 # 新编辑器外壳（Tauri + Svelte）
 
-`src/KeyMouse.EditorUI/` 是流程编辑器的新外壳，用来替换 `src/KeyMouse.FlowEditor`（WinUI 3）。
-**两个都在仓库里**：老的那套照常能编能跑，新的这套按 [ADR 0001](adr/0001-editor-shell-tauri.md) 的阶段推进，
-在功能对齐之前，谁也不是"能当真用的那个"。
+`src/KeyMouse.EditorUI/` 是流程编辑器的新外壳（Tauri + Svelte），也是**默认入口**：开始菜单、`KeyMouse flow edit`、
+`ProductLayout` 都先找它。老外壳 `src/KeyMouse.FlowEditor`（WinUI 3）仍在仓库、仍随安装包装着，作为退路保留，
+直到确认不再需要（计划见 [ADR 0001](adr/0001-editor-shell-tauri.md)）。
+
+功能对照（含每一项怎么验证）写在 [使用指南 → 两个编辑器现在差在哪](../guide/editor.md#两个编辑器现在差在哪)；
+接口契约在 [编辑器 IPC](../reference/editor-ipc.md)。
 
 ## 为什么另起一个目录
 
-- 老外壳的界面进程要管理员权限（为了录得到提权窗口的点击）。新外壳**永不提权**：界面只负责画和发指令，
-  需要权限的动作交给 `KeyMouse.exe`（录制、注入、读屏）。
+- 老外壳的界面进程要管理员权限（为了录得到提权窗口的点击）。新外壳**界面永不提权**：需要权限的动作
+  交给 `KeyMouse.exe`，需要时按次弹 UAC（`录制 ▸ → 以管理员权限录制`）。
 - 老外壳的打包被 WindowsAppSDK 拖着走（`.pri`、96 个语言目录、bootstrapper）。新外壳只有 WebView2。
-- 两套并存是刻意的：新壳已经能开、能改、能跑、能录，但还缺拖拽排序、右键菜单、自绘标题栏，
-  WinUI 版在这些补齐之前仍是"功能更全的那个"；删早了会丢掉一条退路。
+- 两套并存是刻意的：删早了会丢掉一条退路。
 
 ## 目录
 
 ```
 src/KeyMouse.EditorUI/
   index.html            挂载点，只引 /src/main.ts
-  package.json          pnpm 脚本：dev / build / check / tauri
-  vite.config.ts        开发服务器固定 5183；Svelte 的 TS 预处理在这里开
+  package.json          pnpm 脚本：dev / build / check / test:unit / tauri
+  vite.config.ts        开发服务器固定 5183；Svelte 的 TS 预处理在这里开；忽略 src-tauri 的监听
   tsconfig.json         独立配置，不继承外部预设
   src/
     main.ts             挂 App 到 #app，引入主题
-    App.svelte          整屏界面（顶栏 / 工具栏 / 两栏 / 底部输出）
+    App.svelte          整屏界面：顶栏 / 工具栏 / 两栏 / 底部输出 / 迷你模式 / 卡片
     lib/theme.css       主题 var：纸、墨、朱砂、分隔线、字阶、圆角
-    lib/model.ts        流程文档的类型（界面用得着的子集）与"这一步在做什么"的措辞
+    lib/model.ts        流程文档类型、步骤标题与一行摘要
+    lib/schema.ts       解析 `KeyMouse schema` 的契约 JSON，供检查器按 kind 渲染
+    lib/steps.ts        十五种步骤模板、必填项、"还缺什么"的人话
+    lib/edit.ts         增删改排序（纯函数，单测覆盖）
+    lib/fieldpath.ts    点号路径读写（空值删键、删空嵌套连父键）
+    lib/run.ts          退出码结论、行上结果（按报告 origin 落行）
+    lib/progress.ts     从 `[ 3/8 ]` 里读"跑到第几步"
+    lib/StepIcon.svelte 一套自绘步骤图标
+    lib/Inspector.svelte 按契约渲染的参数检查器
   src-tauri/
-    Cargo.toml          只依赖 tauri / serde
-    tauri.conf.json     窗口 1338×949、devUrl 5183、bundle 暂关
-    capabilities/default.json
-    src/main.rs         开窗口、找命令行、报环境（唯一的系统交互入口）
+    Cargo.toml          tauri / serde / 插件：dialog、opener、single-instance
+    tauri.conf.json     窗口尺寸、devUrl 5183、bundle 关（安装程序自己打）
+    capabilities/       主窗口能做什么（对话框、打开文件、改标题……）
+    src/main.rs         开窗口、注册命令、单实例、崩溃日志、窗口尺寸恢复
+    src/layout.rs       找仓库、找命令行、报环境
+    src/files.rs        打开/保存流程、写临时副本、读证据图
+    src/schema.rs       跑 `KeyMouse schema` 并缓存
+    src/pick.rs         屏幕取点/取块
+    src/run.rs          试运行/播放/停止/暂停/读报告
+    src/record.rs       录制（当前权限与提权两条路）
+    src/mini.rs         录制时把窗口缩成细带
+    src/store.rs        最近打开与窗口尺寸（%LOCALAPPDATA%）
+    src/process.rs      起命令行时隐藏控制台窗口
+    src/crashlog.rs     panic 与界面异常落 editor-crash.log
 ```
 
 ## 第一次构建
