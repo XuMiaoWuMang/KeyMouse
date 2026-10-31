@@ -89,7 +89,7 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 | `protocol` | 前后端通信契约：方法、事件、参数与终结规则 |
 | `newlines` | 换行归一：CRLF / 裸 CR 一律折成 LF |
 | `wheel` | 滚轮：竖向与横向是两个方向 |
-| `stopkeys` | 录制的停止键：Ctrl+Alt+Q 与连按两次 ESC |
+| `stopkeys` | 录制的停止键：Ctrl+Alt+Q，以及 0.3 秒内连按两次 ESC（超时的那一次补记成普通按键） |
 | `timeline` | 录制时间线：`atMs` 的写入与往返 |
 | `nowindow` | 无窗口执行：默认不要求窗口在前台 |
 

@@ -3,7 +3,7 @@
 这个页面只回答一件事：**怎么把 KeyMouse 放到机器上、怎么换版本、怎么拿走**。
 装完怎么用，看[流程编辑器](editor.md)与[命令参考](../reference/cli.md)；东西不工作了看[故障排查](troubleshooting.md)。
 
-当前版本 **0.2.1**（引擎 **2.1.0**）。开发树里怎么编译、怎么打包发版，是另一回事，见[开发与发布流程](../dev/development.md#版本与发布)。
+当前版本 **0.2.1**（引擎 **2.2.0**）。开发树里怎么编译、怎么打包发版，是另一回事，见[开发与发布流程](../dev/development.md#版本与发布)。
 
 ## 先选文件
 
@@ -91,7 +91,7 @@ $env:Path += ';D:\Tools\KeyMouse'
 确认拿到的是哪一份：
 
 ```pwsh
-KeyMouse --version      # KeyMouse 0.2.1（引擎 2.1.0）
+KeyMouse --version      # KeyMouse 0.2.1（引擎 2.2.0）
 KeyMouse doctor         # 环境判定、自己是谁、命令行在哪、注册表里写着什么
 ```
 

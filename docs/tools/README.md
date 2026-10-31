@@ -58,7 +58,7 @@
 - 脚本都按 PowerShell 7 写，用 `pwsh -NoProfile -File <脚本>` 调用；`km.cmd` 只是 `tools\dev\km.ps1` 的薄壳。
 - 失败用非 0 退出码或 `throw` 表达；需要连续跑完的关卡（`verify.ps1`）会收集失败项再统一退出。
 - 所有产物只落 `artifacts\`（已 gitignore）：`cli`、`cli-self`、`editor`、`setup`、`release`、`tests`。旧的 `dist\` 与 `out\` 已废弃。
-- 版本号唯一来源是根目录 [Directory.Build.props](../../Directory.Build.props)：产品 0.2.1、引擎 2.1.0。
+- 版本号唯一来源是根目录 [Directory.Build.props](../../Directory.Build.props)：产品 0.2.1、引擎 2.2.0。
 - 本文档里的相对链接会被 [`check-docs.ps1`](check-docs.md) 校验 —— 增删链接后跑一次。
 
 ## 相关

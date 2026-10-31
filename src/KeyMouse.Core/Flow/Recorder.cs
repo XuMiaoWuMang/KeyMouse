@@ -88,7 +88,8 @@ internal static class Recorder
             }
         }
 
-        Console.WriteLine($"● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止，连按两次 ESC 也停" +
+        Console.WriteLine($"● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止，" +
+                          $"或 {Session.EscapeWindowMs / 1000.0:0.#} 秒内连按两次 ESC" +
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
         Console.WriteLine("  鼠标轨迹会一起录（--no-shots 关截图，--move-threshold N 调抽稀）");
         Console.WriteLine("  注意：管理员权限窗口上的操作录不到；要录它们请加 --elevate（或右键以管理员身份运行）");
@@ -140,6 +141,14 @@ internal static class Recorder
         /// </summary>
         private HookEvent? _pendingEscape;
         private uint _lastEscapeAt;
+
+        /// <summary>
+        /// 连按两次 ESC 停止录制：**两次按下必须落在这么近**（毫秒）。
+        /// 0.3 秒是"人手双击"的上限：放得太宽（早先是 1 秒），录制中正常按两次 ESC
+        /// ——比如在编辑器里连按取消、或者游戏里退菜单——就会被当成停止。
+        /// 同一个数也决定"单独一次 ESC 多久没等来第二次就补记进流程"。
+        /// </summary>
+        internal const uint EscapeWindowMs = 300;
         private bool _stopped;
 
         internal Session(string output, int minGapMs, int moveThreshold, bool shots, int durationMs)
@@ -190,8 +199,8 @@ internal static class Recorder
                 return true;
             }
 
-            // 单按一次 ESC 超过 1 秒没等到第二次：它就是一次普通按键，补记进去。
-            if (_pendingEscape is not null && Now() - _lastEscapeAt >= 1000) FlushPendingEscape();
+            // 单按一次 ESC 过了双击窗口还没等到第二次：它就是一次普通按键，补记进去。
+            if (_pendingEscape is not null && Now() - _lastEscapeAt >= EscapeWindowMs) FlushPendingEscape();
             // A client attached to the Runner can stop a recording the same way it stops a flow.
             if (Execution.Cancelled)
             {
@@ -230,14 +239,14 @@ internal static class Recorder
             {
                 if (e.Kind != HookKind.KeyDown) return;   // 抬起：不记录、不刷待定
 
-                if (_pendingEscape is not null && Now() - _lastEscapeAt < 1000)
+                if (_pendingEscape is not null && Now() - _lastEscapeAt < EscapeWindowMs)
                 {
                     _pendingEscape = null;   // 连按两次：一次都不记，直接停
                     _stopped = true;
                     return;
                 }
 
-                FlushPendingEscape();        // 上一次单按超过 1 秒，补记
+                FlushPendingEscape();        // 上一次单按超过时间窗，补记
                 _pendingEscape = e;
                 _lastEscapeAt = Now();
                 return;

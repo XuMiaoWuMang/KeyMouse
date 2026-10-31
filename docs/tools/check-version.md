@@ -21,7 +21,7 @@ pwsh tools\dev\check-version.ps1 -NoArtifact    # 还没打包时只查源码
 | 版本线 | 当前值 | 谁是这条线的产品 |
 | --- | --- | --- |
 | `ProductVersion` | `0.2.1` | `KeyMouse.Cli`、`KeyMouse.FlowEditor`、`KeyMouse.Setup` |
-| `EngineVersion` | `2.1.0` | `KeyMouse.Core`、`KeyMouse.Runner` |
+| `EngineVersion` | `2.2.0` | `KeyMouse.Core`、`KeyMouse.Runner` |
 
 其余地方一律引用 `$(ProductVersion)` / `$(EngineVersion)`，运行时代码从程序集读，不再出现字面量。产品版本是用户看到的那个，"引擎"是 Core/Runner 的能力版本，两条线各自演进。
 
@@ -46,7 +46,7 @@ pwsh tools\dev\check-version.ps1 -NoArtifact    # 还没打包时只查源码
 通过时逐行 `ok …`，结尾：
 
 ```
-版本关卡：通过（产品 0.2.1 / 引擎 2.1.0）
+版本关卡：通过（产品 0.2.1 / 引擎 2.2.0）
 ```
 
 任何一项不过就逐行 `x …`（带文件与行号），结尾 `版本关卡：没过（N 项）`，退出码 `1`。通过退出码为 `0`。

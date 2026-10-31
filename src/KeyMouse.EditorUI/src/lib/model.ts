@@ -127,6 +127,17 @@ function pointLabel(p: FlowPoint): string {
 }
 
 /**
+ * 点击的摘要：`点 120,64`，右键/中键再跟一个「右键」「中键」。
+ * 左键是默认值，写出来只是噪音——用户明确要求"左键默认不显示"。
+ */
+function clickLabel(step: FlowStep): string {
+  const where = step.at ? `点 ${pointLabel(step.at)}` : '点击';
+  if (step.button === 'right') return `${where} · 右键`;
+  if (step.button === 'middle') return `${where} · 中键`;
+  return where;
+}
+
+/**
  * 一行摘要。规则和 WinUI 版的 `StepVm.Summary` 一致：**说"这一步做什么"，
  * 不说"字段是什么"**——参数只写人会关心的那几个。
  */
@@ -144,7 +155,7 @@ export function stepSummary(step: FlowStep): string {
     case 'sleep':
       return `等 ${step.ms ?? 0} ms`;
     case 'click':
-      return step.at ? `点 ${pointLabel(step.at)}` : '点击';
+      return step.at ? clickLabel(step) : '点击';
     case 'move':
       return step.at ? `移到 ${pointLabel(step.at)}` : '移动鼠标';
     case 'wheel':

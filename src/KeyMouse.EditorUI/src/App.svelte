@@ -2878,15 +2878,27 @@ $: syncTitle(doc, path, dirty);
     background: var(--kp-card);
   }
 
-  /* 穿起所有步骤的那根线：从第一个点到最后一个点，画在行下面，被点上的一点底色盖住。 */
-  .list::before {
+  /* 穿起所有步骤的那根线画在**每一行的包裹层**上，而不是 `.list::before`：
+     绝对定位的伪元素只按容器自己的高度算，列表一滚动它就只剩一屏高，下半截的线凭空断掉。
+     每行画一段，滚到哪儿跟到哪儿。 */
+  .row-wrap::after {
     content: '';
     position: absolute;
     left: 21px;
-    top: 30px;
-    bottom: 30px;
+    top: 0;
+    bottom: 0;
     width: 1px;
     background: var(--kp-rule);
+    pointer-events: none;
+  }
+
+  /* 第一行只画下半段、最后一行只画上半段：线从第一个点连到最后一个点，两头都不出头。 */
+  .row-wrap:first-child::after {
+    top: 50%;
+  }
+
+  .row-wrap:last-child::after {
+    bottom: 50%;
   }
 
   .row {
@@ -3320,9 +3332,18 @@ $: syncTitle(doc, path, dirty);
 
   /* ── 自动折叠的连续移动 ─────────────────────────────────
      题头就是一步的样子：同样的编号、图标片、标题、摘要、右侧记号。
-     区别只在"右边多一个 ▸/▾"，以及它自己不占流程里的任何一步。 */
+     区别只在"右边多一个 ▸/▾"，以及它自己不占流程里的任何一步。
+
+     题头要**有边界**：上下各一道线、底色比卡片暗一档。否则它跟上面那串点击行糊成一片，
+     看不出"从这里开始是另一组"。上边那道用 inset 阴影画，避免和上一行的 border-bottom 叠成 2px。 */
   .move-run .move-head {
-    background: transparent;
+    background: var(--kp-paper);
+    box-shadow: inset 0 1px 0 var(--kp-rule);
+  }
+
+  /* 列表里第一组不画上边线：上面就是列表的框，再画一道就成了双线。 */
+  .row-wrap:first-child .move-head {
+    box-shadow: none;
   }
 
   /* 起点 → 终点用等宽字体：两个坐标要对得齐，眼睛才能一眼扫到跨度。 */

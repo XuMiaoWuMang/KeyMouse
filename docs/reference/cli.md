@@ -378,7 +378,7 @@ KeyMouse --version
 ```
 
 调用方需要自己解析输出时（编辑器外壳、Node/Python/Rust 脚本）**应当**设它：猜控制台码页对终端是对的，
-对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 0.2.1��� 2.1.0��`。
+对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 0.2.1��� 2.2.0��`。
 
 设了这个变量就不再看控制台码页；不设则行为与以前完全一致。
 
@@ -456,7 +456,7 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 ## record（录制：把一次操作变成可回放的 JSON）
 
 ```
-KeyMouse record --out flow.json                 # 开始录，Ctrl+Alt+Q 停止（连按两次 ESC 也停）
+KeyMouse record --out flow.json                 # 开始录，Ctrl+Alt+Q 停止（0.3 秒内连按两次 ESC 也停）
 KeyMouse record --out flow.json --duration 10000
 KeyMouse run flow.json                          # 回放
 ```
@@ -475,7 +475,11 @@ KeyMouse run flow.json                          # 回放
 | `--min-gap <毫秒>` | 300 | 多长的间隔值得记成 `sleep` |
 | `--move-threshold <像素>` | 8 | 鼠标轨迹按这个距离抽稀（越短越忠实、文件越大） |
 
-**停止键**：`Ctrl+Alt+Q`，或连按两次 `ESC`。停止键本身不会被录进流程。
+**停止键**：`Ctrl+Alt+Q`，或 **0.3 秒内**连按两次 `ESC`。停止键本身不会被录进流程。
+
+两次 `ESC` 的间隔超过 0.3 秒就**不算双击**：第一次会当成一次普通按键补记进流程（按下后最多等 0.3 秒），
+第二次重新起算。这个窗口是"人手双击"的上限——早先放宽到 1 秒时，录制中正常按两次 `ESC`
+（编辑器里退菜单、游戏里关面板）会被误当成停止。
 
 **编辑器里的录制按钮有四种状态**，每一步都由事实驱动，不靠计时猜：
 

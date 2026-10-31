@@ -17,7 +17,7 @@ KeyMouse doctor
 编辑器：C:\Users\你\AppData\Local\Programs\KeyMouse\KeyMouse.FlowEditor.exe
         来自：自己所在目录（安装版：编辑器与命令行同在 <安装目录>\ 时）
 
-版本：0.2.1（引擎 2.1.0）
+版本：0.2.1（引擎 2.2.0）
 权限：普通用户（提权窗口会拦下输入）
 编码：输出用 utf-8（跟随控制台码页；重定向时按 UTF-8）
 注册表：HKCU\Software\KeyMouse GuiPath=C:\…\KeyMouse.FlowEditor.exe CliPath=C:\…\cli\KeyMouse.exe
@@ -265,7 +265,7 @@ pwsh tools\dev\check-input.ps1
 
 **怎么办**：
 
-- 用 `artifacts\cli\KeyMouse.exe --version`（安装版是 `<安装目录>\cli\KeyMouse.exe --version`）确认引擎是 2.1.0 之后的构建；旧产物不会自己变好，重新 `.\km d` 或重装。
+- 用 `artifacts\cli\KeyMouse.exe --version`（安装版是 `<安装目录>\cli\KeyMouse.exe --version`）确认引擎是 2.2.0 之后的构建；旧产物不会自己变好，重新 `.\km d` 或重装。
 - 想手动确认一条命令有没有真的切过去：
 
   ```pwsh

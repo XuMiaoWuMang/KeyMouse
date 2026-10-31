@@ -15,7 +15,7 @@
   -->
   <PropertyGroup>
     <ProductVersion>0.2.1</ProductVersion>
-    <EngineVersion>2.1.0</EngineVersion>
+    <EngineVersion>2.2.0</EngineVersion>
   </PropertyGroup>
 
   <!-- 所有项目共用的编译约定：语言版本与确定性构建。 -->
