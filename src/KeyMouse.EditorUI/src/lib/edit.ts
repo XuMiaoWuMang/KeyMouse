@@ -69,8 +69,7 @@ export function moveDown(steps: readonly FlowStep[], index: number): FlowStep[] 
 /**
  * 把第 `from` 步挪到第 `to` 个位置（拖拽排序用）。目标位置按"挪完之后的下标"算。
  * 越界或原地不动时原样返回，调用方可以据此判断"没发生什么"。
- */
-export function moveTo(steps: readonly FlowStep[], from: number, to: number): FlowStep[] {
+ */export function moveTo(steps: readonly FlowStep[], from: number, to: number): FlowStep[] {
   if (from === to) return steps.slice();
   if (from < 0 || from >= steps.length) return steps.slice();
   if (to < 0 || to >= steps.length) return steps.slice();
@@ -83,4 +82,44 @@ export function moveTo(steps: readonly FlowStep[], from: number, to: number): Fl
 export function selectionAfterRemove(index: number, length: number): number {
   if (length <= 0) return 0;
   return Math.min(Math.max(index, 0), length - 1);
+}
+
+/**
+ * 删掉第 `index` 步里的第 `child` 个子步骤。
+ *
+ * 组里只剩一个时连 `steps` 字段一起收掉——留一个空数组会在 JSON 里写成
+ * `"steps": []`，读起来像"这里本来有个循环，被清空了"，其实就该没有。
+ */
+export function removeChildAt(steps: readonly FlowStep[], index: number, child: number): FlowStep[] {
+  if (index < 0 || index >= steps.length) return [...steps];
+  const group = steps[index];
+  const children = group.steps;
+  if (!Array.isArray(children) || child < 0 || child >= children.length) return [...steps];
+
+  const kept = children.filter((_, i) => i !== child);
+  const next = [...steps];
+  if (kept.length === 0) {
+    const { steps: _dropped, ...rest } = group;
+    next[index] = rest as FlowStep;
+  } else {
+    next[index] = { ...group, steps: kept };
+  }
+  return next;
+}
+
+/** 组内上下挪一位；边界处原样返回。 */
+export function moveChild(steps: readonly FlowStep[], index: number, from: number, to: number): FlowStep[] {
+  if (index < 0 || index >= steps.length) return [...steps];
+  const group = steps[index];
+  const children = group.steps;
+  if (!Array.isArray(children)) return [...steps];
+  if (from === to || from < 0 || to < 0 || from >= children.length || to >= children.length) {
+    return [...steps];
+  }
+  const kept = [...children];
+  const [moved] = kept.splice(from, 1);
+  kept.splice(to, 0, moved);
+  const next = [...steps];
+  next[index] = { ...group, steps: kept };
+  return next;
 }

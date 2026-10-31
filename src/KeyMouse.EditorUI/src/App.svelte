@@ -7,7 +7,18 @@
   import Inspector from './lib/Inspector.svelte';
   import { fieldsOf, schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
-  import { appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import {
+  appendChild,
+  duplicateAt,
+  insertAfter,
+  moveChild,
+  moveDown,
+  moveTo,
+  moveUp,
+  removeAt,
+  removeChildAt,
+  selectionAfterRemove,
+} from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
@@ -897,12 +908,19 @@ $: syncTitle(doc, path, dirty);
     selected = index;
     moreOpen = false;
                 rowMenu = null;
-                rowMenu = null;
     rowMenu = { index, x: event.clientX, y: event.clientY };
   }
 
+  /** 删掉选中的那一步：选的是组里的子步骤就只删它，不动整组。 */
   function deleteStep(index = selected) {
     if (!doc || steps.length === 0) return;
+    if (childSel !== null) {
+      const kids = childSteps(steps[index]);
+      applySteps(removeChildAt(steps, index, childSel));
+      childSel = kids.length <= 1 ? null : Math.min(childSel, kids.length - 2);
+      note('删了组里的一步（Ctrl+Z 可以反悔）');
+      return;
+    }
     const next = removeAt(steps, index);
     applySteps(next);
     selected = selectionAfterRemove(index, next.length);
@@ -910,15 +928,69 @@ $: syncTitle(doc, path, dirty);
   }
 
   function stepUp(index = selected) {
-    if (!doc || index <= 0) return;
+    if (!doc) return;
+    if (childSel !== null) {
+      if (childSel <= 0) return;
+      applySteps(moveChild(steps, index, childSel, childSel - 1));
+      childSel -= 1;
+      return;
+    }
+    if (index <= 0) return;
     applySteps(moveUp(steps, index));
     selected = index - 1;
   }
 
   function stepDown(index = selected) {
-    if (!doc || index >= steps.length - 1) return;
+    if (!doc) return;
+    if (childSel !== null) {
+      const kids = childSteps(steps[index]);
+      if (childSel >= kids.length - 1) return;
+      applySteps(moveChild(steps, index, childSel, childSel + 1));
+      childSel += 1;
+      return;
+    }
+    if (index >= steps.length - 1) return;
     applySteps(moveDown(steps, index));
     selected = index + 1;
+  }
+
+  /**
+   * ↑/↓ 走"看得见的顺序"：分组行 → 它的子步骤 → 下一行。
+   * 收起的分组直接跳到下一行——和眼睛看到的列表一致。
+   */
+  function moveSelection(delta: number) {
+    if (steps.length === 0) return;
+    if (delta > 0) {
+      if (childSel === null) {
+        const kids = childSteps(steps[selected]);
+        if (kids.length > 0 && expanded[selected]) {
+          childSel = 0;
+          return;
+        }
+        selected = Math.min(selected + 1, steps.length - 1);
+        return;
+      }
+      const kids = childSteps(steps[selected]);
+      if (childSel + 1 < kids.length) {
+        childSel += 1;
+        return;
+      }
+      selected = Math.min(selected + 1, steps.length - 1);
+      childSel = null;
+      return;
+    }
+
+    if (childSel !== null) {
+      if (childSel > 0) {
+        childSel -= 1;
+        return;
+      }
+      childSel = null;
+      return;
+    }
+    selected = Math.max(selected - 1, 0);
+    const kids = childSteps(steps[selected]);
+    childSel = kids.length > 0 && expanded[selected] ? kids.length - 1 : null;
   }
 
   /** 快捷键。输入框里只认 Ctrl+S / Ctrl+O / Ctrl+N / Ctrl+Z，别抢打字。 */
@@ -1007,14 +1079,34 @@ $: syncTitle(doc, path, dirty);
       deleteStep();
       return;
     }
+    // ← / → 收放当前分组：树形列表的通行手势，也让"先展开再进去"不必去够那个小箭头。
+    if (event.key === 'ArrowRight' && childSel === null) {
+      if (childSteps(steps[selected]).length > 0 && !expanded[selected]) {
+        event.preventDefault();
+        expanded = { ...expanded, [selected]: true };
+      }
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      if (childSel !== null) {
+        event.preventDefault();
+        childSel = null;
+        return;
+      }
+      if (expanded[selected]) {
+        event.preventDefault();
+        expanded = { ...expanded, [selected]: false };
+      }
+      return;
+    }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      selected = Math.min(selected + 1, Math.max(steps.length - 1, 0));
+      moveSelection(1);
       return;
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      selected = Math.max(selected - 1, 0);
+      moveSelection(-1);
     }
   }
 

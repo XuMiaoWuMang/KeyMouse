@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
+import { removeChildAt, moveChild, appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
 import { missingHint, missingOf } from './steps';
 
@@ -171,4 +171,46 @@ it('drag: moveTo 不改原数组', () => {
   const steps: FlowStep[] = [{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }];
   moveTo(steps, 1, 0);
   expect(steps.map((step) => step.ms)).toEqual([1, 2]);
+});
+
+describe('child steps', () => {
+  const group = (kids: FlowStep[]): FlowStep[] => [
+    { type: 'sleep', ms: 100 },
+    { type: 'repeat', times: 2, steps: kids },
+    { type: 'sleep', ms: 200 },
+  ];
+
+  it('removes the child and leaves the group in place', () => {
+    const next = removeChildAt(group([{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }]), 1, 0);
+    expect(next.length).toBe(3);
+    expect(next[1].steps?.map((s) => s.ms)).toEqual([2]);
+  });
+
+  it('drops the steps field when the last child goes', () => {
+    const next = removeChildAt(group([{ type: 'sleep', ms: 1 }]), 1, 0);
+    expect(next[1].steps).toBeUndefined();
+    expect(next[1].type).toBe('repeat');
+  });
+
+  it('ignores out-of-range children and non-groups', () => {
+    const steps = group([{ type: 'sleep', ms: 1 }]);
+    expect(removeChildAt(steps, 1, 5)).toEqual(steps);
+    expect(removeChildAt(steps, 0, 0)).toEqual(steps);
+    expect(removeChildAt(steps, 9, 0)).toEqual(steps);
+  });
+
+  it('swaps two children without touching the parent list', () => {
+    const steps = group([{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }]);
+    const next = moveChild(steps, 1, 0, 1);
+    expect(next[1].steps?.map((s) => s.ms)).toEqual([2, 1]);
+    expect(next[0]).toBe(steps[0]);
+    expect(steps[1].steps?.map((s) => s.ms)).toEqual([1, 2]);
+  });
+
+  it('keeps children put at the edges', () => {
+    const steps = group([{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }]);
+    expect(moveChild(steps, 1, 0, -1)).toEqual(steps);
+    expect(moveChild(steps, 1, 1, 2)).toEqual(steps);
+    expect(moveChild(steps, 0, 0, 1)).toEqual(steps);
+  });
 });
