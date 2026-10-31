@@ -1052,6 +1052,7 @@ $: syncTitle(doc, path, dirty);
     const element = event.target as HTMLElement | null;
     const typing = element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA';
     const mod = event.ctrlKey || event.metaKey;
+    const shift = event.shiftKey;
     const key = event.key.toLowerCase();
 
     if (mod && key === 's') {
@@ -1086,6 +1087,13 @@ $: syncTitle(doc, path, dirty);
       event.preventDefault();
       if (running) return;
       void startRun(mod);
+      return;
+    }
+
+    // Ctrl+Shift+D：把诊断信息打包出来。报问题时给用户一个不用翻菜单的入口。
+    if (mod && shift && key === 'd') {
+      event.preventDefault();
+      void collectDiagnostics();
       return;
     }
 
@@ -1227,6 +1235,25 @@ $: syncTitle(doc, path, dirty);
       await openPath(target);
     } catch (e) {
       note(`打不开崩溃日志：${String(e)}`, true);
+    }
+  }
+
+  /**
+   * 打包诊断信息：环境 + 体检 + 崩溃日志尾部 + 设置账本，落到一个文件夹里再打开它。
+   *
+   * 报问题时最花时间的是问清环境，这份东西就是答案。全程本地，不联网、不上传。
+   */
+  async function collectDiagnostics() {
+    busy = true;
+    try {
+      const dir = await invoke<string>('collect_diagnostics');
+      note(`诊断信息已打包：${dir}`);
+      const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
+      await revealItemInDir(dir);
+    } catch (e) {
+      note(`打包失败：${String(e)}`, true);
+    } finally {
+      busy = false;
     }
   }
 
@@ -1535,6 +1562,9 @@ $: syncTitle(doc, path, dirty);
             </button>
             <button role="menuitem" on:click={() => { opsOpen = false; void openCrashLog(); }}>
               看崩溃日志
+            </button>
+            <button role="menuitem" disabled={busy} on:click={() => { opsOpen = false; void collectDiagnostics(); }}>
+              打包诊断信息…
             </button>
           </div>
         {/if}

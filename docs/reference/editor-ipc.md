@@ -149,9 +149,13 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 | --- | --- | --- | --- |
 | `run_doctor` | 无 | `string`（整段文本） | 跑一次 `KeyMouse doctor` 并把它的话原样带回来 |
 | `crash_log_path` | 无 | `string`（绝对路径） | `%LOCALAPPDATA%\KeyMouse\editor-crash.log`，调用时确保目录存在 |
+| `collect_diagnostics` | 无 | `string`（目录绝对路径） | 写 `环境.txt` / `体检.txt` / `崩溃日志尾部.txt` / `设置.json` / `说明.txt` 到 `%LOCALAPPDATA%\KeyMouse\diagnostics\<时间戳>\` |
 
 两条都只"搬话"：环境判断只在命令行里有一份（`ProductLayout` / `Doctor`），界面不复制那套逻辑——
 复制的那份迟早会跟命令行分叉。
+
+`collect_diagnostics` 的三条约定：**单份失败只降级**（那一份的名字后面写上"写不进去：…"，其余照写）、
+**崩溃日志只取末尾 400 行**（开头那些是几个月前的）、**不联网**（打包完由用户自己决定发给谁）。
 
 ## 关窗
 

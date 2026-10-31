@@ -9,6 +9,7 @@
 //! 契约见 `docs/reference/editor-ipc.md`。
 
 mod crashlog;
+mod diagnostics;
 mod files;
 mod mini;
 mod layout;
@@ -107,6 +108,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
             layout::run_doctor,
+            diagnostics::collect_diagnostics,
             crashlog::crash_log_path,
             files::open_flow,
             files::save_flow,
