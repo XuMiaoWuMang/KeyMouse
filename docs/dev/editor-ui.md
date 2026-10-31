@@ -159,6 +159,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- **`···` 菜单的四件事之外还多两项**：「在文件夹里看这个流程」（走 `revealItemInDir`）与
+  「键盘与版本…」——后者是一张就地卡片（键位表 + 当前命令行路径 / 版本 / 环境），
+  不打开文档也能回答"我现在连的是哪一个 KeyMouse"。`Esc` 会先收这张卡片。
 - **窗口标题跟着文件和脏标记走**：`syncTitle()` 把标题写成「文件名 · KeyMouse 流程编辑器」，
   未保存时前面加 `•`。任务栏上光看「流程编辑器」分不出开的是哪一份。`setTitle` 要
   `core:window:allow-set-title` 能力（`src-tauri/capabilities/default.json`），没有它调用会

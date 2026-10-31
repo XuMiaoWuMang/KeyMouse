@@ -65,6 +65,8 @@
   let recordMenuOpen = false;
   /** 工具栏最右那个 ··· 菜单（打开/保存/另存为/从屏幕取区域）。 */
   let opsOpen = false;
+  /** 「键盘与版本」那张卡片：给不想翻文档的人一个就地答案。 */
+  let helpOpen = false;
   /** 流程格式的契约；拿到之前检查器只显示"正在读契约"。 */
   let schema: FlowSchema | null = null;
 
@@ -922,6 +924,10 @@ $: syncTitle(doc, path, dirty);
     // Esc 分两件事：跑着的时候它是"停止"（这是玩流程时手指最自然的位置），
     // 否则把那张「+ 更多」卡片收起来——它在视觉上压住了列表。
     if (key === 'escape') {
+      if (helpOpen) {
+        helpOpen = false;
+        return;
+      }
       if (rowMenu) {
         rowMenu = null;
         return;
@@ -1006,6 +1012,20 @@ $: syncTitle(doc, path, dirty);
    * 把"当前选中的那一步"换成 `next`。选中的可能是顶层一行，也可能是某一行里的子步骤——
    * 后者要顺着 `steps[parent].steps[child]` 换，别把整棵树摊平（摊平会把分组丢掉）。
    */
+  /** 在资源管理器里定位当前流程文件（`···` 菜单里那一项）。 */
+  async function revealFlow() {
+    if (!path) {
+      note('还没保存到文件，先存一次', true);
+      return;
+    }
+    try {
+      const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
+      await revealItemInDir(path);
+    } catch (e) {
+      note(`打不开文件夹：${String(e)}`, true);
+    }
+  }
+
   /** 选中分组里的第 `childIndex` 个子步骤（检查器随之换成它）。 */
   function selectChild(index: number, childIndex: number) {
     selected = index;
@@ -1284,6 +1304,13 @@ $: syncTitle(doc, path, dirty);
             <button role="menuitem" disabled={busy || running || !current} on:click={() => { opsOpen = false; void pickForSelected(); }}>
               从屏幕取区域…
             </button>
+            <hr />
+            <button role="menuitem" disabled={!path} on:click={() => { opsOpen = false; void revealFlow(); }}>
+              在文件夹里看这个流程
+            </button>
+            <button role="menuitem" on:click={() => { opsOpen = false; helpOpen = true; }}>
+              键盘与版本…
+            </button>
           </div>
         {/if}
       </div>
@@ -1426,6 +1453,32 @@ $: syncTitle(doc, path, dirty);
           <p class="blank">这一步还没加。上面那排按钮各加一步，按顺序往下执行。</p>
         {/if}
       </section>
+
+      {#if helpOpen}
+        <!-- 就地答案：不翻文档也能查到键位和"我现在连的是哪个命令行"。 -->
+        <div class="help-card" role="dialog" aria-label="键盘与版本">
+          <header>
+            <h3>键盘</h3>
+            <button class="linkish" on:click={() => (helpOpen = false)}>收起</button>
+          </header>
+          <dl>
+            <dt>Ctrl+S / Ctrl+O / Ctrl+N</dt><dd>保存 / 打开 / 新建</dd>
+            <dt>Ctrl+Z / Ctrl+Shift+Z</dt><dd>撤销 / 重做</dd>
+            <dt>F5 / Ctrl+F5</dt><dd>播放 / 试运行</dd>
+            <dt>↑ ↓</dt><dd>上一步 / 下一步</dd>
+            <dt>Alt+↑ / Alt+↓</dt><dd>把这一步上移 / 下移</dd>
+            <dt>Delete</dt><dd>删掉选中的这一步</dd>
+            <dt>Ctrl+Shift+A</dt><dd>全部步骤类型</dd>
+            <dt>Esc</dt><dd>收菜单；跑着的时候是停止</dd>
+          </dl>
+          <h3>这一份在哪</h3>
+          <p class="help-env">
+            命令行：<code>{runtime?.cliPath ?? '还没找到'}</code><br />
+            版本：{runtime ? `${runtime.cliVersion} · ${runtime.environment === 'development' ? '开发树' : '安装版'}` : '未知'}<br />
+            文件：<code>{path ?? '还没有保存'}</code>
+          </p>
+        </div>
+      {/if}
 
       {#if rowMenu}
         <!-- 右键菜单：与老外壳同一组动作。位置用鼠标点，所以是 fixed + 页面坐标。 -->
@@ -2047,6 +2100,71 @@ $: syncTitle(doc, path, dirty);
   }
 
   /* 右键菜单：跟着鼠标点出现，所以用 fixed 定位，坐标即 clientX/clientY。 */
+  /* 「键盘与版本」卡片：居中偏上，读完自己收起。用和右键菜单同一套卡片语言。 */
+  .help-card {
+    position: fixed;
+    left: 50%;
+    top: 96px;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: min(520px, calc(100vw - 48px));
+    padding: 16px 18px 14px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+    box-shadow: 0 12px 32px rgba(23, 20, 15, 0.16);
+  }
+
+  .help-card header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .help-card h3 {
+    margin: 12px 0 6px;
+    font-size: var(--kp-fs-small);
+    font-weight: 600;
+    color: var(--kp-ink2);
+  }
+
+  .help-card header h3 {
+    margin: 0;
+  }
+
+  .help-card dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 16px;
+    margin: 0;
+    font-size: var(--kp-fs-small);
+  }
+
+  .help-card dt {
+    font-family: var(--kp-mono);
+    color: var(--kp-ink);
+    white-space: nowrap;
+  }
+
+  .help-card dd {
+    margin: 0;
+    color: var(--kp-ink2);
+  }
+
+  .help-env {
+    margin: 0;
+    font-size: var(--kp-fs-small);
+    line-height: 1.7;
+    color: var(--kp-ink2);
+  }
+
+  .help-env code {
+    font-family: var(--kp-mono);
+    font-size: 11px;
+    word-break: break-all;
+  }
+
   .row-menu {
     position: fixed;
     z-index: 40;
