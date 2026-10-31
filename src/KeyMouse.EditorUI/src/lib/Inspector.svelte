@@ -41,6 +41,16 @@
     schema !== null &&
     shapeFields(schema, 'target').every((field) => !hasValue(readPath(step, `target.${field.name}`)));
 
+  // 目标窗口在多数步骤里是"可选"（不填就作用于当前焦点窗口）。对着一个可选字段
+  // 标红写「必填」，会把"还没填"和"填错了"混成同一件事。
+  $: targetRequired = target?.required === true;
+  $: targetHint = targetRequired
+    ? targetEmpty
+      ? '必填'
+      : '齐全'
+    : targetEmpty
+      ? '可选'
+      : '可选 · 已填';
   function hasValue(value: unknown): boolean {
     if (value === null || value === undefined) return false;
     if (typeof value === 'string') return value.trim() !== '';
@@ -78,7 +88,7 @@
   {#if target}
     <div class="side-head">
       <h2>{label(target)}</h2>
-      <span class="hint" class:warn={targetEmpty}>{targetEmpty ? '必填' : '齐全'}</span>
+      <span class="hint" class:warn={targetRequired && targetEmpty}>{targetHint}</span>
     </div>
     {#each shapeFields(schema, 'target') as field}
       <label class="field">
