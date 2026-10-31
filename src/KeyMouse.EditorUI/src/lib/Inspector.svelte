@@ -187,7 +187,7 @@
           {:else}
             <p class="readonly">
               {field.kind === 'steps' || field.kind === 'vars' || field.kind === 'stringList'
-                ? '这类字段在界面里还改不了，先在 JSON 里写（见下面的折叠块）。'
+                ? '这里只读：子步骤在左边列表里加、删、点选着改；键值表（vars）先在 JSON 里写（见下面的折叠块）。'
                 : asText(readPath(step, field.name)) || '——'}
             </p>
           {/if}
