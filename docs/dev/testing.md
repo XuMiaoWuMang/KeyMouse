@@ -3,6 +3,25 @@
 KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证明逻辑对，冒烟测试证明它作用到真实窗口上还对，取证把读屏这类"概率性"能力的测量数据归档下来给人看。
 三层怎么跑、各覆盖什么、什么时候必须跑、以及写新测试要守的规矩，都在这一页。
 
+## 安装包怎么自己验一遍
+
+发布链路改过之后（尤其动了 `tools\build\pack-release.ps1` 或 `src\KeyMouse.Setup`），
+在没有干净机器的前提下，最低限度验这三条：
+
+```powershell
+pwsh tools\build\pack-release.ps1
+Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+& artifacts\tests\install-smoke\cli\KeyMouse.exe --version
+& artifacts\tests\install-smoke\uninstall.exe --silent
+```
+
+看三件事：安装目录里 `KeyMouse.Editor.exe` 与 `KeyMouse.FlowEditor.exe` **都在**（新老并存）、
+`cli\KeyMouse.exe` 能自报版本、卸载后目录消失。
+
+**注意**：装到仓库里时 `KeyMouse doctor` 会如实说"环境：开发树"，因为它往上找得到
+`KeyMouse.sln` + `Directory.Build.props`——这是判定规则本身在起作用，不是装错了。
+要验"安装版布局"必须装到仓库外（本会话曾被 ACL 挡在 `%LOCALAPPDATA%` 之外，机器上手动装一次即可）。
+
 ## 三层一览
 
 | 层 | 入口 | 需要什么 | 覆盖 | 落在哪 |
@@ -14,6 +33,25 @@ KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证�
 **有产物的两层，每次运行都在 `artifacts\tests\` 下新建一个带时间戳的目录**，互不覆盖、可以并排比较，也不污染别处。这条约定见下文「写新测试的规矩」。
 
 新编辑器外壳（`src\KeyMouse.EditorUI`）不在这三层里，它有自己的两套：前端 `vitest`（纯函数：步骤增删排序、撤销后选中项、缺必填项判断）与外壳 `cargo test`（路径解析、读写流程、错误码）。两边由 `tools\dev\editor-ui.ps1 test` 一起跑，`verify.ps1` 的「新外壳」一关会调它；界面本身靠截图核对，不做端到端点击模拟。
+
+## 安装包怎么自己验一遍
+
+发布链路改过之后（尤其动了 `tools\build\pack-release.ps1` 或 `src\KeyMouse.Setup`），
+在没有干净机器的前提下，最低限度验这三条：
+
+```powershell
+pwsh tools\build\pack-release.ps1
+Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+& artifacts\tests\install-smoke\cli\KeyMouse.exe --version
+& artifacts\tests\install-smoke\uninstall.exe --silent
+```
+
+看三件事：安装目录里 `KeyMouse.Editor.exe` 与 `KeyMouse.FlowEditor.exe` **都在**（新老并存）、
+`cli\KeyMouse.exe` 能自报版本、卸载后目录消失。
+
+**注意**：装到仓库里时 `KeyMouse doctor` 会如实说"环境：开发树"，因为它往上找得到
+`KeyMouse.sln` + `Directory.Build.props`——这是判定规则本身在起作用，不是装错了。
+要验"安装版布局"必须装到仓库外（本会话曾被 ACL 挡在 `%LOCALAPPDATA%` 之外，机器上手动装一次即可）。
 
 ## 单元测试
 
@@ -61,6 +99,25 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 
 **什么时候必须跑**：动了参数解析、窗口选择、流程编译/执行、Runner 协议、录制格式中的任何一处，跑对应模块；发布前跑全部。单测不需要桌面，所以在 CI 里也照跑。
 
+## 安装包怎么自己验一遍
+
+发布链路改过之后（尤其动了 `tools\build\pack-release.ps1` 或 `src\KeyMouse.Setup`），
+在没有干净机器的前提下，最低限度验这三条：
+
+```powershell
+pwsh tools\build\pack-release.ps1
+Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+& artifacts\tests\install-smoke\cli\KeyMouse.exe --version
+& artifacts\tests\install-smoke\uninstall.exe --silent
+```
+
+看三件事：安装目录里 `KeyMouse.Editor.exe` 与 `KeyMouse.FlowEditor.exe` **都在**（新老并存）、
+`cli\KeyMouse.exe` 能自报版本、卸载后目录消失。
+
+**注意**：装到仓库里时 `KeyMouse doctor` 会如实说"环境：开发树"，因为它往上找得到
+`KeyMouse.sln` + `Directory.Build.props`——这是判定规则本身在起作用，不是装错了。
+要验"安装版布局"必须装到仓库外（本会话曾被 ACL 挡在 `%LOCALAPPDATA%` 之外，机器上手动装一次即可）。
+
 ## 桌面冒烟
 
 用 KeyMouse 自己的鼠标键盘去驱动一个**专门的靶子窗口**（`tests\KeyMouse.SmokeTarget`），验证"真的作用到桌面上了"：退出码、输入有没有落地、窗口有没有被误动、进程数对不对。
@@ -104,6 +161,25 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 
 **第二种跑不了：会话收不到注入的输入。** 冒烟的每一条断言都假设"打进去的字真的进了窗口"。嵌套/沙箱会话、远程桌面被挂在后台时，`SendInput` 会**报告成功、事件却被丢掉**，于是几十条断言一起变红，而根因只有一个。所以冒烟开跑前先用 [`check-input.ps1`](../tools/check-input.md) 问一句：往靶子里打一串固定字、再 `Ctrl+A`/`Ctrl+C` 读回剪贴板，读到的正好是那串字才算可用；读不到就以退出码 3 停下（`-SkipInputCheck` 可跳过这次自检）。`verify.ps1` 同样先做这个实验，返回 3 就把第 6 关记为"已跳过"并写明原因——**跳过不是通过**，结论区会分开列。
 
+## 安装包怎么自己验一遍
+
+发布链路改过之后（尤其动了 `tools\build\pack-release.ps1` 或 `src\KeyMouse.Setup`），
+在没有干净机器的前提下，最低限度验这三条：
+
+```powershell
+pwsh tools\build\pack-release.ps1
+Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+& artifacts\tests\install-smoke\cli\KeyMouse.exe --version
+& artifacts\tests\install-smoke\uninstall.exe --silent
+```
+
+看三件事：安装目录里 `KeyMouse.Editor.exe` 与 `KeyMouse.FlowEditor.exe` **都在**（新老并存）、
+`cli\KeyMouse.exe` 能自报版本、卸载后目录消失。
+
+**注意**：装到仓库里时 `KeyMouse doctor` 会如实说"环境：开发树"，因为它往上找得到
+`KeyMouse.sln` + `Directory.Build.props`——这是判定规则本身在起作用，不是装错了。
+要验"安装版布局"必须装到仓库外（本会话曾被 ACL 挡在 `%LOCALAPPDATA%` 之外，机器上手动装一次即可）。
+
 ## 取证
 
 有些东西不是"对/错"，而是"准不准、值不值这个价"：读屏在各种取样与预处理下的准确率、光标留在区域里的影响、两个坐标系是不是同一批像素、标题栏读不读得到。这类结论没有断言可写，需要的是**可复查的数据**，所以单列一层。
@@ -131,6 +207,25 @@ pwsh tools\diagnostics\evidence.ps1 -Samples 5 -Attempts 1  # 快速看一眼
 另外 `pwsh tools\diagnostics\window-levels.ps1` 列可见窗口所属进程的权限级别（普通 / 已提权 / 读不到），排查"点了没反应"这类 UIPI 问题时用；它不产生归档。
 
 **什么时候必须跑**：改 `probe` 的取像、预处理、共识判定、选区块选逻辑之后；或者有人报"读数不准"时。它慢且要 OCR 引擎，不是每次改代码都跑——但结论要写进 [design.md](design.md) 的对应小节，并把归档留在本机。
+
+## 安装包怎么自己验一遍
+
+发布链路改过之后（尤其动了 `tools\build\pack-release.ps1` 或 `src\KeyMouse.Setup`），
+在没有干净机器的前提下，最低限度验这三条：
+
+```powershell
+pwsh tools\build\pack-release.ps1
+Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+& artifacts\tests\install-smoke\cli\KeyMouse.exe --version
+& artifacts\tests\install-smoke\uninstall.exe --silent
+```
+
+看三件事：安装目录里 `KeyMouse.Editor.exe` 与 `KeyMouse.FlowEditor.exe` **都在**（新老并存）、
+`cli\KeyMouse.exe` 能自报版本、卸载后目录消失。
+
+**注意**：装到仓库里时 `KeyMouse doctor` 会如实说"环境：开发树"，因为它往上找得到
+`KeyMouse.sln` + `Directory.Build.props`——这是判定规则本身在起作用，不是装错了。
+要验"安装版布局"必须装到仓库外（本会话曾被 ACL 挡在 `%LOCALAPPDATA%` 之外，机器上手动装一次即可）。
 
 ## 写新测试的规矩
 
