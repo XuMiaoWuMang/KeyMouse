@@ -53,8 +53,14 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
 
 const BY_TYPE = new Map(STEP_TEMPLATES.map((t) => [t.type, t]));
 
-/** 工具栏上直接摆出来的四种，其余进「+ 更多」。 */
-export const QUICK_TYPES: readonly StepType[] = ['click', 'type', 'wait-text', 'click-text'];
+/**
+ * 工具栏上直接摆出来的几种，其余进「+ 更多」。
+ *
+ * `切换窗口`（`focus`）排第一：一条流程几乎总是从"把目标窗口弄到前台"开始，
+ * 而它以前只挂在「常用」组里——「+ 更多」又不列常用组，结果界面上没有地方能加它。
+ * 摆到工具栏上就再也没有这个问题。
+ */
+export const QUICK_TYPES: readonly StepType[] = ['focus', 'click', 'type', 'wait-text', 'click-text'];
 
 /** 新建一步。只放"这一步是什么"，参数留给检查器——空着比猜错好。 */
 export function makeStep(type: StepType): FlowStep {

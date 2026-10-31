@@ -835,8 +835,17 @@ $: syncTitle(doc, path, dirty);
     return step.target ?? {};
   }
 
-  /** 「+ 更多」里按用途分组列出剩下的步骤种类；常用四种已经在工具栏上。 */
-  $: moreGroups = [...new Set(STEP_TEMPLATES.map((t) => t.group))].filter((g) => g !== '常用');
+  /**
+   * 「+ 更多」里按用途分组列出剩下的步骤种类。
+   *
+   * 判据是"这个类型在不在工具栏上"，**不是"这个组叫不叫常用"**：早先按组名排除，
+   * `切换窗口`（`focus`，组是常用）就既不在工具栏、也不在「+ 更多」里，
+   * 整个界面上根本没有地方能加它。以后往 `常用` 组里再加类型也不会再漏。
+   */
+  $: quickTypes = new Set<string>(QUICK_TYPES);
+  $: moreGroups = [...new Set(STEP_TEMPLATES.map((t) => t.group))].filter((g) =>
+    STEP_TEMPLATES.some((t) => t.group === g && !quickTypes.has(t.type))
+  );
 
   function syncDirty(value: boolean) {
     void invoke('set_dirty', { dirty: value }).catch(() => undefined);
@@ -1375,6 +1384,30 @@ $: syncTitle(doc, path, dirty);
   }
 
   /** 快捷键。输入框里只认 Ctrl+S / Ctrl+O / Ctrl+N / Ctrl+Z，别抢打字。 */
+  /**
+   * 点空白处收起弹窗。
+   *
+   * 菜单、下拉这些东西只靠 Esc 关不掉所有人的直觉——手上拿着鼠标的人会去点别处，
+   * 然后那个菜单还挂在那儿压着列表。这里统一处理：任何一处 pointerdown 落在
+   * 弹窗（或它的触发按钮）之外，就把开着的那个收起来。
+   *
+   * 触发按钮和菜单本身共用同一个 `data-popup` 值，所以点触发按钮不算"外面"——
+   * 那种情况由按钮自己的 toggle 负责开/关，免得 pointerdown 先关掉、click 又打开。
+   */
+  function closePopups(except?: string) {
+    if (except !== 'more') moreOpen = false;
+    if (except !== 'record') recordMenuOpen = false;
+    if (except !== 'ops') opsOpen = false;
+    if (except !== 'row') rowMenu = null;
+  }
+
+  function onWindowPointerDown(event: PointerEvent) {
+    if (!moreOpen && !recordMenuOpen && !opsOpen && !rowMenu) return;
+    const element = event.target as Element | null;
+    const owner = element?.closest?.('[data-popup]');
+    closePopups(owner?.getAttribute('data-popup') ?? undefined);
+  }
+
   function onKeydown(event: KeyboardEvent) {
     const element = event.target as HTMLElement | null;
     const typing = element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA';
@@ -1467,7 +1500,6 @@ $: syncTitle(doc, path, dirty);
       recordMenuOpen = false;
       return;
     }
-
     if (event.ctrlKey && event.shiftKey && key === 'a') {
       event.preventDefault();
       moreOpen = true;
@@ -1755,7 +1787,7 @@ $: syncTitle(doc, path, dirty);
   }
 </script>
 
-<svelte:window on:keydown={onKeydown} on:keyup={onKeyUp} />
+<svelte:window on:keydown={onKeydown} on:keyup={onKeyUp} on:pointerdown={onWindowPointerDown} />
 
 {#if mini}
   <!-- 录制期间的一屏：只留"正在录 + 多久 + 停止"。
@@ -1810,15 +1842,16 @@ $: syncTitle(doc, path, dirty);
       <button
         class="palette-item more"
         class:open={moreOpen}
+        data-popup="more"
         on:click={() => (moreOpen = !moreOpen)}
         aria-expanded={moreOpen}
       >+ 更多</button>
 
       {#if moreOpen}
-        <div class="more-menu" role="menu">
+        <div class="more-menu" role="menu" data-popup="more">
           {#each moreGroups as group}
             <p class="more-group">{group}</p>
-            {#each STEP_TEMPLATES.filter((item) => item.group === group) as item}
+            {#each STEP_TEMPLATES.filter((item) => item.group === group && !quickTypes.has(item.type)) as item}
               <button class="more-item" role="menuitem" on:click={() => addStep(item.type)}>
                 <StepIcon name={item.type} size={14} />{stepTitle(item.type)}
               </button>
@@ -1842,6 +1875,7 @@ $: syncTitle(doc, path, dirty);
         </button>
         <button
           class="ghost rec-caret"
+          data-popup="record"
           on:click={() => (recordMenuOpen = !recordMenuOpen)}
           disabled={busy || running}
           aria-label="更多录制方式"
@@ -1851,7 +1885,7 @@ $: syncTitle(doc, path, dirty);
           ▾
         </button>
         {#if recordMenuOpen}
-          <div class="record-menu" role="menu">
+          <div class="record-menu" role="menu" data-popup="record">
             <button role="menuitem" on:click={() => { recordMenuOpen = false; void startRecord(); }}>
               录制（当前权限）
             </button>
@@ -1886,12 +1920,13 @@ $: syncTitle(doc, path, dirty);
           aria-label="更多操作"
           aria-expanded={opsOpen}
           title="更多操作"
+          data-popup="ops"
           on:click={() => (opsOpen = !opsOpen)}
         >
           ···
         </button>
         {#if opsOpen}
-          <div class="ops-menu" role="menu">
+          <div class="ops-menu" role="menu" data-popup="ops">
             <button role="menuitem" disabled={busy} on:click={() => { opsOpen = false; void openFlow(); }}>打开…</button>
             <button role="menuitem" disabled={busy || !doc || !dirty} on:click={() => { opsOpen = false; void saveFlow(); }}>保存</button>
             <button role="menuitem" disabled={busy || !doc} on:click={() => { opsOpen = false; void saveAs(); }}>另存为…</button>
@@ -2259,7 +2294,7 @@ $: syncTitle(doc, path, dirty);
 
       {#if rowMenu}
         <!-- 右键菜单：与老外壳同一组动作。位置用鼠标点，所以是 fixed + 页面坐标。 -->
-        <div class="row-menu" style="left: {rowMenu.x}px; top: {rowMenu.y}px" role="menu">
+        <div class="row-menu" style="left: {rowMenu.x}px; top: {rowMenu.y}px" role="menu" data-popup="row">
           <button role="menuitem" on:click={menuDuplicate}>复制这一步</button>
           <button role="menuitem" disabled={rowMenu.index === 0} on:click={menuUp}>上移</button>
           <button role="menuitem" disabled={rowMenu.index === steps.length - 1} on:click={menuDown}>下移</button>

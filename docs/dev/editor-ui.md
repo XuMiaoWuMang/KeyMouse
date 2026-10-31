@@ -363,6 +363,27 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 补标题和摘要时顺手加了 `buttonLabel(step)`；注意 `FlowStep.button` 的类型只有 `'left' | 'right' | 'middle'`，
 在里面写 `x1`/`x2` 分支会被 svelte-check 判成"没有交集"。
 
+## 弹窗一律"点外面就收起"
+
+菜单（`+ 更多`、录制 `▾`、`···`、行右键菜单）原本只有 `Esc` 和"点自己那一项"能关。拿着鼠标的人
+会去点别处，然后菜单挂在那儿压着列表。现在统一在 `<svelte:window on:pointerdown={onWindowPointerDown}>`
+里收：`closePopups(except)` 关掉除 `except` 之外的弹窗，`except` 取
+`event.target.closest('[data-popup]')?.dataset.popup`。
+
+- **触发按钮和菜单本身标同一个 `data-popup` 值**（`more` / `record` / `ops` / `row`）。点了触发按钮不算
+  "外面"，交给按钮自己的 toggle 处理——否则 pointerdown 先关、click 再开，看起来"点了没反应"。
+- 右键菜单没有触发按钮，任何 pointerdown 只要不在它自己身上就关。
+- 判断用 `closest` 而不是坐标：菜单是浮层，它的 `getBoundingClientRect()` 里 `pointer-events` 之外的
+  空白处也算"在里面"，按坐标算会误判。
+
+## 工具栏上的"常用"是算出来的，不是列出来的
+
+「+ 更多」里该列哪些类型，判据必须是"**这个类型在不在工具栏上**"，不能是"这个组叫不叫常用"。
+早先写的是 `.filter((g) => g !== '常用')`，于是 `切换窗口`（`focus`，也在常用组里）既不在工具栏、
+也被「+ 更多」整组排掉——界面上根本没有地方能加它，用户当场就问"切换窗口在哪里加"。
+现在 `moreGroups` 与菜单项都用 `!quickTypes.has(type)` 过滤，并且 `focus` 摆到工具栏第一个
+（一条流程几乎总从切窗口开始，录制出来的流程也自带这一步）。
+
 ## 界面与老外壳的关系
 
 P0 的目标是"两屏并排看不出这是两个程序"：
