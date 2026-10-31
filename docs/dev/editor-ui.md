@@ -47,7 +47,7 @@ src/KeyMouse.EditorUI/
     src/run.rs          试运行/播放/停止/暂停/读报告
     src/record.rs       录制（当前权限与提权两条路）
     src/mini.rs         录制时把窗口缩成细带
-    src/store.rs        最近打开与窗口尺寸（%LOCALAPPDATA%）
+    src/store.rs        最近打开与窗口位置/尺寸（%LOCALAPPDATA%）
     src/process.rs      起命令行时隐藏控制台窗口
     src/crashlog.rs     panic 与界面异常落 editor-crash.log
 ```
@@ -179,6 +179,10 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
+- **窗口位置也记**：`store::remember_size` 关窗时一起存 `outer_position()`（物理像素），下次在 `.setup()`
+  里用 `PhysicalPosition` 原样塞回。两者必须成对——一端按逻辑、一端按物理，窗口每开一次就漂一段
+  （实测过：`outer_position` 与 `set_position(Physical)` 配对时，连开两次的坐标完全一致）。
+  位置单独判空：老账本没有 x/y，缺省 0/0 会把窗口甩到左上角。
 - **体检与日志也是"搬话"**：`run_doctor` 跑一次命令行的 `doctor` 把整段输出带回来（环境判断只在
   命令行里有一份，界面复制那套迟早会分叉）；`crash_log_path` 让「看崩溃日志」能直接打开
   `editor-crash.log`。两条都点在 `···` 菜单里。

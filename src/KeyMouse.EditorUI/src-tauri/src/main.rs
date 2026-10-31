@@ -88,8 +88,14 @@ fn main() {
         }
             // 窗口大小在壳里恢复，不交给界面：界面要等 webview 起来才有机会说话，
             // 那时窗口已经在屏幕上以默认大小闪了一下。这里在窗口显示前就改好。
-            if let (Some(window), Some(size)) = (app.get_webview_window("main"), store::window_size()) {
-                let _ = window.set_size(tauri::LogicalSize::new(size.width, size.height));
+            if let (Some(window), Some(saved)) = (app.get_webview_window("main"), store::window_size()) {
+                let _ = window.set_size(tauri::LogicalSize::new(saved.width, saved.height));
+                // 位置只在"上次确实记过"时用：老账本里没有 x/y，缺省 0/0 会把窗口甩到左上角。
+                if saved.x != 0 || saved.y != 0 {
+                    // outer_position() 给的是物理像素，恢复也用 PhysicalPosition——两者必须成对，
+                    // 一端按逻辑、一端按物理，窗口每开一次就漂一段。
+                    let _ = window.set_position(tauri::PhysicalPosition::new(saved.x, saved.y));
+                }
             }
             Ok(())
         })

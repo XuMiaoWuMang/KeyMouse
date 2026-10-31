@@ -17,15 +17,22 @@ pub struct Store {
     /// 最近的流程文件，越靠前越新。
     #[serde(default)]
     pub recent: Vec<String>,
-    /// 上次关闭时的窗口内尺寸（逻辑像素）。
+    /// 上次关闭时的窗口位置与尺寸（尺寸是逻辑像素，位置是物理像素——Windows 的
+    /// `outer_position` 就是这么给的，换算成逻辑反而要赌它落在哪块屏）。
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub window: Option<Size>,
+    pub window: Option<WindowState>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct Size {
+pub struct WindowState {
     pub width: f64,
     pub height: f64,
+    /// 老账本里没有这两个字段：缺了就当没有位置记忆，别让整份设置读不出来。
+    #[serde(default)]
+    /// 物理像素，与 outer_position() / set_position(PhysicalPosition) 成对使用。
+    pub x: i32,
+    #[serde(default)]
+    pub y: i32,
 }
 
 /// 账本的位置：`%LOCALAPPDATA%\KeyMouse\editor-settings.json`。
@@ -93,7 +100,13 @@ pub fn remember_size(window: &tauri::Window) {
     if logical.width < 200.0 || logical.height < 120.0 {
         return;
     }
-    state.window = Some(Size { width: logical.width, height: logical.height });
+    let position = window.outer_position().unwrap_or(tauri::PhysicalPosition { x: 0, y: 0 });
+    state.window = Some(WindowState {
+        width: logical.width,
+        height: logical.height,
+        x: position.x,
+        y: position.y,
+    });
     save(&state);
 }
 /// 最近打开过的流程（只给还存在的），新的在前。
@@ -111,21 +124,25 @@ pub fn remember_recent(path: String) -> Vec<String> {
     existing(&list)
 }
 
-/// 上次关闭时的窗口内尺寸；没记过就给 `null`。
+/// 上次关闭时的窗口位置与尺寸；没记过就给 `null`。
 #[tauri::command]
-pub fn window_size() -> Option<Size> {
+pub fn window_size() -> Option<WindowState> {
     load().window
 }
 
-/// 记下这次的窗口内尺寸（逻辑像素）。关窗前调用。
+/// 记下这次的窗口位置与尺寸（尺寸逻辑像素、位置物理像素）。关窗前调用。
 #[tauri::command]
-pub fn save_window_size(width: f64, height: f64) {
+pub fn save_window_size(width: f64, height: f64, x: Option<i32>, y: Option<i32>) {
     if width < 200.0 || height < 120.0 {
         // 迷你模式那种一条细带的尺寸记下来毫无意义，下次开就是一条缝。
         return;
     }
     let mut store = load();
-    store.window = Some(Size { width, height });
+    let (x, y) = match (x, y) {
+        (Some(x), Some(y)) => (x, y),
+        _ => store.window.map(|w| (w.x, w.y)).unwrap_or((0, 0)),
+    };
+    store.window = Some(WindowState { width, height, x, y });
     save(&store);
 }
 #[cfg(test)]
@@ -155,7 +172,7 @@ mod tests {
     fn store_survives_a_round_trip() {
         let original = Store {
             recent: vec!["D:/flows/a.json".into()],
-            window: Some(Size { width: 892.0, height: 632.0 }),
+            window: Some(WindowState { width: 892.0, height: 632.0, x: 120, y: 80 }),
         };
         let text = serde_json::to_string(&original).expect("serialize");
         let back: Store = serde_json::from_str(&text).expect("deserialize");
