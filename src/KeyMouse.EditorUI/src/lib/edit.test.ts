@@ -130,6 +130,25 @@ describe('missingOf / missingHint', () => {
   it('repeat 的空子步骤算缺', () => {
     expect(missingOf({ type: 'repeat', times: 3, steps: [] })).toEqual(['steps']);
   });
+
+  it('key 给组合键就算齐', () => {
+    expect(missingOf({ type: 'key', combo: 'Ctrl+S' })).toEqual([]);
+    expect(missingHint({ type: 'key', combo: 'Ctrl+S' })).toBe('齐全');
+  });
+
+  it('key 只给单个键名也算齐——组合键与键名二选一', () => {
+    expect(missingOf({ type: 'key', text: 'delete' })).toEqual([]);
+    expect(missingHint({ type: 'key', text: 'delete' })).toBe('齐全');
+  });
+
+  it('key 两个都不给才缺，而且提示说清是二选一', () => {
+    expect(missingOf({ type: 'key' })).toEqual(['combo 或 text']);
+    expect(missingHint({ type: 'key' })).toBe('还缺 组合键 或 单个键名');
+  });
+
+  it('key 的空白串不算填', () => {
+    expect(missingOf({ type: 'key', combo: '  ', text: '' })).toEqual(['combo 或 text']);
+  });
 });
 
 describe('duplicateAt', () => {

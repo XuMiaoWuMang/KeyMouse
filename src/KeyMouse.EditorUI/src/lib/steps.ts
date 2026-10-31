@@ -15,6 +15,13 @@ export interface StepTemplate {
   group: '常用' | '鼠标' | '键盘' | '等待' | '读取' | '流程' | '其它';
   /** 缺了这些就发不出正确输入；用于检查器右上角的提示 */
   required: readonly string[];
+  /**
+   * 这些字段里**给一个就够**（如 `key` 的组合键与单个键名）。
+   *
+   * 全空才算缺，所以它跟 `required` 是"与"的关系：`required` 里每一项都必须有，
+   * 这里是一组里凑够一个即可。
+   */
+  anyOf?: readonly string[];
   /** 字段名 → 给人看的中文，用于"还缺 X" */
   labels?: Readonly<Record<string, string>>;
 }
@@ -28,7 +35,14 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
   { type: 'drag', group: '鼠标', required: ['from', 'to', 'target'], labels: { from: '起点', to: '终点', target: '目标窗口' } },
   { type: 'move', group: '鼠标', required: ['at'], labels: { at: '坐标' } },
   { type: 'wheel', group: '鼠标', required: [] },
-  { type: 'key', group: '键盘', required: ['combo'], labels: { combo: '按键组合' } },
+  // 组合键与单个键名二选一（契约里就是 `oneOf`）：给一个就发得出去。
+  {
+    type: 'key',
+    group: '键盘',
+    required: [],
+    anyOf: ['combo', 'text'],
+    labels: { combo: '组合键', text: '单个键名' },
+  },
   { type: 'sleep', group: '等待', required: [] },
   { type: 'wait-window', group: '等待', required: ['target'], labels: { target: '目标窗口' } },
   { type: 'read-text', group: '读取', required: ['target', 'region', 'into'], labels: { target: '目标窗口', region: '区域', into: '变量名' } },
@@ -89,7 +103,12 @@ export function missingOf(step: FlowStep): string[] {
   const template = BY_TYPE.get(step.type);
   if (!template) return [];
   const raw = step as unknown as Record<string, unknown>;
-  return template.required.filter((key) => isBlank(raw[key]));
+  const missing = template.required.filter((key) => isBlank(raw[key]));
+  // 二选一的那些：全空才记一条（用 ` 或 ` 拼起来，提示里再说人话）。
+  if (template.anyOf && template.anyOf.every((key) => isBlank(raw[key]))) {
+    missing.push(template.anyOf.join(' 或 '));
+  }
+  return missing;
 }
 
 /** 把缺的项说成人话，用于检查器右上角。 */
@@ -97,6 +116,11 @@ export function missingHint(step: FlowStep): string {
   const missing = missingOf(step);
   if (missing.length === 0) return '齐全';
   const template = BY_TYPE.get(step.type);
-  const words = missing.map((key) => template?.labels?.[key] ?? key);
+  const words = missing.map((key) => {
+    if (template?.labels?.[key]) return template.labels[key];
+    // 二选一拼出来的合成键不在 labels 里，拆开逐段翻译。
+    const parts = key.split(' 或 ').map((part) => template?.labels?.[part] ?? part);
+    return parts.join(' 或 ');
+  });
   return `还缺 ${words.join('、')}`;
 }

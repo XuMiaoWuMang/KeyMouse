@@ -213,6 +213,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **播放前先查必填项**：`firstIncomplete()` 用 `lib/steps.ts` 的 `missingOf`（与检查器右上角那句同源）
   找第一条缺项的步骤，缺就选中它并在底部说清楚，不放行——否则命令行会在中途报同样的错，
   而且是在已经发出一半输入之后。试运行不拦：它就是拿来看错的。
+  契约里 `key` 是"组合键与单个键名**二选一**"，所以模板除了 `required` 还有个 `anyOf`：
+  `anyOf` 里全空才算缺，提示写成「还缺 组合键 或 单个键名」。别把 `combo` 塞进 `required`——
+  那样只写了 `text: delete` 的步骤会被判成半成品，播放直接被拦（这个错犯过一次）。
 - **窗口标题跟着文件和脏标记走**：`syncTitle()` 把标题写成「文件名 · KeyMouse 流程编辑器」，
   未保存时前面加 `•`。任务栏上光看「流程编辑器」分不出开的是哪一份。`setTitle` 要
   `core:window:allow-set-title` 能力（`src-tauri/capabilities/default.json`），没有它调用会

@@ -505,7 +505,7 @@ $: syncTitle(doc, path, dirty);
       const incomplete = firstIncomplete();
       if (incomplete) {
         note(
-          `第 ${incomplete.origin} 步（${incomplete.label}）还缺 ${incomplete.missing.join('、')}：补齐再播放，或者先按 Ctrl+F5 试运行看看`,
+          `第 ${incomplete.origin} 步（${incomplete.label}）还缺 ${incomplete.missing.join('、')}：补齐再播放，或者先按 Ctrl+Enter 试运行看看`,
           true,
         );
         const [row, child] = incomplete.origin.split('.');
@@ -1083,12 +1083,21 @@ $: syncTitle(doc, path, dirty);
       redo();
       return;
     }
-    // F5 跑一遍，Ctrl+F5 是试运行（只做资格检查）。老外壳的按钮上写着 F5，
-    // 用惯了会直接按；跑着的时候什么都不做，免得把正在跑的那条顶掉。
+    // F5 跑一遍；试运行是 Ctrl+Enter。老外壳的按钮上写着 F5，用惯了会直接按；
+    // 跑着的时候什么都不做，免得把正在跑的那条顶掉。
+    //
+    // 为什么试运行不跟 Ctrl+F5：WebView2 把 Ctrl+F5 当"强制刷新"自己吃掉了，
+    // 页面会重载、文档跟着没了（实测过一次，界面回到"还没有打开流程"）。
     if (key === 'f5') {
       event.preventDefault();
       if (running) return;
-      void startRun(mod);
+      void startRun(false);
+      return;
+    }
+    if (mod && key === 'enter') {
+      event.preventDefault();
+      if (running) return;
+      void startRun(true);
       return;
     }
 
@@ -1761,7 +1770,7 @@ $: syncTitle(doc, path, dirty);
           <dl>
             <dt>Ctrl+S / Ctrl+O / Ctrl+N</dt><dd>保存 / 打开 / 新建</dd>
             <dt>Ctrl+Z / Ctrl+Shift+Z</dt><dd>撤销 / 重做</dd>
-            <dt>F5 / Ctrl+F5</dt><dd>播放 / 试运行</dd>
+            <dt>F5 / Ctrl+Enter</dt><dd>播放 / 试运行</dd>
             <dt>↑ ↓</dt><dd>上一步 / 下一步</dd>
             <dt>Alt+↑ / Alt+↓</dt><dd>把这一步上移 / 下移</dd>
             <dt>Delete</dt><dd>删掉选中的这一步</dd>
