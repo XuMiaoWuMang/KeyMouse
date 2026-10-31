@@ -301,18 +301,19 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 **分组头为什么不是"另一种步骤"**：那会让 `flow.schema.json`、引擎、`--dry-run` 全都要认识它，
 而它只有视觉价值。现在的做法是界面里一张平行表（`sections`），文档里一个字节都不多。
 
-## 连续移动自动折叠：折的是显示，不是文档
+## 连续移动与滚轮自动折叠：折的是显示，不是文档
 
-录一段轨迹，`move` 步骤会一串串连着出现，几十行淹掉真正的动作。`src/lib/fold.ts` 把它们折起来，
-规矩和老 WinUI 3 外壳一致，便于两边对照：
+录一段轨迹，`move` 步骤会一串串连着出现，几十行淹掉真正的动作；滚轮也是，一下一下单独列出来没意义。
+`src/lib/fold.ts` 把它们折起来，规矩和老 WinUI 3 外壳一致，便于两边对照：
 
-- `MIN_MOVE_RUN = 3`：连续 3 步以上才折，2 步折了反而更难读。
-- `foldMoves(steps)` 返回 **每个下标** 的归属：`{ head, offset, count }`。题头是这一段的第一条，
-  `count - 1` 条是组员；不是组员的下标 `head === -1`。
+- `MIN_MOVE_RUN = 3`、`MIN_WHEEL_RUN = 3`：连续 3 步以上才折，2 步折了反而更难读。
+- `foldRuns(steps)` 返回 **每个下标** 的归属：`{ kind, head, offset, count }`，`kind` 是 `'move' | 'wheel'`。
+  题头是这一段的第一条，`count - 1` 条是组员；不是组员的下标 `head === -1`。`foldMoves` 保留成别名，
+  只关心移动的调用方不用跟着改。
 - `displayNumbers(runs)` 给出"看得见的编号"：折叠组占一个号，组员借用题头号，后面的行前移。
   所以 `等待时间` 会从第 6 步变成第 2 步。
-- `moveRunSummary(steps, head, count)` 产出 `100,200 → 260,280`：两端都取真实步骤的 `at`，
-  缺坐标的半成品写 `?`（让"这一组里有一步没填"露出来），不猜。
+- `runSummary`/`moveRunSummary`/`wheelRunSummary`：移动产出 `100,200 → 260,280`，滚轮产出
+  `350,470 · 共 +960`（正数带 `+`、负数不带）。两端都取真实步骤的字段，缺的半成品写 `?`（让"这一组里有一步没填"露出来），不猜。
 
 三条实现上的取舍：
 
@@ -342,6 +343,25 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 
 **点击摘要只写非默认键**：`点 120,64`，右键/中键才加「· 右键」「· 中键」（`clickLabel`）。
 左键是默认值，写出来只是噪音——这条规矩是老外壳就有的，用户明确要过。
+
+**检查器里的下拉框要把默认值显示出来**：`click.button` 在契约里是 `default: "left"`，步骤里通常
+**不写**这个键。早先 `Inspector.svelte` 的 enum 分支只读 `readText(...)`，于是选中「点击」时
+「鼠标键」是空的——用户看到的是"我明明点了左键，界面说没填"。
+现在 `enumText` 先取字段值、取不到再回落到 `field.default`；`commitEnum` 在"选回默认值"时写回
+`undefined`，所以**显示默认值不等于把它写进文件**，JSON 不会平白多出一堆 `"button": "left"`。
+
+**契约里同名的字段要补齐 `valueLabels`**：同一个 `button` 在 `click` 上有中文标签、在 `mousehold`
+上没有，界面就只能显示原始的 `left`。这类"看起来是界面 bug、其实是数据没给全"的问题，
+修的时候先看 `src/KeyMouse.Core/flow.schema.json`，别在下拉框里写死中文。
+顺带记住：**编辑器是通过 `flow_schema` 命令向 `artifacts\cli\KeyMouse.exe` 要这份契约的**
+（`src-tauri/src/schema.rs`），改了 schema 必须重跑 `tools\build\build.ps1`，只重建外壳没用——
+症状就是"代码明明改了，界面还是旧的"。
+
+**录制的长按类步骤要有中文名**：`keyhold` / `mousehold` / `keydown` / `keyup` / `mousedown` / `mouseup`
+是录制会写出来的真实类型。`lib/model.ts` 的 `TITLES` 和 `stepSummary` 早先只覆盖了 14 种类型，
+于是列表里出现 `keyhold`、摘要空着（用户的录制里一眼就看见）。
+补标题和摘要时顺手加了 `buttonLabel(step)`；注意 `FlowStep.button` 的类型只有 `'left' | 'right' | 'middle'`，
+在里面写 `x1`/`x2` 分支会被 svelte-check 判成"没有交集"。
 
 ## 界面与老外壳的关系
 

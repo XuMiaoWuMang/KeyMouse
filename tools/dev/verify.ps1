@@ -126,14 +126,23 @@ try {
     Step '版本一致' { & pwsh -NoProfile -File (Join-Path $root 'tools\dev\check-version.ps1') }
 
     # 示例流程被"打开 → 顺手保存"改坏过两次（步骤被删、文字丢了），而它正好是
-    # 用户第一眼看的东西。这里钉住它的形状：6 步、展开后 8 次执行。
+    # 用户第一眼看的东西。以前这里钉死"8 步"，但示例会被重新录一遍（一千多步），
+    # 数字一变关卡就红，红得没道理。现在钉"流程文件自己跟自己对得上"：格式与版本对、
+    # 步骤非空、JSON 里的步数 == 引擎展开后的步数。
+    # `variables` 只在手写的流程里有，录制出来的没有——它是可选的，不能当"改坏"的证据。
     Step '示例流程没被改坏' {
         $sample = Join-Path $root 'samples\demo-flow.json'
+        $doc = Get-Content $sample -Raw -Encoding utf8 | ConvertFrom-Json
+        if ($doc.format -ne 'keymouse-flow') { throw "samples\demo-flow.json 的 format 不是 keymouse-flow（是 '$($doc.format)'）" }
+        if ($null -eq $doc.version) { throw 'samples\demo-flow.json 少了 version' }
+        if ($null -eq $doc.steps) { throw 'samples\demo-flow.json 少了 steps' }
+        $count = @($doc.steps).Count
+        if ($count -lt 1) { throw 'samples\demo-flow.json 一步都没有' }
         $out = & (Join-Path $root 'artifacts\cli\KeyMouse.exe') run $sample --dry-run 2>&1 | Out-String
-        # 这一步只关心"流程本身还是不是八步"：窗口在不在是环境的事，--dry-run
+        # 这一步只关心"流程本身还对吧"：窗口在不在是环境的事，--dry-run
         # 找不到 notepad 时退出码非 0，那不是这道关卡要管的东西。
         $global:LASTEXITCODE = 0
-        if ($out -notmatch '8 步') { throw "samples\demo-flow.json 展开后应当是 8 步，实际：$($out -split "`n" | Select-Object -First 2)" }
+        if ($out -notmatch "$count 步") { throw "samples\demo-flow.json 有 $count 步，引擎展开后对不上：$($out -split "`n" | Select-Object -First 2)" }
     }
 
     if ($SkipPack) {

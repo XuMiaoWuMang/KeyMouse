@@ -66,6 +66,28 @@
     return value === null || value === undefined ? '' : String(value);
   }
 
+  /**
+   * 下拉框显示什么：步骤里写了就用它，没写就用契约里的默认值。
+   *
+   * 左键点击是最常见的例子——文件里根本不写 `button`，契约说默认 `left`，
+   * 结果下拉框一片空白，看着像"这一项没了"。显示默认值不等于写进文件：
+   * 改动时仍然只在**不同于默认值**的时候才落键（见 commitEnum）。
+   */
+  function enumText(step: unknown, field: FieldContract): string {
+    const written = readText(step, field.name);
+    if (written !== '') return written;
+    return asText(field.default);
+  }
+
+  /** 枚举框：选回默认值就把这个键删掉，别让默认值混进流程文件。 */
+  function commitEnum(path: string, picked: string, field: FieldContract) {
+    if (picked === '') {
+      onchange(path, undefined);
+      return;
+    }
+    onchange(path, picked === asText(field.default) ? undefined : picked);
+  }
+
   /** 数字框：清空就删掉这个键，别让 `int` 字段变成空串。 */
   function commitInt(path: string, raw: string, field: FieldContract) {
     const trimmed = raw.trim();
@@ -146,11 +168,8 @@
             />
           {:else if field.kind === 'enum'}
             <select
-              value={readText(step, field.name)}
-              on:change={(event) => {
-                const picked = event.currentTarget.value;
-                onchange(field.name, picked === '' ? undefined : picked);
-              }}
+              value={enumText(step, field)}
+              on:change={(event) => commitEnum(field.name, event.currentTarget.value, field)}
             >
               {#each field.values ?? [] as value}
                 <option value={value}>{field.valueLabels?.[value]?.zh ?? value}</option>
@@ -164,9 +183,9 @@
                   <span class="label">{label(sub)}</span>
                   {#if sub.kind === 'enum'}
                     <select
-                      value={readText(step, `${field.name}.${sub.name}`)}
+                      value={readText(step, `${field.name}.${sub.name}`) || asText(sub.default)}
                       on:change={(event) =>
-                        onchange(`${field.name}.${sub.name}`, event.currentTarget.value)}
+                        commitEnum(`${field.name}.${sub.name}`, event.currentTarget.value, sub)}
                     >
                       {#each sub.values ?? [] as value}
                         <option value={value}>{sub.valueLabels?.[value]?.zh ?? value}</option>

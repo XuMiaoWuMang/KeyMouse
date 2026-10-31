@@ -37,6 +37,26 @@ internal static class StopKeyTests
         Harness.Equal("停止键不进流程", 0,
             twice.Steps.Count(s => s.Type == "key" && (s.Text ?? "").Contains("esc")));
 
+        Harness.Group("stopkey: 两次 ESC 隔太远就不算「连按」");
+        // 0.3 秒是"人手双击"的上限。再宽一点，编辑器里按 ESC 取消、游戏里关面板这类
+        // 正常操作会被当成"停止录制"，而那一下 ESC 已经记进流程了（实测反馈）。
+        // 注意这里必须真的等：窗口按**墙钟**算（Now() = Environment.TickCount64），
+        // 不是按钩子报的 time 字段算——钩子时间戳可能已经旧了，用它会错判。
+        // minGap 给 0：待定的那次 ESC 是在第二次按下时才补记的，两次记录的时间戳
+        // 几乎相同，留着 300ms 的间隔过滤会把第二条吃掉——那是别的规则，不是这条。
+        var slow = new Recorder.Session(
+            Path.Combine(Path.GetTempPath(), "keymouse-stopkey-slow.json"), 0, 8, false, 0);
+        slow.OnEvent(Key(0x1B, 1000));
+        slow.OnEvent(Key(0x1B, 1060, up: true));
+        Thread.Sleep(420);
+        slow.OnEvent(Key(0x1B, 1400));
+        Harness.Check("隔了 400 多毫秒不算连按，不停止", !slow.ShouldStop());
+        slow.Finish();
+        // 只要求它"没被当成停止键吞掉"：慢拍的第二下会留在待定槽里，
+        // 结束时才补记，具体落几条取决于补记顺序（那是刷新逻辑的细节，不是这条规则）。
+        Harness.Check("那一下 ESC 没被当成停止键吞掉，仍旧记进流程",
+            slow.Steps.Any(s => s.Type == "key" && (s.Text ?? "").Contains("esc")));
+
         Harness.Group("stopkey: Ctrl+Alt+Q 用左右 Ctrl 都要认");
 
         // 钩子报 VK_LCONTROL(0xA2)：旧实现只认 VK_CONTROL，于是这组永远不会触发。

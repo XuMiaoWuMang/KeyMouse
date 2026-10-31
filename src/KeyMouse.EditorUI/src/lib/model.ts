@@ -77,6 +77,12 @@ export type StepType =
   | 'wheel'
   | 'type'
   | 'key'
+  | 'keydown'
+  | 'keyup'
+  | 'keyhold'
+  | 'mousedown'
+  | 'mouseup'
+  | 'mousehold'
   | 'sleep'
   | 'wait-window'
   | 'wait-text'
@@ -94,6 +100,14 @@ const TITLES: Record<StepType, string> = {
   wheel: '滚轮',
   type: '输入文字',
   key: '按键/组合键',
+  // 这四个是"按下 / 松开"分开写的那一对，录制与命令行都能产生；
+  // 少了它们列表里就只剩英文类型名（实测：用户录一段长按，行上写着 keyhold）。
+  keydown: '按住键',
+  keyup: '松开键',
+  keyhold: '键盘长按',
+  mousedown: '按住鼠标键',
+  mouseup: '松开鼠标键',
+  mousehold: '鼠标长按',
   sleep: '等待时间',
   'wait-window': '等窗口出现',
   'wait-text': '等文字出现',
@@ -137,6 +151,13 @@ function clickLabel(step: FlowStep): string {
   return where;
 }
 
+/** 「左键 / 右键 / 中键」：没写 button 就是左键（契约里的默认值）。 */
+export function buttonLabel(step: FlowStep): string {
+  if (step.button === 'right') return '右键';
+  if (step.button === 'middle') return '中键';
+  return '左键';
+}
+
 /**
  * 一行摘要。规则和 WinUI 版的 `StepVm.Summary` 一致：**说"这一步做什么"，
  * 不说"字段是什么"**——参数只写人会关心的那几个。
@@ -152,6 +173,20 @@ export function stepSummary(step: FlowStep): string {
     }
     case 'key':
       return step.combo ? `按 ${step.combo}` : step.text ? `敲「${step.text}」` : '按键';
+    case 'keydown':
+    case 'keyup': {
+      const which = step.combo ?? step.text ?? '?';
+      return `${step.type === 'keydown' ? '按住' : '松开'} ${which}`;
+    }
+    case 'keyhold': {
+      const which = step.combo ?? step.text ?? '?';
+      return step.ms ? `按住 ${which} ${step.ms} ms` : `按住 ${which}`;
+    }
+    case 'mousedown':
+    case 'mouseup':
+      return `${step.type === 'mousedown' ? '按住' : '松开'} ${buttonLabel(step)}`;
+    case 'mousehold':
+      return step.ms ? `按住 ${buttonLabel(step)} ${step.ms} ms` : `按住 ${buttonLabel(step)}`;
     case 'sleep':
       return `等 ${step.ms ?? 0} ms`;
     case 'click':

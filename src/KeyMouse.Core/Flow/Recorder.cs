@@ -23,6 +23,35 @@ namespace KeyMouse.Flow;
 /// </summary>
 internal static class Recorder
 {
+    /// <summary>
+    /// 给录好的步骤补一个开头的 `focus`：先把这个窗口切到前台。
+    ///
+    /// 为什么：录制只写坐标、不绑窗口。回放时目标窗口可能被别的窗口压着，
+    /// 第一下点击就打在别人身上，后面的字全打进空气（实测反馈）。
+    /// 只记 process 不记 title——记事本换个文件名 title 就变了，那会让回放第一步就找不到窗口。
+    ///
+    /// 已经以 `focus` 开头、或者根本没记到起始窗口时原样返回；返回的是新列表，
+    /// 调用方的 `Steps` 不被改动（录制还在继续时不该被插一条假的）。
+    /// </summary>
+    internal static List<FlowStep> WithLeadingFocus(List<FlowStep> steps, FlowTarget? start)
+    {
+        if (start is not { } target || string.IsNullOrWhiteSpace(target.Process)) return steps;
+        if (steps.Count > 0 && steps[0].Type == "focus") return steps;
+
+        var withFocus = new List<FlowStep>(steps.Count + 1)
+        {
+            new()
+            {
+                Type = "focus",
+                Target = target,
+                AtMs = 0,
+                Note = "录制时第一下操作就在这个窗口上；先切它到前台，后面的坐标才落得准",
+            },
+        };
+        withFocus.AddRange(steps);
+        return withFocus;
+    }
+
     private const int VkShift = 0x10;
     private const int VkControl = 0x11;
     private const int VkMenu = 0x12;
@@ -141,6 +170,16 @@ internal static class Recorder
         /// </summary>
         private HookEvent? _pendingEscape;
         private uint _lastEscapeAt;
+
+        /// <summary>
+        /// 录制开始时"用户第一下落在哪个窗口"——它会变成流程的第一步 `focus`。
+        ///
+        /// 为什么要有它：录制只写坐标、不绑窗口，回放时目标窗口可能被别的窗口压着，
+        /// 第一下点击就打在别的窗口上（实测反馈：跑 demo-flow 时记事本没到前台，字全打空了）。
+        /// 只在**第一下操作**那个窗口上取一次，后面鼠标移到哪儿都不影响它。
+        /// 记 process 不记 title：记事本换个文件名 title 就变了，那会让回放第一步就找不到窗口。
+        /// </summary>
+        private FlowTarget? _startTarget;
 
         /// <summary>
         /// 连按两次 ESC 停止录制：**两次按下必须落在这么近**（毫秒）。
@@ -541,12 +580,32 @@ internal static class Recorder
             int trajectoryAtPress = 0;
             var lastStepTime = _startedAt;
 
+            /// <summary>
+            /// 记下"第一下操作落在哪个窗口"，保存时它会成为流程的第一步 `focus`。
+            /// 指针步骤按坐标找窗口，键盘步骤取当时的前台窗口。
+            /// </summary>
+            void CaptureStartTarget(FlowStep step)
+            {
+                if (_startTarget != null) return;
+                var at = step.At;
+                IntPtr h = at != null
+                    ? WindowLocator.WindowAt(at.X, at.Y)
+                    : NativeWindow.GetForegroundWindow();
+                h = NativeWindow.Root(h);
+                if (h == IntPtr.Zero) return;
+                NativeWindow.GetWindowThreadProcessId(h, out uint pid);
+                string process = NativeWindow.ProcessNameOf(pid);
+                if (string.IsNullOrWhiteSpace(process)) return;
+                _startTarget = new FlowTarget { Process = process };
+            }
+
             void Emit(FlowStep step, HookEvent at)
             {
                 // 时间线：每一步带上"从录制开始算的第几毫秒"，回放据此排程。
                 // 停顿**不再补 sleep 步骤**：atMs 已经表达了间隔，再写一条"等待时间"
                 // 既重复又碍眼（用户看到的就是 hold / 等待时间 / 抬起 三行，非常像三个操作）。
                 step.AtMs = (int)Math.Max(0, (long)at.Time - _startedAt);
+                CaptureStartTarget(step);
                 Steps.Add(step);
                 lastStepTime = at.Time;
             }
@@ -685,10 +744,14 @@ internal static class Recorder
                     new Point(dangling.Event.X, dangling.Event.Y), null, null, null), dangling.Event);
             }
 
+            // 第一步先把这个窗口切到前台：否则回放时目标窗口可能被压着，
+            // 第一下点击就落在别人身上。已经是 focus 开头的流程不再补。
+            List<FlowStep> saved = WithLeadingFocus(Steps, _startTarget);
+
             var document = new FlowDocument
             {
                 RecordedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
-                DurationMs = Steps.Count > 0 ? Steps.Max(s => s.AtMs ?? 0) : 0,
+                DurationMs = saved.Count > 0 ? saved.Max(s => s.AtMs ?? 0) : 0,
                 Screen = new FlowScreen { Width = VirtualWidth(), Height = VirtualHeight() },
                 Options = new FlowOptions
                 {
@@ -696,7 +759,7 @@ internal static class Recorder
                     MoveThresholdPx = _moveThreshold,
                     Shots = _shots,
                 },
-                Steps = Steps,
+                Steps = saved,
             };
             document.Save(OutputPath);
         }

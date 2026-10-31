@@ -25,11 +25,13 @@
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import {
     MIN_MOVE_RUN,
+    MIN_WHEEL_RUN,
     displayNumbers,
-    foldMoves,
+    foldRuns as foldsOf,
     isFoldHead,
     isFoldMember,
-    moveRunSummary,
+    runKind,
+    runSummary,
   } from './lib/fold';
   import {
     addSection,
@@ -164,8 +166,8 @@ $: rowKeys = steps.map((_, index) => String(index + 1));
    * 过滤时一律不折：过滤是在找"某一步"，把命中的行塞进折叠组里会让人以为它们没了。
    */
   $: foldRuns = filter
-    ? steps.map(() => ({ head: -1, offset: 0, count: 0 }))
-    : foldMoves(steps as readonly { type?: string }[]);
+    ? steps.map(() => ({ kind: 'move' as const, head: -1, offset: 0, count: 0 }))
+    : foldsOf(steps as readonly { type?: string }[]);
   /** 显示编号：折起来的一组占一个号（结果落行仍按 `rowKeys`，两套编号各管各的）。 */
   $: displayNo = displayNumbers(foldRuns);
   /** 哪些折叠组被点开了。默认全收起——四十行轨迹不该默认铺开。 */
@@ -2016,14 +2018,18 @@ $: syncTitle(doc, path, dirty);
             </div>
           {/if}
           {#if isFoldHead(foldRuns, index)}
-            <!-- 自动折叠的连续移动：题头像一步那样占一行，但内容只读——它不是真步骤。
+            <!-- 自动折叠的连续移动 / 滚轮：题头像一步那样占一行，但内容只读——它不是真步骤。
                  点整行展开/收起；展开后组里每一步都是真步骤，可以选中改。 -->
+            {@const run = foldRuns[index]}
+            {@const runName = runKind(foldRuns, index) ?? 'move'}
             <div class="row-wrap move-run" data-row-index={index} data-move-head={index}>
               <button
                 class="row move-head"
                 class:selected={index === selected && childSel === null}
                 aria-expanded={moveOpen[index] ?? false}
-                title={moveOpen[index] ? '点一下收起这组移动' : '点一下展开这组移动'}
+                title={moveOpen[index]
+                  ? `点一下收起这组${runName === 'wheel' ? '滚轮' : '移动'}`
+                  : `点一下展开这组${runName === 'wheel' ? '滚轮' : '移动'}`}
                 on:click={() => {
                   toggleMoveRun(index);
                   selected = index;
@@ -2035,13 +2041,13 @@ $: syncTitle(doc, path, dirty);
                 <span class="rail" aria-hidden="true"></span>
                 <span class="step-dot" aria-hidden="true"></span>
                 <span class="number">{rowNumber(index)}</span>
-                <span class="chip" aria-hidden="true"><StepIcon name="move" size={14} /></span>
+                <span class="chip" aria-hidden="true"><StepIcon name={runName} size={14} /></span>
                 <span class="text">
-                  <span class="title">移动鼠标</span>
-                  <span class="summary move-ends">{moveRunSummary(steps, index, foldRuns[index].count)}</span>
+                  <span class="title">{stepTitle(runName)}</span>
+                  <span class="summary move-ends">{runSummary(steps, index, run.count)}</span>
                 </span>
                 <span class="tags">
-                  <span class="count">{foldRuns[index].count} 次</span>
+                  <span class="count">{run.count} 次</span>
                   {#if foldRunResult(index)}
                     <span class="result" class:bad={!foldRunResult(index)?.ok} title={foldRunResult(index)?.text}>
                       {foldRunResult(index)?.ok ? '✓' : '✗'}<span class="result-text">{foldRunResult(index)?.text}</span>
@@ -2070,7 +2076,7 @@ $: syncTitle(doc, path, dirty);
                     <span class="rail" aria-hidden="true"></span>
                     <span class="step-dot" aria-hidden="true"></span>
                     <span class="number">{rowNumber(index)}.{k + 1}</span>
-                    <span class="chip" aria-hidden="true"><StepIcon name="move" size={14} /></span>
+                    <span class="chip" aria-hidden="true"><StepIcon name={steps[real].type} size={14} /></span>
                     <span class="text">
                       <span class="title">{stepTitle(steps[real].type)}</span>
                       <span class="summary">{stepSummary(steps[real])}</span>
@@ -2271,23 +2277,33 @@ $: syncTitle(doc, path, dirty);
 
       <aside class="side" aria-label="这一步的设置">
         {#if current && foldHeadSelected}
-          <!-- 自动折叠的移动组：题头不是任何一步，所以这里只给"看"，不给改。
-               要改就点开它，逐条选中组里的移动再改——那才是真步骤。 -->
+          <!-- 自动折叠的移动 / 滚轮组：题头不是任何一步，所以这里只给"看"，不给改。
+               要改就点开它，逐条选中组里的步骤再改——那才是真步骤。 -->
+          {@const headRun = foldRuns[selected]}
+          {@const headKind = runKind(foldRuns, selected) ?? 'move'}
+          {@const headIsWheel = headKind === 'wheel'}
           <h2 class="section">这一组是自动折起来的</h2>
           <dl class="fold-facts">
-            <dt>起点</dt>
-            <dd>{moveRunSummary(steps, selected, foldRuns[selected].count).split(' → ')[0]}</dd>
-            <dt>终点</dt>
-            <dd>{moveRunSummary(steps, selected, foldRuns[selected].count).split(' → ')[1]}</dd>
+            {#if headIsWheel}
+              <dt>位置</dt>
+              <dd>{runSummary(steps, selected, headRun.count).split(' · ')[0]}</dd>
+              <dt>合计</dt>
+              <dd>{runSummary(steps, selected, headRun.count).split(' · ')[1]}</dd>
+            {:else}
+              <dt>起点</dt>
+              <dd>{runSummary(steps, selected, headRun.count).split(' → ')[0]}</dd>
+              <dt>终点</dt>
+              <dd>{runSummary(steps, selected, headRun.count).split(' → ')[1]}</dd>
+            {/if}
             <dt>次数</dt>
-            <dd>{foldRuns[selected].count} 次连续移动</dd>
+            <dd>{headRun.count} 次连续{headIsWheel ? '滚轮' : '移动'}</dd>
           </dl>
           <p class="fold-note">
-            连续 {MIN_MOVE_RUN} 次以上的鼠标移动会折成这样一行，读流程时先看"从哪儿到哪儿"。
-            这一行<strong>没有可改的内容</strong>：点它展开，组里每一次移动都是真步骤，选中就能改。
+            连续 {headIsWheel ? MIN_WHEEL_RUN : MIN_MOVE_RUN} 次以上的{headIsWheel ? '滚轮' : '鼠标移动'}会折成这样一行，读流程时先看{headIsWheel ? '"一共滚了多远"' : '"从哪儿到哪儿"'}。
+            这一行<strong>没有可改的内容</strong>：点它展开，组里每{headIsWheel ? '一次滚动' : '一次移动'}都是真步骤，选中就能改。
           </p>
           <button class="ghost fold-toggle" on:click={() => toggleMoveRun(selected)}>
-            {moveOpen[selected] ? '收起这组移动' : '展开这组移动'}
+            {moveOpen[selected] ? `收起这组${headIsWheel ? '滚轮' : '移动'}` : `展开这组${headIsWheel ? '滚轮' : '移动'}`}
           </button>
         {:else if current}
           <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />

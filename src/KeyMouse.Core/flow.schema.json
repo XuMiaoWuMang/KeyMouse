@@ -188,6 +188,16 @@
             "client"
           ],
           "default": "screen",
+          "valueLabels": {
+            "screen": {
+              "zh": "屏幕",
+              "en": "screen"
+            },
+            "client": {
+              "zh": "客户区",
+              "en": "client"
+            }
+          },
           "label": {
             "zh": "坐标空间（默认屏幕）",
             "en": "space"
@@ -778,6 +788,20 @@
             "right",
             "middle"
           ],
+          "valueLabels": {
+            "left": {
+              "zh": "左键",
+              "en": "left"
+            },
+            "right": {
+              "zh": "右键",
+              "en": "right"
+            },
+            "middle": {
+              "zh": "中键",
+              "en": "middle"
+            }
+          },
           "label": {
             "zh": "哪个鼠标键",
             "en": "mouse button"
@@ -853,6 +877,20 @@
             "middle"
           ],
           "default": "left",
+          "valueLabels": {
+            "left": {
+              "zh": "左键",
+              "en": "left"
+            },
+            "right": {
+              "zh": "右键",
+              "en": "right"
+            },
+            "middle": {
+              "zh": "中键",
+              "en": "middle"
+            }
+          },
           "label": {
             "zh": "哪个键",
             "en": "button"
@@ -885,6 +923,20 @@
             "middle"
           ],
           "default": "left",
+          "valueLabels": {
+            "left": {
+              "zh": "左键",
+              "en": "left"
+            },
+            "right": {
+              "zh": "右键",
+              "en": "right"
+            },
+            "middle": {
+              "zh": "中键",
+              "en": "middle"
+            }
+          },
           "label": {
             "zh": "哪个键",
             "en": "button"
@@ -1517,6 +1569,20 @@
             "right",
             "middle"
           ],
+          "valueLabels": {
+            "left": {
+              "zh": "左键",
+              "en": "left"
+            },
+            "right": {
+              "zh": "右键",
+              "en": "right"
+            },
+            "middle": {
+              "zh": "中键",
+              "en": "middle"
+            }
+          },
           "label": {
             "zh": "哪个鼠标键",
             "en": "mouse button"
