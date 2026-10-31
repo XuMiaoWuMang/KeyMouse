@@ -185,6 +185,11 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 "返回 / 刷新 / 另存为 / 打印 / 更多工具"盖住列表）。所以 `onMount` 里在 `document` 上挂了
 一个 `contextmenu` 的 `preventDefault()`——应用里没有需要浏览器原生菜单的地方，粘贴走 Ctrl+V。
 
+**分组里的步骤也能选中、也能改**：点 `6.1` 这样的子行，检查器换成那个子步骤，
+改完写回 `steps[parent].steps[child]`（`replaceCurrent` 一处收口，顶层与子步骤共用）。
+往分组里加步骤照老外壳的习惯：选中分组那一行再点动作，新步骤进组而不是插在组后面，
+加完自动展开这个组。
+
 拖拽排序：把一行拖到另一行的位置上（HTML5 dragstart/dragover/drop，逻辑在 lib/edit.ts 的
 moveTo，单测覆盖越界与原地不动）。自动化里用注入的鼠标发不出浏览器的拖放手势，所以这条
 是按单测 + 人工点击验证的；行内 ↑↓ 与右键菜单是它的等价替代。

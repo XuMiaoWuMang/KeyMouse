@@ -1,12 +1,45 @@
 import { describe, expect, it } from 'vitest';
 
-import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
+import { appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
 import { missingHint, missingOf } from './steps';
 
 const a: FlowStep = { type: 'focus' };
 const b: FlowStep = { type: 'sleep', ms: 10 };
 const c: FlowStep = { type: 'key', combo: 'Ctrl+S' };
+
+describe('appendChild', () => {
+  const group: FlowStep = { type: 'repeat', times: 2, steps: [{ type: 'sleep', ms: 100 }] };
+  const plain: FlowStep = { type: 'sleep', ms: 200 };
+
+  it('往分组末尾加一个子步骤，别的行不动', () => {
+    const next = appendChild([group, plain], 0, { type: 'wheel', delta: -120 });
+    expect(next).toHaveLength(2);
+    expect(next[0].steps).toEqual([
+      { type: 'sleep', ms: 100 },
+      { type: 'wheel', delta: -120 },
+    ]);
+    expect(next[1]).toBe(plain);
+  });
+
+  it('空组也能被填上，原本没有 steps 时就建一个', () => {
+    const empty: FlowStep = { type: 'foreach', in: 'items' };
+    const next = appendChild([empty], 0, { type: 'sleep', ms: 50 });
+    expect(next[0].steps).toEqual([{ type: 'sleep', ms: 50 }]);
+  });
+
+  it('不原地改：原对象与原子数组都不受影响', () => {
+    const before = [group, plain];
+    appendChild(before, 0, { type: 'sleep', ms: 1 });
+    expect(group.steps).toHaveLength(1);
+    expect(before[0]).toBe(group);
+  });
+
+  it('下标越界时原样返回', () => {
+    expect(appendChild([plain], 5, { type: 'sleep', ms: 1 })).toEqual([plain]);
+    expect(appendChild([plain], -1, { type: 'sleep', ms: 1 })).toEqual([plain]);
+  });
+});
 
 describe('insertAfter', () => {
   it('插在指定项之后', () => {

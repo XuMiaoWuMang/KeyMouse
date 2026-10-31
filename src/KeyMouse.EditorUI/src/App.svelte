@@ -7,7 +7,7 @@
   import Inspector from './lib/Inspector.svelte';
   import { fieldsOf, schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
-  import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
+  import { appendChild, duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
@@ -46,6 +46,8 @@
   let doc: FlowDocument | null = null;
   let steps: FlowStep[] = [];
   let selected = 0;
+  /** 选中的是分组里第几个子步骤；null = 选中的是顶层那一行。 */
+  let childSel: number | null = null;
   let dirty = false;
   let outputOpen = false;
   let jsonOpen = false;
@@ -242,7 +244,7 @@ function originOf(index: number, childIndex: number | null): string {
   $: syncDirty(dirty);
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
-  $: current = steps[selected] ?? null;
+  $: current = childSel === null ? steps[selected] ?? null : steps[selected]?.steps?.[childSel] ?? null;
   $: currentShot = current?.shot ?? null;
   // 选中带证据的步骤时才去读那张图；没存过盘就没有可比对的相对路径。
   $: if (currentShot && path) void ensureShot(currentShot);
@@ -749,10 +751,20 @@ function originOf(index: number, childIndex: number | null): string {
     if (!doc) await newFlow();
     if (!doc) return;
     const at = steps.length === 0 ? -1 : selected;
-    applySteps(insertAfter(steps, at, makeStep(type)));
-    selected = at + 1;
+    const fresh = makeStep(type);
+    const host = at >= 0 ? steps[at] : null;
+    // 选中的是一行分组（repeat / foreach / call）时，新步骤进组而不是插在组后面——
+    // 这是老外壳的习惯：分组里想加东西，先选它再点动作。
+    if (host && Array.isArray(host.steps)) {
+      applySteps(appendChild(steps, at, fresh));
+      expanded = { ...expanded, [at]: true };
+      note(`往「${stepTitle(host.type)}」里加了一步${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
+    } else {
+      applySteps(insertAfter(steps, at, fresh));
+      selected = at + 1;
+      note(`加了「${stepTitle(type)}」${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
+    }
     moreOpen = false;
-    note(`加了「${stepTitle(type)}」${missingOf(makeStep(type)).length > 0 ? '：右边补齐还没填的项' : ''}`);
   }
 
   /** 复制这一步（右键菜单里的一项）。副本插在原件后面，并选中副本。 */
@@ -969,27 +981,51 @@ function originOf(index: number, childIndex: number | null): string {
     doc = doc;
   }
 
+  /**
+   * 把"当前选中的那一步"换成 `next`。选中的可能是顶层一行，也可能是某一行里的子步骤——
+   * 后者要顺着 `steps[parent].steps[child]` 换，别把整棵树摊平（摊平会把分组丢掉）。
+   */
+  /** 选中分组里的第 `childIndex` 个子步骤（检查器随之换成它）。 */
+  function selectChild(index: number, childIndex: number) {
+    selected = index;
+    childSel = childIndex;
+    moreOpen = false;
+    rowMenu = null;
+  }
+
+  function replaceCurrent(next: FlowStep) {
+    const top = [...steps];
+    if (childSel === null) {
+      top[selected] = next;
+    } else {
+      const group = steps[selected];
+      if (!group || !Array.isArray(group.steps)) return;
+      const children = [...group.steps];
+      children[childSel] = next;
+      top[selected] = { ...group, steps: children };
+    }
+    doc = { ...doc!, steps: top };
+    steps = top;
+    touch();
+  }
+
   /** 检查器推来的一次改动：路径是点号写法（`when.timeoutMs`），值已经按契约的类型转好。
    *  走 `writePath` 而不是就地赋值——空值要删键、删空的嵌套对象要连父键一起删，
    *  这些规矩写在一处（lib/fieldpath.ts），模板里就不用各个记得。 */
   function applyField(path: string, value: unknown) {
-    const step = steps[selected];
+    const step = current;
     if (!step) return;
-    snapshotEdit(`field:${selected}:${path}`);
+    snapshotEdit(`field:${selected}:${childSel ?? ''}:${path}`);
     // 必须换一份数组/对象：Svelte 只认赋值，原地改字段列表那行不会重画——
     // 表现就是"我改了输入文字，左边还显示旧的"（用户报过这个）。
-    const next = [...steps];
-    next[selected] = writePath(step, path, value) as unknown as FlowStep;
-    doc = { ...doc!, steps: next };
-    steps = next;
-    touch();
+    replaceCurrent(writePath(step, path, value) as unknown as FlowStep);
   }
 
   /** 「取点」「取一块」：屏幕上的事交给命令行（浮层与坐标换算都在它那儿），
    *  这里只把结果写回字段。选中窗口一并填进 target.process——老外壳也这么做：
    *  只有坐标不知道是哪块屏幕，回放到别的窗口上就偏了。 */
   async function pickField(kind: 'point' | 'region', path: string) {
-    const step = steps[selected];
+    const step = current;
     if (!step) return;
     try {
       const picked = await invoke<{
@@ -1005,7 +1041,7 @@ function originOf(index: number, childIndex: number | null): string {
         note('取点取消了');
         return;
       }
-      snapshotEdit(`pick:${selected}:${path}`);
+      snapshotEdit(`pick:${selected}:${childSel ?? ''}:${path}`);
       // 同上：换成新对象再一次性替换，否则列表那行不跟着变。
       let next = writePath(step, path, {
         space: picked.space,
@@ -1017,11 +1053,7 @@ function originOf(index: number, childIndex: number | null): string {
         next = writePath(next, 'target.process', picked.process);
         if (picked.title) next = writePath(next, 'target.title', picked.title);
       }
-      const replaced = [...steps];
-      replaced[selected] = next as unknown as FlowStep;
-      doc = { ...doc!, steps: replaced };
-      steps = replaced;
-      touch();
+      replaceCurrent(next as unknown as FlowStep);
       const where =
         picked.space === 'client' ? '客户区' : picked.space === 'window' ? '窗口' : '屏幕';
       note(
@@ -1272,6 +1304,7 @@ function originOf(index: number, childIndex: number | null): string {
               on:contextmenu={(event) => openRowMenu(index, event)}
               on:click={() => {
                 selected = index;
+                childSel = null;
                 moreOpen = false;
                 rowMenu = null;
               }}
@@ -1323,7 +1356,12 @@ function originOf(index: number, childIndex: number | null): string {
 
           {#if expanded[index]}
             {#each childSteps(step) as child, childIndex}
-              <div class="row child">
+              <!-- 子步骤也能选中：不选中的话它自己的参数（循环体里那一步的文字、坐标）就只能去 JSON 里改。 -->
+              <button
+                class="row child"
+                class:selected={index === selected && childIndex === childSel}
+                on:click={() => selectChild(index, childIndex)}
+              >
                 <span class="rail" aria-hidden="true"></span>
                 <span class="step-dot" aria-hidden="true"></span>
                 <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
@@ -1345,7 +1383,7 @@ function originOf(index: number, childIndex: number | null): string {
                     </span>
                   </span>
                 {/if}
-              </div>
+              </button>
             {/each}
           {/if}
         {/each}
@@ -2154,6 +2192,16 @@ function originOf(index: number, childIndex: number | null): string {
   .row.child .summary {
     font-size: var(--kp-fs-small);
     color: var(--kp-ink2);
+  }
+
+  /* 子步骤被选中时用和顶层行同一套提示（左侧朱砂条 + 底色），只是底色淡一档：
+     它表示"检查器现在编辑的是这一行里的这一小步"。 */
+  .row.child.selected {
+    background: var(--kp-selected);
+  }
+
+  .row.child.selected .title {
+    color: var(--kp-ink);
   }
 
   /* ── 右栏 ───────────────────────────────────────────── */

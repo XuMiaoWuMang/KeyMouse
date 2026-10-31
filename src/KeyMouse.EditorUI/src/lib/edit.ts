@@ -1,5 +1,5 @@
 /**
- * 对步骤列表的五种改动：插入、删除、上移、下移、复制。
+ * 对步骤列表的六种改动：插入、追加进分组、删除、上移、下移、复制。
  *
  * 都是纯函数、都返回新数组：界面把它们的结果塞回文档，单测可以直接调。
  * 不做"带副作用"的原地改——撤销栈就是先把文档序列化一份存起来，原地改会让快照
@@ -12,6 +12,21 @@ import type { FlowStep } from './model';
 export function insertAfter(steps: readonly FlowStep[], index: number, step: FlowStep): FlowStep[] {
   const next = [...steps];
   next.splice(index + 1, 0, step);
+  return next;
+}
+
+/**
+ * 往第 `index` 步（一个分组）里追加一个子步骤。这是老外壳的行为：
+ * 选中 `repeat` / `foreach` / `call` 那一行再点一个动作，新步骤进组，而不是插在组后面。
+ *
+ * 组里原本没有 `steps` 时新建一个——空组也能被这一下填上。
+ */
+export function appendChild(steps: readonly FlowStep[], index: number, child: FlowStep): FlowStep[] {
+  if (index < 0 || index >= steps.length) return [...steps];
+  const group = steps[index];
+  const children = Array.isArray(group.steps) ? [...group.steps, child] : [child];
+  const next = [...steps];
+  next[index] = { ...group, steps: children };
   return next;
 }
 
