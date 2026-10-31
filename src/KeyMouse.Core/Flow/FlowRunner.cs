@@ -138,7 +138,7 @@ internal static class FlowRunner
                     if (step.Type == "sleep" && step.AtMs is not null) step = new FlowStep { Type = "sleep", Ms = 0 };
                 }
                 VariableFrame frame = item.Frame;
-                var record = new CommandRecord { Index = stepNo, Line = stepNo };
+                var record = new CommandRecord { Index = stepNo, Line = stepNo, Origin = item.Origin };
                 var clock = Stopwatch.StartNew();
                 int attempt = 0;
                 int code;

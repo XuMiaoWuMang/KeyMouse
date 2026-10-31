@@ -159,11 +159,12 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
   证据图有自己的块。
-- **行上结果**：命令行每跑完一步写 `[ 3/8] ok …` / `[ 3/8] exit 3 …`，`src/lib/run.ts`
-  的 `parseStepResult` 读出来，按"行下标 = 执行序号 − 1"标到行上。这条换算只在**没有分组步**
-  （`repeat` / `foreach` / `call`）时成立：分组会展开、子流程会内联，一次播放的 3 号可能
-  不是第 3 行。所以 `App.svelte` 用 `flatRun` 守住这个前提，分组流程仍旧只看底部
-  「跑到第 n/N 步」——宁可少显示，不要显示错的一行。
+- **行上结果**：命令行带 `--report` 跑，报告里每步都有 `origin`（`3` 表示第三个顶层步、
+  `6.1` 表示第六步的第一个子步），`src/lib/run.ts` 的 `resultsFromReport` 把它读成
+  「行位置 → 结果」的字典，`App.svelte` 用 `originOf(index, childIndex)` 取同一个键。
+  **分组步不再需要换算**：循环展开三次时 `origin` 三次都是 `6.1`，最后一次执行留在那一行上——
+  这正是"这一行长什么样"的语义。子步骤行也有结果位，收起时看不到、展开就能看。
+  跳过（`skipped`）的步骤写「跳过：<命令>」并按未成功着色，免得把"没跑"看成"成功"。
 - `src-tauri/src/store.rs`：界面自己的账本（最近打开 8 条、上次窗口尺寸），落在
   `%LOCALAPPDATA%\KeyMouse\editor-settings.json`。读写都吞错——账本坏了就当没有。
   窗口尺寸在 `.setup()` 里恢复（不是界面调 API）：那时窗口还没显示，不会先闪一下默认大小。
@@ -188,9 +189,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 moveTo，单测覆盖越界与原地不动）。自动化里用注入的鼠标发不出浏览器的拖放手势，所以这条
 是按单测 + 人工点击验证的；行内 ↑↓ 与右键菜单是它的等价替代。
 
-行上结果：跑完一步，那一行右侧写 `✓ 等 200 ms` 或 `✗ 退出码 3：…`。命令行的编号是**执行序号**
-（分组会展开、子流程会内联），所以只有"整个流程没有分组步"时（`flatRun`）才把它换算成行下标；
-有分组就只写在输出面板里，宁可不显示也不写错行。
+行上结果：跑完一步，那一行右侧写 `✓ 等 200 ms` 或 `✗ 退出码 3：…`。位置由命令行报告里的
+`origin` 决定（`3`、`6.1`），所以带 `repeat` / `foreach` / `call` 的流程也能落到正确的行上；
+循环跑完只剩最后一次执行的结论，因为它回答的是"这一行现在长什么样"。
 
 ## 界面与老外壳的关系
 

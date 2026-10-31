@@ -43,9 +43,38 @@ pub struct RunExit {
     pub cancelled: bool,
 }
 
+/// 这一次运行的报告落哪。
+///
+/// 报告里有每一步的 `origin`（"3"、`"6.1"`），界面靠它把结果写回对应的行——分组步会展开成
+/// 多次执行，光看 `[ 3/8 ]` 的执行序号对不上行号。放在临时目录里，和 `editor-run.json`
+/// 同一个地方，用户想翻也翻得到。
+fn report_path() -> std::path::PathBuf {
+    let base = match std::env::var_os("LOCALAPPDATA") {
+        Some(dir) => std::path::PathBuf::from(dir).join("KeyMouse").join("tmp"),
+        None => std::env::current_exe()
+            .ok()
+            .and_then(|exe| exe.parent().map(|dir| dir.to_path_buf()))
+            .unwrap_or_else(|| std::path::PathBuf::from(".")),
+    };
+    let _ = std::fs::create_dir_all(&base);
+    base.join("editor-run-report.json")
+}
+
+/// 把上一次运行留下的报告原样读给界面。读不到就返回空串：报告是锦上添花，不该让一次
+/// 跑成功的流程因为"报告没了"变成错误。
+#[tauri::command]
+pub fn read_run_report() -> String {
+    std::fs::read_to_string(report_path()).unwrap_or_default()
+}
+
 /// 一条命令的参数。抽出来是为了能单测：`--dry-run` 必须在路径后面，不能丢。
 fn run_args(path: &str, dry_run: bool) -> Vec<String> {
-    let mut args = vec!["run".to_string(), path.to_string()];
+    let mut args = vec![
+        "run".to_string(),
+        path.to_string(),
+        "--report".to_string(),
+        report_path().to_string_lossy().to_string(),
+    ];
     if dry_run {
         args.push("--dry-run".to_string());
     }
@@ -244,11 +273,14 @@ mod tests {
 
     #[test]
     fn dry_run_arg_comes_after_the_path() {
-        assert_eq!(run_args("a.json", true), vec!["run", "a.json", "--dry-run"]);
+        assert_eq!(run_args("a.json", true)[0..3], ["run".to_string(), "a.json".to_string(), "--report".to_string()]);
+        assert_eq!(*run_args("a.json", true).last().unwrap(), "--dry-run".to_string());
     }
 
     #[test]
     fn play_has_no_extra_flags() {
-        assert_eq!(run_args("a b.json", false), vec!["run", "a b.json"]);
+        let plain = run_args("a b.json", false);
+        assert_eq!(plain[0..2], ["run".to_string(), "a b.json".to_string()]);
+        assert!(!plain.contains(&"--dry-run".to_string()));
     }
 }

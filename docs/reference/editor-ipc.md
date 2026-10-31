@@ -182,6 +182,11 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 | `run_cancel` | — | `boolean`：有没有东西被掐掉 |
 | `write_scratch_flow` | `text` | `string`：临时副本的完整路径 |
 | `pause_flow` | `paused: boolean` | `boolean`：确实有在跑的东西被按了 |
+| `read_run_report` | — | `string`：上一次运行的报告全文，读不到是空串 |
+
+`read_run_report` 读的是 `%LOCALAPPDATA%\KeyMouse\tmp\editor-run-report.json`——每次运行都带
+`--report` 写到那儿，界面在 `run-exit` 之后读它，按报告里的 `origin`（`3`、`6.1`）把每步的
+结果写到对应的行上。读不到就是空串、界面只留底部输出：报告是补充，不是运行的前提。
 
 `pause_flow` 只是**置上/清掉**子进程的那个命名事件（`Local\KeyMouse-pause-<pid>`，见
 [`cli.md`](cli.md#暂停与继续)）：停点由命令行决定，永远落在两步之间。外壳不自己挂起线程——

@@ -49,6 +49,13 @@ internal sealed class CommandRecord
     public int Line { get; set; }
     public string Command { get; set; } = "";
 
+    /// <summary>
+    /// Where this execution came from in the document the editor shows: "3" for the third top-level
+    /// step, "6.1" for the first child of the sixth. Empty for script mode (a text file has lines,
+    /// not rows) so the JSON stays honest instead of inventing a number.
+    /// </summary>
+    public string? Origin { get; set; }
+
     /// <summary>The target options this line inherited from an earlier line, if any.</summary>
     public string? InheritedTarget { get; set; }
 

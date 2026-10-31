@@ -9,7 +9,7 @@
   import { writePath } from './lib/fieldpath';
   import { duplicateAt, insertAfter, moveDown, moveTo, moveUp, removeAt, selectionAfterRemove } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
-  import { parseStepResult, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
+  import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
@@ -86,7 +86,7 @@
    * 所以这里只在流程里没有 repeat / foreach / call 时才把结果标到行上——那种流程里
    * 执行顺序和显示顺序才是同一件事。分组流程仍旧看底部的「跑到第 n/N 步」。
    */
-  let results: Record<number, StepResult> = {};
+  let results: Record<string, StepResult> = {};
   /** 这一轮是不是试运行：行上的结果要标出来，否则和真跑长得一模一样。 */
   let runIsDry = false;
   /** 这一轮跑的是临时副本（改动没保存）：结束提示时要说清楚，免得人以为文件已经被跑过。 */
@@ -100,7 +100,16 @@ ull = 没在拖）。 */
   let dragFrom: number | null = null;
   let dragOver: number | null = null;
   /** 这份流程里有没有分组步（repeat / foreach / call）。有的话行上就不能标编号结果。 */
-  $: flatRun = steps.every((step) => !['repeat', 'foreach', 'call'].includes(step.type));
+  // 行在文档里的位置："1"、"2"、"6.1"——和命令行报告的 `origin` 是同一套写法。
+$: rowKeys = steps.map((_, index) => String(index + 1));
+
+/**
+ * 一行在文档里的位置："3"、`"6.1"`。命令行报告的 `origin` 用的同一套写法，
+ * 所以结果能直接落到这一行上——分组步展开多少次都不影响。
+ */
+function originOf(index: number, childIndex: number | null): string {
+  return childIndex === null ? rowKeys[index] : `${rowKeys[index]}.${childIndex + 1}`;
+}
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
   /**
@@ -162,8 +171,6 @@ ull = 没在拖）。 */
         lines = [...lines, event.payload];
         // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
         progress = parseRunProgress(event.payload.line) ?? progress;
-        const result = parseStepResult(event.payload.line);
-        if (result && flatRun) results = { ...results, [result.index - 1]: { ...result, dry: runIsDry } };
       }),
     );
 
@@ -189,6 +196,15 @@ ull = 没在拖）。 */
           else void adoptRecording(target);
           return;
         }
+
+        // 结果从报告里读：报告按文档结构给出每一行的 origin，分组步展开多少次都落回同一行。
+        // 读不到报告（老版本命令行、临时目录不可写）就保留空结果，比编一个更诚实。
+        void invoke<string>('read_run_report')
+          .then((text) => {
+            const fromReport = resultsFromReport(text, runIsDry);
+            if (Object.keys(fromReport).length > 0) results = fromReport;
+          })
+          .catch(() => undefined);
 
         note(runConclusion(code, cancelled), runIsBad(code, cancelled));
       }),
@@ -1269,10 +1285,10 @@ ull = 没在拖）。 */
                 <span class="summary">{stepSummary(step)}</span>
               </span>
               <span class="tags">
-              {#if results[index]}
-                <!-- 一步的结果写在行上（老外壳也这样）：编号即执行序号，只对没有分组步的流程成立。 -->
-                <span class="result" class:bad={!results[index].ok} title={results[index].text}>
-                  {results[index].ok ? '✓' : '✗'} {#if results[index].dry}<span class="dry-tag">检查</span>{/if}<span class="result-text">{results[index].text}</span>
+              {#if results[rowKeys[index]]}
+                <!-- 一步的结果写在行上（老外壳也这样）：键是这一行在文档里的位置，来自命令行报告的 origin。 -->
+                <span class="result" class:bad={!results[rowKeys[index]].ok} title={results[rowKeys[index]].text}>
+                  {results[rowKeys[index]].ok ? '✓' : '✗'} {#if results[rowKeys[index]].dry}<span class="dry-tag">检查</span>{/if}<span class="result-text">{results[rowKeys[index]].text}</span>
                 </span>
               {/if}
               {#if childSteps(step).length > 0}
@@ -1316,6 +1332,19 @@ ull = 没在拖）。 */
                   <span class="title">{stepTitle(child.type)}</span>
                   <span class="summary">{stepSummary(child)}</span>
                 </span>
+                {#if results[originOf(index, childIndex)]}
+                  <span class="tags">
+                    <span
+                      class="result"
+                      class:bad={!results[originOf(index, childIndex)].ok}
+                      title={results[originOf(index, childIndex)].text}
+                    >
+                      {results[originOf(index, childIndex)].ok ? '✓' : '✗'}
+                      {#if results[originOf(index, childIndex)].dry}<span class="dry-tag">检查</span>{/if}
+                      <span class="result-text">{results[originOf(index, childIndex)].text}</span>
+                    </span>
+                  </span>
+                {/if}
               </div>
             {/each}
           {/if}

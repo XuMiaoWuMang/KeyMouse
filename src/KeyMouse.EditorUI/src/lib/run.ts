@@ -46,8 +46,6 @@ export function runHint(dryRun: boolean): string {
 
 /** 命令行报告的一步结果。 */
 export interface StepResult {
-  /** 命令行的执行序号，从 1 开始（不是界面里的行号，见 `parseStepResult` 的说明）。 */
-  index: number;
   ok: boolean;
   /** 命令行给的描述，例如 `等 6000 ms`、`退出码 3：窗口不满足条件`。 */
   text: string;
@@ -55,33 +53,53 @@ export interface StepResult {
   dry?: boolean;
 }
 
+/** 报告里的一步。字段名与命令行 `--report` 写出的 JSON 一致。 */
+interface ReportCommand {
+  index?: number;
+  origin?: string;
+  command?: string;
+  exitCode?: number;
+  skipped?: boolean;
+}
+
 /**
- * 从一行输出里读"这一步怎么样了"。
+ * 把命令行的 `--report` 读成"每个界面行一个结果"，键是行在文档里的位置（"3"、"6.1"）。
  *
- * 命令行打完一步会写 `[  3/8] ok 等 6000 ms` 或 `[  3/8] exit 3 ...`。注意这个编号是
- * **执行序号**：分组步会展开、子流程会内联，于是它和界面里的行号不是一回事。界面只在
- * "流程里没有分组步"时拿它当场标（见 `App.svelte` 的 `flatRun`）。
+ * 为什么不再靠解析 `[ 3/8 ]`：那个编号是**执行序号**，分组步会展开、子流程会内联，于是
+ * 它对不上行号。报告里的 `origin` 是命令行按文档结构算出来的，分组步的每一次执行都指向
+ * 同一行走；循环跑三遍时最后一次的结果留在那一行上——这正是"这一行长什么样"该表达的。
  */
-export function parseStepResult(line: string): StepResult | null {
-  const head = /^\s*\[\s*(\d+)\s*\/\s*(\d+)\s*\]\s*(.*)$/.exec(line);
-  if (!head) return null;
+export function resultsFromReport(text: string, dry: boolean): Record<string, StepResult> {
+  if (!text.trim()) return {};
 
-  const index = Number(head[1]);
-  const total = Number(head[2]);
-  if (!Number.isFinite(index) || index < 1) return null;
-  if (!Number.isFinite(total) || total < 1) return null;
-
-  const body = head[3].trim();
-  const okMatch = /^ok\b\s*(.*)$/.exec(body);
-  if (okMatch) return { index, ok: true, text: okMatch[1].trim() };
-
-  const exitMatch = /^exit\s+(-?\d+)\s*:?\s*(.*)$/.exec(body);
-  if (exitMatch) {
-    const code = exitMatch[1];
-    const detail = exitMatch[2].trim();
-    return { index, ok: false, text: detail ? `退出码 ${code}：${detail}` : `退出码 ${code}` };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return {};
   }
 
-  return null;
+  const commands = (parsed as { commands?: unknown }).commands;
+  if (!Array.isArray(commands)) return {};
+
+  const results: Record<string, StepResult> = {};
+  for (const raw of commands) {
+    const entry = raw as ReportCommand;
+    const origin = typeof entry.origin === 'string' ? entry.origin : '';
+    if (!origin) continue; // 脚本模式的报告没有行号，跳过比编一个更诚实
+
+    const code = typeof entry.exitCode === 'number' ? entry.exitCode : 0;
+    const detail = (entry.command ?? '').trim();
+    let text: string;
+    if (entry.skipped) text = detail ? `跳过：${detail}` : '跳过';
+    else if (code === 0) text = detail;
+    else text = detail ? `退出码 ${code}：${detail}` : `退出码 ${code}`;
+
+    results[origin] = { ok: !entry.skipped && code === 0, text, dry };
+  }
+
+  return results;
 }
+
+
 

@@ -108,6 +108,7 @@ fn main() {
             run::validate_flow,
             run::run_flow,
             run::run_cancel,
+            run::read_run_report,
             run::pause_flow,
             record::record_flow,
             record::record_flow_elevated,

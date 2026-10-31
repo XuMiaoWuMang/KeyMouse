@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseStepResult, runConclusion, runHint, runIsBad } from './run';
+import { resultsFromReport, runConclusion, runHint, runIsBad } from './run';
 
 describe('runConclusion', () => {
   it('被停止掐掉的不算失败', () => {
@@ -32,35 +32,37 @@ describe('runHint', () => {
   });
 });
 
-describe('parseStepResult', () => {
-  it('读成功那一步的编号与描述', () => {
-    expect(parseStepResult('[  1/2] ok         等 6000 ms')).toEqual({
-      index: 1,
-      ok: true,
-      text: '等 6000 ms',
-    });
+describe('resultsFromReport', () => {
+  const report = JSON.stringify({
+    commands: [
+      { index: 1, origin: '1', command: 'KeyMouse window focus --process notepad', exitCode: 0 },
+      { index: 2, origin: '2', command: 'KeyMouse key type 你好', exitCode: 0 },
+      { index: 3, origin: '6.1', command: 'KeyMouse mouse wheel -120', exitCode: 0 },
+      { index: 4, origin: '6.1', command: 'KeyMouse mouse wheel -120', exitCode: 3 },
+      { index: 5, origin: '7', command: '等 300 ms', exitCode: 0, skipped: true },
+    ],
   });
 
-  it('读失败那一步的退出码与原因', () => {
-    expect(parseStepResult('[ 3/8] exit 3 没有窗口匹配 --process notepad')).toEqual({
-      index: 3,
-      ok: false,
-      text: '退出码 3：没有窗口匹配 --process notepad',
-    });
+  it('按行位置给结果，分组步最后一次执行留在那一行上', () => {
+    const results = resultsFromReport(report, true);
+    expect(results['1']).toEqual({ ok: true, text: 'KeyMouse window focus --process notepad', dry: true });
+    expect(results['2'].ok).toBe(true);
+    expect(results['2'].text).toBe('KeyMouse key type 你好');
+    expect(results['6.1'].ok).toBe(false);
+    expect(results['6.1'].text).toBe('退出码 3：KeyMouse mouse wheel -120');
   });
 
-  it('只有退出码没有原因也认', () => {
-    expect(parseStepResult('[ 2/5] exit 1')).toEqual({ index: 2, ok: false, text: '退出码 1' });
+  it('跳过的步骤不算成功，但也不是失败', () => {
+    const results = resultsFromReport(report, false);
+    expect(results['7'].ok).toBe(false);
+    expect(results['7'].text).toBe('跳过：等 300 ms');
+    expect(results['7'].dry).toBe(false);
   });
 
-  it('不是这一步报告的行一律 null', () => {
-    expect(parseStepResult('流程 D:\\a\\b.json')).toBeNull();
-    expect(parseStepResult('录制于 2026-10-30T20:00:00+08:00')).toBeNull();
-    expect(parseStepResult('[ 1/9] ???')).toBeNull();
-  });
-
-  it('编号不是正数的行不算', () => {
-    expect(parseStepResult('[ 0/3] ok x')).toBeNull();
-    expect(parseStepResult('[ 2/0] ok x')).toBeNull();
+  it('空报告、坏 JSON、没有 origin 的都被忽略', () => {
+    expect(resultsFromReport('', true)).toEqual({});
+    expect(resultsFromReport('{ not json', true)).toEqual({});
+    expect(resultsFromReport(JSON.stringify({ commands: [{ index: 1, exitCode: 0 }] }), true)).toEqual({});
+    expect(resultsFromReport(JSON.stringify({ nothing: true }), true)).toEqual({});
   });
 });

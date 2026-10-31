@@ -285,11 +285,16 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
   "exitCode": 3,
   "stoppedAtLine": 3,
   "commands": [
-    { "index": 1, "line": 2, "command": "key type \"hi\" --process notepad",
+    { "index": 1, "origin": "1", "line": 2, "command": "key type \"hi\" --process notepad",
       "exitCode": 0, "attempts": 1, "durationMs": 412, "injectedEvents": 4, "output": "已输入 2 个字符" }
   ]
 }
 ```
+
+`origin` 是这一步在**文档里的位置**：`"3"` 是第三个顶层步，`"6.1"` 是第六步的第一个子步。
+循环展开成多项时同一步的 `origin` 相同（它描述"哪一行"，不是"第几次执行"），子流程内联时
+沿用调用它的那一行的 `origin`——编辑器靠它把结果写回正确的行。脚本（`.txt`）没有这一步，
+所以 `origin` 缺省。
 
 `injectedEvents` 是**真实注入到系统输入队列的事件数**，`--dry-run` 时全程为 0 ——
 报告本身就是"到底有没有发东西"的证据。JSON 用 `UnsafeRelaxedJsonEscaping` 写出，中文不会变成 `\uXXXX`。

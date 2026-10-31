@@ -61,9 +61,15 @@ internal sealed class FlowPlan
     /// One thing to do. Frame is where the step runs **and** where an export lands (the caller's frame
     /// for an export item); ExportFrom is the subflow frame the values are read from, which is the
     /// difference between "hand the caller the value" and "write it into the subflow again".
+    ///
+    /// Origin is where this execution came from in the document the editor is showing: "3" for the
+    /// third top-level step, "6.1" for the first child of the sixth. Loops expand into several items
+    /// with the same Origin (the editor's row is one row, whatever the loop does), and an inlined
+    /// subflow keeps the caller's Origin, because the caller is what the user is looking at.
     /// </summary>
     internal sealed record Item(
-        FlowStep? Step, VariableFrame Frame, IReadOnlyList<string>? Export = null, VariableFrame? ExportFrom = null);
+        FlowStep? Step, VariableFrame Frame, IReadOnlyList<string>? Export = null, VariableFrame? ExportFrom = null,
+        string Origin = "");
 
     /// <summary>Calls nested deeper than this are refused: a subflow tree is not a call stack to abuse.</summary>
     internal const int MaxCallDepth = 8;
@@ -78,16 +84,18 @@ internal sealed class FlowPlan
         var plan = new FlowPlan();
         var root = new VariableFrame(null, document.Texts);
         Add(plan, document.Steps, root, document,
-            Path.GetDirectoryName(full) ?? ".", [full], 0);
+            Path.GetDirectoryName(full) ?? ".", [full], 0, prefix: string.Empty);
         return plan;
     }
 
     private static void Add(
         FlowPlan plan, List<FlowStep> steps, VariableFrame frame, FlowDocument document,
-        string baseDirectory, List<string> stack, int depth)
+        string baseDirectory, List<string> stack, int depth, string prefix)
     {
-        foreach (FlowStep step in steps)
+        for (int index = 0; index < steps.Count; index++)
         {
+            FlowStep step = steps[index];
+            string origin = prefix.Length == 0 ? (index + 1).ToString(CultureInfo.InvariantCulture) : $"{prefix}.{index + 1}";
             switch (step.Type)
             {
                 case "repeat":
@@ -98,7 +106,7 @@ internal sealed class FlowPlan
                         var loop = new VariableFrame(frame, [
                             new KeyValuePair<string, string>("index", round.ToString(CultureInfo.InvariantCulture)),
                         ]);
-                        Add(plan, step.Steps ?? [], loop, document, baseDirectory, stack, depth);
+                        Add(plan, step.Steps ?? [], loop, document, baseDirectory, stack, depth, origin);
                     }
                     continue;
                 }
@@ -114,7 +122,7 @@ internal sealed class FlowPlan
                             new KeyValuePair<string, string>("index", round.ToString(CultureInfo.InvariantCulture)),
                             new KeyValuePair<string, string>("item", items[round]),
                         ]);
-                        Add(plan, step.Steps ?? [], loop, document, baseDirectory, stack, depth);
+                        Add(plan, step.Steps ?? [], loop, document, baseDirectory, stack, depth, origin);
                     }
                     continue;
                 }
@@ -138,17 +146,17 @@ internal sealed class FlowPlan
                     }
 
                     var callFrame = new VariableFrame(new VariableFrame(frame, sub.Texts), overrides);
-                    Add(plan, sub.Steps, callFrame, sub, Path.GetDirectoryName(path) ?? ".", [.. stack, path], depth + 1);
+                    Add(plan, sub.Steps, callFrame, sub, Path.GetDirectoryName(path) ?? ".", [.. stack, path], depth + 1, origin);
 
                     if (step.Export is { Length: > 0 } exported)
                     {
-                        plan.Items.Add(new Item(null, frame, exported, callFrame));
+                        plan.Items.Add(new Item(null, frame, exported, callFrame, origin));
                     }
                     continue;
                 }
             }
 
-            plan.Items.Add(new Item(step, frame, null));
+            plan.Items.Add(new Item(step, frame, null, null, origin));
         }
     }
 }
