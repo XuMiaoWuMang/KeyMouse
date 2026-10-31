@@ -24,6 +24,14 @@
   import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import {
+    MIN_MOVE_RUN,
+    displayNumbers,
+    foldMoves,
+    isFoldHead,
+    isFoldMember,
+    moveRunSummary,
+  } from './lib/fold';
+  import {
     addSection,
     moveSection,
     normalizeSections,
@@ -149,6 +157,25 @@ ull = 没在拖）。 */
   /** 这份流程里有没有分组步（repeat / foreach / call）。有的话行上就不能标编号结果。 */
   // 行在文档里的位置："1"、"2"、"6.1"——和命令行报告的 `origin` 是同一套写法。
 $: rowKeys = steps.map((_, index) => String(index + 1));
+
+  /**
+   * 连续的鼠标移动折成一组（**只折显示**，`steps` 一个字节都不改）。
+   *
+   * 过滤时一律不折：过滤是在找"某一步"，把命中的行塞进折叠组里会让人以为它们没了。
+   */
+  $: foldRuns = filter
+    ? steps.map(() => ({ head: -1, offset: 0, count: 0 }))
+    : foldMoves(steps as readonly { type?: string }[]);
+  /** 显示编号：折起来的一组占一个号（结果落行仍按 `rowKeys`，两套编号各管各的）。 */
+  $: displayNo = displayNumbers(foldRuns);
+  /** 哪些折叠组被点开了。默认全收起——四十行轨迹不该默认铺开。 */
+  let moveOpen: Record<number, boolean> = {};
+  /** 选中的是不是某个折叠组的题头（那它没有可改的字段，检查器换成只读卡片）。 */
+  $: foldHeadSelected = childSel === null && isFoldHead(foldRuns, selected);
+
+  function toggleMoveRun(index: number) {
+    moveOpen = { ...moveOpen, [index]: !moveOpen[index] };
+  }
 
   $: visibleSteps = filterSteps(steps, filter);
   /** 第几行之前有分组头：模板里要按行号查。 */
@@ -798,7 +825,8 @@ $: syncTitle(doc, path, dirty);
   }
 
   function rowNumber(index: number): string {
-    return String(index + 1);
+    // 折起来的移动组占一个号，后面的行跟着前移；没有折叠时就是 1、2、3。
+    return String(displayNo[index] ?? index + 1);
   }
 
   function targetOf(step: FlowStep): FlowTarget {
@@ -1297,6 +1325,10 @@ $: syncTitle(doc, path, dirty);
           return;
         }
         selected = Math.min(selected + 1, steps.length - 1);
+        // 往下走时别停在折起来的组员上：它没画出来，选中了也看不见。
+        if (isFoldMember(foldRuns, selected)) {
+          selected = Math.min(foldRuns[selected].head + foldRuns[selected].count, steps.length - 1);
+        }
         return;
       }
       const kids = childSteps(steps[selected]);
@@ -1318,8 +1350,26 @@ $: syncTitle(doc, path, dirty);
       return;
     }
     selected = Math.max(selected - 1, 0);
+    // 往上走时落在组员上就退回题头：题头才是看得见的那一行。
+    if (isFoldMember(foldRuns, selected)) selected = foldRuns[selected].head;
     const kids = childSteps(steps[selected]);
     childSel = kids.length > 0 && expanded[selected] ? kids.length - 1 : null;
+  }
+
+  /**
+   * 折起来的那一段里谁出了问题就报谁：先找第一个失败的，没有就找第一个"检查"，
+   * 都成功就用第一条的结果。全都没跑过返回 null（行上什么都不画）。
+   */
+  function foldRunResult(index: number): StepResult | null {
+    const run = foldRuns[index];
+    if (!run || run.count === 0) return null;
+    const rows: StepResult[] = [];
+    for (let k = 0; k < run.count; k += 1) {
+      const row = results[rowKeys[index + k]];
+      if (row) rows.push(row);
+    }
+    if (rows.length === 0) return null;
+    return rows.find((row) => !row.ok) ?? rows.find((row) => row.dry) ?? rows[0];
   }
 
   /** 快捷键。输入框里只认 Ctrl+S / Ctrl+O / Ctrl+N / Ctrl+Z，别抢打字。 */
@@ -1965,6 +2015,82 @@ $: syncTitle(doc, path, dirty);
               >×</button>
             </div>
           {/if}
+          {#if isFoldHead(foldRuns, index)}
+            <!-- 自动折叠的连续移动：题头像一步那样占一行，但内容只读——它不是真步骤。
+                 点整行展开/收起；展开后组里每一步都是真步骤，可以选中改。 -->
+            <div class="row-wrap move-run" data-row-index={index} data-move-head={index}>
+              <button
+                class="row move-head"
+                class:selected={index === selected && childSel === null}
+                aria-expanded={moveOpen[index] ?? false}
+                title={moveOpen[index] ? '点一下收起这组移动' : '点一下展开这组移动'}
+                on:click={() => {
+                  toggleMoveRun(index);
+                  selected = index;
+                  childSel = null;
+                  moreOpen = false;
+                  rowMenu = null;
+                }}
+              >
+                <span class="rail" aria-hidden="true"></span>
+                <span class="step-dot" aria-hidden="true"></span>
+                <span class="number">{rowNumber(index)}</span>
+                <span class="chip" aria-hidden="true"><StepIcon name="move" size={14} /></span>
+                <span class="text">
+                  <span class="title">移动鼠标</span>
+                  <span class="summary move-ends">{moveRunSummary(steps, index, foldRuns[index].count)}</span>
+                </span>
+                <span class="tags">
+                  <span class="count">{foldRuns[index].count} 次</span>
+                  {#if foldRunResult(index)}
+                    <span class="result" class:bad={!foldRunResult(index)?.ok} title={foldRunResult(index)?.text}>
+                      {foldRunResult(index)?.ok ? '✓' : '✗'}<span class="result-text">{foldRunResult(index)?.text}</span>
+                    </span>
+                  {/if}
+                  {#if missingOf(steps[index]).length > 0}
+                    <span class="todo" title={missingHint(steps[index])}>待补</span>
+                  {/if}
+                  <span class="caret-hint" aria-hidden="true">{moveOpen[index] ? '▾' : '▸'}</span>
+                </span>
+              </button>
+
+              {#if moveOpen[index]}
+                {#each Array.from({ length: foldRuns[index].count }, (_, k) => k) as k}
+                  {@const real = index + k}
+                  <button
+                    class="row child move-child"
+                    class:selected={real === selected && childSel === null}
+                    on:click={() => {
+                      selected = real;
+                      childSel = null;
+                      moreOpen = false;
+                      rowMenu = null;
+                    }}
+                  >
+                    <span class="rail" aria-hidden="true"></span>
+                    <span class="step-dot" aria-hidden="true"></span>
+                    <span class="number">{rowNumber(index)}.{k + 1}</span>
+                    <span class="chip" aria-hidden="true"><StepIcon name="move" size={14} /></span>
+                    <span class="text">
+                      <span class="title">{stepTitle(steps[real].type)}</span>
+                      <span class="summary">{stepSummary(steps[real])}</span>
+                    </span>
+                    {#if results[rowKeys[real]]}
+                      <span class="tags">
+                        <span class="result" class:bad={!results[rowKeys[real]].ok} title={results[rowKeys[real]].text}>
+                          {results[rowKeys[real]].ok ? '✓' : '✗'}
+                          {#if results[rowKeys[real]].dry}<span class="dry-tag">检查</span>{/if}
+                          <span class="result-text">{results[rowKeys[real]].text}</span>
+                        </span>
+                      </span>
+                    {/if}
+                  </button>
+                {/each}
+              {/if}
+            </div>
+          {:else if isFoldMember(foldRuns, index)}
+            <!-- 组员跟着题头画（见上一支）：这一支故意什么都不输出。 -->
+          {:else}
           <div class="row-wrap" role="listitem"
               data-row-index={index}
               draggable="true"
@@ -2074,6 +2200,7 @@ $: syncTitle(doc, path, dirty);
             {/each}
           {/if}
           {/if}
+          {/if}
         {/each}
 
         {#if steps.length === 0}
@@ -2143,7 +2270,26 @@ $: syncTitle(doc, path, dirty);
       {/if}
 
       <aside class="side" aria-label="这一步的设置">
-        {#if current}
+        {#if current && foldHeadSelected}
+          <!-- 自动折叠的移动组：题头不是任何一步，所以这里只给"看"，不给改。
+               要改就点开它，逐条选中组里的移动再改——那才是真步骤。 -->
+          <h2 class="section">这一组是自动折起来的</h2>
+          <dl class="fold-facts">
+            <dt>起点</dt>
+            <dd>{moveRunSummary(steps, selected, foldRuns[selected].count).split(' → ')[0]}</dd>
+            <dt>终点</dt>
+            <dd>{moveRunSummary(steps, selected, foldRuns[selected].count).split(' → ')[1]}</dd>
+            <dt>次数</dt>
+            <dd>{foldRuns[selected].count} 次连续移动</dd>
+          </dl>
+          <p class="fold-note">
+            连续 {MIN_MOVE_RUN} 次以上的鼠标移动会折成这样一行，读流程时先看"从哪儿到哪儿"。
+            这一行<strong>没有可改的内容</strong>：点它展开，组里每一次移动都是真步骤，选中就能改。
+          </p>
+          <button class="ghost fold-toggle" on:click={() => toggleMoveRun(selected)}>
+            {moveOpen[selected] ? '收起这组移动' : '展开这组移动'}
+          </button>
+        {:else if current}
           <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />
 
           {#if currentShot}
@@ -3170,6 +3316,81 @@ $: syncTitle(doc, path, dirty);
 
   .row.child.selected .title {
     color: var(--kp-ink);
+  }
+
+  /* ── 自动折叠的连续移动 ─────────────────────────────────
+     题头就是一步的样子：同样的编号、图标片、标题、摘要、右侧记号。
+     区别只在"右边多一个 ▸/▾"，以及它自己不占流程里的任何一步。 */
+  .move-run .move-head {
+    background: transparent;
+  }
+
+  /* 起点 → 终点用等宽字体：两个坐标要对得齐，眼睛才能一眼扫到跨度。 */
+  .move-ends {
+    font-family: var(--kp-mono);
+    font-size: var(--kp-fs-small);
+    letter-spacing: 0.01em;
+  }
+
+  .caret-hint {
+    margin-left: 8px;
+    font-size: 10px;
+    color: var(--kp-ink3);
+    flex: none;
+  }
+
+  /* 只读卡片：起点/终点/次数三行，坐标用等宽字体，和列表里的摘要对得上。 */
+  .fold-facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 14px;
+    margin: 10px 0 4px;
+    font-size: var(--kp-fs-small);
+  }
+
+  .fold-facts dt {
+    color: var(--kp-ink3);
+    text-align: right;
+  }
+
+  .fold-facts dd {
+    margin: 0;
+    color: var(--kp-ink);
+    font-family: var(--kp-mono);
+  }
+
+  .fold-note {
+    margin: 12px 0 10px;
+    color: var(--kp-ink2);
+    font-size: var(--kp-fs-small);
+    line-height: 1.7;
+  }
+
+  .fold-note strong {
+    color: var(--kp-ink);
+    font-weight: 600;
+  }
+
+  .fold-toggle {
+    align-self: flex-start;
+  }
+
+  .move-head[aria-expanded='true'] .caret-hint {
+    color: var(--kp-ink2);
+  }
+
+  /* 展开后的每一小步：比普通子步骤更淡一档的左侧竖线，表明它们属于上一条题头。 */
+  .move-child {
+    border-left: 2px solid var(--kp-rule);
+    margin-left: 18px;
+    /* 缩进靠 margin 做，padding 必须留够：`.row` 的 40px 是给左边那颗圆点让位的，
+       改成 6px 的话「1.1」会被圆点压住，只剩个「.1」。 */
+    width: calc(100% - 18px);
+    padding-left: 46px;
+  }
+
+  .move-child .number {
+    color: var(--kp-ink3);
   }
 
   /* ── 右栏 ───────────────────────────────────────────── */
