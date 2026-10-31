@@ -90,7 +90,18 @@ fn main() {
             // 窗口大小在壳里恢复，不交给界面：界面要等 webview 起来才有机会说话，
             // 那时窗口已经在屏幕上以默认大小闪了一下。这里在窗口显示前就改好。
             if let (Some(window), Some(saved)) = (app.get_webview_window("main"), store::window_size()) {
-                let _ = window.set_size(tauri::LogicalSize::new(saved.width, saved.height));
+                // 屏幕可能变过（换了显示器、改了缩放、上次记的是更大的窗口）：
+                // 把上次的大小夹进当前这块屏幕，否则窗口比屏幕还大，底部状态行永远点不到。
+                let mut width = saved.width;
+                let mut height = saved.height;
+                if let Ok(Some(monitor)) = window.current_monitor() {
+                    let scale = monitor.scale_factor();
+                    let max_width = (f64::from(monitor.size().width) / scale) - 40.0;
+                    let max_height = (f64::from(monitor.size().height) / scale) - 80.0;
+                    width = width.min(max_width).max(760.0);
+                    height = height.min(max_height).max(520.0);
+                }
+                let _ = window.set_size(tauri::LogicalSize::new(width, height));
                 // 位置只在"上次确实记过"时用：老账本里没有 x/y，缺省 0/0 会把窗口甩到左上角。
                 if saved.x != 0 || saved.y != 0 {
                     // outer_position() 给的是物理像素，恢复也用 PhysicalPosition——两者必须成对，
@@ -131,6 +142,10 @@ fn main() {
             store::remember_recent,
             store::window_size,
             store::save_window_size,
+            store::load_sections,
+            store::save_sections,
+            store::long_press_ms,
+            store::save_long_press_ms,
             set_dirty,
             close_window,
             log_error,

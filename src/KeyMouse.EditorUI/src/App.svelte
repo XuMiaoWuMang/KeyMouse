@@ -23,6 +23,16 @@
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
+  import {
+    addSection,
+    moveSection,
+    normalizeSections,
+    removeSection,
+    shiftAfterDelete,
+    shiftAfterInsert,
+    spanOf,
+    type Section,
+  } from './lib/sections';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
@@ -90,6 +100,20 @@
   /** 哪些分组步是展开的。不在表里 = 收起（老外壳的默认也是收起）。 */
   let expanded: Record<number, boolean> = {};
 
+  /**
+   * 纯界面的分组边界（父操作条）：只在编辑器里给长流程分段看，**不进流程 JSON**、
+   * 不参与执行。存边界而不是成员列表——拖一个分组头就是搬走一段连续的行，
+   * 组内相对顺序天然不变。规则都在 `lib/sections.ts` 里，这里只管摆和存。
+   */
+  let sections: Section[] = [];
+  /** 长按识别阈值：按住一行超过这么久，就打开那一行的菜单。账本里存，帮助卡里能改。 */
+  let longPressMs = 500;
+  /** 正在拖哪个分组头、鼠标压在第几行之前（rAF 合并之后才更新）。 */
+  let sectionDrag: { at: number; before: number | null } | null = null;
+  /** 正在就地改名的分组边界；`null` = 没在改名。 */
+  let renaming: number | null = null;
+  let draftTitle = '';
+
   /** 最近打开过的流程（新在前，只含还存在的文件）。空状态里列出来，省一次"打开"对话框。 */
   let recent: string[] = [];
   // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
@@ -127,6 +151,8 @@ ull = 没在拖）。 */
 $: rowKeys = steps.map((_, index) => String(index + 1));
 
   $: visibleSteps = filterSteps(steps, filter);
+  /** 第几行之前有分组头：模板里要按行号查。 */
+  $: sectionAt = new Set(sections.map((section) => section.at));
 /**
  * 一行在文档里的位置："3"、`"6.1"`。命令行报告的 `origin` 用的同一套写法，
  * 所以结果能直接落到这一行上——分组步展开多少次都不影响。
@@ -153,10 +179,19 @@ function originOf(index: number, childIndex: number | null): string {
   const undoStack: string[] = [];
   const redoStack: string[] = [];
   const HISTORY_LIMIT = 50;
+  /**
+   * 分组边界不进文档，所以撤销栈里另存一份（和文档快照一一对应）。
+   * 不塞进文档 JSON：那样"改分组"会把文档弄脏，用户明明没动流程却要保存。
+   */
+  const undoSections: Section[][] = [];
+  const redoSections: Section[][] = [];
+
+  const copySections = (list: Section[]): Section[] => list.map((section) => ({ ...section }));
 
   onMount(async () => {
     void loadSchema();
     void loadRecent();
+    void loadLongPress();
     try {
       runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
@@ -344,6 +379,8 @@ $: syncTitle(doc, path, dirty);
     selected = 0;
     dirty = filePath === null;
     savedJson = JSON.stringify(next);
+    // 分组是跟着文件走的：换了一份文件就换一套分组头。异步捞，捞不到就先空着。
+    void loadSections();
   }
 
   /** 把路径记进"最近打开"，失败就算了——记不住不该挡住干活。 */
@@ -353,6 +390,25 @@ $: syncTitle(doc, path, dirty);
       recent = await invoke<string[]>('recent_files');
     } catch {
       recent = [];
+    }
+  }
+
+  /** 长按阈值存在账本里；外壳读不到就用缺省值，别让界面因此起不来。 */
+  async function loadLongPress() {
+    try {
+      longPressMs = await invoke<number>('long_press_ms');
+    } catch {
+      longPressMs = 500;
+    }
+  }
+
+  /** 改长按阈值：外壳会把越界的值夹回 [150, 3000]，然后用它的返回值覆盖本地。 */
+  async function saveLongPress(ms: number) {
+    try {
+      longPressMs = await invoke<number>('save_long_press_ms', { ms });
+      note(`长按识别改成 ${longPressMs} 毫秒`);
+    } catch (e) {
+      note(String(e), true);
     }
   }
 
@@ -437,6 +493,8 @@ $: syncTitle(doc, path, dirty);
       path = picked;
       dirty = false;
       savedJson = JSON.stringify(doc);
+      // 刚换了落盘位置：把这一套分组头记到新路径名下。
+      persistSections();
       note(`已保存 ${picked}`);
     } catch (e) {
       note(String(e), true);
@@ -761,7 +819,10 @@ $: syncTitle(doc, path, dirty);
     if (!doc) return;
     undoStack.push(JSON.stringify(doc));
     if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    undoSections.push(copySections(sections));
+    if (undoSections.length > HISTORY_LIMIT) undoSections.shift();
     redoStack.length = 0;
+    redoSections.length = 0;
   }
 
   /**
@@ -795,7 +856,10 @@ $: syncTitle(doc, path, dirty);
     const previous = undoStack.pop();
     if (previous === undefined || !doc) return;
     redoStack.push(JSON.stringify(doc));
+    redoSections.push(copySections(sections));
     restore(previous);
+    sections = undoSections.pop() ?? [];
+    persistSections();
     note('撤销了一步');
   }
 
@@ -803,7 +867,10 @@ $: syncTitle(doc, path, dirty);
     const next = redoStack.pop();
     if (next === undefined || !doc) return;
     undoStack.push(JSON.stringify(doc));
+    undoSections.push(copySections(sections));
     restore(next);
+    sections = redoSections.pop() ?? [];
+    persistSections();
     note('重做了一步');
   }
 
@@ -812,13 +879,188 @@ $: syncTitle(doc, path, dirty);
 
   // ── 步骤的增删与排序 ───────────────────────────────────
 
-  function applySteps(next: FlowStep[]) {
+  function applySteps(next: FlowStep[], shift?: { kind: 'insert' | 'delete'; at: number }) {
     if (!doc) return;
     snapshot();
     doc = { ...doc, steps: next };
     steps = next;
+    // 插入/删除一行时，它后面的分组头要跟着挪一格，否则分组会自己"吞"掉一行。
+    if (shift?.kind === 'insert') sections = shiftAfterInsert(sections, shift.at);
+    if (shift?.kind === 'delete') sections = shiftAfterDelete(sections, shift.at);
+    persistSections();
     touch();
   }
+
+  // ── 分组（纯界面，不进 JSON）────────────────────────────
+
+  /** 换文件时把这份文件的分组捞回来；没有文件（还没保存）就空着。 */
+  async function loadSections() {
+    if (!path) {
+      sections = [];
+      return;
+    }
+    try {
+      const list = (await invoke('load_sections', { path })) as Section[];
+      sections = normalizeSections(list, steps.length);
+    } catch {
+      sections = [];
+    }
+  }
+
+  /** 把当前分组写回账本。没有文件路径时只留在内存里——存不了就别假装存了。 */
+  function persistSections() {
+    sections = normalizeSections(sections, steps.length);
+    if (!path) return;
+    void invoke<Section[]>('save_sections', { path, sections })
+      .then((next) => {
+        sections = normalizeSections(next, steps.length);
+      })
+      .catch(() => undefined);
+  }
+
+  /** 在选中这一行前面开一组。已经有头就不再重复开（只改名）。 */
+  function makeSection(index: number) {
+    sections = normalizeSections(addSection(sections, index, `分组 ${sections.length + 1}`), steps.length);
+    persistSections();
+    note('从这一行开始分了一组：双击组名可以改');
+  }
+
+  /** 取消这一组：只去掉那条分隔线，步骤一个都不动。 */
+  function dropSection(index: number) {
+    sections = removeSection(sections, index);
+    persistSections();
+    note('去掉了这一组的分隔线，步骤没动');
+  }
+
+  function beginRename(index: number) {
+    renaming = index;
+    draftTitle = sections.find((section) => section.at === index)?.title ?? '';
+  }
+
+  function commitRename() {
+    if (renaming === null) return;
+    const at = renaming;
+    const title = draftTitle.trim();
+    renaming = null;
+    if (!title) return;
+    sections = sections.map((section) => (section.at === at ? { ...section, title } : section));
+    persistSections();
+  }
+
+  function renameKey(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitRename();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      renaming = null;
+      draftTitle = '';
+    }
+  }
+
+  // ── 拖分组头：整段移动（pointermove 按帧合并）──────────────
+
+  /**
+   * 高频 `pointermove` 直接改状态会把整棵树每帧画好几遍。这里只记最新坐标，
+   * 真正算"压到第几行"放到下一帧做，一帧最多一次。
+   */
+  let dragFrame = 0;
+  let dragPoint: { x: number; y: number } | null = null;
+
+  function startSectionDrag(at: number, event: PointerEvent) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    sectionDrag = { at, before: at };
+    window.addEventListener('pointermove', onSectionDragMove);
+    window.addEventListener('pointerup', endSectionDrag, { once: true });
+    window.addEventListener('pointercancel', endSectionDrag, { once: true });
+  }
+
+  function onSectionDragMove(event: PointerEvent) {
+    dragPoint = { x: event.clientX, y: event.clientY };
+    if (dragFrame) return;
+    dragFrame = requestAnimationFrame(() => {
+      dragFrame = 0;
+      if (!dragPoint || !sectionDrag) return;
+      sectionDrag = { at: sectionDrag.at, before: rowAtPoint(dragPoint) };
+    });
+  }
+
+  /** 鼠标底下是第几行（用行元素上的 data-row-index，不猜坐标）。 */
+  function rowAtPoint(point: { x: number; y: number }): number | null {
+    const element = document.elementFromPoint(point.x, point.y);
+    const holder = element?.closest('[data-row-index]');
+    const raw = holder?.getAttribute('data-row-index');
+    return raw === null || raw === undefined ? null : Number(raw);
+  }
+
+  function endSectionDrag() {
+    window.removeEventListener('pointermove', onSectionDragMove);
+    if (dragFrame) {
+      cancelAnimationFrame(dragFrame);
+      dragFrame = 0;
+    }
+    const drag = sectionDrag;
+    sectionDrag = null;
+    dragPoint = null;
+    if (!drag || drag.before === null || !doc) return;
+    const moved = moveSection(steps, sections, drag.at, drag.before);
+    if (moved.steps === steps) return;
+    snapshot();
+    doc = { ...doc, steps: moved.steps };
+    steps = moved.steps;
+    if (moved.sections !== sections) sections = moved.sections;
+    persistSections();
+    touch();
+    note('把这一组挪过去了：组里的步骤跟着一起走');
+  }
+
+  // ── 长按 ──────────────────────────────────────────────
+
+  /**
+   * 长按识别：按住一行超过 `longPressMs` 就打开这一行的菜单。
+   * 鼠标和 `Enter` 共用一套计时器——短按仍然是"选中/展开"，长按才出菜单。
+   */
+  let pressTimer: ReturnType<typeof setTimeout> | null = null;
+  let pressOrigin = { x: 0, y: 0 };
+
+  function cancelPress() {
+    if (pressTimer !== null) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  }
+
+  function startPress(index: number, event: PointerEvent, keyboard = false) {
+    if (!keyboard && event.button !== 0) return;
+    cancelPress();
+    pressOrigin = keyboard ? { x: 0, y: 0 } : { x: event.clientX, y: event.clientY };
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      openRowMenuAt(index, pressOrigin);
+    }, longPressMs);
+  }
+
+  /** 键盘长按：按住 Enter 超过阈值，同样打开这一行的菜单。 */
+  function startKeyboardPress(index: number) {
+    cancelPress();
+    pressOrigin = { x: 0, y: 0 };
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      openRowMenuAt(index, pressOrigin);
+    }, longPressMs);
+  }
+
+  function onKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Enter') cancelPress();
+  }
+
+  /** 手指/鼠标挪开一点就当没按过——拖拽排序和长按不能互相抢。 */
+  function maybeCancelPress(event: PointerEvent) {
+    if (pressTimer === null) return;
+    if (Math.abs(event.clientX - pressOrigin.x) > 6 || Math.abs(event.clientY - pressOrigin.y) > 6) cancelPress();
+  }
+
 
   /** 在选中步之后插一步；没有选中（空文档）就放到最前面。 */
   async function addStep(type: StepType) {
@@ -835,7 +1077,7 @@ $: syncTitle(doc, path, dirty);
       expanded = { ...expanded, [at]: true };
       note(`往「${stepTitle(host.type)}」里加了一步${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
     } else {
-      applySteps(insertAfter(steps, at, fresh));
+      applySteps(insertAfter(steps, at, fresh), { kind: 'insert', at: at + 1 });
       selected = at + 1;
       note(`加了「${stepTitle(type)}」${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
     }
@@ -846,7 +1088,7 @@ $: syncTitle(doc, path, dirty);
   function duplicateStep(index: number) {
     const next = duplicateAt(steps, index);
     if (next.length === steps.length) return;
-    applySteps(next);
+    applySteps(next, { kind: 'insert', at: index + 1 });
     selected = index + 1;
     note('复制了一步');
   }
@@ -904,6 +1146,21 @@ $: syncTitle(doc, path, dirty);
     if (child === undefined) deleteStep(index);
     else deleteChildStep(index, child);
   }
+
+  /** 菜单里的分组两项：先收起菜单再动手，和别的项一个规矩。 */
+  function menuMakeSection() {
+    if (!rowMenu) return;
+    const { index } = rowMenu;
+    rowMenu = null;
+    makeSection(index);
+  }
+
+  function menuDropSection() {
+    if (!rowMenu) return;
+    const { index } = rowMenu;
+    rowMenu = null;
+    dropSection(index);
+  }
   /** 拖起一行。用 HTML5 的拖放：行是按钮，但拖放事件挂在外面那层 row-wrap 上。 */
   function startDrag(index: number, event: DragEvent) {
     dragFrom = index;
@@ -936,8 +1193,24 @@ $: syncTitle(doc, path, dirty);
     event.preventDefault();
     selected = index;
     moreOpen = false;
-                rowMenu = null;
+    rowMenu = null;
     rowMenu = { index, x: event.clientX, y: event.clientY, child };
+  }
+
+  /**
+   * 长按出来的菜单没有真的鼠标事件：给一个假事件只为了复用同一条路。
+   * 点坐标优先用按下去的位置；键盘长按没有坐标，就落在那一行的左上角。
+   */
+  function openRowMenuAt(index: number, point: { x: number; y: number }) {
+    const keyboard = point.x === 0 && point.y === 0;
+    const box = keyboard ? document.querySelector(`[data-row-index="${index}"]`)?.getBoundingClientRect() : null;
+    const x = box ? box.left + 12 : point.x;
+    const y = box ? box.top + 12 : point.y;
+    selected = index;
+    childSel = null;
+    moreOpen = false;
+    rowMenu = { index, x, y };
+    note('长按呼出了菜单；短按只是选中');
   }
 
   /**
@@ -978,7 +1251,7 @@ $: syncTitle(doc, path, dirty);
       return;
     }
     const next = removeAt(steps, index);
-    applySteps(next);
+    applySteps(next, { kind: 'delete', at: index });
     selected = selectionAfterRemove(index, next.length);
     note('删了一步（Ctrl+Z 可以反悔）');
   }
@@ -1113,6 +1386,12 @@ $: syncTitle(doc, path, dirty);
     if (mod && shift && key === 'd') {
       event.preventDefault();
       void collectDiagnostics();
+      return;
+    }
+
+    // Enter 长按：按住过阈值就打开这一行的菜单；短按仍然只是选中（由按钮自己处理）。
+    if (key === 'enter' && !mod && !event.altKey && doc) {
+      if (!event.repeat) startKeyboardPress(selected);
       return;
     }
 
@@ -1424,7 +1703,7 @@ $: syncTitle(doc, path, dirty);
   }
 </script>
 
-<svelte:window on:keydown={onKeydown} />
+<svelte:window on:keydown={onKeydown} on:keyup={onKeyUp} />
 
 {#if mini}
   <!-- 录制期间的一屏：只留"正在录 + 多久 + 停止"。
@@ -1648,7 +1927,46 @@ $: syncTitle(doc, path, dirty);
 
         {#each steps as step, index}
           {#if matchesFilter(step, filter)}
+          {#if !filter && sectionAt.has(index)}
+            <!-- 分组头（父操作条）：只是列表里的抽屉，**不代表任何动作**——不进 JSON、不参与执行。
+                 拖它整段走，双击改名，右边 × 拆掉分隔线（步骤一步都不动）。 -->
+            <div
+              class="section-head"
+              class:bare={!sections.find((section) => section.at === index)?.title}
+              class:dragging={sectionDrag?.at === index}
+              class:drop-target={sectionDrag !== null && sectionDrag.before === index && sectionDrag.at !== index}
+              data-section-at={index}
+              data-row-index={index}
+              on:pointerdown={(event) => startSectionDrag(index, event)}
+            >
+              <span class="grip" aria-hidden="true">⠿</span>
+              {#if !sections.find((section) => section.at === index)?.title}
+                <!-- 没标题 = 一条分隔线。拖动分组时自动补的那条尾巴就长这样，不吵人。 -->
+                <span class="section-rule" aria-hidden="true"></span>
+              {:else if renaming === index}
+                <input
+                  class="section-input"
+                  bind:value={draftTitle}
+                  on:blur={commitRename}
+                  on:keydown={renameKey}
+                  aria-label="分组名"
+                />
+              {:else}
+                <button class="section-title" on:dblclick={() => beginRename(index)} title="双击改这一组的名字">
+                  {sections.find((section) => section.at === index)?.title}
+                </button>
+                <span class="section-meta">{spanOf(sections, index, steps.length)[1] - index} 步</span>
+              {/if}
+              <button
+                class="tiny section-x"
+                on:click|stopPropagation={() => dropSection(index)}
+                aria-label="拆掉这一组的分隔线"
+                title="拆掉这一组（步骤不动）"
+              >×</button>
+            </div>
+          {/if}
           <div class="row-wrap" role="listitem"
+              data-row-index={index}
               draggable="true"
               class:grouped={childSteps(step).length > 0}
               class:dragging={dragFrom === index}
@@ -1663,6 +1981,11 @@ $: syncTitle(doc, path, dirty);
               class="row"
               class:selected={index === selected}
               on:contextmenu={(event) => openRowMenu(index, event)}
+              on:pointerdown={(event) => startPress(index, event)}
+              on:pointermove={maybeCancelPress}
+              on:pointerup={cancelPress}
+              on:pointerleave={cancelPress}
+              on:pointercancel={cancelPress}
               on:click={() => {
                 selected = index;
                 childSel = null;
@@ -1783,6 +2106,21 @@ $: syncTitle(doc, path, dirty);
             版本：{runtime ? `${runtime.cliVersion} · ${runtime.environment === 'development' ? '开发树' : '安装版'}` : '未知'}<br />
             文件：<code>{path ?? '还没有保存'}</code>
           </p>
+          <h3>长按</h3>
+          <p class="help-env">
+            按住一行（或按住 <kbd>Enter</kbd>）超过
+            <input
+              class="long-press"
+              type="number"
+              min="150"
+              max="3000"
+              step="50"
+              value={longPressMs}
+              aria-label="长按识别阈值（毫秒）"
+              on:change={(event) => void saveLongPress(Number(event.currentTarget.value))}
+            />
+            毫秒，就打开那一行的菜单；短按仍然是选中，不冲突。
+          </p>
         </div>
       {/if}
 
@@ -1793,6 +2131,14 @@ $: syncTitle(doc, path, dirty);
           <button role="menuitem" disabled={rowMenu.index === 0} on:click={menuUp}>上移</button>
           <button role="menuitem" disabled={rowMenu.index === steps.length - 1} on:click={menuDown}>下移</button>
           <button role="menuitem" on:click={menuDelete}>删除这一步</button>
+          {#if rowMenu.child === undefined}
+            <div class="menu-sep" aria-hidden="true"></div>
+            {#if sectionAt.has(rowMenu.index)}
+              <button role="menuitem" on:click={menuDropSection}>取消这一组</button>
+            {:else}
+              <button role="menuitem" on:click={menuMakeSection}>从这里分一组</button>
+            {/if}
+          {/if}
         </div>
       {/if}
 
@@ -2268,6 +2614,115 @@ $: syncTitle(doc, path, dirty);
     font-family: var(--kp-mono);
     font-size: 11px;
     color: var(--kp-ink3);
+  }
+
+  /* 分组头（父操作条）：比步骤行低一层——它是抽屉的把手，不是一步动作。
+     左边一根短横、名字用斜体，和真步骤一眼就能分开。 */
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    margin: 6px 0 2px;
+    padding: 0 10px 0 4px;
+    border-left: 2px solid var(--kp-rule);
+    color: var(--kp-ink2);
+    cursor: grab;
+    user-select: none;
+  }
+
+  .section-head:first-child {
+    margin-top: 0;
+  }
+
+  .section-head.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+  }
+
+  /* 没有标题的那条：只画一根线，高度也收窄，免得抢走"这里有个分组"的注意力。 */
+  .section-head.bare {
+    height: 14px;
+    border-left-color: transparent;
+  }
+
+  .section-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--kp-rule);
+  }
+
+  .section-head.drop-target {
+    border-left-color: var(--kp-signal);
+    background: var(--kp-field);
+  }
+
+  .section-head .grip {
+    font-size: 12px;
+    color: var(--kp-ink3);
+    letter-spacing: -1px;
+  }
+
+  .section-title {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--kp-ink2);
+    cursor: text;
+  }
+
+  .section-title:hover {
+    color: var(--kp-ink);
+  }
+
+  .section-input {
+    flex: 1;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--kp-signal);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-card);
+    color: var(--kp-ink);
+    font: inherit;
+    font-size: 12px;
+  }
+
+  .section-meta {
+    margin-left: auto;
+    font-family: var(--kp-mono);
+    font-size: 11px;
+    color: var(--kp-ink3);
+  }
+
+  .section-x {
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .section-head:hover .section-x {
+    opacity: 1;
+  }
+
+  .menu-sep {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--kp-rule);
+  }
+
+  .long-press {
+    width: 64px;
+    height: 22px;
+    margin: 0 2px;
+    padding: 0 6px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-field);
+    color: var(--kp-ink);
+    font-family: var(--kp-mono);
+    font-size: 12px;
   }
   .list {
     position: relative;

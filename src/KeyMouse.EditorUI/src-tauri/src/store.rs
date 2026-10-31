@@ -11,6 +11,13 @@ use serde::{Deserialize, Serialize};
 /// 最近文件最多记这么多。老外壳也是 8 条：再多就没人往下看了。
 const RECENT_LIMIT: usize = 8;
 
+/// 长按识别的缺省阈值。400 ms 太容易误触、800 ms 又像卡住，取中间。
+pub const DEFAULT_LONG_PRESS_MS: u32 = 500;
+
+/// 阈值给个上下限：太小等于单击触发两次，太大等于永远按不出来。
+pub const MIN_LONG_PRESS_MS: u32 = 150;
+pub const MAX_LONG_PRESS_MS: u32 = 3000;
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Store {
@@ -21,6 +28,36 @@ pub struct Store {
     /// `outer_position` 就是这么给的，换算成逻辑反而要赌它落在哪块屏）。
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub window: Option<WindowState>,
+    /// 每个流程文件的纯界面分组：键是文件绝对路径，值是按 `at` 排好的边界。
+    ///
+    /// 它**不进流程 JSON**：换台机器、换一版命令行，那份文件照样能跑——分组只是编辑器
+    /// 自己为了看得顺而加的抽屉。文件改名/移动会丢，这个代价写在这里，不打算兜。
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub sections: std::collections::BTreeMap<String, Vec<Section>>,
+    /// 长按识别阈值（毫秒）。界面可以改；缺省 500。
+    #[serde(default = "default_long_press_ms")]
+    pub long_press_ms: u32,
+}
+
+/// 一个分组头：在第 `at` 个步骤之前开一组，管到下一个边界之前。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Section {
+    pub at: usize,
+    #[serde(default)]
+    pub title: String,
+}
+
+fn default_long_press_ms() -> u32 {
+    DEFAULT_LONG_PRESS_MS
+}
+
+impl Store {
+    /// 补上 `#[derive(Default)]` 给不了的那两个默认值。
+    fn normalize_defaults(&mut self) {
+        if self.long_press_ms == 0 {
+            self.long_press_ms = DEFAULT_LONG_PRESS_MS;
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -52,7 +89,9 @@ pub fn load() -> Store {
     let Ok(text) = fs::read_to_string(&path) else {
         return Store::default();
     };
-    serde_json::from_str(&text).unwrap_or_default()
+    let mut store: Store = serde_json::from_str(&text).unwrap_or_default();
+    store.normalize_defaults();
+    store
 }
 
 /// 写账本。**故意不返回错误**：记不住最近文件不是用户的问题。
@@ -61,7 +100,14 @@ pub fn save(store: &Store) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    if let Ok(text) = serde_json::to_string_pretty(store) {
+    let mut copy = Store {
+        recent: store.recent.clone(),
+        window: store.window,
+        sections: store.sections.clone(),
+        long_press_ms: store.long_press_ms,
+    };
+    copy.normalize_defaults();
+    if let Ok(text) = serde_json::to_string_pretty(&copy) {
         let _ = fs::write(&path, text + "\n");
     }
 }
@@ -145,6 +191,72 @@ pub fn save_window_size(width: f64, height: f64, x: Option<i32>, y: Option<i32>)
     store.window = Some(WindowState { width, height, x, y });
     save(&store);
 }
+
+/// 一份流程文件对应账本里的哪个键。
+///
+/// 用规范化后的**绝对路径**：界面上 `samples\demo-flow.json` 与
+/// `D:\Data\KeyMouse\samples\demo-flow.json` 说的是同一份文件，键也该是一个。
+pub fn sections_key(path: &str) -> String {
+    normalize(path)
+}
+
+/// 把界面递过来的分组边界捋顺：丢掉空的标题、同一个 `at` 只留第一个、按位置排序。
+///
+/// 越界的边界在这里不管（只有界面知道现在有几行）——界面会先拿 `steps.length` 截一道，
+/// 这里再兜也是同一件事。
+pub fn tidy_sections(sections: &[Section]) -> Vec<Section> {
+    let mut out: Vec<Section> = Vec::with_capacity(sections.len());
+    for section in sections {
+        if out.iter().any(|kept| kept.at == section.at) {
+            continue;
+        }
+        let title = section.title.trim();
+        out.push(Section {
+            at: section.at,
+            title: if title.is_empty() { format!("分组 {}", out.len() + 1) } else { title.to_string() },
+        });
+    }
+    out.sort_by_key(|section| section.at);
+    out
+}
+
+/// 某个流程文件的分组边界。没记过就是空数组（不是错误）。
+#[tauri::command]
+pub fn load_sections(path: String) -> Vec<Section> {
+    let store = load();
+    store.sections.get(&sections_key(&path)).cloned().unwrap_or_default()
+}
+
+/// 记下某个流程文件的分组边界，返回捋顺之后的列表（界面拿去重画）。
+#[tauri::command]
+pub fn save_sections(path: String, sections: Vec<Section>) -> Vec<Section> {
+    let tidied = tidy_sections(&sections);
+    let mut store = load();
+    let key = sections_key(&path);
+    if tidied.is_empty() {
+        store.sections.remove(&key);
+    } else {
+        store.sections.insert(key, tidied.clone());
+    }
+    save(&store);
+    tidied
+}
+
+/// 长按阈值（毫秒）。
+#[tauri::command]
+pub fn long_press_ms() -> u32 {
+    load().long_press_ms
+}
+
+/// 改长按阈值。超出 [`MIN_LONG_PRESS_MS`, `MAX_LONG_PRESS_MS`] 的夹回边界，返回生效值。
+#[tauri::command]
+pub fn save_long_press_ms(ms: u32) -> u32 {
+    let value = ms.clamp(MIN_LONG_PRESS_MS, MAX_LONG_PRESS_MS);
+    let mut store = load();
+    store.long_press_ms = value;
+    save(&store);
+    value
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,6 +285,8 @@ mod tests {
         let original = Store {
             recent: vec!["D:/flows/a.json".into()],
             window: Some(WindowState { width: 892.0, height: 632.0, x: 120, y: 80 }),
+            sections: std::collections::BTreeMap::new(),
+            long_press_ms: DEFAULT_LONG_PRESS_MS,
         };
         let text = serde_json::to_string(&original).expect("serialize");
         let back: Store = serde_json::from_str(&text).expect("deserialize");
@@ -185,5 +299,40 @@ mod tests {
         let store: Store = serde_json::from_str("{ not json").unwrap_or_default();
         assert!(store.recent.is_empty());
         assert!(store.window.is_none());
+    }
+
+    #[test]
+    fn sections_are_sorted_without_duplicates() {
+        let tidied = tidy_sections(&[
+            Section { at: 4, title: "尾巴".into() },
+            Section { at: 0, title: "开头".into() },
+            Section { at: 4, title: "重复".into() },
+        ]);
+        assert_eq!(
+            tidied,
+            vec![Section { at: 0, title: "开头".into() }, Section { at: 4, title: "尾巴".into() }]
+        );
+    }
+
+    #[test]
+    fn an_empty_title_becomes_a_numbered_one() {
+        let tidied = tidy_sections(&[Section { at: 2, title: "   ".into() }]);
+        assert_eq!(tidied[0].title, "分组 1");
+    }
+
+    #[test]
+    fn an_old_store_without_the_new_fields_still_loads() {
+        // 老账本里没有 sections / longPressMs：读出来要有一份能用的默认值。
+        let store: Store =
+            serde_json::from_str(r#"{"recent":["D:/a.json"],"window":{"width":892,"height":632,"x":1,"y":2}}"#)
+                .expect("old store parses");
+        assert!(store.sections.is_empty());
+        assert_eq!(store.long_press_ms, DEFAULT_LONG_PRESS_MS);
+    }
+
+    #[test]
+    fn the_long_press_threshold_is_clamped() {
+        assert_eq!(1u32.clamp(MIN_LONG_PRESS_MS, MAX_LONG_PRESS_MS), MIN_LONG_PRESS_MS);
+        assert_eq!(99999u32.clamp(MIN_LONG_PRESS_MS, MAX_LONG_PRESS_MS), MAX_LONG_PRESS_MS);
     }
 }
