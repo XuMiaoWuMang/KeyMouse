@@ -69,6 +69,8 @@
   let moreOpen = false;
   /** 列表过滤：按类型或摘要里的字找一步。空串表示不过滤。 */
   let filter = "";
+  /** 过滤框的 DOM：Ctrl+F 要能把光标直接放进去。 */
+  let filterBox: HTMLInputElement | undefined;
   let busy = false;
   /** 正在跑的那条子进程。停止按钮据此出现，播放按钮据此让位。 */
   let running = false;
@@ -1090,6 +1092,14 @@ $: syncTitle(doc, path, dirty);
       return;
     }
 
+    // Ctrl+F：光标跳进过滤框。流程长的时候，找一步比滚快。
+    if (mod && key === 'f') {
+      event.preventDefault();
+      filterBox?.focus();
+      filterBox?.select();
+      return;
+    }
+
     // Ctrl+Shift+D：把诊断信息打包出来。报问题时给用户一个不用翻菜单的入口。
     if (mod && shift && key === 'd') {
       event.preventDefault();
@@ -1606,6 +1616,7 @@ $: syncTitle(doc, path, dirty);
           <!-- 长流程里找一步不该靠滚：按类型或摘要里的字过滤；编号仍然是文档里的位置。 -->
           <div class="filter">
             <input
+              bind:this={filterBox}
               value={filter}
               placeholder="找一步：类型、文字、键名都行"
               aria-label="过滤步骤"
@@ -1618,8 +1629,10 @@ $: syncTitle(doc, path, dirty);
               }}
             />
             {#if filter}
-              <button class="ghost tiny" on:click={() => (filter = '')} aria-label="清除过滤">清空</button>
-              <span class="filter-count">{visibleSteps.length}/{steps.length}</span>
+              <span class="filter-meta">
+                <button class="ghost filter-clear" on:click={() => (filter = '')} aria-label="清除过滤">清空</button>
+                <span class="filter-count">{visibleSteps.length}/{steps.length}</span>
+              </span>
             {/if}
           </div>
         {/if}
@@ -2199,6 +2212,21 @@ $: syncTitle(doc, path, dirty);
     padding: 10px 12px 12px;
   }
 
+  /* 计数与「清空」在窄栏里会各自断行，一条都不许折。 */
+  .filter-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    flex: none;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--kp-ink3);
+  }
+
+  .filter-meta button {
+    white-space: nowrap;
+  }
+
   .filter input {
     flex: 1 1 auto;
     min-width: 0;
@@ -2215,6 +2243,15 @@ $: syncTitle(doc, path, dirty);
     outline: none;
     border-color: var(--kp-signal);
     background: var(--kp-card);
+  }
+
+  /* 清空是文字按钮，别套 .tiny（那是 22px 的图标格，文字会溢出来压住计数）。 */
+  .filter-clear {
+    flex: none;
+    height: 24px;
+    padding: 0 8px;
+    white-space: nowrap;
+    font-size: 12px;
   }
 
   .filter-count {
