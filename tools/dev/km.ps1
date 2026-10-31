@@ -23,6 +23,7 @@
         .\km w            监视 src/ 与 tests/：改了就跟一次「编译 + 单元测试」
         .\km w -once      只跟一次（用来确认监视本身是好的）
         .\km env          打印环境判定：开发树还是安装版、两边的命令行在哪
+        .\km push         推到远端（网络不通时说清楚卡在哪）
         .\km docs         文档链接检查
         .\km clean        清掉 bin / obj / artifacts
 
@@ -241,6 +242,11 @@ switch ($Verb) {
             PublishCli
         }
         & $cliArtifact doctor @Rest
+        exit $LASTEXITCODE
+    }
+
+    { $_ -in 'push' } {
+        & (Join-Path $PSScriptRoot 'push.ps1') @Rest
         exit $LASTEXITCODE
     }
 

@@ -29,6 +29,7 @@
 .\km w                # 监视 src/ 与 tests/：改一次跑一次"编译 + 单测"
 .\km w -once          # 只跟一次（确认监视本身是好的）
 .\km clean            # 清掉 bin / obj / artifacts
+.\km push             # 推到远端；网络/身份/远端有新提交这三类问题会分开说
 ```
 
 ## 动词表
@@ -43,6 +44,7 @@
 | `s` | `smoke` | 桌面冒烟，转调 `tests\smoke\run.ps1` | 数分钟 |
 | `v` | `verify` | 全部关卡，转调 `tools\dev\verify.ps1` | 数分钟 |
 | `env` | `environment` | 打包（若缺）后跑 `KeyMouse doctor` | — |
+| `push` | — | 推送到远端，转调 `tools\dev\push.ps1`（推不动时说清是网络、身份还是远端有提交） | 视网络 |
 | `docs` | — | 文档链接检查 | 数十毫秒 |
 | `d` | `dist` | 打包单文件；`-s` / `--self-contained` 切自包含 | ~5s |
 | `r` | `run` | 运行 bin 里的 KeyMouse，参数原样转发；`-n` 跳过编译 | — |

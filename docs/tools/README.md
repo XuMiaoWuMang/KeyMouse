@@ -12,6 +12,7 @@
 | `verify.ps1` | `tools\dev\verify.ps1` | 串起六道关卡，最后给一个明确结论 | 每次对外交付前 |
 | `check-docs.ps1` | `tools\dev\check-docs.ps1` | 校验仓库里每条相对链接都指向真实文件 | 动过文档；CI 每次 push 都跑 |
 | `check-version.ps1` | `tools\dev\check-version.ps1` | 确认版本号只有一个来源，且产物与源码一致 | 改过版本号、发版前；CI 每次 push 都跑 |
+| `push.ps1` | `tools\dev\push.ps1` | 推到远端；推不动时说清楚是网络、身份还是远端有新提交 | 想推提交的时候（`.\km push`） |
 | `run.ps1`（冒烟） | `tests\smoke\run.ps1` | 在真实桌面上让 KeyMouse 往靶子窗口打字再对账 | 改过输入、焦点、选区、录制、Runner、流程 |
 | `check-input.ps1` | `tools\dev\check-input.ps1` | 一句话实验：这个会话收不收得到注入的输入 | 冒烟忽然红一片、换机器、怀疑注入被系统丢掉 |
 | `evidence.ps1` | `tools\diagnostics\evidence.ps1` | 归档读屏取证：每次调用的 JSON、截图、耗时 | 怀疑读屏不稳，需要拿数据说话 |
@@ -31,6 +32,7 @@
 - [`verify.ps1`](verify.md) —— 把构建、单测、文档、版本、打包、冒烟串成一次运行。
 - [`check-docs.ps1`](check-docs.md) —— 文档改动后跑一次，几十毫秒的事。
 - [`check-version.ps1`](check-version.md) —— 动了 `Directory.Build.props` 或任一 csproj 之后跑。
+- [`push.ps1`](push.md) —— 推到远端，失败时给出"网络 / 身份 / 远端有提交"里的哪一种。
 
 ## 构建
 
