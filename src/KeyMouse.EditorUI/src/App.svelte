@@ -21,6 +21,7 @@
 } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
+  import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
   import {
     childSteps,
@@ -65,6 +66,8 @@
   let outputOpen = false;
   let jsonOpen = false;
   let moreOpen = false;
+  /** 列表过滤：按类型或摘要里的字找一步。空串表示不过滤。 */
+  let filter = "";
   let busy = false;
   /** 正在跑的那条子进程。停止按钮据此出现，播放按钮据此让位。 */
   let running = false;
@@ -120,6 +123,7 @@ ull = 没在拖）。 */
   // 行在文档里的位置："1"、"2"、"6.1"——和命令行报告的 `origin` 是同一套写法。
 $: rowKeys = steps.map((_, index) => String(index + 1));
 
+  $: visibleSteps = filterSteps(steps, filter);
 /**
  * 一行在文档里的位置："3"、`"6.1"`。命令行报告的 `origin` 用的同一套写法，
  * 所以结果能直接落到这一行上——分组步展开多少次都不影响。
@@ -1518,7 +1522,30 @@ $: syncTitle(doc, path, dirty);
       </section>
     {:else}
       <section class="list" aria-label="步骤">
+        {#if steps.length > 4}
+          <!-- 长流程里找一步不该靠滚：按类型或摘要里的字过滤；编号仍然是文档里的位置。 -->
+          <div class="filter">
+            <input
+              value={filter}
+              placeholder="找一步：类型、文字、键名都行"
+              aria-label="过滤步骤"
+              on:input={(event) => (filter = event.currentTarget.value)}
+              on:keydown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation();
+                  filter = '';
+                }
+              }}
+            />
+            {#if filter}
+              <button class="ghost tiny" on:click={() => (filter = '')} aria-label="清除过滤">清空</button>
+              <span class="filter-count">{visibleSteps.length}/{steps.length}</span>
+            {/if}
+          </div>
+        {/if}
+
         {#each steps as step, index}
+          {#if matchesFilter(step, filter)}
           <div class="row-wrap" role="listitem"
               draggable="true"
               class:grouped={childSteps(step).length > 0}
@@ -1588,6 +1615,7 @@ $: syncTitle(doc, path, dirty);
 
           {#if expanded[index]}
             {#each childSteps(step) as child, childIndex}
+              {#if childVisible(step, child, filter)}
               <!-- 子步骤也能选中：不选中的话它自己的参数（循环体里那一步的文字、坐标）就只能去 JSON 里改。 -->
               <button
                 class="row child"
@@ -1616,12 +1644,16 @@ $: syncTitle(doc, path, dirty);
                   </span>
                 {/if}
               </button>
+              {/if}
             {/each}
+          {/if}
           {/if}
         {/each}
 
         {#if steps.length === 0}
           <p class="blank">这一步还没加。上面那排按钮各加一步，按顺序往下执行。</p>
+        {:else if visibleSteps.length === 0}
+          <p class="blank">没有匹配的步骤。清掉过滤条件就能看到全部。</p>
         {/if}
       </section>
 
@@ -2079,6 +2111,37 @@ $: syncTitle(doc, path, dirty);
     max-width: 40ch;
   }
 
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+
+  .filter input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--kp-rule);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-field);
+    color: var(--kp-ink);
+    font-size: 13px;
+  }
+
+  .filter input:focus {
+    outline: none;
+    border-color: var(--kp-signal);
+    background: var(--kp-card);
+  }
+
+  .filter-count {
+    flex: none;
+    font-family: var(--kp-mono);
+    font-size: 11px;
+    color: var(--kp-ink3);
+  }
   .list {
     position: relative;
     overflow: auto;
