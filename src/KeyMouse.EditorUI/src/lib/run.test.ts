@@ -59,6 +59,31 @@ describe('resultsFromReport', () => {
     expect(results['7'].dry).toBe(false);
   });
 
+  it('子流程内联的结果往上卷到「调用另一个流程」那一行', () => {
+    const report = JSON.stringify({
+      commands: [
+        { index: 1, origin: '1', command: '等 80 ms', exitCode: 0 },
+        { index: 2, origin: '2.1', command: '等 120 ms', exitCode: 0 },
+        { index: 3, origin: '2.2', command: 'KeyMouse mouse wheel -120', exitCode: 0 },
+        { index: 4, origin: '3', command: '等 60 ms', exitCode: 0 },
+      ],
+    });
+    const results = resultsFromReport(report, false);
+    expect(results['2']).toEqual({ ok: true, text: '2 步都成功', dry: false });
+    expect(results['2.1'].ok).toBe(true);
+  });
+
+  it('卷起来的那句带上第一个失败的原因', () => {
+    const report = JSON.stringify({
+      commands: [
+        { index: 1, origin: '2.1', command: '等 120 ms', exitCode: 0 },
+        { index: 2, origin: '2.2', command: 'KeyMouse window focus --process nope', exitCode: 3 },
+      ],
+    });
+    const results = resultsFromReport(report, false);
+    expect(results['2'].ok).toBe(false);
+    expect(results['2'].text).toContain('退出码 3');
+  });
   it('空报告、坏 JSON、没有 origin 的都被忽略', () => {
     expect(resultsFromReport('', true)).toEqual({});
     expect(resultsFromReport('{ not json', true)).toEqual({});

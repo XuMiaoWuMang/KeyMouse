@@ -98,6 +98,23 @@ export function resultsFromReport(text: string, dry: boolean): Record<string, St
     results[origin] = { ok: !entry.skipped && code === 0, text, dry };
   }
 
+  // 子流程内联、循环展开时，命令行给的是 `2.1`、`2.2` 这种位置，而"调用另一个流程"
+  // 那一行自己没有命令。往上卷一层：父行只要没有自己的结果，就用孩子的结果汇总一句，
+  // 否则用户会看到「调用另一个流程」那行永远是空的——明明它跑过了。
+  for (const key of Object.keys(results)) {
+    if (!key.includes('.')) continue;
+    const parent = key.slice(0, key.lastIndexOf('.'));
+    if (results[parent]) continue;
+
+    const kids = Object.entries(results).filter(([child]) => child.startsWith(parent + '.'));
+    if (kids.length === 0) continue;
+
+    const failed = kids.find(([, value]) => !value.ok);
+    results[parent] = failed
+      ? { ok: false, text: failed[1].text, dry }
+      : { ok: true, text: `${kids.length} 步都成功`, dry };
+  }
+
   return results;
 }
 
