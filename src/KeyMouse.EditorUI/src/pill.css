@@ -8,12 +8,15 @@
   1. 窗口本身按 transparent 建（src-tauri/src/pill.rs 的 `.transparent(true)`）；
   2. 页面根元素与 body 的背景必须真的是 transparent（这里显式写，不吃任何默认）；
   3. 阴影只能靠 CSS 画（box-shadow），窗口自带的那圈阴影必须关掉（`.shadow(false)`）。
+
+  内容只有三样：呼吸的红点、走过的时长、一个方块按钮。宽度固定，时长用等宽数字，
+  所以药丸不会随时间跳动——它会一直悬在屏幕上，抖一下都碍眼。
 */
 
 :root {
   --pill-paper: rgba(250, 247, 242, 0.94);
   --pill-ink: #17140f;
-  --pill-ink2: #5b5348;
+  --pill-ink2: #6b6357;
   --pill-rule: rgba(23, 20, 15, 0.14);
   --pill-signal: #c2410c;
 }
@@ -32,27 +35,33 @@ body {
 
 .pill {
   position: absolute;
-  inset: 6px;
+  inset: 4px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px 0 14px;
-  border-radius: 18px;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 7px 0 10px;
+  border-radius: 999px;
   background: var(--pill-paper);
   border: 1px solid var(--pill-rule);
   box-shadow:
-    0 10px 24px rgba(23, 20, 15, 0.18),
+    0 6px 16px rgba(23, 20, 15, 0.16),
     0 1px 0 rgba(255, 255, 255, 0.7) inset;
   color: var(--pill-ink);
+  cursor: grab;
+}
+
+.pill:active {
+  cursor: grabbing;
 }
 
 .dot {
   flex: none;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--pill-signal);
-  box-shadow: 0 0 0 4px rgba(194, 65, 12, 0.16);
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.14);
   animation: breathe 1.6s ease-in-out infinite;
 }
 
@@ -62,56 +71,66 @@ body {
     opacity: 1;
   }
   50% {
-    opacity: 0.45;
+    opacity: 0.4;
   }
 }
 
-.title {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
+/* 等宽数字：0:07 → 0:58 → 1:23 过程中宽度不变，药丸不跟着伸缩 */
 .elapsed {
-  font-family: 'Cascadia Mono', Consolas, monospace;
+  flex: none;
+  min-width: 32px;
+  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
   color: var(--pill-ink2);
+  text-align: center;
 }
 
-.hint {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--pill-ink2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* 停止：朱砂实心圆里一个白色方块，不用"停止"两个字。
+   实心圆是"能点"，左边那个呼吸点是"在录"——形状与明度都不同，不会看混。 */
 .stop {
   flex: none;
-  height: 28px;
-  padding: 0 12px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border: 0;
-  border-radius: 14px;
+  border-radius: 50%;
   background: var(--pill-signal);
   color: #fff;
-  font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.stop .glyph {
+  width: 8px;
+  height: 8px;
+  border-radius: 1.5px;
+  background: currentColor;
 }
 
 .stop:hover {
   background: #a8380a;
 }
 
-/* 拖动区：整条药丸都能按住拖，按钮除外（按钮自己处理点击） */
-.drag {
-  position: absolute;
-  inset: 0;
-  cursor: grab;
+.stop:active .glyph {
+  transform: scale(0.82);
 }
 
-.drag:active {
-  cursor: grabbing;
+.stop:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
+/* 停不下来：红点停跳、按钮转暗，靠悬停提示说明原因（没有文字区可写） */
+.pill.failed .dot {
+  animation: none;
+  background: var(--pill-ink2);
+  box-shadow: none;
+}
+
+.pill.failed .stop {
+  background: var(--pill-ink2);
 }

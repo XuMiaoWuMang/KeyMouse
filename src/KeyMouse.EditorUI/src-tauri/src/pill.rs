@@ -13,9 +13,12 @@
 
 use tauri::{AppHandle, Manager, LogicalPosition, LogicalSize, WebviewUrl, WebviewWindowBuilder};
 
-/// 浮条窗口的尺寸（逻辑像素）。宽度够放"正在录制 + 已录 N 秒 + 提示 + 停止"。
-pub const WIDTH: f64 = 372.0;
-pub const HEIGHT: f64 = 60.0;
+/// 浮条窗口的尺寸（逻辑像素）。
+///
+/// 只装得下三样东西：8px 呼吸点、等宽时长（`0:07` → `12:34` 宽度不变）、22px 方块按钮。
+/// 它要一直悬在屏幕上，多一个像素都在挡人——所以这里不写"正在录制""操作你要录的窗口"这类字。
+pub const WIDTH: f64 = 104.0;
+pub const HEIGHT: f64 = 38.0;
 
 /// 离屏幕底部的距离（逻辑像素）：留出任务栏高度以上的呼吸空间。
 const BOTTOM_MARGIN: f64 = 96.0;
@@ -106,9 +109,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pill_leaves_room_for_a_stop_button() {
-        assert!(WIDTH >= 320.0 && WIDTH <= 520.0, "太窄放不下提示语，太宽挡视线");
-        assert!(HEIGHT >= 48.0 && HEIGHT <= 80.0, "一行字 + 28px 按钮的下限");
+    fn pill_is_small_enough_to_ignore() {
+        // 红点 8 + 间距 8 + 时长 32 + 间距 8 + 按钮 22 + 左右留白 20 ≈ 98，留一点余量。
+        assert!(WIDTH >= 96.0 && WIDTH <= 180.0, "太窄挤不下时长，太宽挡视线");
+        assert!(HEIGHT >= 32.0 && HEIGHT <= 56.0, "22px 按钮 + 上下 4px 描边就够，再高就显得笨");
     }
 
     #[test]
