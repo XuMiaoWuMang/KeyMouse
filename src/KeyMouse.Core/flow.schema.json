@@ -389,7 +389,7 @@
           "name": "intervalMs",
           "kind": "int",
           "required": false,
-          "min": 20,
+          "min": 100,
           "max": 5000,
           "default": 250,
           "label": {
@@ -1090,7 +1090,7 @@
           "name": "intervalMs",
           "kind": "int",
           "required": false,
-          "min": 20,
+          "min": 100,
           "max": 5000,
           "default": 200,
           "label": {
@@ -1190,9 +1190,9 @@
           "name": "intervalMs",
           "kind": "int",
           "required": false,
-          "min": 20,
+          "min": 100,
           "max": 5000,
-          "default": 250,
+          "default": 1000,
           "label": {
             "zh": "每轮间隔（毫秒）",
             "en": "interval ms"
@@ -1302,7 +1302,7 @@
           "name": "intervalMs",
           "kind": "int",
           "required": false,
-          "min": 20,
+          "min": 100,
           "max": 5000,
           "default": 250,
           "label": {

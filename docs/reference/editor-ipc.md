@@ -126,6 +126,18 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 外壳缓存整份 JSON，界面自己解析（`src/lib/schema.ts`）。**不要**在 Rust 里挑字段转发：
 契约加一个字段就得改一次壳，等于把"改契约不用改界面"这件事废掉。
 
+**契约的来源是命令行，不是仓库里的文件**：编辑器的 `flow_schema` 每次都去问
+`runtime_info.cliPath` 那个 `KeyMouse.exe`。
+
+- 拿着**开发树的** `artifacts\cli\KeyMouse.exe`：它会直接读仓库里的
+  `src/KeyMouse.Core\flow.schema.json`，改完文件刷新界面就生效，不用重建。
+- 拿着**安装版**的 exe，或开发树里那个 `artifacts\cli` 还没重建：读到的是**编译时内嵌**的那一份，
+  改源码文件不会影响它。
+
+所以"我改了 schema、界面还是旧值"这件事只有两种可能：跑的是安装版；或者开发树里但
+`artifacts\cli` 是旧的——`pwsh tools\build\build.ps1` 之后再看。想确认到底读的哪一份，
+看输出面板里的「命令行：…」那一行。
+
 ### `pick_region(point: bool) -> PickResult | null`
 
 跑 `KeyMouse region pick [--point] --json`，把结果翻译成界面能直接写进步骤的形状。

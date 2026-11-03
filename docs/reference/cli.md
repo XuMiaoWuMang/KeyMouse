@@ -699,6 +699,15 @@ KeyMouse schema                # 打印整份契约
 KeyMouse schema click-text     # 只看一种步骤：必须 / 可选 / 取值 / 范围
 ```
 
+**这份契约从哪儿读**，取决于你跑的是哪一个 `KeyMouse.exe`：
+
+| 场景 | 读哪里 | 改完多久生效 |
+| --- | --- | --- |
+| 开发树（`artifacts\cli\KeyMouse.exe`，或 `dotnet run` 出来的那个） | 仓库里的 `src/KeyMouse.Core\flow.schema.json` **文件本身** | 立刻。不用重建 |
+| 安装版（`%LOCALAPPDATA%\KeyMouse\cli\KeyMouse.exe`） | 编译时**内嵌进 `KeyMouse.Core.dll`** 的那一份 | 随版本走；改文件不会影响已装的版本 |
+
+判定沿用 [`environments.md`](../guide/environments.md) 的规则（往上能不能找到 `KeyMouse.sln`）。所以"我改了 schema、界面没变"这件事只会发生在**安装版**，或者**开发树里但拿的是旧的 `artifacts\cli`**——后一种情况跑一次 `pwsh tools\build\build.ps1` 就好。
+
 细节与前端渲染约定见 [`interface.md`](interface.md)。
 ### 变量与循环
 

@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using KeyMouse.Product;
 
 namespace KeyMouse.Flow;
 /// <summary>
@@ -72,16 +74,50 @@ internal static class FlowSchema
 {
     private const string ResourceName = "KeyMouse.flow.schema.json";
 
+    /// <summary>
+    /// The contract's bytes.
+    ///
+    /// Shipped builds read the copy embedded in the assembly - that is what "one document, both sides
+    /// read it" means. A **development tree** reads the file next to the sources instead: editing
+    /// `flow.schema.json` otherwise needs `tools\build\build.ps1` before the editor sees it, and that
+    /// trap already cost one wrong conclusion ("我改了 min，界面还是旧值"). Same rule as everywhere
+    /// else: the file is the source of truth in a dev tree, the embedded copy is the shipped artifact.
+    /// </summary>
+    private static byte[] ReadSchemaBytes()
+    {
+        string? file = SchemaFile();
+        if (file is not null) return File.ReadAllBytes(file);
+
+        using Stream stream = typeof(FlowSchema).Assembly.GetManifestResourceStream(ResourceName)
+            ?? throw new InvalidOperationException($"程序集里没有内嵌 {ResourceName}");
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        return buffer.ToArray();
+    }
+
+    /// <summary>开发树里那份契约文件；安装版返回 null（那时只有内嵌的那一份）。</summary>
+    private static string? SchemaFile()
+    {
+        if (ProductLayout.Environment != ProductEnvironment.Development) return null;
+        if (ProductLayout.RepositoryRoot is not { Length: > 0 } root) return null;
+        string path = Path.Combine(root, "src", "KeyMouse.Core", "flow.schema.json");
+        return File.Exists(path) ? path : null;
+    }
+
     internal static IReadOnlyList<FlowField> DocumentFields { get; }
     internal static IReadOnlyList<FlowField> CommonFields { get; }
     internal static IReadOnlyDictionary<string, FlowStepContract> Steps { get; }
     internal static IReadOnlyDictionary<string, IReadOnlyList<FlowField>> Shapes { get; }
 
+    /// <summary>契约原文，读一次留住：`KeyMouse schema` 每次都吐同一份。</summary>
+    private static readonly string _json;
+
     static FlowSchema()
     {
-        using Stream stream = typeof(FlowSchema).Assembly.GetManifestResourceStream(ResourceName)
-            ?? throw new InvalidOperationException($"程序集里没有内嵌 {ResourceName}");
-        using JsonDocument schema = JsonDocument.Parse(stream);
+        byte[] bytes = ReadSchemaBytes();
+        _json = Encoding.UTF8.GetString(bytes);
+
+        using JsonDocument schema = JsonDocument.Parse(bytes);
 
         JsonElement root = schema.RootElement;
         DocumentFields = ReadFields(root.GetProperty("document").GetProperty("fields"));
@@ -128,15 +164,7 @@ internal static class FlowSchema
         Shapes.TryGetValue(kind, out IReadOnlyList<FlowField>? fields) ? fields : [];
 
     /// <summary>The image of the contract as JSON, for `KeyMouse schema` and for tests.</summary>
-    internal static string Json
-    {
-        get
-        {
-            using Stream stream = typeof(FlowSchema).Assembly.GetManifestResourceStream(ResourceName)!;
-            using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
-        }
-    }
+    internal static string Json => _json;
 
     /// <summary>Reads `{ "zh": "...", "en": "..." }.language`, tolerating a missing block.</summary>
     private static string Text(JsonElement element, string property, string language)
