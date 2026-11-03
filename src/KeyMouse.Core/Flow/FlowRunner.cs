@@ -253,7 +253,7 @@ internal static class FlowRunner
         switch (step.Type)
         {
             case "sleep":
-                int ms = Math.Clamp(step.Ms ?? 0, 0, 3_600_000);
+                int ms = Number(step, "ms", 0);
                 if (!options.DryRun) Thread.Sleep(ms);
                 return (0, $"等待 {ms} ms");
 
@@ -264,7 +264,7 @@ internal static class FlowRunner
             case "mousehold":
             case "keyhold":
             {
-                int holdMs = Math.Clamp(step.Ms ?? 0, 0, 3_600_000);
+                int holdMs = Number(step, "ms", 0);
                 string what = step.Button is { Length: > 0 } button
                     ? $"鼠标{button switch { "right" => "右键", "middle" => "中键", _ => "左键" }}"
                     : $"键盘 {step.Combo ?? step.Text ?? "?"}";
@@ -365,7 +365,7 @@ internal static class FlowRunner
             if (!string.IsNullOrEmpty(step.Text))
             {
                 TextMatch? match = TextLocator.Find(lines, step.Text!, step.Match ?? TextPredicate.Contains,
-                    Math.Clamp(step.MaxErrors ?? 1, 0, 20));
+                    Number(step, "maxErrors", 1));
                 if (match is null)
                     return (3, $"没找到「{step.Text}」（读到「{text}」）——{step.Into} 没被改动");
                 value = match.Matched;
@@ -382,8 +382,8 @@ internal static class FlowRunner
     /// <summary>Waits until a usable window matches the step's selector, then reports how long it took.</summary>
     private static (int ExitCode, string Output) WaitWindow(FlowStep step, ScriptOptions options)
     {
-        int timeoutMs = Math.Clamp(step.TimeoutMs ?? 5000, 0, 600_000);
-        int intervalMs = Math.Clamp(step.IntervalMs ?? 200, 20, 5000);
+        int timeoutMs = Number(step, "timeoutMs", 5000);
+        int intervalMs = Number(step, "intervalMs", 200);
         string[] selector = step.Target?.Selector() ?? [];
         if (selector.Length == 0) return (2, "wait-window 需要 target（窗口选择器）");
         if (options.DryRun) return (0, $"（dry-run）检查选择器即可：{string.Join(' ', selector)}");
@@ -531,9 +531,9 @@ internal static class FlowRunner
 
     private static PollResult PollStep(FlowStep step, bool dryRun, bool allowRestore, int stepIndex) => PollForText(
         SelectorOf(step.Target), step.Region!, step.Text ?? "",
-        step.Match ?? TextPredicate.Contains, Math.Clamp(step.MaxErrors ?? 1, 0, 20),
-        Math.Clamp(step.TimeoutMs ?? 5000, 0, 600_000), Math.Clamp(step.IntervalMs ?? 250, 0, 5000),
-        Math.Clamp(step.Confirm ?? 2, 1, 10), dryRun, allowRestore, stepIndex);
+        step.Match ?? TextPredicate.Contains, Number(step, "maxErrors", 1),
+        Number(step, "timeoutMs", 5000), Number(step, "intervalMs", 200),
+        Number(step, "confirm", 2), dryRun, allowRestore, stepIndex);
 
     /// <summary>
     /// 等到流程时间线上的某一刻（毫秒，从本次回放开始算）。分片睡眠，
@@ -618,9 +618,38 @@ internal static class FlowRunner
     private static PollResult EvaluateWhen(FlowStep step, FlowCondition condition, bool dryRun, bool allowRestore, int stepIndex) =>
         PollForText(
             SelectorOf(condition.Target ?? step.Target), condition.Region!, condition.Text ?? "",
-            condition.Match ?? TextPredicate.Contains, Math.Clamp(condition.MaxErrors ?? 1, 0, 20),
-            Math.Clamp(condition.TimeoutMs ?? 2000, 0, 600_000), Math.Clamp(condition.IntervalMs ?? 250, 0, 5000),
-            Math.Clamp(condition.Confirm ?? 2, 1, 10), dryRun, allowRestore, stepIndex);
+            condition.Match ?? TextPredicate.Contains, ShapeNumber("when", condition.MaxErrors, "maxErrors", 1),
+            ShapeNumber("when", condition.TimeoutMs, "timeoutMs", 2000), ShapeNumber("when", condition.IntervalMs, "intervalMs", 200),
+            ShapeNumber("when", condition.Confirm, "confirm", 2), dryRun, allowRestore, stepIndex);
+
+    /// <summary>
+    /// 一个数字字段的取值：没填就用契约的默认值，填了也按契约夹进范围。
+    ///
+    /// 加载时已经查过越界（`FlowModel.CheckRanges` 会把越界当错误），这里再夹一次是因为运行时的值
+    /// 可能来自占位符替换或子流程参数——夹取总好过睡一个负毫秒。上下限同样出自契约，不在这里另写。
+    /// </summary>
+    private static int Number(FlowStep step, string field, int whenAbsent)
+    {
+        int? given = field switch
+        {
+            "ms" => step.Ms,
+            "timeoutMs" => step.TimeoutMs,
+            "intervalMs" => step.IntervalMs,
+            "maxErrors" => step.MaxErrors,
+            "confirm" => step.Confirm,
+            _ => null,
+        };
+
+        if (!FlowSchema.TryGetNumberRule(step.Type, field, out NumberRule rule)) return given ?? whenAbsent;
+        return given is int value ? rule.Clamp(value) : rule.Fallback(whenAbsent);
+    }
+
+    /// <summary>同上，但读的是 `when` 这种嵌套形状的字段（`shapes.when`）。</summary>
+    private static int ShapeNumber(string kind, int? given, string field, int whenAbsent)
+    {
+        if (!FlowSchema.TryGetShapeNumberRule(kind, field, out NumberRule rule)) return given ?? whenAbsent;
+        return given is int value ? rule.Clamp(value) : rule.Fallback(whenAbsent);
+    }
 
     private static string Describe(FlowStep step) => step.Type switch
     {

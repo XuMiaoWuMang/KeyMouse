@@ -83,10 +83,11 @@ pub fn record_flow_elevated(
 /// 按 `Ctrl+Alt+Q` 让命令行自己收尾（它会写文件、打印摘要）。
 ///
 /// 按键走的是同一个命令行、同一套注入：录制本身靠的就是这套注入，能录就能停。
-/// 3 秒还没退出就杀进程——宁可丢这一次录制，也不要让界面卡在"录制中"。
+/// 5 秒还没退出就杀进程——宁可丢这一次录制，也不要让界面卡在"录制中"。
 ///
-/// 这 3 秒是留给它写文件的：收到停止键之后，它要把录到的东西落盘、打印摘要、退出。
-/// 太短会在最不该打断的时刻打断（写了一半的 json）。
+/// 这 5 秒是留给它写文件的：收到停止键之后，它要把录到的东西落盘、打印摘要、退出。
+/// 太短会在最不该打断的时刻打断（写了一半的 json）；太长则"停止"按下去要愣好几秒才有反应。
+/// 1300 步的实录落盘实测不到 1 秒，5 秒是留足余量又不至于让人以为卡住的值。
 #[tauri::command]
 pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let cli = crate::run::cli_path_of()?;
@@ -101,7 +102,7 @@ pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
         .map_err(|e| format!("发停止键失败：{e}"))?;
 
     let started = Instant::now();
-    while started.elapsed() < Duration::from_millis(3000) {
+    while started.elapsed() < Duration::from_millis(5000) {
         if !is_running(&app) {
             return Ok("stopped");
         }

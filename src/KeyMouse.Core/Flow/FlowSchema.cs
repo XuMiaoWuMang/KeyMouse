@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -238,4 +239,51 @@ internal static class FlowSchema
             _ => true,
         };
     }
+
+    /// <summary>
+    /// 契约给某个步骤字段划的范围与默认值；契约里没写就是"没限制"。
+    ///
+    /// 引擎以前把这些数字写死在自己的代码里（`Math.Clamp(step.IntervalMs ?? 200, 20, 5000)`），
+    /// 于是"每轮间隔最少 20 毫秒"同时存在于两处：契约说 100，引擎认 20，谁也说不出哪个算数。
+    /// 现在引擎只问这一处——契约里没有的边界，就按字段类型本身的合法范围兜底。
+    /// </summary>
+    internal static bool TryGetNumberRule(string stepType, string field, out NumberRule rule)
+    {
+        rule = new NumberRule(0, int.MaxValue, null);
+        if (!TryGetStep(stepType, out FlowStepContract contract)) return false;
+
+        FlowField? match = contract.All.FirstOrDefault(f => string.Equals(f.Name, field, StringComparison.Ordinal));
+        if (match is null || match.Kind != "int") return false;
+
+        rule = RuleOf(match);
+        return true;
+    }
+
+    /// <summary>同上，但字段属于嵌套形状（`when` / `region` / `target` / `point`）。</summary>
+    internal static bool TryGetShapeNumberRule(string kind, string field, out NumberRule rule)
+    {
+        rule = new NumberRule(0, int.MaxValue, null);
+        if (!Shapes.TryGetValue(kind, out IReadOnlyList<FlowField>? fields)) return false;
+
+        FlowField? match = fields.FirstOrDefault(f => string.Equals(f.Name, field, StringComparison.Ordinal));
+        if (match is null || match.Kind != "int") return false;
+
+        rule = RuleOf(match);
+        return true;
+    }
+
+    private static NumberRule RuleOf(FlowField field) => new(
+        Min: field.Min ?? 0,
+        Max: field.Max ?? int.MaxValue,
+        Default: int.TryParse(field.Default, NumberStyles.Integer, CultureInfo.InvariantCulture, out int fallback) ? fallback : null);
+}
+
+/// <summary>一个数字字段在契约里的规矩：上下限与默认值。</summary>
+internal readonly record struct NumberRule(int Min, int Max, int? Default)
+{
+    /// <summary>把值夹进范围；越界不报错，运行时照旧跑——报错留给加载时那条更早的检查。</summary>
+    internal int Clamp(int value) => Math.Clamp(value, Min, Max);
+
+    /// <summary>没填时用契约的默认值，再兜一个调用方给的保底。</summary>
+    internal int Fallback(int whenAbsent) => Clamp(Default ?? whenAbsent);
 }

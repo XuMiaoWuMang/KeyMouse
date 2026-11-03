@@ -569,7 +569,7 @@ KeyMouse run flow.json                          # 回放
   "target": { "process": "notepad" },
   "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 },
   "text": "保存成功", "match": "fuzzy", "maxErrors": 1,
-  "timeoutMs": 8000, "intervalMs": 250, "confirm": 2 }
+  "timeoutMs": 8000, "intervalMs": 1000, "confirm": 2 }
 ```
 
 | 字段 | 默认 | 说明 |
@@ -579,8 +579,13 @@ KeyMouse run flow.json                          # 回放
 | `match` | `contains` | `contains`（读到里含期望）/ `exact`（完全一致）/ `fuzzy`（编辑距离 ≤ `maxErrors`） |
 | `maxErrors` | 1 | 只对 `fuzzy` 有意义。**这是你声明的容错预算，不是工具偷偷放宽的阈值** |
 | `timeoutMs` | 5000 | 等多久；超时退出码 `3`（= 没做任何操作，可安全重试） |
-| `intervalMs` | 250 | 两轮之间等多久（每轮都是一次真实的引擎调用，约 0.2~0.6 秒） |
+| `intervalMs` | 1000 | 两轮之间等多久（每轮都是一次真实的引擎调用，约 0.2~0.6 秒） |
 | `confirm` | 2 | 需要连续几轮**读到同一段**满足条件的文字才算数；设 1 就是"一眼看到就算" |
+
+**上面这几个"默认"不在引擎里写死**：加载时按 `flow.schema.json` 的 `default` 取值、按 `min`/`max`
+校验，越界直接退出码 2（不悄悄夹一下，否则你的笔误会被藏起来）。改契约就改
+`src/KeyMouse.Core/flow.schema.json`——开发树里引擎直接读这份文件，安装版读编译进去的那份。
+本表的数字是"当前契约的值"，契约改了这里也得跟着改。
 
 三条语义值得记住：
 

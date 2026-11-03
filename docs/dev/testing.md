@@ -92,10 +92,11 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 | `stopkeys` | 录制的停止键：Ctrl+Alt+Q，以及 0.3 秒内连按两次 ESC（超时的那一次补记成普通按键） |
 | `timeline` | 录制时间线：`atMs` 的写入与往返 |
 | `nowindow` | 无窗口执行：默认不要求窗口在前台 |
+| `schema-range` | 数字范围与默认值只认契约：越界加载即失败，`when` 这类嵌套形状一样管 |
 
 断言只有一个极小的 Harness（`tests\KeyMouse.Tests\Harness.cs`）：`Check(说明, 条件, 细节)`、`Equal`、`Sequence`、`Throws`，末尾打印 `N passed, M failed`，有失败就返回退出码 1。每个模块包在 `Section` 里跑，某个模块抛异常会被记成一条失败并继续跑后面的模块，不会让整轮测试中断。
 
-最近一次全跑：16 个模块 **677 passed, 0 failed**（0 警告）。
+最近一次全跑：17 个模块 **699 passed, 0 failed**（0 警告）。
 
 **什么时候必须跑**：动了参数解析、窗口选择、流程编译/执行、Runner 协议、录制格式中的任何一处，跑对应模块；发布前跑全部。单测不需要桌面，所以在 CI 里也照跑。
 

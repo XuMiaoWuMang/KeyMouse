@@ -55,6 +55,50 @@ fn log_error(message: String) {
     crashlog::write(&format!("ui {message}"));
 }
 
+/// 把窗口夹进当前显示器：大小不超过屏，位置不越界。
+///
+/// 为什么还要"过一会儿再来一次"：`setup()` 里窗口还没显示，`current_monitor()` 常常给
+/// `None`，这时"按屏幕夹一下"会整段跳过。带进来的旧尺寸一旦比当前屏幕还大（换显示器、改缩放、
+/// 笔记本拔掉外接屏），底部状态行就永远点不到。夹一次只花几毫秒，值得重复一次。
+fn clamp_to_monitor(window: &tauri::WebviewWindow) {
+    let monitor = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| window.primary_monitor().ok().flatten());
+    let Some(monitor) = monitor else { return };
+
+    let scale = monitor.scale_factor();
+    let origin = *monitor.position();
+    let area = *monitor.size();
+    let margin_x = (40.0 * scale).round() as i32;
+    let margin_y = (80.0 * scale).round() as i32;
+
+    // 大小：留出边距（右边距给滚动条，下边距给任务栏），同时不低于 760×520 逻辑像素。
+    let min_w = (760.0 * scale).round() as u32;
+    let min_h = (520.0 * scale).round() as u32;
+    let max_w = area.width.saturating_sub(margin_x.max(0) as u32).max(min_w);
+    let max_h = area.height.saturating_sub(margin_y.max(0) as u32).max(min_h);
+    if let Ok(size) = window.outer_size() {
+        let w = size.width.min(max_w);
+        let h = size.height.min(max_h);
+        if w != size.width || h != size.height {
+            let _ = window.set_size(tauri::PhysicalSize::new(w, h));
+        }
+    }
+
+    // 位置：让整个窗口落在显示器可见范围内（右下角贴边时优先保住标题栏与底栏）。
+    if let (Ok(size), Ok(position)) = (window.outer_size(), window.outer_position()) {
+        let right = origin.x + area.width as i32 - size.width as i32;
+        let bottom = origin.y + area.height as i32 - size.height as i32;
+        let x = position.x.clamp(origin.x, right.max(origin.x));
+        let y = position.y.clamp(origin.y, bottom.max(origin.y));
+        if x != position.x || y != position.y {
+            let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        }
+    }
+}
+
 fn main() {
     crashlog::install();
 
@@ -90,11 +134,19 @@ fn main() {
             // 窗口大小在壳里恢复，不交给界面：界面要等 webview 起来才有机会说话，
             // 那时窗口已经在屏幕上以默认大小闪了一下。这里在窗口显示前就改好。
             if let (Some(window), Some(saved)) = (app.get_webview_window("main"), store::window_size()) {
-                // 屏幕可能变过（换了显示器、改了缩放、上次记的是更大的窗口）：
-                // 把上次的大小夹进当前这块屏幕，否则窗口比屏幕还大，底部状态行永远点不到。
+                // 屏幕可能变过（换了显示器、改了缩放、上次记的是更大的窗口或更靠下的位置）：
+                // 把上次的大小**和位置**都夹进当前这块屏幕。只夹大小不夹位置的话，窗口会有一截
+                // 落到屏幕外面——底部状态行和「输出」按钮永远点不到。
                 let mut width = saved.width;
                 let mut height = saved.height;
-                if let Ok(Some(monitor)) = window.current_monitor() {
+                let monitor = window
+                    .current_monitor()
+                    .ok()
+                    .flatten()
+                    // 窗口还没显示时 current_monitor() 常常给 None；这时退回主屏，
+                    // 否则"夹进屏幕"这一整段会被跳过，接着就出现比屏幕还大的窗口。
+                    .or_else(|| window.primary_monitor().ok().flatten());
+                if let Some(monitor) = monitor.as_ref() {
                     let scale = monitor.scale_factor();
                     let max_width = (f64::from(monitor.size().width) / scale) - 40.0;
                     let max_height = (f64::from(monitor.size().height) / scale) - 80.0;
@@ -103,11 +155,30 @@ fn main() {
                 }
                 let _ = window.set_size(tauri::LogicalSize::new(width, height));
                 // 位置只在"上次确实记过"时用：老账本里没有 x/y，缺省 0/0 会把窗口甩到左上角。
-                if saved.x != 0 || saved.y != 0 {
+                if (saved.x != 0 || saved.y != 0) && monitor.is_some() {
                     // outer_position() 给的是物理像素，恢复也用 PhysicalPosition——两者必须成对，
                     // 一端按逻辑、一端按物理，窗口每开一次就漂一段。
-                    let _ = window.set_position(tauri::PhysicalPosition::new(saved.x, saved.y));
+                    let monitor = monitor.as_ref().expect("上面刚判过");
+                    let scale = monitor.scale_factor();
+                    let origin = monitor.position();
+                    let area = monitor.size();
+                    let w = (width * scale).round() as i32;
+                    let h = (height * scale).round() as i32;
+                    let right = origin.x + area.width as i32 - w;
+                    let bottom = origin.y + area.height as i32 - h;
+                    let x = saved.x.clamp(origin.x, right.max(origin.x));
+                    let y = saved.y.clamp(origin.y, bottom.max(origin.y));
+                    let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
                 }
+            }
+
+            // 窗口显示之后再夹一次：setup 里拿不到显示器时，上面那整段是跳过的。
+            // 400ms 足够窗口映射到屏幕上，又短到用户还没来得及手动调整。
+            if let Some(window) = app.get_webview_window("main") {
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(400));
+                    clamp_to_monitor(&window);
+                });
             }
             Ok(())
         })

@@ -345,6 +345,7 @@ internal sealed class FlowDocument
             }
 
             CheckRequired(step, $"第 {i + 1} 步");
+            CheckRanges(step, $"第 {i + 1} 步");
             CheckPlaceholders(step, scope, $"第 {i + 1} 步");
 
             // A read-text defines a variable for the steps after it, so the check above can stay a
@@ -406,6 +407,7 @@ internal sealed class FlowDocument
                 throw new CommandFailure(2, $"{where}的 axis '{axis}' 不认识（可用：{FlowAxis.Vertical} | {FlowAxis.Horizontal}）");
 
             CheckRequired(step, where);
+            CheckRanges(step, where);
             CheckPlaceholders(step, scope, where);
             if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
 
@@ -551,6 +553,58 @@ internal sealed class FlowDocument
                 contract.Own.FirstOrDefault(f => f.Name == name)?.LabelZh is { Length: > 0 } label ? label : name));
             throw new CommandFailure(2, $"{where}的 {step.Type} 需要 {labels} 之一");
         }
+    }
+
+    /// <summary>
+    /// 数字字段的取值范围，也由契约说了算。
+    ///
+    /// 以前引擎自己写死上限（`Math.Clamp(intervalMs ?? 200, 20, 5000)`），契约里写的却是 `min: 100`：
+    /// 界面上输不进 20，手写一份 JSON 却能跑 20，两边对"合法流程"的定义不一致。现在越界在**加载时**
+    /// 就报错，而不是悄悄夹一下——夹取会把用户的笔误藏起来，等他发现"没什么变化"时已经查了三遍。
+    /// </summary>
+    private static void CheckRanges(FlowStep step, string where)
+    {
+        using JsonDocument document = JsonDocument.Parse(JsonSerializer.Serialize(step, FlowDocument.Json));
+        JsonElement root = document.RootElement;
+
+        if (FlowSchema.TryGetStep(step.Type, out FlowStepContract contract))
+        {
+            string owner = $"{where}的 {step.Type}";
+            foreach (FlowField field in contract.Own) CheckRange(root, field, owner);
+        }
+
+        if (step.When is not null && root.TryGetProperty("when", out JsonElement when))
+        {
+            string owner = $"{where}的 when";
+            foreach (FlowField field in FlowSchema.ShapeFields("when")) CheckRange(when, field, owner);
+        }
+    }
+
+    private static void CheckRange(JsonElement owner, FlowField field, string at)
+    {
+        if (field.Kind != "int" || (field.Min is null && field.Max is null)) return;
+        if (!TryReadNumber(owner, field.Name, out double value)) return;
+
+        string range = field.Min is int low && field.Max is int high ? $"{low}..{high}" : field.Min is int only ? $"不小于 {only}" : $"不大于 {field.Max}";
+        string shown = value.ToString("0.###", CultureInfo.InvariantCulture);
+        bool bad = field.Min is int min && value < min || field.Max is int max && value > max;
+        if (bad)
+        {
+            string label = field.LabelZh is { Length: > 0 } zh ? $"（{zh}）" : "";
+            throw new CommandFailure(2, $"{at} 里 {field.Name} = {shown}，契约要求 {range}{label}");
+        }
+    }
+
+    /// <summary>按点分路径取一个数字；不是数字（没填、是文案、被占位符替换过）就当"这里没限制可查"。</summary>
+    private static bool TryReadNumber(JsonElement owner, string path, out double value)
+    {
+        value = 0;
+        JsonElement cursor = owner;
+        foreach (string part in path.Split('.'))
+        {
+            if (cursor.ValueKind != JsonValueKind.Object || !cursor.TryGetProperty(part, out cursor)) return false;
+        }
+        return cursor.ValueKind == JsonValueKind.Number && cursor.TryGetDouble(out value);
     }
 
     /// <summary>Every step in the file, groups included (used where a whole-file rule applies).</summary>

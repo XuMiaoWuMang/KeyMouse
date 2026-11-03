@@ -16,9 +16,14 @@
 | --- | --- |
 | 契约文件（唯一权威） | `src/KeyMouse.Core/flow.schema.json` |
 | 分发方式 | 作为资源**内嵌进 KeyMouse.Core.dll**，跟着程序走，不依赖文件路径 |
+| 开发树里的例外 | 引擎判定自己在开发树时（`ProductLayout`）**直接读仓库里的这份文件**，改完不用重新构建就生效；安装版仍读内嵌的那份 |
 | 命令行查看全部 | `KeyMouse schema` |
 | 命令行看一种步骤 | `KeyMouse schema click-text` |
-| 单元测试 | `dotnet run --project tests\KeyMouse.Tests -c Release -- --only flow` |
+| 单元测试 | `dotnet run --project tests\KeyMouse.Tests -c Release -- --only flow`；数字范围另见 `--only schema-range` |
+
+**数字字段的 `min`/`max`/`default` 只有这一份，而且引擎认它**：加载时按 `min`/`max` 校验（越界退出码 2，
+不悄悄夹取）、字段没写时取 `default`；编辑器画控件读的也是同一份。所以"界面上输不进 20、手写 JSON
+却能跑 20"这种事不会再出现——两边对"合法流程"的定义出自同一行契约。
 
 `KeyMouse schema click-text` 的输出就是前端能拿到的信息，例如：
 

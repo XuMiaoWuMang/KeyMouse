@@ -2632,6 +2632,9 @@ $: syncTitle(doc, path, dirty);
     display: grid;
     grid-template-columns: minmax(420px, 1fr) minmax(360px, 46%);
     min-height: 0;
+    /* 空状态那张卡片比可视区高时（最近打开一堆文件），要让这一行自己滚，
+       否则卡片会从底栏下面穿出去。正常状态下两个面板各自滚，这里不会出现滚动条。 */
+    overflow: auto;
     padding: var(--kp-gap-lg) var(--kp-gap-xl);
     gap: var(--kp-gap-xl);
   }

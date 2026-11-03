@@ -29,6 +29,7 @@ internal static class TestEntry
         ("record-focus", "录制收尾补 focus：回放才落在正确窗口", RecorderFocusTests.Run),
         ("timeline", "录制时间线：atMs 的写入与往返", TimelineTests.Run),
         ("nowindow", "无窗口执行：默认不要求窗口在前台", NoWindowTests.Run),
+        ("schema-range", "数字范围与默认值只认契约，越界加载即失败", SchemaRangeTests.Run),
     ];
 
     private static int Main(string[] args)
