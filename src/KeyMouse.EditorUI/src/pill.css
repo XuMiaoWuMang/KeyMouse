@@ -1,0 +1,117 @@
+/*
+  录制浮条：一块**透明的**置顶小窗口，里面只画一个圆角药丸。
+
+  为什么不是把主窗口缩成一条（原来的 mini.rs）：缩出来的东西是不透明的矩形，
+  贴在别人窗口旁边像贴了一张纸。透明的窗口 + 窗内自己画的药丸，才像"浮在桌面上"。
+
+  透明窗口的三条硬要求，缺一条就会看到白底或黑底：
+  1. 窗口本身按 transparent 建（src-tauri/src/pill.rs 的 `.transparent(true)`）；
+  2. 页面根元素与 body 的背景必须真的是 transparent（这里显式写，不吃任何默认）；
+  3. 阴影只能靠 CSS 画（box-shadow），窗口自带的那圈阴影必须关掉（`.shadow(false)`）。
+*/
+
+:root {
+  --pill-paper: rgba(250, 247, 242, 0.94);
+  --pill-ink: #17140f;
+  --pill-ink2: #5b5348;
+  --pill-rule: rgba(23, 20, 15, 0.14);
+  --pill-signal: #c2410c;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: transparent;
+  /* 透明窗口里不要出现滚动条与文字选中，拖动靠 pointerdown 交给宿主 */
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+.pill {
+  position: absolute;
+  inset: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 0 14px;
+  border-radius: 18px;
+  background: var(--pill-paper);
+  border: 1px solid var(--pill-rule);
+  box-shadow:
+    0 10px 24px rgba(23, 20, 15, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  color: var(--pill-ink);
+}
+
+.dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pill-signal);
+  box-shadow: 0 0 0 4px rgba(194, 65, 12, 0.16);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.elapsed {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px;
+  color: var(--pill-ink2);
+}
+
+.hint {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--pill-ink2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stop {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--pill-signal);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stop:hover {
+  background: #a8380a;
+}
+
+/* 拖动区：整条药丸都能按住拖，按钮除外（按钮自己处理点击） */
+.drag {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+.drag:active {
+  cursor: grabbing;
+}

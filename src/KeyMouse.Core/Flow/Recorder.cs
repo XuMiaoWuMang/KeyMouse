@@ -52,6 +52,25 @@ internal static class Recorder
         return withFocus;
     }
 
+    /// <summary>
+    /// `--ignore-process` 的取值检查：去掉首尾空白、去掉可能带的 `.exe`，空值直接报错。
+    ///
+    /// 抽成单独的方法是为了能测——[`Run`] 会挂全局钩子，单测里跑不起来。
+    /// 引擎比的是 [`NativeWindow.ProcessNameOf`]，那边给的是**不带扩展名**的名字，
+    /// 所以用户写 `KeyMouse.Editor.exe` 也认。
+    /// </summary>
+    internal static string ParseIgnoreProcess(string raw)
+    {
+        string name = raw.Trim();
+        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            name = name[..^4];
+
+        if (name.Length == 0)
+            throw new ArgumentException("--ignore-process 需要一个进程名，例如 KeyMouse.Editor");
+
+        return name;
+    }
+
     private const int VkShift = 0x10;
     private const int VkControl = 0x11;
     private const int VkMenu = 0x12;
@@ -71,7 +90,7 @@ internal static class Recorder
     internal static int Run(string[] args, Commands.GlobalOptions g)
     {
         var (positional, options) = Commands.Parse(
-            args, "out", "min-gap", "move-threshold", "duration", "shot-size", "ignore-rect", "ignore-window");
+            args, "out", "min-gap", "move-threshold", "duration", "shot-size", "ignore-rect", "ignore-window", "ignore-process");
         if (positional.Count > 0)
             throw new ArgumentException($"record 不接受位置参数 '{positional[0]}'");
         if (g.HasSelector)
@@ -102,6 +121,12 @@ internal static class Recorder
             session.IgnoreWindow = (IntPtr)handle;
         }
 
+        // --ignore-process <名字>：这个进程的所有窗口上的鼠标事件一律不记。
+        // 比句柄好用：外壳的录制浮条是录制中途才建出来的，录制开始时根本拿不到它的句柄；
+        // 而"点停止"这一下就落在浮条上，绝不该被录成一步。
+        if (options.TryGetValue("ignore-process", out string? ignoredProcess))
+            session.IgnoreProcess = ParseIgnoreProcess(ignoredProcess);
+
         if (options.TryGetValue("ignore-rect", out string? rawRects))
         {
             foreach (string part in rawRects.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -122,6 +147,10 @@ internal static class Recorder
                           (durationMs > 0 ? $"，{durationMs / 1000.0:0.#} 秒后自动停" : "") + "）");
         Console.WriteLine("  鼠标轨迹会一起录（--no-shots 关截图，--move-threshold N 调抽稀）");
         Console.WriteLine("  注意：管理员权限窗口上的操作录不到；要录它们请加 --elevate（或右键以管理员身份运行）");
+
+        using StopSignal? externalStop = StopSignal.Install();
+        session.ExternalStop = externalStop;
+
         NativeHooks.Record(session.OnEvent, session.ShouldStop,
             () => Execution.RecordingState("recording"));
         session.Finish();
@@ -213,6 +242,18 @@ internal static class Recorder
         /// <summary>这个窗口上的鼠标事件不记（编辑器的悬浮停止按钮）。拖动窗口后依然有效。</summary>
         internal IntPtr IgnoreWindow { get; set; }
 
+        /// <summary>这个进程名（不带 .exe）的窗口上的鼠标事件不记。见 --ignore-process。</summary>
+        internal string? IgnoreProcess { get; set; }
+
+        /// <summary>
+        /// 外部停止信号：外壳（或任何知道本进程 pid 的东西）把
+        /// <c>Local\KeyMouse-record-stop-&lt;pid&gt;</c> 置上，这一轮就收尾。
+        ///
+        /// 为什么不用"注入 Ctrl+Alt+Q"：那条路要抢到前台窗口、要钩子看得见注入的键，
+        /// 而录制浮条自己就是前台 + WebView2 窗口，实测时有时无。命名事件不依赖焦点。
+        /// </summary>
+        internal StopSignal? ExternalStop { get; set; }
+
         /// <summary>刚刚吞掉了一次按下：它的抬起也要吞，否则点击配对会错位。</summary>
         private bool _suppressRelease;
 
@@ -242,6 +283,11 @@ internal static class Recorder
             if (_pendingEscape is not null && Now() - _lastEscapeAt >= EscapeWindowMs) FlushPendingEscape();
             // A client attached to the Runner can stop a recording the same way it stops a flow.
             if (Execution.Cancelled)
+            {
+                _stopped = true;
+                return true;
+            }
+            if (ExternalStop is not null && ExternalStop.IsSet)
             {
                 _stopped = true;
                 return true;
@@ -340,11 +386,26 @@ internal static class Recorder
         /// </summary>
         private bool SkipIgnored(HookEvent e)
         {
-            if (IgnoreRects.Count == 0 && IgnoreWindow == IntPtr.Zero) return false;
+            if (IgnoreRects.Count == 0 && IgnoreWindow == IntPtr.Zero && IgnoreProcess is null) return false;
 
             bool mouse = e.Kind is HookKind.MouseMove or HookKind.ButtonDown or HookKind.ButtonUp
                 or HookKind.Wheel or HookKind.HWheel;
             if (!mouse) return false;
+
+            if (IgnoreProcess is not null)
+            {
+                // 同一进程的所有窗口都跳过：主窗口、录制浮条、以后可能还有别的。
+                IntPtr under = NativeHooks.WindowAt(e.X, e.Y);
+                if (under != IntPtr.Zero)
+                {
+                    NativeWindow.GetWindowThreadProcessId(under, out uint ownerPid);
+                    if (ownerPid != 0 && NativeWindow.ProcessNameOf(ownerPid) == IgnoreProcess)
+                    {
+                        if (e.Kind == HookKind.ButtonDown) _suppressRelease = true;
+                        return true;
+                    }
+                }
+            }
 
             if (IgnoreWindow != IntPtr.Zero)
             {

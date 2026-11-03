@@ -365,6 +365,22 @@ Local\KeyMouse-pause-<pid>
 - 「停止」仍然是把整棵子树杀掉（退出码 7 的语义不变）：暂停只是为了"先看一眼再决定"。
 - 图形编辑器用它实现工具栏上的「暂停 / 继续」，见 [`editor-ipc.md`](editor-ipc.md) 的 `pause_flow`。
 
+### 录制的"优雅停止"事件
+
+`record` 另建一个**单向**的命名事件（跑流程时不建）：
+
+```text
+Local\KeyMouse-record-stop-<pid>
+```
+
+谁把它置上，这一轮录制就在下一次检查时收尾、**把已经录到的写盘**，退出码 0——
+和按 `Ctrl+Alt+Q` 的效果一样，但**不依赖前台窗口、也不依赖注入的键被钩子看见**。
+外壳的浮条「停止」走的就是这条路：浮条自己是前台窗口（WebView2），注入组合键实测时灵时不灵。
+
+- 只认"置上"，不提供 `ResetEvent`：停止是单向的。
+- 置不上（老版本命令行没建这个事件）时外壳回落到注入 `Ctrl+Alt+Q`，见 `record_stop`。
+- 引擎侧实现：`src\KeyMouse.Core\Runtime\StopSignal.cs`；外壳侧：`record.rs` 的 `signal_stop`。
+
 ## 输出编码
 
 默认跟随控制台的输出码页（中文 Windows 上是 cp936）——这是给终端里的人和 PowerShell 管道看的，

@@ -13,6 +13,8 @@ mod diagnostics;
 mod files;
 mod mini;
 mod layout;
+mod overlay_style;
+mod pill;
 mod pick;
 mod process;
 mod record;
@@ -23,7 +25,7 @@ mod store;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use tauri::{Emitter, Manager, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
 /// 界面里有没有未保存的改动。
 ///
@@ -53,6 +55,31 @@ fn close_window(window: tauri::Window) -> Result<(), String> {
 #[tauri::command]
 fn log_error(message: String) {
     crashlog::write(&format!("ui {message}"));
+}
+
+/// 浮条上的「停止」：和主窗口那个按钮走同一条命令。
+#[tauri::command]
+fn pill_stop(app: AppHandle) -> Result<&'static str, String> {
+    let outcome = record::record_stop(app.clone())?;
+    pill::hide(&app);
+    Ok(outcome)
+}
+
+/// 探针：环境变量 `KEYMOUSE_PILL_SPIKE=1` 时自动亮一次浮条。
+///
+/// 浮条平时只在录制期间出现，可"它长得对不对"不该逼着人先真录一轮。给自动化验证
+/// （改完就跑、不用人手按键）留一个不靠键盘的入口；平时没人设这个变量，等于不存在。
+pub fn spawn_pill_spike(app: &tauri::AppHandle) {
+    if std::env::var_os("KEYMOUSE_PILL_SPIKE").is_none() {
+        return;
+    }
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(900));
+        if let Err(error) = pill::show(&app) {
+            crate::crashlog::write(&format!("pill spike 失败：{error}"));
+        }
+    });
 }
 
 /// 把窗口夹进当前显示器：大小不超过屏，位置不越界。
@@ -180,6 +207,8 @@ fn main() {
                     clamp_to_monitor(&window);
                 });
             }
+
+            spawn_pill_spike(app.handle());
             Ok(())
         })
         .manage(ShellState {
@@ -205,6 +234,7 @@ fn main() {
             record::record_flow,
             record::record_flow_elevated,
             record::record_stop,
+            pill_stop,
             schema::flow_schema,
             pick::pick_region,
             mini::enter_mini,

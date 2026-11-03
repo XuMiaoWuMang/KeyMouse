@@ -181,7 +181,10 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         };
 
         let cancelled = state.cancelled.swap(false, std::sync::atomic::Ordering::Relaxed);
-        // 不管这一趟是录制还是播放，子进程一退，悬浮停止球就没有理由留在屏幕上。
+        // 不管这一趟是录制还是播放，子进程一退，录制浮条就没有理由留在屏幕上。
+        // 用户用 Esc / Ctrl+Alt+Q / 到时长自动停时不会有人来点"停止"，只能在这儿撤；
+        // 跑的是流程时浮条本来就不存在，hide 是空操作。
+        crate::pill::hide(&wait_handle);
         let _ = wait_handle.emit("shell://run-exit", RunExit { code, cancelled });
     });
 

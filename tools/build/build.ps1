@@ -19,6 +19,13 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $out = Join-Path $root $(if ($SelfContained) { 'artifacts\cli-self' } else { 'artifacts\cli' })
 
+# 重新发布前先挪走旧产物：单文件打包器（GenerateBundle）遇到上次写了一半的输出，
+# 会抛 "It is forbidden to change Manifest state after it was written or BundleId was obtained"，
+# 这条错误看着像 SDK 坏了，其实只是残留。没人跑着的旧 exe 删不掉也无所谓——发布本身能覆盖。
+if (Test-Path $out) {
+    try { Remove-Item -Recurse -Force $out } catch { Write-Host "旧产物删不掉（可能还有进程在用），继续发布" -ForegroundColor Yellow }
+}
+
 $dotnetArgs = @(
     'publish', (Join-Path $root 'src\KeyMouse.Cli\KeyMouse.Cli.csproj'),
     '-c', $Configuration,

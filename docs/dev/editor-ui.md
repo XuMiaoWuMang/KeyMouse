@@ -466,3 +466,36 @@ P0 的目标是"两屏并排看不出这是两个程序"：
   `%LOCALAPPDATA%\KeyMouse\tmp\editor-run.json`（外壳命令 `write_scratch_flow`），再拿这个
   路径去跑。磁盘上正在编辑的文件一个字都不动，底部输出会写明"跑的是临时副本，磁盘上的
   文件没动"。已保存且无改动时仍直接跑原文件。
+
+## 录制浮条：一块真的透明的第二窗口
+
+录制时屏幕上那条药丸是**独立的第二个 webview**（窗口 label `pill`，入口 `pill.html` + `src/pill.ts`），
+不是把主窗口缩成一条。它要同时满足三件事，缺一件就不是"浮条"：
+
+1. **真透明**：窗口 `transparent(true)` + `decorations(false)` + `shadow(false)`，页面根与 `body` 必须
+   `background: transparent`，圆角与投影全交给 CSS（`src/pill.css`）。系统阴影一开，圆角外面会多出一圈
+   不透明的方块。
+2. **不抢前台（这条最后没做，见下）**：桌宠项目 `dsh-pet-indesktop` 的 `pet/platform_win.py` 用
+   `WS_EX_NOACTIVATE` 做到"点它不夺焦点"，但那是**自己画原生窗口**。WebView2 在 `WS_EX_NOACTIVATE`
+   的窗口里收不到鼠标点击——实测点「停止」毫无反应、日志里连一次 `pill_stop` 都没有。
+   所以这里只保留 `WS_EX_TOOLWINDOW`（不进 Alt+Tab / 任务栏），点击会激活浮条，可以接受：
+   点它就是要停。
+3. **每次显示都重排 z 序**：`SetWindowPos(HWND_TOPMOST, …SWP_NOACTIVATE)`。只设一次 `always_on_top`
+   的话，窗口只是"身在置顶带"，被别的置顶窗盖住就再也回不来（这条也是桌宠踩出来的）。
+
+其它几条实现上的硬约束：
+
+- **建窗不能在命令线程里直接干**：`#[tauri::command]` 跑在主线程上，`WebviewWindowBuilder::build()`
+  要把建窗任务派回主线程，于是自锁——现象是日志停在"pill show：进入"，窗口一动不动。
+  正确写法是 `std::thread::spawn(move || pill::show(&app))`（`record.rs` 与 `main.rs` 的 `spawn_pill_spike` 都这么写）。
+- **句柄/显示器要等一下**：`build()` 刚返回时 `hwnd()` 偶尔还拿不到真句柄、`current_monitor()` 也可能是 None。
+  所以 `arrange()` 在 show 之后立刻跑一遍，再 sleep 260ms 在别的线程补一遍。
+- **capabilities 要单独开**：`src-tauri/capabilities/pill.json` 只给 `core:default` +
+  `allow-start-dragging` + `allow-hide` + `allow-close`。**没有它，浮条里的 `invoke('pill_stop')`
+  会被 ACL 挡掉**——那种失败只有前端控制台看得见。
+- **把自己录进去就糟了**：浮条是录制**中途**才建出来的，`--ignore-window` 拿不到它的句柄，
+  所以外壳用 `--ignore-process KeyMouse.Editor`（引擎侧 `Recorder.ParseIgnoreProcess`）把
+  自己整棵进程树的点击都排除掉，否则每份录制都会多一步"点屏幕中间"。
+- **停止不靠注入键**：见 [`../reference/cli.md`](../reference/cli.md) 的"录制的优雅停止事件"——
+  外壳置命名事件，录制侧轮询到就写盘收尾。
+- 单独验浮条：`set KEYMOUSE_PILL_SPIKE=1` 再启动外壳，`setup()` 末尾的 `spawn_pill_spike` 会在 900ms 后亮一次浮条，不必真录一轮（没有主窗口快捷键，免得界面上多一个说不清来历的键）。

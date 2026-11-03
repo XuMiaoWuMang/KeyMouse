@@ -716,8 +716,8 @@ $: syncTitle(doc, path, dirty);
       recordingPath = target;
       recordMode = 'self';
       running = true;
-      await enterMini();
-      note('开始录了：去操作你要录的窗口，按 Esc 或点「停止」结束');
+      // 录制期间不缩窗口：浮条已经在桌面上了，缩成细带反而挡住用户要操作的地方。
+      note('开始录了：去操作你要录的窗口；浮条上的「停止」或 Esc 都能收尾');
     } catch (e) {
       note(`录制没起来：${e}`, true);
     }

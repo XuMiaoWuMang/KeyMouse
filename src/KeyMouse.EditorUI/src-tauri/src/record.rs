@@ -21,8 +21,19 @@ use tauri::{AppHandle, Manager};
 
 use crate::run::{spawn_streaming, RunState};
 
+/// 外壳自己的进程名（开发版跑 `keymouse-editor.exe`，安装版跑 `KeyMouse.Editor.exe`）。
+///
+/// 录制时整进程排除：浮条窗口是录制中途才建出来的，句柄拿不到，只能按进程名跳过。
+/// 取自身可执行文件名而不是写常量——两种构建的文件名不一样。
+fn self_process_name() -> String {
+    std::env::current_exe()
+        .ok()
+        .and_then(|path| path.file_stem().map(|stem| stem.to_string_lossy().to_string()))
+        .unwrap_or_else(|| "KeyMouse.Editor".to_string())
+}
+
 /// 录制时把自己这个窗口排除掉：否则"点一下编辑器"也会被录成一步。
-fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>) -> Vec<String> {
+fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str) -> Vec<String> {
     let mut args = vec![
         "record".to_string(),
         "--out".to_string(),
@@ -39,14 +50,19 @@ fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>) -
         args.push(format!("0x{handle:X}"));
     }
 
+    // 整个进程都排除：主窗口、录制浮条、以后可能还有别的窗口。
+    // 尤其"点浮条上的停止"这一下——回放时去点那块屏幕毫无意义。
+    args.push("--ignore-process".to_string());
+    args.push(skip_process.to_string());
+
     args
 }
 
 /// 提权录制：命令行自己在 `--elevate` 里用 runas 起一个管理员进程并等它结束，
 /// 所以外壳这边仍然只是"起一个子进程、等它退出"，退出码就是那次录制的退出码。
-fn elevated_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>) -> Vec<String> {
+fn elevated_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str) -> Vec<String> {
     let mut args = vec!["--elevate".to_string()];
-    args.extend(record_args(out_path, duration_ms, ignore_window));
+    args.extend(record_args(out_path, duration_ms, ignore_window, skip_process));
     args
 }
 
@@ -58,9 +74,19 @@ pub fn record_flow(
     duration_ms: u64,
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
-    spawn_streaming(&app, record_args(&out_path, duration_ms, ignore))?;
-    // 迷你模式由界面自己进出（它更清楚"这一轮录制结束了没有"），
-    // 这里不再碰窗口形态。
+    spawn_streaming(&app, record_args(&out_path, duration_ms, ignore, &self_process_name()))?;
+    // 浮条：录制期间浮在桌面上，带一个"停止"。浮条起不来不算录制失败，
+    // 用户仍然可以用 Ctrl+Alt+Q 停——所以失败只记日志。
+    //
+    // 必须另起线程调 `pill::show`：建 webview 窗口要回到主线程执行，
+    // 而命令本身就跑在主线程上，直接调会**静默卡住**（日志停在"进入"、窗口永远不出现）。
+    // 从别的线程调，Tauri 会把建窗派给主线程排队，反而正确。
+    let pill_app = app.clone();
+    std::thread::spawn(move || {
+        if let Err(error) = crate::pill::show(&pill_app) {
+            crate::crashlog::write(&format!("录制浮条没起来：{error}"));
+        }
+    });
     Ok(())
 }
 
@@ -76,7 +102,7 @@ pub fn record_flow_elevated(
     duration_ms: u64,
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
-    spawn_streaming(&app, elevated_args(&out_path, duration_ms, ignore))?;
+    spawn_streaming(&app, elevated_args(&out_path, duration_ms, ignore, &self_process_name()))?;
     Ok(())
 }
 
@@ -92,27 +118,65 @@ pub fn record_flow_elevated(
 pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let cli = crate::run::cli_path_of()?;
 
-    crate::process::cli_command(&cli)
-        .args(["key", "combo", "ctrl+alt+q"])
-        .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map_err(|e| format!("发停止键失败：{e}"))?;
+    // 先试命名事件：录制进程建了 `Local\KeyMouse-record-stop-<pid>`，置上它，那一轮就在
+    // 下一步之前收尾并写盘。这条路不依赖前台窗口，也不依赖注入的键被钩子看见——而浮条
+    // 自己就是前台窗口（WebView2），注入组合键实测时灵时不灵。
+    // 置不上（老版本命令行没建这个事件）才回落到注入 Ctrl+Alt+Q。
+    if !signal_stop(&app) {
+        crate::process::cli_command(&cli)
+            .args(["key", "combo", "ctrl+alt+q"])
+            .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map_err(|e| format!("发停止键失败：{e}"))?;
+    }
 
     let started = Instant::now();
     while started.elapsed() < Duration::from_millis(5000) {
         if !is_running(&app) {
+            // 命令行自己收尾了（按 Esc 连按、Ctrl+Alt+Q、或到时长自动停），浮条一并撤走。
+            crate::pill::hide(&app);
             return Ok("stopped");
         }
         std::thread::sleep(Duration::from_millis(100));
     }
 
-    if crate::run::run_cancel(app) {
+    if crate::run::run_cancel(app.clone()) {
+        crate::pill::hide(&app);
         return Ok("killed");
     }
+    crate::pill::hide(&app);
     Ok("idle")
+}
+
+/// 置上"这一轮该收尾了"的命名事件。返回 true 表示信号确实送到。
+///
+/// 名字与录制进程约定：`Local\KeyMouse-record-stop-<子进程 pid>`，见
+/// `src\KeyMouse.Core\Runtime\StopSignal.cs`。pid 取 `RunState.pid`（`spawn_streaming` 里填的）。
+fn signal_stop(app: &AppHandle) -> bool {
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use windows_sys::Win32::System::Threading::{OpenEventW, SetEvent, EVENT_MODIFY_STATE};
+
+    let state = app.state::<RunState>();
+    let pid = *state.pid.lock().unwrap();
+    let Some(pid) = pid else {
+        return false;
+    };
+
+    let mut name: Vec<u16> = format!("Local\\KeyMouse-record-stop-{pid}").encode_utf16().collect();
+    name.push(0);
+    // SAFETY: name 以 0 结尾、只有本进程在写这块内存；句柄用完立刻关。
+    unsafe {
+        let handle: HANDLE = OpenEventW(EVENT_MODIFY_STATE, 0, name.as_ptr());
+        if handle.is_null() {
+            return false;
+        }
+        let ok = SetEvent(handle);
+        CloseHandle(handle);
+        ok != 0
+    }
 }
 
 fn is_running(app: &AppHandle) -> bool {
@@ -125,25 +189,51 @@ fn is_running(app: &AppHandle) -> bool {
 mod tests {
     use super::{elevated_args, record_args};
 
+    // 下面三个用例把 skip_process 钉成字面量：真实调用处传的是 `self_process_name()`，
+    // 它在测试里会是测试二进制的名字（带哈希），拿它做断言等于什么都没断言。
+    const SKIP: &str = "KeyMouse.Editor";
+
     #[test]
     fn record_args_include_output_and_ignore_window() {
         assert_eq!(
-            record_args("C:\\a b\\rec.json", 0, Some(0x12AB)),
-            vec!["record", "--out", "C:\\a b\\rec.json", "--ignore-window", "0x12AB"]
+            record_args("C:\\a b\\rec.json", 0, Some(0x12AB), SKIP),
+            vec![
+                "record",
+                "--out",
+                "C:\\a b\\rec.json",
+                "--ignore-window",
+                "0x12AB",
+                "--ignore-process",
+                SKIP
+            ]
         );
     }
 
     #[test]
     fn duration_is_only_passed_when_positive() {
-        assert_eq!(record_args("r.json", 3000, None), vec!["record", "--out", "r.json", "--duration", "3000"]);
+        assert_eq!(
+            record_args("r.json", 3000, None, SKIP),
+            vec!["record", "--out", "r.json", "--duration", "3000", "--ignore-process", SKIP]
+        );
     }
 
     #[test]
     fn elevated_args_put_the_flag_first() {
         // --elevate 必须是第一个参数：命令行看到它就不再往下解析，直接 runas 重跑。
         assert_eq!(
-            elevated_args("r.json", 2000, Some(0xBEEF)),
-            vec!["--elevate", "record", "--out", "r.json", "--duration", "2000", "--ignore-window", "0xBEEF"]
+            elevated_args("r.json", 2000, Some(0xBEEF), SKIP),
+            vec![
+                "--elevate",
+                "record",
+                "--out",
+                "r.json",
+                "--duration",
+                "2000",
+                "--ignore-window",
+                "0xBEEF",
+                "--ignore-process",
+                SKIP
+            ]
         );
     }
 }

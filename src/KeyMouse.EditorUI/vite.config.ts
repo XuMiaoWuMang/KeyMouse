@@ -20,7 +20,12 @@ export default defineConfig({
     target: 'chrome110',
     outDir: 'dist',
     emptyOutDir: true,
-    // 只有一个入口：录制时的"够得着停止"改成把主窗口缩成细带（src-tauri/src/mini.rs），
-    // 不再另开一整块 webview 窗口，所以没有第二个 html。
+    rollupOptions: {
+      // 两个入口：主界面，以及录制时那块透明浮条（src-tauri/src/pill.rs 建的窗口）。
+      input: {
+        main: 'index.html',
+        pill: 'pill.html',
+      },
+    },
   },
 });
