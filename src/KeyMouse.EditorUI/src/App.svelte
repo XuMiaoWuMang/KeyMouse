@@ -2017,6 +2017,7 @@ $: syncTitle(doc, path, dirty);
   <main class="body">
     {#if !doc}
       <section class="empty">
+        <p class="kicker">KeyMouse · 流程编辑器</p>
         <h2>还没有打开流程</h2>
         <p>一条流程就是一串动作：切到某个窗口、点一下、输入文字、等屏幕上出现某段字。写好后可以先试运行，确认真能走通再播放。</p>
         <div class="empty-actions">
@@ -2740,51 +2741,56 @@ $: syncTitle(doc, path, dirty);
     gap: var(--kp-gap-xl);
   }
 
-  /* ── 空状态 ─────────────────────────────────────────── */
-  /* 最近打开：一行一个文件，名字用正文色，目录用弱色（它只是提醒"在哪"）。 */
+  /* ── 空状态：当一页文档的开篇来排 ─────────────────────
+     报头式 kicker + 衬线大标题 + 导语 + 三个动作 + 发丝线，下面是"最近"目录。
+     不套卡片边框：页边全是纸，靠留白分栏，和设置页是同一套规矩。 */
   .recent {
-    margin-top: 22px;
-    max-width: 520px;
+    margin: 6px 0 0;
+    max-width: var(--kp-measure);
   }
 
+  /* 「最近」是等宽 kicker，和报头、检查器段标题同一套语气 */
   .recent h3 {
-    margin: 0 0 8px;
-    font-size: 12px;
-    font-weight: 600;
+    margin: 0 0 6px;
+    font: 500 10.5px/1 var(--kp-font-mono);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     color: var(--kp-ink3);
-    letter-spacing: 0.04em;
   }
 
   .recent ul {
     margin: 0;
     padding: 0;
     list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
   }
 
   .recent-item {
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    padding: 6px 8px;
+    padding: 7px 0;
     border: 0;
-    border-radius: var(--kp-r-sm);
+    border-bottom: 1px solid var(--kp-rule);
     background: transparent;
     text-align: left;
     cursor: pointer;
   }
 
-  .recent-item:hover {
-    background: var(--kp-field);
+  .recent li:last-child .recent-item {
+    border-bottom: 0;
+  }
+
+  .recent-item:hover .recent-name {
+    color: var(--kp-signal);
+    border-bottom-color: var(--kp-signal);
   }
 
   .recent-name {
     flex: none;
-    font-size: 13px;
+    font: 500 14px/1.5 var(--kp-font-serif);
     color: var(--kp-ink);
+    border-bottom: 1px solid transparent;
   }
 
   .recent-dir {
@@ -2793,46 +2799,51 @@ $: syncTitle(doc, path, dirty);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: var(--kp-mono);
-    font-size: 11px;
+    font: 400 11.5px/1.5 var(--kp-font-mono);
     color: var(--kp-ink3);
   }
+
   .empty {
     grid-column: 1 / -1;
-    border: 1px solid var(--kp-rule);
-    border-radius: var(--kp-radius-panel);
-    background: var(--kp-card);
-    padding: 40px 44px;
-    max-width: 760px;
     align-self: start;
+    max-width: 720px;
+    padding: 34px 0 8px;
+  }
+
+  .empty .kicker {
+    font: 600 10.5px/1 var(--kp-font-mono);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--kp-ink3);
   }
 
   .empty h2 {
-    margin: 0 0 10px;
-    font-size: 21px;
-    font-weight: 600;
+    margin: 12px 0 10px;
+    font: 500 26px/1.35 var(--kp-font-serif);
+    letter-spacing: 0.02em;
     color: var(--kp-ink);
   }
 
   .empty p {
-    margin: 0 0 18px;
-    max-width: 56ch;
+    margin: 0 0 20px;
+    max-width: var(--kp-measure);
+    font: var(--kp-fs-prose) / var(--kp-lh-prose) var(--kp-font-serif);
     color: var(--kp-ink2);
-    line-height: 1.7;
   }
 
   .empty-actions {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
   }
 
+  /* 命令行提示压在一条发丝线下，字号降一档：它是脚注，不是正文 */
   .empty .tips {
-    margin: 0;
-    padding-top: 16px;
+    margin: 0 0 22px;
+    padding-top: 14px;
     border-top: 1px solid var(--kp-rule);
-    font-size: var(--kp-fs-small);
+    font: 400 12.5px/1.8 var(--kp-font);
     color: var(--kp-ink3);
   }
 
@@ -2841,11 +2852,12 @@ $: syncTitle(doc, path, dirty);
     font-family: var(--kp-font-mono);
     font-size: 12px;
     padding: 2px 5px;
-    border-radius: 4px;
+    border-radius: 3px;
     background: var(--kp-field);
     color: var(--kp-ink2);
     white-space: nowrap;
   }
+
 
   /* 列表为空 / 没有选中项时的一句话，不是错误，所以不用朱砂色 */
   .blank {
