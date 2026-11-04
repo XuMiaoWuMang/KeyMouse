@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { open, save } from '@tauri-apps/plugin-dialog';
@@ -87,6 +87,44 @@
   /** 上一次保存（或刚打开）时的序列化快照：撤销回到这一刻就不该再显示未保存。 */
   let savedJson = '';
   let outputOpen = false;
+
+  /**
+   * 输出面板的"粘底"逻辑。
+   *
+   * 用户看日志永远是看最后一行，所以新内容来了要跟着滚；但一旦他自己往上翻，
+   * 说明他在读某一段，此时再拽到底就是在跟人抢滚轮——所以只在"贴底"时才跟。
+   */
+  function onOutputScroll(): void {
+    if (!outputBox) return;
+    outputStick = outputBox.scrollHeight - outputBox.scrollTop - outputBox.clientHeight < 24;
+  }
+
+  /**
+   * 什么时候才需要把"环境"摆到用户面前：命令行都没找到、被提权了、或者输出里已经有错误行。
+   * 正常跑通的流程一条都不用看——这些信息在设置页和诊断包里都有。
+   */
+  $: trouble =
+    lines.some((item) => item.stream === 'err') ||
+    (runtime !== null && (runtime.elevated || !runtime.cliPath));
+
+  $: troubleText = !runtime
+    ? '外壳没连上（浏览器预览时正常）。出问题请打包诊断信息。'
+    : runtime.elevated
+      ? '编辑器是提权运行的（不该如此）。打包诊断信息能一起带出去。'
+      : !runtime.cliPath
+        ? '没找到命令行 KeyMouse.exe。打包诊断信息里有它找过的位置。'
+        : '有步骤报错了。点右上角 ··· → 打包诊断信息（或按 Ctrl+Shift+D）。';
+  async function followOutput(): Promise<void> {
+    if (!outputStick) return;
+    await tick();
+    if (outputBox) outputBox.scrollTop = outputBox.scrollHeight;
+  }
+
+  $: if (outputOpen && lines.length) void followOutput();
+  /** 输出面板的可滚动容器：新日志默认跟着最后一行走（除非用户自己往上翻过）。 */
+  let outputBox: HTMLPreElement | null = null;
+  let outputStick = true;
+
   let jsonOpen = false;
   let moreOpen = false;
   /** 当前页面：流程图 / 设置。设置是整页替换，不是弹窗——它内容多，弹窗装不下。 */
@@ -2457,7 +2495,7 @@ $: syncTitle(doc, path, dirty);
         <span class="notice" class:bad={notice.bad}>{notice.text}</span>
       {/if}
     </div>
-    <button class="output-pill" on:click={() => (outputOpen = !outputOpen)}>
+    <button class="output-pill" on:click={() => { outputOpen = !outputOpen; outputStick = true; void followOutput(); }}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="8" rx="1.5" /><path d="M5 6.5h6M5 9h3.5" /></svg>
       输出
     </button>
@@ -2475,21 +2513,20 @@ $: syncTitle(doc, path, dirty);
         </div>
       </header>
       {#if lines.length}
-        <pre class="run">{#each lines as item}<span class:err={item.stream === 'err'}>{item.line}{'\n'}</span>{/each}</pre>
-      {/if}
-      {#if runtime}
-        <pre class="environment">环境：{runtime.environment}
-命令行：{runtime.cliPath || '（没找到）'}
-版本：{runtime.cliVersion || '（没回版本号）'}
-外壳：{runtime.editorExe}
-提权：{runtime.elevated ? '是（不该如此）' : '否（正确）'}</pre>
+        <pre class="run" bind:this={outputBox} on:scroll={onOutputScroll}>{#each lines as item}<span class:err={item.stream === 'err'}>{item.line}{'\n'}</span>{/each}</pre>
       {:else}
-        <pre>外壳没连上。浏览器里直接打开预览时是正常的——
-只有在 `pnpm tauri dev` 起的窗口里才有 IPC。</pre>
+        <p class="output-empty">还没有输出。跑一次流程或录一段，这里会跟着往下滚。</p>
+      {/if}
+      {#if trouble}
+        <!-- 平时不摆环境信息：正常使用时它只是占地方。出状况才冒出来，并指路去打包。 -->
+        <div class="trouble">
+          <span>{troubleText}</span>
+          <button class="ghost small" on:click={() => void collectDiagnostics()}>打包诊断信息</button>
+        </div>
       {/if}
     </section>
-  {/if}
-  </div>
+{/if}
+</div>
 {/if}
 
 <style>
@@ -3999,9 +4036,12 @@ $: syncTitle(doc, path, dirty);
     border: 1px solid var(--kp-rule);
     border-radius: var(--kp-radius-panel);
     background: var(--kp-card);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     padding: 14px 16px 16px;
     max-height: 36vh;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .output header {
@@ -4028,20 +4068,48 @@ $: syncTitle(doc, path, dirty);
   }
 
   /* 命令行那一行行原样收着：它是证据，不重排、不截断。 */
+  /* 只有这块滚动：面板本身不滚，否则"最底下的输出"与"错误条"会互相挤出去。 */
   .output pre.run {
-    margin-bottom: 10px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    margin-bottom: 8px;
   }
 
   .output pre.run .err {
     color: var(--kp-critical);
   }
 
-  /* 环境那几行是"关于这次运行的前提"，比输出淡一档，免得抢走失败原因的注意力。 */
-  .output pre.environment {
+  /* 环境信息平时不占地方：一切正常时它只是"关于这次运行的前提"，没人看。 */
+  /* 出状况才由 .trouble 那条把注意力引到"打包诊断信息"上，细节在设置页里。 */
+  .output-empty {
+    margin: 2px 0 6px;
+    font-size: 12.5px;
+    color: var(--kp-ink3);
+  }
+
+  /* 一条窄带：左侧 2px 朱砂表示"这不是正常状态"，右侧给一个直接能点的出口。 */
+  .trouble {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 8px 0 8px 10px;
+    border-top: 1px solid var(--kp-rule);
+    border-left: 2px solid var(--kp-accent);
+    font-size: 12.5px;
     color: var(--kp-ink2);
-    background: transparent;
-    border: 1px dashed var(--kp-rule);
-    font-size: var(--kp-fs-tiny, 12px);
+  }
+
+  .trouble span {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 出口要和这条警示是一家人：朱砂描边，而不是默认的灰线（灰线在米纸上几乎看不见）。 */
+  .trouble button {
+    border-color: var(--kp-accent);
+    color: var(--kp-accent);
   }
 
   /* 停止是"跑着的时候才有"的动作：朱砂实心会让人以为它在吸引你去点，用细边就够。 */

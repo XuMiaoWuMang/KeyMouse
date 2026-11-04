@@ -487,6 +487,25 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 三条刻意的取舍写在文件头：单份失败只降级（名字后加"写不进去：…"，其余照写）、崩溃日志只取尾部、
 目录名带时间戳所以连打两次不覆盖。时间戳是手写的 UTC（`civil_from_days`），不为一个文件名引依赖。
 
+## 输出面板：不摆环境、粘底、只有一块在滚
+
+三条约束，都是踩过之后才定下来的：
+
+1. **环境信息不进面板**。命令行、版本、提权、环境名这四行以前一直贴在输出上方，占掉 60 多像素；
+   而它们只在"出事"时才有用（而且设置页里本来就有）。现在改成派生的 `trouble`：
+   输出里出现 `err` 流、或者 `runtime.elevated` / 没有 `cliPath` 时才在底部显示一条窄带，
+   带一个直接能点的「打包诊断信息」。
+2. **粘底但不抢滚轮**。`outputStick` 记住"用户是不是在底部"，`onOutputScroll` 每滚一次更新它
+   （距底 < 24px 就算在底部）；新输出到来时用 `tick()` 等 DOM 更新完再 `scrollTop = scrollHeight`。
+   往上翻旧日志时**不**强制拉到最底——否则用户永远读不完一行。
+3. **只有 `<pre>` 滚**。面板本身 `display:flex; flex-direction:column; overflow:hidden`，
+   `<pre class="run">` 是 `flex:1 1 auto; min-height:0; overflow:auto`，错误条是 `flex:none`。
+   以前面板与 `pre` 都在滚，结果是"最新的输出"和"错误条"互相把对方挤出可视区。
+
+改这个面板时很容易把模板的大括号弄丢（我用按行号改模板的方式连着破过三次：
+`</section>`、根 `<div class="shell">` 的 `</div>`、`{#if mini}` 的 `{/if}`）。
+`pnpm run check` 会依次报 `Unexpected block closing tag` → `<div> was left open` → `Block was left open`，
+照着提示逐层补回来即可；改完务必再跑一次，别只看第一行。
 ## 与命令行的接口
 
 界面不碰文件、不起进程；跨过去只有这些命令，参数与错误码都写在
