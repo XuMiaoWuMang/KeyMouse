@@ -4,6 +4,8 @@
   import { listen } from '@tauri-apps/api/event';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import StepIcon from './lib/StepIcon.svelte';
+  import Icon from './lib/Icon.svelte';
+  import Settings from './Settings.svelte';
   import Inspector from './lib/Inspector.svelte';
   import { fieldsOf, schemaFrom, type FlowSchema } from './lib/schema';
   import { writePath } from './lib/fieldpath';
@@ -87,6 +89,8 @@
   let outputOpen = false;
   let jsonOpen = false;
   let moreOpen = false;
+  /** 当前页面：流程图 / 设置。设置是整页替换，不是弹窗——它内容多，弹窗装不下。 */
+  let view: 'flow' | 'settings' = 'flow';
   /** 列表过滤：按类型或摘要里的字找一步。空串表示不过滤。 */
   let filter = "";
   /** 过滤框的 DOM：Ctrl+F 要能把光标直接放进去。 */
@@ -222,7 +226,17 @@ function originOf(index: number, childIndex: number | null): string {
     void loadRecent();
     void loadLongPress();
     try {
-      runtime = await invoke<RuntimeInfo>('runtime_info');
+      // 主题先落地再谈别的：晚一步，用户会先看到一帧默认纸色。
+    try {
+      document.documentElement.dataset.theme = await invoke<string>('theme');
+    } catch {
+      document.documentElement.dataset.theme = 'paper';
+    }
+
+    // 设置页想"打开某个流程"时发这个事件：打开流程只有一处实现，别复制第二份。
+    window.addEventListener('keymouse:open-path', onOpenPathRequest);
+
+    runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
       runtime = null;
       note(String(e), true);
@@ -231,6 +245,15 @@ function originOf(index: number, childIndex: number | null): string {
     // 命令行/双击带进来的文件直接打开，省掉一次"再点一下打开"。
     if (runtime.initialPath) await loadFrom(runtime.initialPath);
   });
+
+  // 设置页里点"最近"的一条：它不自己打开文件，只发个事件回来，打开流程只有一处实现。
+  function onOpenPathRequest(event: Event): void {
+    const detail = (event as CustomEvent<string>).detail;
+    if (typeof detail === 'string' && detail) {
+      view = 'flow';
+      void loadFrom(detail);
+    }
+  }
 
   // 关闭窗口时外壳会问界面一句"能关吗"：脏了就先确认，再让它关。
   onMount(() => {
@@ -1467,6 +1490,19 @@ $: syncTitle(doc, path, dirty);
       return;
     }
 
+    // Ctrl+,：设置页（和大多数编辑器一致，不占别的组合）。
+    if (mod && key === ',') {
+      event.preventDefault();
+      view = view === 'settings' ? 'flow' : 'settings';
+      return;
+    }
+
+    // 设置页里 Esc 等于"返回流程"，别让用户去找返回按钮。
+    if (view === 'settings' && key === 'escape' && !mod) {
+      event.preventDefault();
+      view = 'flow';
+      return;
+    }
     // Ctrl+Shift+D：把诊断信息打包出来。报问题时给用户一个不用翻菜单的入口。
     if (mod && shift && key === 'd') {
       event.preventDefault();
@@ -1822,16 +1858,25 @@ $: syncTitle(doc, path, dirty);
       {#if path}<span class="path" title={path}>{path}</span>{/if}
     </div>
     <div class="file-actions">
-      <button class="ghost icon-only" on:click={undo} disabled={!canUndo} aria-label="撤销" title="撤销（Ctrl+Z）">↶</button>
-      <button class="ghost icon-only" on:click={redo} disabled={!canRedo} aria-label="重做" title="重做（Ctrl+Shift+Z）">↷</button>
-      <span class="sep" aria-hidden="true"></span>
-      <button class="ghost" on:click={newFlow} disabled={busy}>新建</button>
-      <button class="ghost" on:click={openFlow} disabled={busy}>打开</button>
-      <button class="ghost" on:click={saveFlow} disabled={!canSave || busy}>保存</button>
-      <button class="ghost" on:click={saveAs} disabled={!doc || busy}>另存为</button>
+      {#if view === 'settings'}
+        <!-- 设置页不是文档：撤销/保存这些跟它无关，只留一个回程。 -->
+        <button class="ghost" on:click={() => (view = 'flow')}>← 返回流程</button>
+      {:else}
+        <button class="ghost icon-only" on:click={() => (view = 'settings')} aria-label="设置" title="设置（Ctrl+,）">
+          <Icon name="settings" size={15} />
+        </button>
+        <button class="ghost icon-only" on:click={undo} disabled={!canUndo} aria-label="撤销" title="撤销（Ctrl+Z）">↶</button>
+        <button class="ghost icon-only" on:click={redo} disabled={!canRedo} aria-label="重做" title="重做（Ctrl+Shift+Z）">↷</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="ghost" on:click={newFlow} disabled={busy}>新建</button>
+        <button class="ghost" on:click={openFlow} disabled={busy}>打开</button>
+        <button class="ghost" on:click={saveFlow} disabled={!canSave || busy}>保存</button>
+        <button class="ghost" on:click={saveAs} disabled={!doc || busy}>另存为</button>
+      {/if}
     </div>
   </header>
 
+  {#if view !== 'settings'}
   <nav class="toolbar">
     <div class="palette">
       {#each QUICK_TYPES as type}
@@ -1941,6 +1986,9 @@ $: syncTitle(doc, path, dirty);
             <button role="menuitem" on:click={() => { opsOpen = false; helpOpen = true; }}>
               键盘与版本…
             </button>
+            <button role="menuitem" on:click={() => { opsOpen = false; view = 'settings'; }}>
+              设置…
+            </button>
             <hr />
             <button role="menuitem" disabled={busy} on:click={() => { opsOpen = false; void runDoctor(); }}>
               体检（doctor）
@@ -1956,7 +2004,17 @@ $: syncTitle(doc, path, dirty);
       </div>
     </div>
   </nav>
+  {/if}
 
+  {#if view === 'settings'}
+    <main class="body settings-body">
+      <Settings
+        runtime={runtime}
+        on:close={() => (view = 'flow')}
+        on:theme={() => {}}
+      />
+    </main>
+  {:else}
   <main class="body">
     {#if !doc}
       <section class="empty">
@@ -2377,6 +2435,7 @@ $: syncTitle(doc, path, dirty);
       </aside>
     {/if}
   </main>
+  {/if}
 
   <footer class="foot">
     <div class="status">
@@ -2434,6 +2493,13 @@ $: syncTitle(doc, path, dirty);
 {/if}
 
 <style>
+  /* 设置页：整页替换主界面时，去掉两栏网格与内边距，让页面自己排版。 */
+  .body.settings-body {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+  }
+
   .shell {
     height: 100%;
     display: grid;

@@ -37,6 +37,12 @@ pub struct Store {
     /// 长按识别阈值（毫秒）。界面可以改；缺省 500。
     #[serde(default = "default_long_press_ms")]
     pub long_press_ms: u32,
+    /// 配色主题 id（见 `docs/dev/editor-ui.md` 的「主题」一节）。
+    ///
+    /// 只存 id，颜色值一律写在前端 `src/lib/theme.css` 里：主题是设计决定，
+    /// 不该让用户配置到"某一个色值"这种颗粒度。
+    #[serde(default = "default_theme")]
+    pub theme: String,
 }
 
 /// 一个分组头：在第 `at` 个步骤之前开一组，管到下一个边界之前。
@@ -51,11 +57,24 @@ fn default_long_press_ms() -> u32 {
     DEFAULT_LONG_PRESS_MS
 }
 
+/// 默认主题：纸白（与老外壳同一套暖纸）。
+pub const DEFAULT_THEME: &str = "paper";
+
+/// 认得的主题 id。前端多一个、这里少一个，就是"选了不生效"——所以两边一起改。
+pub const THEMES: [&str; 3] = ["paper", "kraft", "night"];
+
+fn default_theme() -> String {
+    DEFAULT_THEME.to_string()
+}
+
 impl Store {
     /// 补上 `#[derive(Default)]` 给不了的那两个默认值。
     fn normalize_defaults(&mut self) {
         if self.long_press_ms == 0 {
             self.long_press_ms = DEFAULT_LONG_PRESS_MS;
+        }
+        if !THEMES.contains(&self.theme.as_str()) {
+            self.theme = default_theme();
         }
     }
 }
@@ -105,6 +124,7 @@ pub fn save(store: &Store) {
         window: store.window,
         sections: store.sections.clone(),
         long_press_ms: store.long_press_ms,
+        theme: store.theme.clone(),
     };
     copy.normalize_defaults();
     if let Ok(text) = serde_json::to_string_pretty(&copy) {
@@ -168,6 +188,32 @@ pub fn remember_recent(path: String) -> Vec<String> {
     let list = remember(&mut store, &path);
     save(&store);
     existing(&list)
+}
+
+/// 从最近列表里去掉一条（文件已经删了、或者用户不想再看见它）。
+#[tauri::command]
+pub fn forget_recent(path: String) -> Vec<String> {
+    let mut store = load();
+    let key = std::fs::canonicalize(&path)
+        .map(|p| p.to_string_lossy().to_lowercase())
+        .unwrap_or_else(|_| path.to_lowercase());
+    store.recent.retain(|item| {
+        std::fs::canonicalize(item)
+            .map(|p| p.to_string_lossy().to_lowercase())
+            .unwrap_or_else(|_| item.to_lowercase())
+            != key
+    });
+    save(&store);
+    existing(&store.recent)
+}
+
+/// 清空最近列表（设置页的「清空」）。
+#[tauri::command]
+pub fn clear_recent() -> Vec<String> {
+    let mut store = load();
+    store.recent.clear();
+    save(&store);
+    Vec::new()
 }
 
 /// 上次关闭时的窗口位置与尺寸；没记过就给 `null`。
@@ -243,6 +289,32 @@ pub fn save_sections(path: String, sections: Vec<Section>) -> Vec<Section> {
 }
 
 /// 长按阈值（毫秒）。
+/// 读出当前主题 id。
+#[tauri::command]
+pub fn theme() -> String {
+    load().theme
+}
+
+/// 换主题。认不出的 id 一律落到默认主题——前端传错不该把界面搞成无主题。
+#[tauri::command]
+pub fn save_theme(id: String) -> String {
+    let value = if THEMES.contains(&id.as_str()) {
+        id
+    } else {
+        default_theme()
+    };
+    let mut store = load();
+    store.theme = value.clone();
+    save(&store);
+    value
+}
+
+/// 列出可选主题（前端画设置页用，免得两边各留一份清单）。
+#[tauri::command]
+pub fn theme_options() -> Vec<String> {
+    THEMES.iter().map(|id| (*id).to_string()).collect()
+}
+
 #[tauri::command]
 pub fn long_press_ms() -> u32 {
     load().long_press_ms
@@ -287,11 +359,25 @@ mod tests {
             window: Some(WindowState { width: 892.0, height: 632.0, x: 120, y: 80 }),
             sections: std::collections::BTreeMap::new(),
             long_press_ms: DEFAULT_LONG_PRESS_MS,
+            theme: "kraft".into(),
         };
         let text = serde_json::to_string(&original).expect("serialize");
         let back: Store = serde_json::from_str(&text).expect("deserialize");
         assert_eq!(back.recent, original.recent);
         assert_eq!(back.window.map(|s| s.width), Some(892.0));
+        assert_eq!(back.theme, "kraft", "主题要能原样读回来");
+    }
+
+    #[test]
+    fn unknown_theme_falls_back_to_default() {
+        // 老账本里没有 theme 字段、或者被手改成一个不认得的值：一律回到 paper。
+        let store: Store = serde_json::from_str(r#"{"recent":[],"theme":"vaporwave"}"#).expect("deserialize");
+        let mut store = store;
+        store.normalize_defaults();
+        assert_eq!(store.theme, DEFAULT_THEME);
+
+        let legacy: Store = serde_json::from_str(r#"{"recent":[]}"#).expect("deserialize");
+        assert_eq!(legacy.theme, DEFAULT_THEME, "没有字段时用默认主题");
     }
 
     #[test]

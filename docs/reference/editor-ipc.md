@@ -338,6 +338,8 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 | `remember_recent(path)` | `path` | `string[]`：更新后的列表（界面直接重画） |
 | `window_size()` | — | `{ width, height } \| null`：逻辑像素 |
 | `save_window_size(width, height)` | 宽、高 | —（宽 < 200 或高 < 120 直接忽略：迷你模式那种细带尺寸记下来毫无意义） |
+| `forget_recent(path)` | `path` | `string[]`：去掉这一条之后的列表（比较时按规范化路径，删掉的文件也能去掉） |
+| `clear_recent()` | — | `[]`：清空（设置页的「清空最近列表」） |
 
 约定：
 
@@ -358,6 +360,9 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 | `save_sections(path, sections)` | 同上 | 落地之后的数组（外壳会去越界、去重、按 `at` 排序再回写） |
 | `long_press_ms()` | — | `number`：当前的长按阈值（毫秒） |
 | `save_long_press_ms(ms)` | 毫秒 | `number`：夹到 150–3000 之后**实际生效**的值 |
+| `theme()` | — | `string`：账本里的主题 id，认不出时回 `paper` |
+| `save_theme(id)` | `paper` / `kraft` / `night` | `string`：实际存下来的 id（不在白名单就落回 `paper`） |
+| `theme_options()` | — | `string[]`：外壳认得的主题 id（设置页画选项用，两边只留一份清单） |
 
 三条约定：
 

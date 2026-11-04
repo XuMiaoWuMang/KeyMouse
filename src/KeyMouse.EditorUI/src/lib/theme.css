@@ -1,40 +1,104 @@
-/* 工程纸（Engineering Paper）—— 与 KeyMouse.FlowEditor/Themes/Palette.xaml 同一套 token。
-   纸、墨、朱砂，三样东西。没有第四样：
-     · 纸面是暖白，卡片是它的提亮，不是另一种灰；
-     · 墨色三档都是同一个暖黑；
-     · 朱砂只有一个用法：当前与可动（主操作、选中、未保存、报错除外）。
-   控件 4px、面板 8px；没有投影；线只有 1px 一种。 */
+/* 工程纸 · 杂志风（Engineering Paper / Magazine）
+ *
+ * 视觉语汇取自 guizang-page-skill 的杂志风：米白纸、墨色字、等宽元信息、
+ * 衬线大标题、发丝线、方框标签、章节花饰编号（✦✦✦ 01 ✦✦✦）。
+ * 三样东西，没有第四样：
+ *   · 纸面是暖白，卡片是它的提亮，不是另一种灰；
+ *   · 墨色三档都是同一个暖黑；
+ *   · 朱砂只有一个用法：当前与可动（主操作、选中、未保存；报错另有 critical）。
+ *
+ * 和 skill 的差异只有一处：accent 不取它的"近黑"，而是产品本来就在用的朱砂 ——
+ * 这是产品识别色，不跟着"文档排版"换。深色主题下换成一档更亮的暖金，
+ * 理由是朱砂压在近黑纸上看不清（对比度不够，见 docs/dev/editor-ui.md「主题」）。
+ *
+ * 控件 4px、面板 8px；没有投影；线只有 1px 一种（2px 只留给报头与设置页的
+ * chrome rule——那是全页唯一允许的粗线）。
+ */
 
 :root {
-  --kp-paper: #faf7f2;
-  --kp-card: #ffffff;
-  --kp-ink: #17140f;
-  --kp-ink2: #6a655c;
-  --kp-ink3: #a39c90;
-  --kp-rule: #e6e1d8;
-  --kp-field: #f5f1e9;
-  --kp-selected: #f2ece2;
+  /* —— 纸与墨（默认：纸白 paper） —— */
+  --kp-paper: #f1efea;
+  --kp-card: #fbfaf7;
+  --kp-card-2: #e9e6df;
+  --kp-ink: #0a0a0b;
+  --kp-ink2: #55524c;
+  --kp-ink3: #8f8b84;
+  --kp-rule: #d3d0c9;
+  --kp-rule-strong: #7e7d7b;
+  --kp-field: #e9e6df;
+  --kp-selected: #e4e1d9;
   --kp-signal: #c2410c;
   --kp-signal-hover: #a83709;
   --kp-signal-pressed: #8e2e06;
-  --kp-signal-off: #efe7da;
+  --kp-signal-off: #f0e4d7;
   --kp-critical: #b3261e;
+  --kp-mask: rgb(10 10 11 / 32%);
 
-  --kp-radius-control: 4px;
-  --kp-radius-panel: 8px;
+  /* —— 字体三级：标题衬线 / 正文无衬线 / 元信息等宽 —— */
+  --kp-font-serif: 'Source Serif 4', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+  --kp-font: 'Noto Sans SC', 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', system-ui, sans-serif;
+  --kp-font-mono: 'IBM Plex Mono', 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
 
-  --kp-font: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', system-ui, sans-serif;
-  --kp-font-mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
-
+  /* —— 字号角色 —— */
   --kp-fs-small: 12px;
   --kp-fs-body: 14px;
   --kp-fs-row-title: 15px;
   --kp-fs-title: 21px;
   --kp-fs-hero: 26px;
+  /* 设置页那种"文档感"的排版：正文 15.5/1.85、行长 36em（skill 的 T1/T2/T3） */
+  --kp-fs-prose: 15.5px;
+  --kp-lh-prose: 1.85;
+  --kp-measure: 36em;
+  --kp-fs-display: 30px;
+
+  --kp-radius-control: 4px;
+  --kp-radius-panel: 8px;
+  --kp-radius-sheet: 3px;
 
   --kp-gap: 8px;
   --kp-gap-lg: 16px;
   --kp-gap-xl: 24px;
+  --kp-gap-2xl: 40px;
+  --kp-gap-3xl: 64px;
+}
+
+/* 牛皮纸：怀旧、人文；纸更深一档，线要跟着暖 */
+[data-theme='kraft'] {
+  --kp-paper: #eedfc7;
+  --kp-card: #f7ecd9;
+  --kp-card-2: #e4d3b6;
+  --kp-ink: #2a1e13;
+  --kp-ink2: #6b5540;
+  --kp-ink3: #9c8467;
+  --kp-rule: #cdb894;
+  --kp-rule-strong: #8b7250;
+  --kp-field: #e4d3b6;
+  --kp-selected: #dfcaa8;
+  --kp-signal: #9b5a2e;
+  --kp-signal-hover: #874b24;
+  --kp-signal-pressed: #74401e;
+  --kp-signal-off: #e8d6ba;
+  --kp-critical: #a33a25;
+}
+
+/* 午夜墨：夜读；深色下 accent 换暖金（朱砂压在近黑上看不清） */
+[data-theme='night'] {
+  --kp-paper: #0e0d0c;
+  --kp-card: #171614;
+  --kp-card-2: #201e1b;
+  --kp-ink: #ece2cf;
+  --kp-ink2: #a9a196;
+  --kp-ink3: #7a736a;
+  --kp-rule: #302d29;
+  --kp-rule-strong: #6d675e;
+  --kp-field: #201e1b;
+  --kp-selected: #2a2724;
+  --kp-signal: #e0ab56;
+  --kp-signal-hover: #edb968;
+  --kp-signal-pressed: #c8963f;
+  --kp-signal-off: #33291a;
+  --kp-critical: #d98b6d;
+  --kp-mask: rgb(0 0 0 / 55%);
 }
 
 * {
@@ -82,4 +146,25 @@ select {
 
 ::selection {
   background: var(--kp-signal-off);
+}
+
+/* 滚动条也走纸墨：细、无圆角、悬停才加深。 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--kp-rule) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--kp-rule);
+  border: 3px solid var(--kp-paper);
+  border-radius: 0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--kp-rule-strong);
 }

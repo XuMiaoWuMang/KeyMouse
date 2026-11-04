@@ -363,6 +363,40 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 补标题和摘要时顺手加了 `buttonLabel(step)`；注意 `FlowStep.button` 的类型只有 `'left' | 'right' | 'middle'`，
 在里面写 `x1`/`x2` 分支会被 svelte-check 判成"没有交集"。
 
+## 排版语汇：归藏 Page 的杂志风
+
+界面的字号、颜色、线宽不是随手调的，取自 `guizang-page-skill`（归藏 Page）的**杂志风**：
+米白纸、墨色字、等宽元信息、衬线大标题、发丝线、方框标签、章节花饰编号（`✦✦✦ 01 ✦✦✦`）。
+落点是 `src/lib/theme.css` 里那套 `--kp-*` token。
+
+- **accent 不跟着文档走**：skill 的 `ink-classic` 强调色近黑，这里保留产品自己的朱砂 `#c2410c`
+  ——它是"当前与可动"的唯一颜色，属于产品识别，不属于排版主题。
+- **三套主题只换纸与墨**：`paper`（默认）、`kraft`（牛皮纸）、`night`（午夜墨）。
+  深色主题下朱砂压在近黑纸上看不清，accent 换暖金 `#e0ab56`（`[data-theme='night']` 里改）。
+- **中文不斜体**：浏览器只有伪斜体，斜体只留给西文。
+- **线只有一种**：1px `var(--kp-rule)`；2px 只留给设置页报头那条 chrome rule。
+- **字体是系统栈**：`Source Serif 4 / Noto Serif SC / Songti SC`，装了什么用什么。
+  生产环境不联网取 Google Fonts，所以没打包字体；中文标题实际落在宋体上，这是刻意的取舍。
+
+主题落在账本里（`editor-settings.json` 的 `theme`），Rust 侧 `store.rs` 的 `THEMES`
+是白名单：认不出的 id 一律回到 `paper`，免得一个坏值把界面搞成无主题。
+
+## 设置页（`src/Settings.svelte`）
+
+设置是**整页替换**，不是弹窗：它内容多（外观/交互/文件/环境/快捷键），弹窗装不下，
+而且文档式的长页正好是杂志风擅长的事。
+
+- 入口三处：顶栏齿轮、`···` 菜单「设置…」、`Ctrl+,`；返回：顶栏「← 返回流程」或 `Esc`。
+- 每一行都真的生效：主题 → `save_theme`；长按阈值 → `save_long_press_ms`；
+  最近文件 → `recent_files` / `forget_recent` / `clear_recent`；体检 → `run_doctor`；
+  诊断 → `collect_diagnostics`。
+- **设置页不自己判断环境**：判断只活在命令行的 `doctor` 里，这里只把它的输出搬回来贴成
+  `<pre>`。同一套判断写两份，迟早两份都不一样。
+- **打开流程只有一处实现**：设置页点"最近"里的一条时发 `keymouse:open-path` 事件，
+  主界面监听后 `loadFrom()`；别在设置页里再写一遍打开逻辑。
+- 图标全是内联 SVG（`src/lib/Icon.svelte`）：远程图标一断网就是空白方块，而外壳只依赖
+  系统 WebView2；内联 SVG 还能跟 `currentColor` 一起换主题。
+
 ## 弹窗一律"点外面就收起"
 
 菜单（`+ 更多`、录制 `▾`、`···`、行右键菜单）原本只有 `Esc` 和"点自己那一项"能关。拿着鼠标的人
