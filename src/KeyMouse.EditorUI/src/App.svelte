@@ -1853,8 +1853,7 @@ $: syncTitle(doc, path, dirty);
       <span class="kind">流程编辑器</span>
     </div>
     <div class="doc">
-      <span class="name" class:warn={dirty}>{fileLabel}</span>
-      {#if dirty}<span class="unsaved">未保存</span>{/if}
+      <span class="name" class:warn={dirty}>{fileLabel}{#if dirty}<span class="unsaved">未保存</span>{/if}</span>
       {#if path}<span class="path" title={path}>{path}</span>{/if}
     </div>
     <div class="file-actions">
@@ -2507,26 +2506,31 @@ $: syncTitle(doc, path, dirty);
     position: relative;
   }
 
-  /* ── 顶栏 ───────────────────────────────────────────── */
+  /* ── 顶栏：报头 ───────────────────────────────────────
+     三段：kicker（等宽小字）／衬线文件标题 + 等宽路径／右侧动作。
+     整页只有这一条 1.5px 的实线，下面工具栏、列表、检查器一律发丝线。 */
   .topbar {
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: baseline;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
     gap: var(--kp-gap-xl);
-    padding: 14px var(--kp-gap-xl) 10px;
+    padding: 13px var(--kp-gap-xl) 11px;
+    border-bottom: 1.5px solid var(--kp-ink);
   }
 
   .brand {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    font-size: var(--kp-fs-title);
-    letter-spacing: -0.01em;
+    gap: 7px;
+    font: 600 10.5px/1 var(--kp-font-mono);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--kp-ink2);
   }
 
   .mark {
     color: var(--kp-signal);
-    font-size: 18px;
+    font-size: 13px;
     transform: translateY(-1px);
   }
 
@@ -2535,35 +2539,52 @@ $: syncTitle(doc, path, dirty);
   }
 
   .kind {
-    color: var(--kp-ink2);
-    font-size: var(--kp-fs-body);
+    color: var(--kp-ink3);
+    font-weight: 500;
+    letter-spacing: 0.14em;
   }
 
-  /* 打开的是哪个文件：名字在前、完整路径在后，路径可以被截断，名字不行 */
+  /* 打开的是哪个文件：标题在上（衬线），路径在下（等宽、可截断） */
   .doc {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
     min-width: 0;
   }
 
   .doc .name {
-    font-size: var(--kp-fs-body);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font: 500 17px/1.3 var(--kp-font-serif);
+    letter-spacing: 0.02em;
     color: var(--kp-ink);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .doc .name.warn {
     color: var(--kp-ink2);
   }
 
+  .doc .path {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--kp-ink3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .unsaved {
     flex: none;
     padding: 1px 6px;
-    border-radius: 999px;
-    background: var(--kp-selected);
+    border: 1px solid var(--kp-signal);
+    border-radius: 2px;
     color: var(--kp-signal);
-    font-size: var(--kp-fs-small);
+    font: 500 10px/1.5 var(--kp-font-mono);
+    letter-spacing: 0.08em;
   }
 
   .file-actions {
@@ -2603,21 +2624,35 @@ $: syncTitle(doc, path, dirty);
     gap: 4px;
   }
 
+  /* 步骤按钮做成"方框标签"：1px 线 + 直角感，hover 只加深线，不铺底色。
+     底留给"选中"，线留给"可以点"。 */
   .palette-item,
   .ghost {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 32px;
+    height: 30px;
     padding: 0 10px;
+    border: 1px solid transparent;
     border-radius: var(--kp-radius-control);
     color: var(--kp-ink2);
+    font-size: 12.5px;
+  }
+
+  .palette-item {
+    border-color: var(--kp-rule);
+    background: transparent;
   }
 
   .palette-item:hover,
   .ghost:hover {
     background: var(--kp-field);
     color: var(--kp-ink);
+  }
+
+  .palette-item:hover {
+    background: transparent;
+    border-color: var(--kp-rule-strong);
   }
 
   .output-pill svg,
@@ -3349,9 +3384,10 @@ $: syncTitle(doc, path, dirty);
     box-shadow: 0 0 0 2px var(--kp-card);
   }
 
+  /* 编号是"页码"：等宽、等宽数字、对齐到右 */
   .number {
-    font-family: var(--kp-font-mono);
-    font-size: var(--kp-fs-small);
+    font: 400 11.5px/1 var(--kp-font-mono);
+    font-variant-numeric: tabular-nums;
     color: var(--kp-ink3);
     text-align: right;
   }
@@ -3381,9 +3417,11 @@ $: syncTitle(doc, path, dirty);
     min-width: 0;
   }
 
+  /* 步骤名用衬线：一列步骤读起来像目录，不是一排按钮 */
   .title {
-    font-size: var(--kp-fs-row-title);
-    line-height: 1.35;
+    font: 500 15px/1.35 var(--kp-font-serif);
+    letter-spacing: 0.02em;
+    color: var(--kp-ink);
   }
 
   .summary {

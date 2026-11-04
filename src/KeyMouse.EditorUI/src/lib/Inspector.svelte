@@ -310,11 +310,11 @@
     margin-bottom: 4px;
   }
 
+  /* 检查器的段标题：衬线、字距略开，和列表里的步骤名同一套字 */
   h2 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font: 500 16px/1.4 var(--kp-font-serif);
+    letter-spacing: 0.03em;
   }
 
   .section-head {
