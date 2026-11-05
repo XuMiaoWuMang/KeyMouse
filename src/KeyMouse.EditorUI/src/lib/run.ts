@@ -5,17 +5,29 @@
  * 这几句是界面唯一需要"理解"退出码的地方，所以单独放这儿，配单测。
  */
 
-/** 命令行文档里约定的退出码含义。0 之外都可能出现，这里只给最常见的几个。 */
+/**
+ * 退出码的含义，逐条对齐 `docs/reference/cli.md` 的「退出码」表。
+ *
+ * 这里曾把 4 写成"编辑器路径不对"——那一版是凭印象编的，用户看到的是
+ * "退出码 4：编辑器路径不对"，而真相是"目标窗口被最小化了"。界面上报原因时
+ * 要么照抄文档，要么只报数字，别猜。
+ */
 const CODE_HINTS: Record<number, string> = {
-  1: '有一步没做成',
-  2: '流程文件本身读不懂',
-  3: '窗口不满足条件（没找到、没最小化、没解锁）',
-  4: '编辑器路径不对',
-  5: '锁屏或桌面不可用',
-  6: '读屏没读出东西',
+  1: '有一步运行时失败（比如输入被系统拦下）',
+  2: '流程文件读不懂（参数或结构不对）',
+  3: '没找到符合条件的窗口或文字',
+  4: '目标窗口不可用（最小化、隐藏或被系统挡住）',
+  5: '焦点没抢到，这一步没有发送任何输入',
+  6: '没看清（读屏多次结果不一致）',
+  7: '被停止或取消，取消点之后没有发送输入',
 };
 
-export function runConclusion(code: number | null, cancelled: boolean, dryRun = false): string {
+export function runConclusion(
+  code: number | null,
+  cancelled: boolean,
+  dryRun = false,
+  reason = '',
+): string {
   if (cancelled) return '已停止。';
 
   // 试运行和播放的输出长得一模一样，唯一区别是它**没有真的发输入**。
@@ -29,7 +41,21 @@ export function runConclusion(code: number | null, cancelled: boolean, dryRun = 
   }
 
   const hint = CODE_HINTS[code];
-  return hint ? `没跑通（退出码 ${code}）：${hint}。${only}` : `没跑通（退出码 ${code}）。${only}`;
+  // 光有"退出码 4 是什么"还不够：真正让用户明白的是那一步自己说了什么
+  //（"目标窗口不可用：HYP(27036) 米哈游启动器 已最小化"）。有就带上，没有就不编。
+  const why = reason ? (hint ? `${hint}；${reason}` : reason) : hint;
+  return why ? `没跑通（退出码 ${code}）：${why}。${only}` : `没跑通（退出码 ${code}）。${only}`;
+}
+
+/** 一句话版的失败原因：命令行 `output` 的第一行，去掉前缀、压成一行、截短。 */
+export function firstLine(text: string): string {
+  const line =
+    text
+      .split(/\r?\n/)
+      .map((part) => part.trim())
+      .find((part) => part.length > 0) ?? '';
+  const plain = line.replace(/^错误[：:]\s*/, '');
+  return plain.length > 72 ? `${plain.slice(0, 72)}…` : plain;
 }
 
 /** 结束时的语气是不是"坏消息"：只有真的失败才把底部那行标红。 */
@@ -60,6 +86,8 @@ interface ReportCommand {
   command?: string;
   exitCode?: number;
   skipped?: boolean;
+  /** 这一步自己说的话：失败时是错误原因（首行就够），成功时是它做了什么。 */
+  output?: string;
 }
 
 /**
@@ -89,11 +117,14 @@ export function resultsFromReport(text: string, dry: boolean): Record<string, St
     if (!origin) continue; // 脚本模式的报告没有行号，跳过比编一个更诚实
 
     const code = typeof entry.exitCode === 'number' ? entry.exitCode : 0;
-    const detail = (entry.command ?? '').trim();
+    const command = (entry.command ?? '').trim();
+    // 失败时把命令行自己说的话摆到行上：用户要知道的是"窗口被最小化了"，
+    // 而不是"KeyMouse window focus --process HYP"。
+    const said = !entry.skipped && code !== 0 ? firstLine(entry.output ?? '') : '';
     let text: string;
-    if (entry.skipped) text = detail ? `跳过：${detail}` : '跳过';
-    else if (code === 0) text = detail;
-    else text = detail ? `退出码 ${code}：${detail}` : `退出码 ${code}`;
+    if (entry.skipped) text = command ? `跳过：${command}` : '跳过';
+    else if (code === 0) text = command;
+    else text = said ? `退出码 ${code}：${said}` : command ? `退出码 ${code}：${command}` : `退出码 ${code}`;
 
     results[origin] = { ok: !entry.skipped && code === 0, text, dry };
   }
@@ -120,3 +151,22 @@ export function resultsFromReport(text: string, dry: boolean): Record<string, St
 
 
 
+
+/** 第一个失败的行：结论里那句"为什么"取它的原因，而不是再猜一遍。 */
+export function firstFailure(results: Record<string, StepResult>): string {
+  const failing = Object.keys(results).filter((key) => !results[key].ok);
+  if (failing.length === 0) return '';
+
+  const order = (key: string) => key.split('.').map((part) => Number(part) || 0);
+  failing.sort((a, b) => {
+    const left = order(a);
+    const right = order(b);
+    for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+      const diff = (left[i] ?? -1) - (right[i] ?? -1);
+      if (diff !== 0) return diff;
+    }
+    return 0;
+  });
+
+  return results[failing[0]].text.replace(/^退出码 \d+：/, '');
+}

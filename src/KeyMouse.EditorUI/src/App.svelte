@@ -23,7 +23,7 @@
   selectionAfterRemove,
 } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
-  import { resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
+  import { firstFailure, resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import {
     MIN_MOVE_RUN,
@@ -348,14 +348,21 @@ function originOf(index: number, childIndex: number | null): string {
 
         // 结果从报告里读：报告按文档结构给出每一行的 origin，分组步展开多少次都落回同一行。
         // 读不到报告（老版本命令行、临时目录不可写）就保留空结果，比编一个更诚实。
+        // 结论里那句"为什么"要用报告里第一步失败自己的说法，所以先读报告再下结论。
         void invoke<string>('read_run_report')
           .then((text) => {
             const fromReport = resultsFromReport(text, runIsDry);
             if (Object.keys(fromReport).length > 0) results = fromReport;
+            note(
+              runConclusion(code, cancelled, runIsDry, firstFailure(fromReport)),
+              runIsBad(code, cancelled),
+            );
           })
-          .catch(() => undefined);
-
-        note(runConclusion(code, cancelled), runIsBad(code, cancelled));
+          .catch(() => {
+            // `read_run_report` 读不到文件时返回空串、不会 reject，所以这条路其实摸不到；
+            // 留着只是防它哪天改成会 reject 的写法。
+            note(runConclusion(code, cancelled, runIsDry), runIsBad(code, cancelled));
+          });
       }),
     );
 
@@ -689,7 +696,17 @@ $: syncTitle(doc, path, dirty);
         const result = await invoke<{ code: number | null; cancelled: boolean }>('validate_flow', {
           path: target,
         });
-        note(runConclusion(result.code, result.cancelled, true), runIsBad(result.code, result.cancelled));
+        // 试运行也是 `run --dry-run --report`，报告一样会写出来；不读它的话，
+        // 行上没有结果，结论里也只有"退出码 3"这种没有下文的话。
+        const fromReport = resultsFromReport(
+          await invoke<string>('read_run_report').catch(() => ''),
+          true,
+        );
+        if (Object.keys(fromReport).length > 0) results = fromReport;
+        note(
+          runConclusion(result.code, result.cancelled, true, firstFailure(fromReport)),
+          runIsBad(result.code, result.cancelled),
+        );
       } catch (e) {
         note(`试运行没起来：${e}`, true);
       } finally {

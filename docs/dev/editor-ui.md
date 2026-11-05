@@ -506,6 +506,24 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 `</section>`、根 `<div class="shell">` 的 `</div>`、`{#if mini}` 的 `{/if}`）。
 `pnpm run check` 会依次报 `Unexpected block closing tag` → `<div> was left open` → `Block was left open`，
 照着提示逐层补回来即可；改完务必再跑一次，别只看第一行。
+
+## 退出码文案：照抄 `cli.md`，还要带上"那一步自己说了什么"
+
+`src/lib/run.ts` 的 `CODE_HINTS` 只放 `docs/reference/cli.md` 那张表里的含义。**别凭印象编**：
+曾经把 `4` 写成"编辑器路径不对"，用户看到的正是「没跑通（退出码 4）：编辑器路径不对。」，
+而真相是「目标窗口不可用：HYP(27036) 米哈游启动器 已最小化」。界面上报原因只有两条路——
+照抄文档，或者只报数字。
+
+光有"退出码 4 是什么"还不够，用户要的是"为什么"。所以两件事一起做：
+
+1. `resultsFromReport` 在失败行上用报告里的 `output` 第一行（`firstLine`：剥 `错误：`、压成一行、
+   超过 72 字截断），成功行仍用命令行文本——一行要么说"做成了什么"，要么说"卡在哪儿"。
+2. 结论里拼上第一步失败的说法：`runConclusion(code, cancelled, dryRun, reason)` 的第二段，
+   `reason` 从 `firstFailure(results)` 来（按点分路径挑最小行号，去掉 `退出码 N：` 前缀）。
+
+两条路都要读报告：**播放**走 `run-exit` 事件，**试运行**走 `validate_flow` 的返回值——两者都写
+`--report`，所以两处都得先 `read_run_report` 再下结论。只改一条的话，另一半还是"退出码 X"没有下文。
+注意 `read_run_report()` 读不到文件时返回空串、**不会 reject**，`.catch()` 那条兜底其实摸不到。
 ## 与命令行的接口
 
 界面不碰文件、不起进程；跨过去只有这些命令，参数与错误码都写在

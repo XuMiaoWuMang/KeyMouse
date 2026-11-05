@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resultsFromReport, runConclusion, runHint, runIsBad } from './run';
+import { firstFailure, firstLine, resultsFromReport, runConclusion, runHint, runIsBad } from './run';
 
 describe('runConclusion', () => {
   it('被停止掐掉的不算失败', () => {
@@ -18,10 +18,19 @@ describe('runConclusion', () => {
     expect(runIsBad(null, false)).toBe(true);
   });
 
-  it('常见退出码带上原因，不常见的只报数字', () => {
-    expect(runConclusion(3, false)).toContain('窗口不满足条件');
+  it('退出码按 cli.md 那张表说，别编', () => {
+    expect(runConclusion(3, false)).toContain('没找到符合条件的窗口或文字');
+    expect(runConclusion(4, false)).toContain('目标窗口不可用');
+    expect(runConclusion(5, false)).toContain('焦点没抢到');
+    expect(runConclusion(7, false)).toContain('被停止或取消');
     expect(runConclusion(3, false)).toContain('退出码 3');
     expect(runConclusion(42, false)).toBe('没跑通（退出码 42）。');
+  });
+
+  it('报告里那一步自己说的话优先于通用解释', () => {
+    const text = runConclusion(4, false, false, '目标窗口不可用：HYP(27036) 米哈游启动器 已最小化');
+    expect(text).toContain('目标窗口不可用（最小化、隐藏或被系统挡住）');
+    expect(text).toContain('HYP(27036)');
   });
 });
 
@@ -89,5 +98,24 @@ describe('resultsFromReport', () => {
     expect(resultsFromReport('{ not json', true)).toEqual({});
     expect(resultsFromReport(JSON.stringify({ commands: [{ index: 1, exitCode: 0 }] }), true)).toEqual({});
     expect(resultsFromReport(JSON.stringify({ nothing: true }), true)).toEqual({});
+  });
+});
+
+describe('firstLine', () => {
+  it('剥掉「错误：」前缀，只留第一行', () => {
+    expect(firstLine('错误：没有窗口匹配 --process HYP\n\n当前可见的窗口：…')).toBe('没有窗口匹配 --process HYP');
+    expect(firstLine('   ')).toBe('');
+  });
+});
+
+describe('firstFailure', () => {
+  it('挑最小的行号，去掉「退出码 N：」前缀', () => {
+    const results = {
+      '2': { ok: false, text: '退出码 4：目标窗口不可用：HYP 已最小化' },
+      '10': { ok: false, text: '退出码 1：别的错' },
+      '1': { ok: true, text: '等 100 ms' },
+    };
+    expect(firstFailure(results)).toBe('目标窗口不可用：HYP 已最小化');
+    expect(firstFailure({ '1': { ok: true, text: 'x' } })).toBe('');
   });
 });
