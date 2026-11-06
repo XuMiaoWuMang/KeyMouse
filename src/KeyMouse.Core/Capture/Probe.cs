@@ -72,8 +72,7 @@ internal static partial class Probe
         bool nearest = resample == "nearest";
         bool normalize = options.ContainsKey("normalize");
         string languages = options.TryGetValue("lang", out string? lang) && lang.Length > 0 ? lang : "eng+chi_sim";
-        string engineCommand = ResolveEngine(
-            options.TryGetValue("engine", out string? engine) && engine.Length > 0 ? engine : "tesseract");
+        string engineChoice = options.TryGetValue("engine", out string? engine) && engine.Length > 0 ? engine : "auto";
         string? tessdata = options.TryGetValue("tessdata-dir", out string? dir) && dir.Length > 0 ? dir : DefaultTessdata();
         string? keepImage = options.TryGetValue("keep-image", out string? keep) && keep.Length > 0 ? keep : null;
         string? keepPrepared = options.TryGetValue("keep-prepared", out string? keep2) && keep2.Length > 0 ? keep2 : null;
@@ -169,7 +168,7 @@ internal static partial class Probe
         string spaceName = windowSpace ? "窗口" : "客户区";
         ValidateRegion(window, windowSpace, region);
 
-        var engineInfo = DescribeEngine(engineCommand, languages, tessdata);
+        var engineInfo = DescribeEngine(engineChoice, languages, tessdata);
 
         // Read the region `reads` times. Each iteration captures again, so the consensus rule
         // covers capture noise (animations, a caret, a repaint) and not just engine
@@ -194,7 +193,7 @@ internal static partial class Probe
                 prepared = Preprocess(normalize ? Normalize(frame) : frame, scale, pad, nearest);
                 WriteBmp(imagePath, prepared);
 
-                var read = RunEngine(engineCommand, imagePath, languages, tessdata);
+                var read = RunOcr(prepared, engineChoice, languages, tessdata, imagePath);
                 attempts.Add(read);
             }
 

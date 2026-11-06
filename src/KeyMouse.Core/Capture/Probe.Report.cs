@@ -26,8 +26,12 @@ internal static partial class Probe
         (int X, int Y, int W, int H) region, string preparation, string spaceName)
     {
         Console.WriteLine($"引擎      {engine.Command} {engine.Version}".TrimEnd());
-        Console.WriteLine($"语言      {engine.Languages}" +
-                          (engine.Tessdata is null ? "（引擎自带 tessdata）" : $"  模型 {engine.Tessdata}"));
+        // The tessdata suffix only means something for the external engine; the built-in one
+        // carries its dictionary inside the model file, so saying "tessdata" there is a lie.
+        string dictionary = engine.Kind == "builtin"
+            ? "（字典在模型里）"
+            : engine.Tessdata is null ? "（引擎自带 tessdata）" : $"  模型 {engine.Tessdata}";
+        Console.WriteLine($"语言      {engine.Languages}{dictionary}");
         if (engine.Models.Length > 0)
         {
             Console.WriteLine("模型      " + string.Join("  ", engine.Models.Select(m => $"{m.Name} {m.Bytes / 1024.0 / 1024.0:0.0} MB")));

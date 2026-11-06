@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using KeyMouse.Recognition.Ocr;
 
 namespace KeyMouse.Capture;
 
@@ -13,28 +14,93 @@ internal static partial class Probe
 {
 
     internal static (string Text, double? Confidence, LineInfo[] Lines) ReadOnce(
-        WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region, string capture = "screen")
+        WindowInfo window, bool windowSpace, (int X, int Y, int W, int H) region, string capture = "screen",
+        string engine = "auto")
     {
         ValidateRegion(window, windowSpace, region);
         NativeCapture.Frame frame = CaptureRegion(window, windowSpace, region, capture);
-        string engineCommand = ResolveEngine("tesseract");
-        string? tessdata = DefaultTessdata();
         var prepared = Preprocess(frame, 1, 0, nearest: false);
-        string imagePath = Scratch.PathFor($"keymouse-probe-{Environment.ProcessId}.bmp");
-        try
+        return RunOcr(prepared, engine, languages: DefaultLanguages, tessdata: DefaultTessdata(), imagePath: null);
+    }
+
+    /// <summary>
+    /// Picks the engine for one read, in one place.
+    ///
+    /// `auto` means "built-in if the models are here, otherwise whatever the machine already has".
+    /// The two explicit values exist because silently falling back would hide a broken install:
+    /// `builtin` fails loudly when the models are missing, `tesseract` keeps the old path reachable.
+    /// Anything else is treated as a path/name for the external engine, exactly as before.
+    /// </summary>
+    private static (string Text, double? Confidence, LineInfo[] Lines) RunOcr(
+        NativeCapture.Frame prepared, string engine, string languages, string? tessdata, string? imagePath)
+    {
+        bool wantsBuiltin = engine is "auto" or "builtin" or "";
+        if (wantsBuiltin)
         {
-            WriteBmp(imagePath, prepared);
-            var read = RunEngine(engineCommand, imagePath, DefaultLanguages, tessdata);
-            return (read.Text, read.Confidence, read.Lines);
-        }
-        finally
-        {
-            if (File.Exists(imagePath))
+            if (TryBuiltin(out PaddleOcr? ocr, out string? why) && ocr is not null)
             {
-                try { File.Delete(imagePath); } catch (IOException) { /* a leftover temp file is not a failure */ }
+                PaddleOcr.OcrRead read = ocr.Read(prepared.Bgra, prepared.Width, prepared.Height);
+                if (read.Lines.Length == 0) return (string.Empty, null, []);
+
+                var lines = new LineInfo[read.Lines.Length];
+                for (int i = 0; i < read.Lines.Length; i++)
+                {
+                    PaddleOcr.OcrLine line = read.Lines[i];
+                    var word = new WordInfo(line.Text, line.Score, line.Rect);
+                    lines[i] = new LineInfo(i.ToString(CultureInfo.InvariantCulture), line.Text, line.Rect, [word]);
+                }
+                return (read.Text, read.Confidence, lines);
+            }
+
+            if (engine == "builtin")
+            {
+                throw new CommandFailure(ExitUnreadable, why ?? "内置 OCR 起不来——未读取到任何内容");
             }
         }
+
+        if (imagePath is null)
+        {
+            imagePath = Scratch.PathFor($"keymouse-probe-{Environment.ProcessId}.bmp");
+            WriteBmp(imagePath, prepared);
+            try { return RunEngine(ResolveEngine("tesseract"), imagePath, languages, tessdata); }
+            finally { TryDelete(imagePath); }
+        }
+
+        WriteBmp(imagePath, prepared);
+        return RunEngine(ResolveEngine(engine), imagePath, languages, tessdata);
     }
+
+    /// <summary>
+    /// The built-in engine is expensive to construct (~150 ms of session setup) and cheap to reuse,
+    /// so it lives for the process. A failed load is remembered too: a read loop must not retry a
+    /// missing model 30 times.
+    /// </summary>
+    private static PaddleOcr? _builtin;
+    private static string? _builtinFailure;
+    private static readonly object BuiltinGate = new();
+
+    private static bool TryBuiltin(out PaddleOcr? ocr, out string? why)
+    {
+        lock (BuiltinGate)
+        {
+            if (_builtin is null && _builtinFailure is null)
+            {
+                _builtin = PaddleOcr.TryCreate(out PaddleOcr? created, out string? reason) ? created : null;
+                if (_builtin is null) _builtinFailure = reason;
+            }
+
+            ocr = _builtin;
+            why = _builtinFailure;
+            return ocr is not null;
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch (IOException) { /* a leftover temp file is not a failure */ }
+    }
+
 
     /// <summary>The language set the CLI defaults to; the predicate must agree with it.</summary>
     internal const string DefaultLanguages = "eng+chi_sim";
@@ -198,7 +264,32 @@ internal static partial class Probe
         return (joined, mean, [.. lines]);
     }
 
-    private static EngineInfo DescribeEngine(string command, string languages, string? tessdata)
+    private static EngineInfo DescribeEngine(string engine, string languages, string? tessdata)
+    {
+        if (engine is "auto" or "builtin" or "")
+        {
+            if (TryBuiltin(out PaddleOcr? ocr, out string? why) && ocr is not null)
+            {
+                var models = OcrModels.Describe(new OcrModels.Location(Path.GetDirectoryName(ocr.DetPath) ?? "", ocr.DetPath, ocr.RecPath))
+                    .Select(m => new EngineModel(m.Name, m.Bytes))
+                    .ToArray();
+                return new EngineInfo("builtin", "paddle-ocr / onnxruntime", null, "中文 + 英文（内置字典）", null, models);
+            }
+
+            if (engine == "builtin")
+                return new EngineInfo("builtin", "paddle-ocr / onnxruntime", null, "中文 + 英文（内置字典）", null, []);
+
+            // `auto` with no models: report what will actually run, not what we wished for.
+            return DescribeExternal(ResolveEngine("tesseract"), languages, tessdata) with
+            {
+                Command = $"tesseract（{why}）",
+            };
+        }
+
+        return DescribeExternal(ResolveEngine(engine), languages, tessdata);
+    }
+
+    private static EngineInfo DescribeExternal(string command, string languages, string? tessdata)
     {
         string? version = null;
         try

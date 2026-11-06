@@ -133,8 +133,9 @@ try {
     )) {
         $zip = Join-Path $assets $pair.To
         if (Test-Path $zip) { Remove-Item $zip -Force }
-        # cli.zip 只放单个 exe：安装时直接解到 <dir>\cli\KeyMouse.exe
-        # editorui.zip 同理：新壳就是一个 exe，解到 <安装目录>\KeyMouse.Editor.exe
+        # cli.zip 放 exe + 内置 OCR 模型：安装时解到 <dir>\cli\KeyMouse.exe 与 <dir>\cli\models\ocr\*.onnx。
+        #   内置引擎（paddle-ocr）要那两份 onnx；不带的话装完会静默回落到 Tesseract。
+        # editorui.zip 就是一个 exe：解到 <安装目录>\KeyMouse.Editor.exe
         if ($pair.To -in @('cli.zip', 'editorui.zip')) {
             $name = if ($pair.To -eq 'cli.zip') { 'KeyMouse.exe' } else { 'KeyMouse.Editor.exe' }
             $from = if ($pair.From.EndsWith('.exe')) { $pair.From } else { Join-Path $pair.From $name }
@@ -143,6 +144,21 @@ try {
             [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
                 $archive, $from, $name,
                 [System.IO.Compression.CompressionLevel]::SmallestSize) | Out-Null
+
+            if ($pair.To -eq 'cli.zip') {
+                $modelDir = Join-Path $artifacts 'models\ocr'
+                foreach ($model in @('det.onnx', 'rec.onnx')) {
+                    $file = Join-Path $modelDir $model
+                    if (-not (Test-Path $file)) {
+                        Write-Warning ("没有 $file —— 安装版会用 Tesseract 兜底；先跑 tools\build\fetch-ocr-models.ps1")
+                        continue
+                    }
+                    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                        $archive, $file, "models/ocr/$model",
+                        [System.IO.Compression.CompressionLevel]::SmallestSize) | Out-Null
+                }
+            }
+
             $archive.Dispose()
             $stream.Dispose()
         }

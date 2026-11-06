@@ -394,7 +394,7 @@ KeyMouse --version
 ```
 
 调用方需要自己解析输出时（编辑器外壳、Node/Python/Rust 脚本）**应当**设它：猜控制台码页对终端是对的，
-对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 0.2.1��� 2.2.0��`。
+对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 0.2.1��� 2.3.0��`。
 
 设了这个变量就不再看控制台码页；不设则行为与以前完全一致。
 
@@ -412,8 +412,8 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 | `--region x,y,w,h` | 整个客户区 | 区域坐标；越界一律拒绝，**不猜也不截断** |
 | `--space client\|window` | `client` | `window` 用于标题栏（它在客户区之外） |
 | `--reads N` | 2 | 重复读取次数，**N 次逐字一致**才算看清 |
-| `--lang` | `eng+chi_sim` | 交给引擎的语言 |
-| `--engine` | `tesseract` | 可执行文件；会先找常见安装位置。**目前按 Tesseract 的命令行调用**（`<引擎> <图> <输出基> -l <语言> --psm 6 [--tessdata-dir <目录>] tsv`），别家引擎要兼容这套参数才能直接用 |
+| `--lang` | `eng+chi_sim` | 交给**外部**引擎的语言；内置引擎固定中文+英文，这一项对它无意义 |
+| `--engine` | `auto` | `auto`＝有内置模型就用内置、没有回落到 Tesseract；`builtin`＝只用内置，没模型直接报错；`tesseract` 或任意路径＝走旧的 Tesseract 命令行（`<引擎> <图> <输出基> -l <语言> --psm 6 [--tessdata-dir <目录>] tsv`）。内置引擎的模型在 `<exe>\models\ocr\`，取法见 [fetch-ocr-models.ps1](../tools/fetch-ocr-models.md) |
 | `--tessdata-dir` | `%LOCALAPPDATA%\KeyMouse\tessdata` | 模型目录，**两套模型就是两个目录** |
 | `--min-conf N` | 30 | 置信度地板，只用来抓"彻底没读出来" |
 | `--scale` / `--pad` | 1 / 0 | **默认把抓到的原始像素直接交给引擎**：不放大、不加白边。要放大时 `--scale 3 --pad 16` 是实测过的组合 |
@@ -439,7 +439,9 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
 - **壳窗口可能没有客户区**：WebView / Electron 的 `*-siw` / `*-sic` 类窗口实测 `0×0` 客户区，
   这时任何区域都判越界（退出码 `2`）。
 - 量级参考：记事本一条 600×80 的区域，`--reads 2`、退出码 `0`、置信度 76.9、耗时 689 ms。
-- `--engine` 目前只有 Tesseract 真正跑过；JSON 里 `kind` 对任何外部命令都写 `external`，
+- **引擎有两套**：内置（PaddleOCR PP-OCRv4 的 det/rec，ONNX Runtime，模型随程序走）与外部（Tesseract 命令行）。
+  报告里 `kind` 写 `builtin` 或 `external`；内置那套模型缺失时 `auto` 会回落并把原因写进 `command` 字段，
+  设计、参数与已知边界见 [OCR](../dev/ocr.md)。
   引擎身份由 `command` / `version` / `models` 自证。
 - **默认把原始像素交给引擎**（`--scale 1 --pad 0`，不归一化）：屏幕上是什么，引擎就读什么。
   20 个真实样本 × 5 组配置（本地留档 `artifacts\tests\evidence-<时间戳>\`，不入库）：**原始像素 12/20、原始+归一化 12/20、

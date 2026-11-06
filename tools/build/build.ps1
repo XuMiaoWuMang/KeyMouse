@@ -44,3 +44,15 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXIT
 
 Write-Host ''
 Write-Host "OK -> $(Join-Path $out 'KeyMouse.exe')" -ForegroundColor Green
+
+# OCR 模型跟着命令行走：内置引擎从 <cli 目录>\models\ocr\ 找 det.onnx / rec.onnx，
+# 安装包复制 cli 目录时它们自然一起过去。没有模型就不拷——命令行会明确说"回落到外部引擎"。
+$ocrSource = Join-Path $root "artifacts\models\ocr"
+if (Test-Path (Join-Path $ocrSource "det.onnx")) {
+    $ocrTarget = Join-Path $out "models\ocr"
+    New-Item -ItemType Directory -Force $ocrTarget | Out-Null
+    foreach ($file in @("det.onnx", "rec.onnx")) { Copy-Item (Join-Path $ocrSource $file) $ocrTarget -Force }
+    Write-Host "OCR 模型已随包：$ocrTarget" -ForegroundColor DarkGray
+} else {
+    Write-Host "没有 OCR 模型（tools\build\fetch-ocr-models.ps1），包里的内置引擎会回落到 Tesseract" -ForegroundColor Yellow
+}

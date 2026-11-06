@@ -27,5 +27,6 @@
     <Using Include="KeyMouse.Input" />
     <Using Include="KeyMouse.Runtime" />
     <Using Include="KeyMouse.Windowing" />
+    <Using Include="KeyMouse.Recognition.Ocr" />
   </ItemGroup>
 </Project>

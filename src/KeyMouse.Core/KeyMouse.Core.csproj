@@ -43,4 +43,7 @@
     <!-- WinForms 也在 ImplicitUsings 里，它的 NativeWindow 和我们这个同名。 -->
     <Using Include="KeyMouse.Windowing.NativeWindow" Alias="NativeWindow" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.1" />
+  </ItemGroup>
 </Project>

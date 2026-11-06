@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | `km` | `tools\dev\km.ps1`（根入口 [km.cmd](../../km.cmd)） | 日常开发入口，一条命令做一件事 | 每天：编译、单测、冒烟、打包、监视 |
 | `build.ps1` | `tools\build\build.ps1` | 把 CLI 打成单文件，落 `artifacts\cli` 或 `artifacts\cli-self` | 要单文件产物，或 CI 要复现同一条发布命令 |
+| `fetch-ocr-models.ps1` | `tools\build\fetch-ocr-models.ps1` | 取内置 OCR 的 det/rec 模型到 `artifacts\models\ocr` | 新克隆、换模型、怀疑模型坏了（`-Verify`） |
 | `pack-release.ps1` | `tools\build\pack-release.ps1` | 打一次完整发布：编辑器 + 两个命令行 + 安装程序 | 发版前，产出 `artifacts\release\` 三件套 |
 | `verify.ps1` | `tools\dev\verify.ps1` | 串起六道关卡，最后给一个明确结论 | 每次对外交付前 |
 | `check-docs.ps1` | `tools\dev\check-docs.ps1` | 校验仓库里每条相对链接都指向真实文件 | 动过文档；CI 每次 push 都跑 |
@@ -37,6 +38,7 @@
 ## 构建
 
 - [`build.ps1` 与 `pack-release.ps1`](build.md) —— 单文件产物、编辑器发布目录、安装程序载荷。
+- [`fetch-ocr-models.ps1`](fetch-ocr-models.md) —— 内置 OCR 的两个 ONNX 模型（det/rec）从哪来、怎么校验。
 
 ## 新编辑器外壳
 
@@ -58,7 +60,7 @@
 - 脚本都按 PowerShell 7 写，用 `pwsh -NoProfile -File <脚本>` 调用；`km.cmd` 只是 `tools\dev\km.ps1` 的薄壳。
 - 失败用非 0 退出码或 `throw` 表达；需要连续跑完的关卡（`verify.ps1`）会收集失败项再统一退出。
 - 所有产物只落 `artifacts\`（已 gitignore）：`cli`、`cli-self`、`editor`、`setup`、`release`、`tests`。旧的 `dist\` 与 `out\` 已废弃。
-- 版本号唯一来源是根目录 [Directory.Build.props](../../Directory.Build.props)：产品 0.2.1、引擎 2.2.0。
+- 版本号唯一来源是根目录 [Directory.Build.props](../../Directory.Build.props)：产品 0.2.1、引擎 2.3.0。
 - 本文档里的相对链接会被 [`check-docs.ps1`](check-docs.md) 校验 —— 增删链接后跑一次。
 
 ## 相关

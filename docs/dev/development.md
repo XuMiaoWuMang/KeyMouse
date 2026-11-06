@@ -140,7 +140,7 @@ exe，清单里就没有 `<trustInfo>` 那一段（所以标题栏会如实显�
 三层，命令都从仓库根跑：
 
 ```pwsh
-.\km t                      # 单元测试：15 个模块，不需要桌面
+.\km t                      # 单元测试：20 个模块，不需要桌面
 .\km t parsing flow         # 只跑改到的模块
 .\km tl                     # 列模块
 .\km t -n flow              # 不重编，直接跑
@@ -161,7 +161,7 @@ pwsh tools\diagnostics\evidence.ps1      # 取证：把测量证据归档成一�
 | # | 关卡 | 实际命令 | 需要桌面 | CI |
 | --- | --- | --- | --- | --- |
 | 1 | 构建 | `dotnet build KeyMouse.sln -c Release`（0 警告是底线） | ❌ | ✅ |
-| 2 | 单元测试 | `tests\KeyMouse.Tests`（15 个模块） | ❌ | ✅ |
+| 2 | 单元测试 | `tests\KeyMouse.Tests`（20 个模块） | ❌ | ✅ |
 | 3 | 文档链接 | `pwsh tools\dev\check-docs.ps1` | ❌ | ✅ |
 | 4 | 版本一致 | `pwsh tools\dev\check-version.ps1` | ❌ | ✅（加 `-NoArtifact`） |
 | 5 | 打包 | `pwsh tools\build\build.ps1` → `artifacts\cli\KeyMouse.exe` | ❌ | ✅（同一条 publish 命令 + 跑一次 `--version`） |
@@ -183,7 +183,7 @@ CI 侧：`.github\workflows\ci.yml` 在 push 到 `main`、PR 和手动触发时�
 
 ## 版本与发布
 
-版本号只有一个来源：根 `Directory.Build.props` 的 `<ProductVersion>`（产品 0.2.1）与 `<EngineVersion>`（引擎 2.2.0）。规则由 `tools\dev\check-version.ps1` 强制：
+版本号只有一个来源：根 `Directory.Build.props` 的 `<ProductVersion>`（产品 0.2.1）与 `<EngineVersion>`（引擎 2.3.0）。规则由 `tools\dev\check-version.ps1` 强制：
 
 - `src\KeyMouse.Cli`、`src\KeyMouse.FlowEditor`、`src\KeyMouse.Setup` 用 `<Version>$(ProductVersion)</Version>`；`src\KeyMouse.Core`、`src\KeyMouse.Runner` 用 `$(EngineVersion)`；
 - `src\` 下的 csproj / props / targets 不许写死 `<(ProductVersion|EngineVersion|Version)>x.y.z`；
