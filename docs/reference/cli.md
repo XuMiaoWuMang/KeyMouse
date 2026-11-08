@@ -174,6 +174,7 @@ key press enter --process notepad
 | `--retry-delay MS` | 重试前等多久（默认 300） |
 | `--set name=value` | 定义变量，脚本里用 `${name}` 引用（可重复给） |
 | `--report file.json` | 写一份机器可读的执行报告 |
+| `--max-steps N` | 运行的全局步数上限（默认 2000000），超限退出码 `3`；流程的条件循环与脚本的重复展开都靠它兜底 |
 
 ### 一个进程，从头到尾
 
@@ -296,6 +297,10 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
 沿用调用它的那一行的 `origin`——编辑器靠它把结果写回正确的行。脚本（`.txt`）没有这一步，
 所以 `origin` 缺省。
 
+流程里一旦有条件分支或条件循环，`total` 是**静态规划数**（`if` 两条分支都算、循环体只算一遍），
+不保证等于实际执行步数；实际执行了多少看 `commands` 的条数 / `succeeded + failed`。没有控制流的旧流程
+两个数一致。
+
 `injectedEvents` 是**真实注入到系统输入队列的事件数**，`--dry-run` 时全程为 0 ——
 报告本身就是"到底有没有发东西"的证据。JSON 用 `UnsafeRelaxedJsonEscaping` 写出，中文不会变成 `\uXXXX`。
 
@@ -339,13 +344,13 @@ KeyMouse window focus --process explorer --pick 3
 | 0 | 成功 |
 | 1 | 运行时失败（如 `SendInput` 被 UIPI 拦截） |
 | 2 | 参数错误 |
-| 3 | 选择器无匹配 / 多候选未 `--pick` / `waitfor` 超时 / **选区被取消**（`region pick`、`probe --pick-region`） |
+| 3 | 选择器无匹配 / 多候选未 `--pick` / `waitfor` 超时 / **选区被取消**（`region pick`、`probe --pick-region`）/ **循环超过 `maxRounds` 或 `--max-steps`** / **`assert` 不成立** |
 | 4 | 目标不可用（隐藏 / 最小化 / 被 DWM cloak / 无响应 / **被禁用**） |
 | 5 | **焦点验证失败 —— 未发送任何输入** |
-| 7 | **被客户端取消**（`runner cancel` / 编辑器"停止"）——取消点之后未发送任何输入 |
 | 6 | **没看清**（`probe`：N 次读取不一致 / 置信度低于地板 / 没有可用引擎）—— 同样未发送任何输入 |
+| 7 | **被客户端取消**（`runner cancel` / 编辑器"停止"）——取消点之后未发送任何输入 |
 
-脚本返回**第一条失败命令**的退出码。
+脚本返回**第一条失败命令**的退出码；流程里的 `assert` / 循环护栏也是 `3`，语义同样是"确定没发出输入"。
 
 `3` / `4` / `5` / `6` 共享同一条承诺：**确定没有发出任何输入**，因此都可以安全重试（`--retry` 也只对它们生效）。
 
@@ -576,9 +581,107 @@ KeyMouse run flow.json                          # 回放
 | `key` | `combo`（组合）或 `text`（单个键） | `key combo` / `key press` |
 | `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
-| `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` || `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
+| `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
+| `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` |
 | `read-text` | `target`、`region`、`into`、`text`（可选） | 读一次区域，把内容存进变量（给了 `text` 就存匹配到的那段）；没匹配到 → 退出码 `3`，变量不动 |
 | `call` | `flow`、`vars`、`export` | 运行另一个流程文件：**内联**执行，子流程有自己的变量作用域，`export` 里的名字交回调用者 |
+| `if` | `cond`、`steps`、`else`（可选）、`probe`（条件用 `text()` 时必须） | 条件成立执行 `steps`，否则执行 `else`；`else` 里再放一个 `if` 就是 `else if` |
+| `while` | `cond`、`steps`、`maxRounds`（默认 200）、`probe` | 条件成立就重复；超过 `maxRounds` 退出码 `3` |
+| `do` | `steps`、`cond`、`maxRounds`（默认 200）、`probe` | 先执行一遍，再按 `cond` 决定是否再来一轮 |
+| `for` | `init`、`cond`、`step`、`steps`、`maxRounds`（默认 10000）、`probe` | 计数循环：`init` 一次、每轮前查 `cond`、每轮后执行 `step` |
+| `break` / `continue` | — | 跳出当前循环 / 进入下一轮；只能出现在循环体内 |
+| `set` | `name`、`value`（表达式） | 给变量赋值；已有变量在原处更新，新变量定义在当前块 |
+| `assert` | `cond`、`message`（可选）、`probe` | 断言；不成立退出码 `3`，消息原样带出 |
+
+### 控制流：if / else / while / do / for / break / continue
+
+C 的**语义**，结构化 JSON 的**语法**。条件不是一段随便执行的东西，而是一套手写的小表达式语言：
+没有 `eval`，加载时检查语法与变量名，报错带列号。
+
+```json
+{ "type": "if", "cond": "text(\"保存\")",
+  "probe": { "target": { "process": "notepad" },
+             "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 } },
+  "steps": [ { "type": "key", "combo": "ctrl+s" } ],
+  "else":  [ { "type": "sleep", "ms": 200 } ] }
+
+{ "type": "while", "cond": "text(\"加载中\")", "maxRounds": 60,
+  "probe": { "target": { "process": "notepad" },
+             "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 } },
+  "steps": [ { "type": "sleep", "ms": 500 } ] }
+
+{ "type": "do", "cond": "found()", "steps": [ … ] }
+
+{ "type": "for", "init": { "i": "0" }, "cond": "i < 3", "step": { "i": "i + 1" },
+  "steps": [ { "type": "set", "name": "sum", "value": "sum + i" } ] }
+
+{ "type": "break" }      { "type": "continue" }
+{ "type": "set", "name": "n", "value": "n + 1" }
+{ "type": "assert", "cond": "n < 10", "message": "n 太大了" }
+```
+
+| 写法 | 语义 |
+| --- | --- |
+| `if` | 条件成立执行 `steps`，否则执行 `else`；`else` 里再放一个 `if` 就是 `else if`。两个块都是 C 那样的花括号作用域 |
+| `while` | 每轮开始前重新求值；条件为假就结束 |
+| `do` | 先执行一遍 `steps`，再求值；为真就再来一轮（至少执行一次） |
+| `for` | `init` 在循环前按顺序求值一次；每轮前查 `cond`；每轮后执行 `step`——`continue` 之后 `step` 照样执行 |
+| `break` / `continue` | 只对**最近一层**循环有效；不在循环里会在加载时报错 |
+| `set` | 已有变量在**原处**更新（循环外的计数器因此能一直加），新变量定义在当前块 |
+| `assert` | 条件必须为真；否则退出码 `3`，`message` 原样写进输出 |
+
+**表达式**（`cond`、`init`/`step` 的值、`set.value`）：
+
+| 类别 | 内容 |
+| --- | --- |
+| 字面量 | `3`、`2.5`、`"文本"`、`'文本'`、`true`、`false` |
+| 变量 | 直接写名字：文档 `variables`、`--set`、`read-text` 的 `into`、循环变量 `index`/`item`、`for` 的 `init` 名字、`set` 过的名字，以及 `last`（最近一次读屏得到的文字） |
+| 算术 | `+ - * / %`、一元 `-`；`+` 两边只要有一边是文本就拼接，数字与"像数字的文本"相加时按数字算（所以 `--set i=3` 也能写 `i + 1`） |
+| 比较 | `== != < <= > >=`；两个文本按序号比较，数字与文本比时会尝试把文本读成数字 |
+| 逻辑 | `&& \|\| !`，短路：`false && text(...)` 不会去读屏 |
+| 谓词 | `text("保存")`、`text("保存", 0, 0, 600, 32)`、`window("notepad")`、`front("notepad")`、`found("副本")`、`elapsed()` |
+| 括号 | `( … )`；三目 `?:`、`switch`、`goto`、函数定义都不提供 |
+
+- `text(文字[, x, y, 宽, 高])` **单次取样**：读一次 `probe` 的区域，不轮询。要"等到出现"就写 `wait-text`，
+  或者 `while (!text("完成")) { sleep … }`（后者有 `maxRounds` 兜底）。
+- 五个参数形态只换区域，窗口与匹配方式仍取 `probe`；区域空间跟 `probe.region.space` 一致。
+- `probe` 只在条件里用了 `text()` 时必须给；`target` 与 `region` 都必填，不猜窗口也不猜区域。
+- `window()` / `front()` 的参数是**进程名**（`.exe` 可写可不写）；`front()` 比较的是前台窗口的进程。
+- `found()`：最近一次 `read-text` / `wait-text` / `click-text` 是否命中。不带参数 = 是否成功；带文字 =
+  命中过这段文字（或读到的内容包含它）。`text()` 不算一次"读取步骤"，不会改 `last`/`found()`。
+- `elapsed()`：从这次流程开始到现在的毫秒数（写超时保护时用）。
+- **条件必须是 `true/false`**。数字或文本不会自动当真值——这是刻意的：GUI 流程里"0 不成立"比"少写一个比较"更难查。
+
+**作用域**（C 的块作用域）：
+
+- `if` / `while` / `do` / `for` 的身体各有一层帧：里面**新定义**的变量出块就没了；
+- `set` 一个外层已有的名字会在**原处**更新——循环外的计数器因此能一直加；
+- `for` 的 `init` 名字只活在循环里；`step` 在每轮 body 之后执行（`continue` 之后也执行），
+  但 `step` 里新定义的名字在 body/`cond` 第一轮看不到，加载期就会拒绝；
+- `read-text` 的 `into` 仍然写**当前作用域**；子流程的捕获仍然留在子流程里，靠 `export` 交回。
+
+**护栏（条件循环必须有上界）**：
+
+| 项 | 默认 | 说明 |
+| --- | --- | --- |
+| `while.maxRounds` / `do.maxRounds` | 200 | 最多执行多少轮；硬顶 10000 |
+| `for.maxRounds` | 10000 | 计数循环的上界；硬顶 10000 |
+| `--max-steps N` | 2000000 | 整次运行的执行步数硬上限；嵌套循环相乘时靠它兜底 |
+
+超过任一上界 → 退出码 `3`，指出是哪一层循环/哪条条件；**即使 `--keep-going` 也停**——上界触发说明流程写错了，
+再继续只会把错误放大。`--max-steps` 对流程与脚本都生效（脚本自己的展开上限是 10 万条，通常更早挡住）。
+
+**`--dry-run` 下**：
+
+- 条件照常求值，但不发任何输入；
+- `text()` 只解析窗口、校验区域，然后**按成立算**（和 `when` 的 dry-run 一样），因此走的是"条件成立"的那条路；
+- `while` / `do` / `for` 的循环体**只走一遍**，不会因为 `text()` 永远成立而空转；日志会标明"只走一遍"；
+- `window()` / `front()` 真的去查（只读，不发输入）。
+
+**报告与编号**：块本身不是"一步"，只有真正执行的步骤进报告；`origin` 仍指向文档里的那一行
+（循环体反复执行时同一个 `origin` 出现多次）。含条件/循环的流程在控制台里不打印分母
+（`[  7]` 而不是 `[  7/20]`），因为实际步数要到跑完才知道；报告里的 `total` 是**静态规划数**
+（`if` 两条分支都算、循环体只算一遍），对没有控制流的旧流程与原值完全一致。
 
 ### wait-text：等一块区域上出现某段文字
 
@@ -642,8 +745,8 @@ KeyMouse runner stop                # 请它退出
 - 管道：`\\.\pipe\keymouse-runner-<用户名>`（按用户隔离，没有端口）。
 - 协议：一行一个 JSON 对象，双向。请求 `{"id":1,"method":"run","params":{"flow":"...","dryRun":false}}`；
   事件 `{"kind":"..."}`，`kind` ∈ `hello | log | step | finished | result | error`。
-  `step` 带 `index/total/state(started|finished)/type/exitCode/durationMs`——编辑器就是靠它在列表里
-  实时高亮正在执行的那一步。
+  `step` 带 `index/total/state(started|finished)/type/exitCode/durationMs/origin`——编辑器靠它在列表里
+  实时高亮正在执行的那一步；动态循环下 `index` 与行号不再一一对应，`origin` 才是行键。
 - 方法：`hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown`。
 - **一次只跑一个作业**：输入是全局资源，作业排队而不是并行（理由见 design.md）。
 
@@ -682,12 +785,12 @@ KeyMouse flow edit flow.json                    # 用默认编辑器打开一个
             "text": "保存成功", "match": "contains", "timeoutMs": 2000, "else": "skip" } }
 ```
 
-`when` 是这套格式里唯一的条件：前提成立才执行这一步。
+`when` 是**单步**的前提：前提成立才执行这一步。成块的条件分支用 `if`，循环用 `while`/`do`/`for`（见上一节）。
 
 - `target` 可以自己给（**可以盯另一个窗口**）；不给就用步骤自己的 target。
 - `else`：`skip`（默认，跳过这一步、退出码仍是 0）或 `fail`（退出码 `3`，同样保证"什么都没发"）。
 - 前提不成立时的跳过会在报告里标成 `skipped`，控制台那一行显示 `skip`。
-- 一串步骤各自带 `when`，就是最常用的分支写法；真正的 if/else 块与循环留给后续版本。
+- `if` / `while` / `do` / `for` / `break` / `continue` **不能**带 `when`：条件请写进它们自己的 `cond`。
 
 
 

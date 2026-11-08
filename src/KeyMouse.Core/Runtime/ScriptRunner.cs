@@ -31,6 +31,9 @@ internal sealed class ScriptOptions
     public int RetryDelayMs = 300;
     public string? ReportPath;
 
+    /// <summary>流程的全局硬上限（步数）：嵌套循环只靠 maxRounds 挡不住乘法爆炸，这是最后一道闸。</summary>
+    public int MaxSteps = 2_000_000;
+
     /// <summary>
     /// May a minimized window be restored? Opt-in from two places - `--allow-restore` on the command
     /// line, or `"allowRestore": true` in a flow file - because bringing a window back is a visible
@@ -110,7 +113,7 @@ internal static partial class ScriptRunner
         if (ParseOptions(args, options) is { } optionError) return Fail(2, optionError);
         if (options.Path is null)
             return Fail(2, "用法：KeyMouse run <文件|-> [--delay 毫秒] [--keep-going] [--dry-run] [--echo] " +
-                           "[--retry 次数] [--retry-delay 毫秒] [--set 名=值] [--report 文件.json]");
+                           "[--retry 次数] [--retry-delay 毫秒] [--max-steps 步数] [--set 名=值] [--report 文件.json]");
 
         List<(int LineNumber, List<string> Tokens)> commands;
         LoopPlan plan;
@@ -219,6 +222,14 @@ internal static partial class ScriptRunner
                 }
 
                 dispatched++;
+                if (dispatched > options.MaxSteps)
+                {
+                    report.Failed++;
+                    report.StoppedAtLine = lineNumber;
+                    firstFailureCode = 3;
+                    Console.WriteLine($"停止：超过 --max-steps（{options.MaxSteps} 步）——脚本可能写成了死循环");
+                    break;
+                }
                 string loopNote = loopStack.Count == 0
                     ? ""
                     : "[" + string.Join(' ', loopStack.Select(f => $"{f.Name}={f.Iteration}")) + "] ";

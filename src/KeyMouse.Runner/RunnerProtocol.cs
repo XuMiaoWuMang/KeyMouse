@@ -115,6 +115,12 @@ internal sealed class RunnerEvent
     public string? State { get; set; }
     public string? Type { get; set; }
 
+    /// <summary>
+    /// 这一步在文档里的位置（"3"、"6.1"）。动态循环下执行序号与行号不再一一对应，编辑器靠它
+    /// 把结果落回正确的那一行；脚本模式的报告里没有 origin，这里为 null。
+    /// </summary>
+    public string? Origin { get; set; }
+
     /// <summary>这一步留下的截图路径（引擎抓不到就是 null，绝不编一个）。</summary>
     public string? Shot { get; set; }
 
@@ -134,11 +140,13 @@ internal sealed class RunnerEvent
     internal static RunnerEvent Queued(int id, int job, int ahead, string message) =>
         new() { Kind = "queued", Id = id, Job = job, Total = ahead, Message = message };
 
-    internal static RunnerEvent Step(int id, int job, int index, int total, string state, string type, int? exitCode = null, long? durationMs = null, string? shot = null) =>
+    internal static RunnerEvent Step(int id, int job, int index, int total, string state, string type,
+        int? exitCode = null, long? durationMs = null, string? shot = null, string? origin = null) =>
         new()
         {
             Kind = "step", Id = id, Job = job, Index = index, Total = total,
             State = state, Type = type, ExitCode = exitCode, DurationMs = durationMs, Shot = shot,
+            Origin = origin,
         };
 
     /// <summary>录制会话的状态：recording（钩子已就绪）/ stopping（收到停止键，正在收尾）。</summary>

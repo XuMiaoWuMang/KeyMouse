@@ -88,6 +88,18 @@ internal sealed class FlowCondition
     public string? Else { get; set; }
 }
 
+/// <summary>
+/// Where a block's predicates look. `text()` reads this one region; both target and region are
+/// required whenever a condition uses `text()` - the engine never guesses which window to watch.
+/// </summary>
+internal sealed class FlowProbe
+{
+    public FlowTarget? Target { get; set; }
+    public FlowRegion? Region { get; set; }
+    public string? Match { get; set; }
+    public int? MaxErrors { get; set; }
+}
+
 internal sealed class FlowStep
 {
     private string? _text;
@@ -153,6 +165,41 @@ internal sealed class FlowStep
 
     /// <summary>`call`: names the subflow hands back to the caller once it has run.</summary>
     public string[]? Export { get; set; }
+
+    // ---------------------------------------------------------------- control flow
+
+    /// <summary>
+    /// `if` / `while` / `do` / `for` / `assert`: the condition, written in the small expression language
+    /// (see <see cref="Expression"/>). Bare variable names, no <c>{{...}}</c>.
+    /// </summary>
+    public string? Cond { get; set; }
+
+    /// <summary>Where <c>text()</c> inside <see cref="Cond"/> reads. Required exactly when the condition uses it.</summary>
+    public FlowProbe? Probe { get; set; }
+
+    /// <summary>
+    /// `while` / `do` / `for`: how many rounds the loop may take before the flow stops with exit 3.
+    /// Defaults: 200 for the waiting loops, 10000 for `for`; the contract caps both at 10000.
+    /// </summary>
+    public int? MaxRounds { get; set; }
+
+    /// <summary>`if`: the other branch. An `else if` is an `if` nested here, exactly like C.</summary>
+    public List<FlowStep>? Else { get; set; }
+
+    /// <summary>`for`: names to evaluate once before the loop, in order (name → expression).</summary>
+    public Dictionary<string, string>? Init { get; set; }
+
+    /// <summary>`for`: names to evaluate after each round, in order (name → expression).</summary>
+    public Dictionary<string, string>? Step { get; set; }
+
+    /// <summary>`set`: the variable to write.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>`set`: the expression to store.</summary>
+    public string? Value { get; set; }
+
+    /// <summary>`assert`: what to say when the assertion is false.</summary>
+    public string? Message { get; set; }
 }
 
 internal sealed class FlowOptions
@@ -271,203 +318,8 @@ internal sealed class FlowDocument
             if (document.Lists.ContainsKey(name)) document.Lists[name] = [value];
         }
 
-        // A subflow sees what its caller had (frames are chained, not copied), so the caller's names
-        // are in scope while validating it too - otherwise a subflow that documents "call me with a
-        // `who`" would be refused for using it.
-        var scope = new HashSet<string>(document.Texts.Keys, StringComparer.Ordinal);
-        foreach (string name in inherited ?? []) scope.Add(name);
-        var calls = new CallContext(Path.GetDirectoryName(Path.GetFullPath(path)) ?? ".", stack ?? [], 0);
-
-        for (int i = 0; i < document.Steps.Count; i++)
-        {
-            var step = document.Steps[i];
-            if (step is null) throw new CommandFailure(2, $"第 {i + 1} 步是 null");
-            if (!KnownTypes.Contains(step.Type))
-            {
-                throw new CommandFailure(2,
-                    $"第 {i + 1} 步的类型 '{step.Type}' 不认识（可用：{string.Join(" | ", KnownTypes)}）");
-            }
-
-            // Conditions are validated when the file is loaded, not half-way through a replay: a
-            // typo in a match mode should cost a second, not the five minutes the step might wait.
-            if (step.When is { } when)
-            {
-                if (when.Region is null || string.IsNullOrEmpty(when.Text))
-                    throw new CommandFailure(2, $"第 {i + 1} 步的 when 需要 region 与 text（前提是什么）");
-                if (when.Match is { } conditionMode && !TextPredicate.IsKnownMode(conditionMode))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步 when 的 match '{conditionMode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
-                FlowTarget? conditionTarget = when.Target ?? step.Target;
-                if (string.IsNullOrWhiteSpace(conditionTarget?.Process) && string.IsNullOrWhiteSpace(conditionTarget?.Class))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步的 when 需要 target（自己给，或者步骤本身有）——否则不知道该读哪个窗口");
-                if (when.Region.Space is not (FlowSpace.Client or FlowSpace.Window))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步 when 的 region 只支持 {FlowSpace.Client} 或 {FlowSpace.Window}");
-                if (when.Else is { } otherwise && otherwise is not ("skip" or "fail"))
-                    throw new CommandFailure(2, $"第 {i + 1} 步 when 的 else '{otherwise}' 不认识（可用：skip | fail）");
-            }
-
-            if (step.Type is "wait-text" or "click-text" or "read-text")
-            {
-                if (step.Region is null)
-                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 region（读哪一块）");
-                if (step.Match is { } mode && !TextPredicate.IsKnownMode(mode))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步 {step.Type} 的 match '{mode}' 不认识（可用：{string.Join(" | ", TextPredicate.Modes)}）");
-                if (step.Region.Space is not (FlowSpace.Client or FlowSpace.Window))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步 {step.Type} 的 region 只支持 {FlowSpace.Client}（客户区）或 {FlowSpace.Window}（整个窗口）：" +
-                        "读屏必须落在某个窗口里，没有窗口就没有可比对的坐标系");
-                if (step.Type is "wait-text" or "click-text" && string.IsNullOrEmpty(step.Text))
-                    throw new CommandFailure(2, $"第 {i + 1} 步 {step.Type} 需要 text（等什么字）");
-                if (step.Type == "read-text" && string.IsNullOrEmpty(step.Into))
-                    throw new CommandFailure(2, $"第 {i + 1} 步 read-text 需要 into（读到的东西存进哪个变量）");
-            }
-
-            // Groups: a `repeat` needs a count, a `foreach` needs a list, and both need steps to run.
-            if (step.Type == "repeat" && (step.Times is not int times || times < 0 || times > MaxLoopIterations))
-                throw new CommandFailure(2, $"第 {i + 1} 步的 repeat 需要 times（0 到 {MaxLoopIterations} 之间）");
-            if (step.Type is "repeat" or "foreach" && step.When is not null)
-            {
-                // Loops are flattened before execution, so a condition on the group itself would have
-                // nowhere to live. Say so instead of quietly ignoring it.
-                throw new CommandFailure(2,
-                    $"第 {i + 1} 步的 {step.Type} 不能带 when：把前提写到里面的步骤上（循环体会各自判断）");
-            }
-            if (step.Type == "foreach")
-            {
-                if (string.IsNullOrEmpty(step.In))
-                    throw new CommandFailure(2, $"第 {i + 1} 步的 foreach 需要 in（遍历哪个列表变量）");
-                if (!document.Lists.ContainsKey(step.In!))
-                    throw new CommandFailure(2,
-                        $"第 {i + 1} 步的 foreach 遍历 '{step.In}'，但文档 variables 里没有这个列表");
-            }
-
-            CheckRequired(step, $"第 {i + 1} 步");
-            CheckRanges(step, $"第 {i + 1} 步");
-            CheckPlaceholders(step, scope, $"第 {i + 1} 步");
-
-            // A read-text defines a variable for the steps after it, so the check above can stay a
-            // straightforward forward pass instead of a guess about what a capture might produce.
-            if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
-
-            // An export is the same promise one level out: the caller may use those names afterwards.
-            if (step.Type == "call" && step.Export is { Length: > 0 })
-            {
-                foreach (string name in step.Export) scope.Add(name);
-            }
-
-            if (step.Type == "call") ValidateCall(step, $"第 {i + 1} 步", calls);
-
-            if (step.Steps is { Count: > 0 })
-            {
-                var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
-                if (step.Type == "foreach") inner.Add("item");
-                ValidateSteps(step.Steps, inner, $"第 {i + 1} 步里", calls);
-            }
-            else if (step.Type is "repeat" or "foreach")
-            {
-                throw new CommandFailure(2, $"第 {i + 1} 步的 {step.Type} 里没有步骤");
-            }
-        }
-
+        FlowValidator.Validate(document, path, stack, inherited);
         return document;
-    }
-
-    /// <summary>
-    /// The same checks for a group's children: a file is walked the way it will be executed, carrying
-    /// the names in scope, so a `{{typo}}` is refused when the file is loaded - with the path to the
-    /// step that used it - instead of half-way through a run.
-    /// </summary>
-    private static void ValidateSteps(List<FlowStep> steps, HashSet<string> scope, string path, CallContext calls)
-    {
-        for (int i = 0; i < steps.Count; i++)
-        {
-            FlowStep step = steps[i] ?? throw new CommandFailure(2, $"{path}第 {i + 1} 步是 null");
-            string where = $"{path}第 {i + 1} 步";
-
-            if (!KnownTypes.Contains(step.Type))
-                throw new CommandFailure(2, $"{where}的类型 '{step.Type}' 不认识（可用：{string.Join(" | ", KnownTypes)}）");
-            if (step.When is { } when && (when.Region is null || string.IsNullOrEmpty(when.Text)))
-                throw new CommandFailure(2, $"{where}的 when 需要 region 与 text（前提是什么）");
-            if (step.When?.Match is { } conditionMode && !TextPredicate.IsKnownMode(conditionMode))
-                throw new CommandFailure(2, $"{where}的 when 的 match '{conditionMode}' 不认识");
-            if (step.When is { } condition && condition.Target is null && step.Target is null)
-                throw new CommandFailure(2, $"{where}的 when 需要 target（自己给，或者步骤本身有）");
-            if (step.Type is "wait-text" or "click-text" or "read-text" && step.Region is null)
-                throw new CommandFailure(2, $"{where}的 {step.Type} 需要 region（读哪一块）");
-            if (step.Type == "repeat" && (step.Times is not int t || t < 0 || t > MaxLoopIterations))
-                throw new CommandFailure(2, $"{where}的 repeat 需要 times（0 到 {MaxLoopIterations} 之间）");
-            if (step.Type == "foreach" && string.IsNullOrEmpty(step.In))
-                throw new CommandFailure(2, $"{where}的 foreach 需要 in（遍历哪个列表变量）");
-            if (step.Axis is { Length: > 0 } axis &&
-                !string.Equals(axis, FlowAxis.Vertical, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(axis, FlowAxis.Horizontal, StringComparison.OrdinalIgnoreCase))
-                throw new CommandFailure(2, $"{where}的 axis '{axis}' 不认识（可用：{FlowAxis.Vertical} | {FlowAxis.Horizontal}）");
-
-            CheckRequired(step, where);
-            CheckRanges(step, where);
-            CheckPlaceholders(step, scope, where);
-            if (step.Type == "read-text" && !string.IsNullOrEmpty(step.Into)) scope.Add(step.Into!);
-
-            // An export is the same promise one level out: the caller may use those names afterwards.
-            if (step.Type == "call" && step.Export is { Length: > 0 })
-            {
-                foreach (string name in step.Export) scope.Add(name);
-            }
-
-            if (step.Type == "call") ValidateCall(step, where, calls);
-
-            if (step.Steps is { Count: > 0 } children)
-            {
-                var inner = new HashSet<string>(scope, StringComparer.Ordinal) { "index" };
-                if (step.Type == "foreach") inner.Add("item");
-                ValidateSteps(children, inner, $"{where}里", calls);
-            }
-            else if (step.Type is "repeat" or "foreach")
-            {
-                throw new CommandFailure(2, $"{where}的 {step.Type} 里没有步骤");
-            }
-        }
-    }
-
-    /// <summary>Where a `call` is being validated from: its own directory, the files already on the
-    /// call stack (a subflow may not call back into one of them), and how deep we already are.</summary>
-    private readonly record struct CallContext(string BaseDirectory, IReadOnlyList<string> Stack, int Depth);
-
-    /// <summary>
-    /// A subflow is checked here rather than at the first step: a missing file, a cycle or a call
-    /// tower is a property of the file, not of the moment it happens to run.
-    /// </summary>
-    private static void ValidateCall(FlowStep step, string where, CallContext calls)
-    {
-        if (string.IsNullOrEmpty(step.Flow))
-            throw new CommandFailure(2, $"{where}的 call 需要 flow（子流程文件，相对当前文件）");
-
-        string path = Path.GetFullPath(Path.Combine(calls.BaseDirectory, step.Flow!));
-        if (!File.Exists(path))
-            throw new CommandFailure(2, $"{where}的 call 指向的子流程不存在：{path}");
-        if (calls.Depth + 1 > FlowPlan.MaxCallDepth)
-            throw new CommandFailure(2, $"{where}的 call 嵌套超过 {FlowPlan.MaxCallDepth} 层（子流程树不是用来堆栈的）");
-        if (calls.Stack.Contains(path, StringComparer.OrdinalIgnoreCase))
-            throw new CommandFailure(2,
-                $"{where}的 call 成环了：{string.Join(" → ", calls.Stack)} → {path}");
-    }
-
-    /// <summary>Every `{{name}}` a step mentions, taken from the step's own JSON so a new field cannot
-    /// be forgotten here, and checked against what is actually in scope.</summary>
-    private static void CheckPlaceholders(FlowStep step, HashSet<string> scope, string where)
-    {
-        foreach (string name in Placeholders(step))
-        {
-            bool loopVariable = name is "index" or "item";
-            if (!scope.Contains(name) && !loopVariable)
-            {
-                throw new CommandFailure(2,
-                    $"{where}用了未定义的变量 {{{{{name}}}}}（文档 variables、循环变量 index/item，或者 --set）");
-            }
-        }
     }
 
     internal static IEnumerable<string> Placeholders(FlowStep step)
@@ -475,23 +327,23 @@ internal sealed class FlowDocument
         // A group's children are validated on their own, with the scope their loop provides - so a
         // group is checked for the placeholders in its *own* fields. Serializing the whole step here
         // would make `foreach` look like it used `{{item}}` before the loop variable existed.
-        string json;
-        if (step.Steps is null)
-        {
-            json = JsonSerializer.Serialize(step, Json);
-        }
-        else
-        {
-            FlowStep shallow = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
-            shallow.Steps = null;
-            json = JsonSerializer.Serialize(shallow, Json);
-        }
+        FlowStep shallow = JsonSerializer.Deserialize<FlowStep>(JsonSerializer.Serialize(step, Json), Json)!;
+        // Expression fields are checked by the expression parser (they use bare names, not {{...}}),
+        // and the else branch has its own steps with their own scope. Scanning them here would either
+        // double-report or invent a placeholder that the runtime never expands.
+        shallow.Steps = null;
+        shallow.Else = null;
+        shallow.Cond = null;
+        shallow.Init = null;
+        shallow.Step = null;
+        shallow.Value = null;
+        string json = JsonSerializer.Serialize(shallow, Json);
 
         return PlaceholderPattern.Matches(json).Select(m => m.Groups[1].Value).Distinct(StringComparer.Ordinal);
     }
 
     internal static readonly System.Text.RegularExpressions.Regex PlaceholderPattern =
-        new(@"\{\{([A-Za-z0-9_.]+)\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"\{\{([\p{L}\p{Nd}_.]+)\}\}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
     /// Replaces `{{name}}` with what the scope holds. Called at the last moment before dispatch, on the
@@ -523,88 +375,54 @@ internal sealed class FlowDocument
             target.Class = Fill(target.Class);
             target.Title = Fill(target.Title);
         }
+        if (copy.Probe?.Target is { } probeTarget)
+        {
+            probeTarget.Process = Fill(probeTarget.Process);
+            probeTarget.Class = Fill(probeTarget.Class);
+            probeTarget.Title = Fill(probeTarget.Title);
+        }
+        if (copy.When is { } when)
+        {
+            when.Text = Fill(when.Text);
+            if (when.Target is { } whenTarget)
+            {
+                whenTarget.Process = Fill(whenTarget.Process);
+                whenTarget.Class = Fill(whenTarget.Class);
+                whenTarget.Title = Fill(whenTarget.Title);
+            }
+        }
         copy.Text = Fill(copy.Text);
         copy.Combo = Fill(copy.Combo);
         copy.Into = Fill(copy.Into);
         copy.Note = Fill(copy.Note);
+        copy.Message = Fill(copy.Message);
         return copy;
 
         string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, frame);
     }
 
     /// <summary>
-    /// What the contract says must be there. The hand-written checks above give the better message for
-    /// the cases they know; this one is the safety net that makes "required" mean one thing only - the
-    /// same document the editor renders its controls from.
+    /// A probe may name its window with a placeholder too; resolve it at the moment the condition is
+    /// evaluated, exactly like a step's target.
     /// </summary>
-    private static void CheckRequired(FlowStep step, string where)
+    internal static FlowProbe? ResolveProbe(FlowProbe? probe, VariableFrame frame)
     {
-        if (!FlowSchema.TryGetStep(step.Type, out FlowStepContract contract)) return;
-
-        foreach (FlowField field in contract.Own.Where(f => f.Required))
+        if (probe?.Target is null) return probe;
+        FlowTarget target = probe.Target;
+        return new FlowProbe
         {
-            if (!FlowSchema.HasValue(step, field.Name))
-                throw new CommandFailure(2, $"{where}的 {step.Type} 需要 {field.Name}（{field.LabelZh}）");
-        }
+            Target = new FlowTarget
+            {
+                Process = Fill(target.Process),
+                Class = Fill(target.Class),
+                Title = Fill(target.Title),
+            },
+            Region = probe.Region,
+            Match = probe.Match,
+            MaxErrors = probe.MaxErrors,
+        };
 
-        if (contract.OneOf.Count > 0 && !contract.OneOf.Any(name => FlowSchema.HasValue(step, name)))
-        {
-            string labels = string.Join(" 或 ", contract.OneOf.Select(name =>
-                contract.Own.FirstOrDefault(f => f.Name == name)?.LabelZh is { Length: > 0 } label ? label : name));
-            throw new CommandFailure(2, $"{where}的 {step.Type} 需要 {labels} 之一");
-        }
-    }
-
-    /// <summary>
-    /// 数字字段的取值范围，也由契约说了算。
-    ///
-    /// 以前引擎自己写死上限（`Math.Clamp(intervalMs ?? 200, 20, 5000)`），契约里写的却是 `min: 100`：
-    /// 界面上输不进 20，手写一份 JSON 却能跑 20，两边对"合法流程"的定义不一致。现在越界在**加载时**
-    /// 就报错，而不是悄悄夹一下——夹取会把用户的笔误藏起来，等他发现"没什么变化"时已经查了三遍。
-    /// </summary>
-    private static void CheckRanges(FlowStep step, string where)
-    {
-        using JsonDocument document = JsonDocument.Parse(JsonSerializer.Serialize(step, FlowDocument.Json));
-        JsonElement root = document.RootElement;
-
-        if (FlowSchema.TryGetStep(step.Type, out FlowStepContract contract))
-        {
-            string owner = $"{where}的 {step.Type}";
-            foreach (FlowField field in contract.Own) CheckRange(root, field, owner);
-        }
-
-        if (step.When is not null && root.TryGetProperty("when", out JsonElement when))
-        {
-            string owner = $"{where}的 when";
-            foreach (FlowField field in FlowSchema.ShapeFields("when")) CheckRange(when, field, owner);
-        }
-    }
-
-    private static void CheckRange(JsonElement owner, FlowField field, string at)
-    {
-        if (field.Kind != "int" || (field.Min is null && field.Max is null)) return;
-        if (!TryReadNumber(owner, field.Name, out double value)) return;
-
-        string range = field.Min is int low && field.Max is int high ? $"{low}..{high}" : field.Min is int only ? $"不小于 {only}" : $"不大于 {field.Max}";
-        string shown = value.ToString("0.###", CultureInfo.InvariantCulture);
-        bool bad = field.Min is int min && value < min || field.Max is int max && value > max;
-        if (bad)
-        {
-            string label = field.LabelZh is { Length: > 0 } zh ? $"（{zh}）" : "";
-            throw new CommandFailure(2, $"{at} 里 {field.Name} = {shown}，契约要求 {range}{label}");
-        }
-    }
-
-    /// <summary>按点分路径取一个数字；不是数字（没填、是文案、被占位符替换过）就当"这里没限制可查"。</summary>
-    private static bool TryReadNumber(JsonElement owner, string path, out double value)
-    {
-        value = 0;
-        JsonElement cursor = owner;
-        foreach (string part in path.Split('.'))
-        {
-            if (cursor.ValueKind != JsonValueKind.Object || !cursor.TryGetProperty(part, out cursor)) return false;
-        }
-        return cursor.ValueKind == JsonValueKind.Number && cursor.TryGetDouble(out value);
+        string? Fill(string? value) => string.IsNullOrEmpty(value) ? value : Expand(value, frame);
     }
 
     /// <summary>Every step in the file, groups included (used where a whole-file rule applies).</summary>
@@ -614,6 +432,7 @@ internal sealed class FlowDocument
         {
             yield return step;
             foreach (FlowStep child in AllSteps(step.Steps ?? [])) yield return child;
+            foreach (FlowStep child in AllSteps(step.Else ?? [])) yield return child;
         }
     }
 
@@ -628,6 +447,7 @@ internal sealed class FlowDocument
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
         "click-text", "read-text", "repeat", "foreach", "call",
+        "if", "while", "do", "for", "break", "continue", "set", "assert",
         "keydown", "keyup", "mousedown", "mouseup", "hold", "mousehold", "keyhold",
     ];
 
@@ -635,7 +455,14 @@ internal sealed class FlowDocument
     internal static readonly string[] ReadingTypes = ["wait-text", "click-text", "read-text"];
 
     /// <summary>Steps that only exist for the runner: they carry steps of their own or store a value.</summary>
-    internal static readonly string[] RunnerTypes = ["sleep", "hold", "mousehold", "keyhold", "wait-window", "wait-text", "click-text", "read-text", "repeat", "foreach"];
+    internal static readonly string[] RunnerTypes =
+    [
+        "sleep", "hold", "mousehold", "keyhold", "wait-window", "wait-text", "click-text", "read-text",
+        "repeat", "foreach", "if", "while", "do", "for", "break", "continue", "set", "assert",
+    ];
+
+    /// <summary>Step types that carry a block of child steps in `steps`.</summary>
+    internal static readonly string[] BlockTypes = ["repeat", "foreach", "if", "while", "do", "for"];
 
     /// <summary>One loop cannot run forever: the cap is stated, not discovered at 3 a.m.</summary>
     internal const int MaxLoopIterations = 10_000;

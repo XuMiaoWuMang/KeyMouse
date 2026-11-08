@@ -1,12 +1,15 @@
 using KeyMouse;
+using KeyMouse.Flow;
 
 namespace KeyMouse.Tests;
 
 /// <summary>
-/// Loops and variables, without a desktop. A `repeat`/`foreach` becomes the steps it would run, each
-/// carrying the frame it runs in (so `{{index}}`/`{{item}}` resolve at the last moment, next to every
-/// other variable), and the loader refuses a file whose placeholders cannot resolve or whose loops
-/// have no bounds.
+/// Loops and variables, without a desktop: a `repeat`/`foreach` becomes the steps it would run,
+/// each in its own round frame (so `{{index}}`/`{{item}}` resolve at the last moment), and the
+/// loader refuses a file whose placeholders cannot resolve or whose loops have no bounds.
+///
+/// The execution assertions read the report, not the console: the report is the contract the editor
+/// and the smoke tests share.
 /// </summary>
 internal static class LoopTests
 {
@@ -32,11 +35,7 @@ internal static class LoopTests
             Times = 3,
             Steps = [new FlowStep { Type = "sleep", Ms = 5, Note = "第 {{index}} 次" }],
         };
-        FlowPlan repeated = Plan([repeat], document);
-        Harness.Equal("a repeat of three becomes three steps", 3, repeated.StepCount);
-        Harness.Sequence("...each resolved in the frame of its own round",
-            ["第 0 次", "第 1 次", "第 2 次"],
-            repeated.Items.Select(i => FlowDocument.Resolve(i.Step!, i.Frame).Note ?? ""));
+        Harness.Equal("a repeat of three plans three steps", 3, Plan([repeat], document).PlannedSteps);
 
         var each = new FlowStep
         {
@@ -44,10 +43,7 @@ internal static class LoopTests
             In = "rows",
             Steps = [new FlowStep { Type = "type", Text = "{{item}}" }],
         };
-        FlowPlan items = Plan([each], document);
-        Harness.Sequence("a foreach walks its list in order",
-            ["甲", "乙", "丙"],
-            items.Items.Select(i => FlowDocument.Resolve(i.Step!, i.Frame).Text ?? ""));
+        Harness.Equal("a foreach plans one step per item", 3, Plan([each], document).PlannedSteps);
 
         var nested = new FlowStep
         {
@@ -55,15 +51,48 @@ internal static class LoopTests
             In = "rows",
             Steps = [new FlowStep { Type = "repeat", Times = 2, Steps = [new FlowStep { Type = "sleep", Ms = 1 }] }],
         };
-        Harness.Equal("nested loops multiply", 6, Plan([nested], document).StepCount);
+        Harness.Equal("nested loops multiply", 6, Plan([nested], document).PlannedSteps);
 
-        Harness.Equal("a loop with no bound runs nothing",
-            0, Plan([new FlowStep { Type = "repeat", Times = 0 }], document).StepCount);
-        Harness.Equal("...and a foreach over an unknown list runs nothing",
-            0, Plan([new FlowStep { Type = "foreach", In = "nope" }], document).StepCount);
+        Harness.Equal("a loop with no bound plans nothing",
+            0, Plan([new FlowStep { Type = "repeat", Times = 0 }], document).PlannedSteps);
 
         Harness.Check("building a plan does not touch the document",
             ((FlowStep)repeat.Steps![0]).Note == "第 {{index}} 次");
+
+        Harness.Group("loops: what actually runs");
+
+        FlowRun.Result counted = FlowRun.Run(FlowRun.Flow(
+            """
+            [{"type":"repeat","times":3,"steps":[{"type":"set","name":"n","value":"n + 1"}]},
+             {"type":"assert","cond":"n == 3"}]
+            """,
+            """{"n":"0"}"""));
+        Harness.Equal("a repeat runs its body exactly three times", 4, counted.Report?.Succeeded);
+        Harness.Equal("...and the counter survives between rounds", 0, counted.ExitCode);
+        Harness.Sequence("...with the loop body's origin repeated",
+            ["1.1", "1.1", "1.1", "2"],
+            counted.Report?.Commands.Select(c => c.Origin ?? "") ?? []);
+
+        FlowRun.Result walked = FlowRun.Run(FlowRun.Flow(
+            """
+            [{"type":"foreach","in":"rows","steps":[{"type":"set","name":"seen","value":"seen + item"}]},
+             {"type":"assert","cond":"seen == \"甲乙丙\""}]
+            """,
+            """{"rows":["甲","乙","丙"],"seen":""}"""));
+        Harness.Equal("a foreach walks its list in order", 0, walked.ExitCode);
+        Harness.Equal("...four steps: three items plus the assert", 4, walked.Report?.Succeeded);
+
+        FlowRun.Result nestedRun = FlowRun.Run(FlowRun.Flow(
+            """
+            [{"type":"foreach","in":"rows","steps":[
+                {"type":"repeat","times":2,"steps":[{"type":"sleep","ms":0}]}]}]
+            """,
+            """{"rows":["a","b","c"]}"""));
+        Harness.Equal("nested legacy loops execute six steps", 6, nestedRun.Report?.Succeeded);
+        Harness.Equal("...and the denominator is the expanded count", 6, nestedRun.Report?.Total);
+
+        FlowRun.Result empty = FlowRun.Run(FlowRun.Flow("""[{"type":"repeat","times":0}]"""));
+        Harness.Equal("a flow that plans no steps is refused", 2, empty.ExitCode);
 
         Harness.Group("variables: substitution");
 
@@ -72,6 +101,13 @@ internal static class LoopTests
         Harness.Equal("text without placeholders is returned as it is", "原样", FlowDocument.Expand("原样", scope));
         Harness.Throws<CommandFailure>("an unknown placeholder is refused at dispatch time",
             () => FlowDocument.Expand("{{nope}}", scope));
+
+        FlowRun.Result cjk = FlowRun.Run(FlowRun.Flow(
+            """[{"type":"type","text":"你好 {{名字}}"}]""",
+            """{"名字":"世界"}"""));
+        Harness.Check("变量名可以是中文，占位符照样展开",
+            cjk.Dispatched.Any(argv => argv.Contains("你好 世界")),
+            string.Join(" | ", cjk.Dispatched.Select(argv => string.Join(' ', argv))));
 
         var templated = new FlowStep
         {
@@ -93,7 +129,15 @@ internal static class LoopTests
         Harness.Equal("...and an unshadowed name still comes from a parent",
             "外层", new VariableFrame(inner, [new KeyValuePair<string, string>("other", "x")]).Lookup("other") is null
                 ? outer.Lookup("who") : "外层");
-        Harness.Equal("...and a frame can hand a value back", "改过", new VariableFrame(outer, [new KeyValuePair<string, string>("who", "改过")]).Lookup("who"));
+        Harness.Equal("...and a frame can hand a value back", "改过",
+            new VariableFrame(outer, [new KeyValuePair<string, string>("who", "改过")]).Lookup("who"));
+
+        Harness.Group("variables: values are typed for expressions");
+
+        FlowRun.Result typed = FlowRun.Run(FlowRun.Flow(
+            """[{"type":"set","name":"i","value":"i + 1"},{"type":"assert","cond":"i == 1"}]""",
+            """{"i":"0"}"""));
+        Harness.Equal("--set text that reads as a number participates in arithmetic", 0, typed.ExitCode);
 
         Harness.Group("loops: what the loader refuses");
 
@@ -116,7 +160,7 @@ internal static class LoopTests
                 () => FlowDocument.Load(path));
 
             Write(""" "steps":[{"type":"repeat","times":2,"when":{"text":"x","region":{"space":"client","x":0,"y":0,"width":10,"height":10},"target":{"process":"p"}},"steps":[{"type":"sleep","ms":1}]}] """);
-            Harness.Throws<CommandFailure>("a loop cannot carry a when (it has nowhere to live once flattened)",
+            Harness.Throws<CommandFailure>("a loop cannot carry a when (conditions live on the body)",
                 () => FlowDocument.Load(path));
 
             Write(""" "steps":[{"type":"type","text":"{{typo}}","target":{"process":"notepad"}}] """);

@@ -41,7 +41,7 @@ pwsh tools\dev\km.ps1 b
 | `ut` / `ui-test` | 新外壳的两层测试（vitest + cargo test） | 十几秒 |
 | `t` / `test` | 单元测试，全部模块（不需要桌面） | ~1 s |
 | `t parsing` | 只跑指定模块，可写多个：`t parsing flow` | ~1 s |
-| `tl` / `test-list` | 列出 16 个单元测试模块 | 瞬时 |
+| `tl` / `test-list` | 列出 22 个单元测试模块 | 瞬时 |
 | `t -n flow` | 不重新编译，直接跑 | ~0.2 s |
 | `s` / `smoke` | 桌面冒烟（需要解锁的桌面） | 数分钟 |
 | `v` / `verify` | 六道关卡（构建 / 单测 / 文档 / 版本 / 打包 / 冒烟） | 取决于是否冒烟 |
@@ -140,12 +140,12 @@ exe，清单里就没有 `<trustInfo>` 那一段（所以标题栏会如实显�
 三层，命令都从仓库根跑：
 
 ```pwsh
-.\km t                      # 单元测试：20 个模块，不需要桌面
+.\km t                      # 单元测试：22 个模块，不需要桌面
 .\km t parsing flow         # 只跑改到的模块
 .\km tl                     # 列模块
 .\km t -n flow              # 不重编，直接跑
 
-.\km s                      # 桌面冒烟：12 个模块，需要解锁的桌面
+.\km s                      # 桌面冒烟：13 个模块，需要解锁的桌面
 pwsh tests\smoke\run.ps1 -List
 pwsh tests\smoke\run.ps1 -Only typing,features
 
@@ -161,11 +161,11 @@ pwsh tools\diagnostics\evidence.ps1      # 取证：把测量证据归档成一�
 | # | 关卡 | 实际命令 | 需要桌面 | CI |
 | --- | --- | --- | --- | --- |
 | 1 | 构建 | `dotnet build KeyMouse.sln -c Release`（0 警告是底线） | ❌ | ✅ |
-| 2 | 单元测试 | `tests\KeyMouse.Tests`（20 个模块） | ❌ | ✅ |
+| 2 | 单元测试 | `tests\KeyMouse.Tests`（22 个模块） | ❌ | ✅ |
 | 3 | 文档链接 | `pwsh tools\dev\check-docs.ps1` | ❌ | ✅ |
 | 4 | 版本一致 | `pwsh tools\dev\check-version.ps1` | ❌ | ✅（加 `-NoArtifact`） |
 | 5 | 打包 | `pwsh tools\build\build.ps1` → `artifacts\cli\KeyMouse.exe` | ❌ | ✅（同一条 publish 命令 + 跑一次 `--version`） |
-| 6 | 桌面冒烟 | `pwsh tests\smoke\run.ps1`（12 个模块） | ✅ | ❌（CI 没有交互式桌面） |
+| 6 | 桌面冒烟 | `pwsh tests\smoke\run.ps1`（13 个模块） | ✅ | ❌（CI 没有交互式桌面） |
 
 `-SkipSmoke` 与 `-SkipPack` 可以跳过第 6、5 关（CI 与赶时间的本地验证用）。锁屏时第 6 关自动跳过并打印原因——判定只看**前台窗口**（`LockApp` / `LogonUI`，或标题匹配「锁屏 / Lock Screen」），不能看「`LockApp` 进程在不在」：解锁之后那个进程常常还留着。
 
@@ -276,12 +276,16 @@ pwsh tools\release\clean-releases.ps1 -Remove gui,v0.1.0 -Yes
 
 大文件用 partial 按职责拆开，命名规律是"主文件 + `.职责.cs`"：`Commands.{Target,Mouse,Keyboard,Window,Parsing}.cs`、`ScriptRunner.{Parse,Report}.cs`、`Probe.{Target,Image,Engine,Report}.cs`、`MainWindow.{Document,Steps,Run,Record}.cs`。拆的时候只搬代码、不加抽象——类还是那一个类，调用点一行都不用改。
 
+流程这一层另有两个按职责独立出来的文件：`Flow\Expression.cs`（词法/语法/求值，纯函数，不碰桌面）、
+`Flow\FlowValidator.cs`（加载期结构、作用域与表达式检查），以及 `Flow\FlowPlan.cs`（语句树与规划步数）。
+它们不是 partial，而是有明确边界的独立类型——这正是 2.4.0 重构里"搬代码也搬设计"的那部分。
+
 **还没拆的几个大文件，以及为什么先停手**：
 
 | 文件 | 行数 | 为什么没拆 |
 | --- | --- | --- |
 | `src\KeyMouse.Core\Flow\Recorder.cs` | ~900 | `Run` 是一段连续的低级钩子循环（装钩子、收消息、合并轨迹、判停止），状态耦合在局部变量里。按行切片只会得到几个共享十几个变量的"函数"，比现在更难读；真要拆得先改设计 |
-| `src\KeyMouse.Core\Flow\FlowModel.cs` | ~750 | 类型定义（目标/点/区域/条件/步骤/文档）与加载、校验、占位符展开交错：`Load` 调 `ValidateSteps`，`ValidateSteps` 又调 `CheckPlaceholders`。切点只能落在调用链中间，切完两个文件都得来回跳 |
-| `src\KeyMouse.Core\Flow\FlowRunner.cs` | ~640 | 一个执行循环加"每种步骤怎么跑"的分支，分支共享同一份运行状态；拆出去要显式传状态，属于设计改动 |
+| `src\KeyMouse.Core\Flow\FlowModel.cs` | ~650 | 类型定义（目标/点/区域/条件/步骤/文档）与加载、占位符展开交错。校验已经搬到 `FlowValidator`；再拆就得拆模型类型本身，收益低 |
+| `src\KeyMouse.Core\Flow\FlowRunner.cs` | ~900 | 递归遍历语句树 + "每种步骤怎么跑"的分支，分支共享同一份运行状态（步号、报告、时间线、重试、护栏）。拆出去要显式传状态，属于设计改动 |
 
 判断标准：**搬代码不改设计才拆**。拆完要新增抽象、要给一批方法加参数、要在两个文件之间来回跳，就先放着——大本身不是问题，耦合才是。

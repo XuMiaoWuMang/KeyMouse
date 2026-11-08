@@ -57,6 +57,7 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 | **图形编辑器** | 新外壳 `KeyMouse.Editor.exe`（Tauri + Svelte，界面进程不提权）：账本式步骤列表、按契约渲染的参数检视器、打开/保存、增删排序与撤销、试运行与播放、停止、录制；老外壳 `KeyMouse.FlowEditor.exe`（WinUI 3）过渡期保留，`KeyMouse flow edit 流程.json` 默认开新外壳、找不到才退到它 |
 | **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提 |
 | **循环与变量** | 流程可以带 `variables`、用 `{{名字}}` 传值、用 `repeat` / `foreach` 循环；`read-text` 把屏幕内容读进变量 |
+| **控制流** | C 风格的 `if/else`、`while`、`do-while`、`for`、`break/continue`，条件是一套手写的小表达式（变量比较、`text("…")` 读屏谓词、`found()`、`elapsed()`），循环都有 `maxRounds` 与 `--max-steps` 上界 |
 | **子流程** | 一个流程可以 `call` 另一个流程文件：内联执行、变量作用域链式、`export` 回传；成环、缺文件、超过 8 层在加载时就被拒 |
 | **条件步骤** | `sleep`、`wait-window`、`wait-text`（读一块区域等某段文字出现，连续两次读到同一段才算数，超时退出码 3） |
 

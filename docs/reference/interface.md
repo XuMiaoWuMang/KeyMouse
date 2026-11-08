@@ -67,6 +67,7 @@ click-text：找字并点击它
 | `region` | 子卡片：`space/x/y/width/height` | 可配"从屏幕取区域" |
 | `target` | 子卡片：`process/class/title` | `process` 与 `class` **至少给一个** |
 | `when` | 子卡片：前提条件字段 | 空文字 = 没有前提（这一步总是执行） |
+| `probe` | 子卡片：`target` / `region` / `match` / `maxErrors` | 条件里用 `text()` 时读哪里；块步骤专用 |
 | `steps` | 提示"在「这一步的 JSON」里编辑" | 分组步骤的子步骤 |
 | `vars` | 提示同上 | `call` 传进去的变量表 |
 | `stringList` | 提示同上 | `call` 的 `export` 名字数组 |
@@ -134,6 +135,13 @@ click-text：找字并点击它
 | `repeat` | `times`、`steps` | `note` |
 | `foreach` | `in`、`steps` | `note` |
 | `call` | `flow` | `vars`、`export`、`note` |
+| `if` | `cond`、`steps` | `else`、`probe`、`note` |
+| `while` | `cond`、`steps` | `maxRounds`、`probe`、`note` |
+| `do` | `steps`、`cond` | `maxRounds`、`probe`、`note` |
+| `for` | `cond`、`steps` | `init`、`step`、`maxRounds`、`probe`、`note` |
+| `break` / `continue` | — | —（只能放在循环体内） |
+| `set` | `name`、`value` | `note`、`when` |
+| `assert` | `cond` | `message`、`probe`、`note`、`when` |
 
 关于 `when`（前提条件）：
 
@@ -146,7 +154,25 @@ click-text：找字并点击它
 **高度要盖住整行文字**，否则字被切掉会读错（实测：`0,0,400,20` 读成乱码，`0,0,400,32` 正常）。
 
 关于占位符 `{{名字}}`：只能出现在**字符串**字段（文字、组合键、进程名/类名/标题、备注等）。
-JSON 的数字放不下占位符，这是限制不是疏忽。
+JSON 的数字放不下占位符，这是限制不是疏忽。**表达式字段是例外**：`cond`、`set.value`、`for.init`/`step`
+里直接写变量名，写 `{{名字}}` 会在加载时被明确拒绝。
+
+### 4.1 控制流与表达式（契约之外的语义）
+
+`if` / `while` / `do` / `for` 的 `cond`、`set` 的 `value`、`for` 的 `init`/`step` 都是一套手写表达式语言：
+
+- 字面量：数字、`"文本"` / `'文本'`、`true` / `false`；
+- 变量：直接写名字（文档 `variables`、`--set`、`read-text` 的 `into`、循环变量、`set` 过的名字、`last`）；
+- 运算：`+ - * / %`、`== != < <= > >=`、`&& || !`、括号；`&&`/`||` 短路；
+- 谓词：`text("…")` / `text("…", x, y, 宽, 高)`、`window("进程")`、`front("进程")`、`found(["文字"])`、`elapsed()`；
+- 条件必须是 `true`/`false`，不会把数字或文本自动当真值。
+
+`text()` 读 `probe` 指定的窗口与区域（**单次取样**，不轮询）；`probe` 的形状、`maxRounds` 的上下限、
+循环/步数护栏、`--dry-run` 下"条件按成立算、循环只走一遍"的行为，见
+[`cli.md` 的「控制流」](cli.md)。
+
+**兼容方向**：新增步骤类型不改 `format.version`（仍是 `1`）。新引擎照跑旧文件；旧引擎打开新文件会报
+"类型不认识"——这是预期的降级，不是格式损坏。
 
 ## 5. 常驻 Runner 的 IPC 接口（JSON 行协议）
 

@@ -18,6 +18,12 @@ public sealed class EditorModel : INotifyPropertyChanged
     private bool _dirty;
     private string _savedJson = "";
 
+    /// <summary>
+    /// 打开时的文档头（variables / allowRestore / recordedAt / durationMs / screen / options）。
+    /// 编辑器只编辑步骤；没有这一份，保存时会把文档级字段整段丢掉。
+    /// </summary>
+    private FlowDocument? _source;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<StepVm> Steps { get; } = [];
@@ -30,6 +36,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     public ObservableCollection<StepVm> Rows { get; } = [];
 
     private readonly Dictionary<FlowStep, StepVm> _byNode = [];
+    private readonly Dictionary<string, StepVm> _byOrigin = new(StringComparer.Ordinal);
 
     public string? DocumentPath => _documentPath;
 
@@ -70,6 +77,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     public void Renumber()
     {
         Rows.Clear();
+        _byOrigin.Clear();
 
         // 连续的鼠标移动先折叠：3 次以上的一组，头一行说"起点 → 终点 · N 次"，
         // 每一下移动单独成为它的子行。读流程的人要的是"从哪儿到哪儿"，
@@ -102,6 +110,8 @@ public sealed class EditorModel : INotifyPropertyChanged
         {
             StepVm top = Steps[i];
             top.Number = displayNo[i].ToString();
+            top.Origin = (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            _byOrigin[top.Origin] = top;
             top.Group = null;
             top.RunCount = 0;
             top.SummaryOverride = null;
@@ -139,7 +149,7 @@ public sealed class EditorModel : INotifyPropertyChanged
             {
                 // 被调用流程的步骤以**只读预览**接在 call 行下面：读流程的人不必来回切文件。
                 // 只展开一层——嵌套调用的完整树会把账本变成翻页器。
-                List<FlowStep>? preview = Preview(flow);
+                List<FlowStep>? preview = Preview(flow, top.Step);
                 top.PreviewCount = preview?.Count ?? 0;
                 top.ChildTotal = top.PreviewCount;
                 bool showPreview = top.IsExpanded || top.ChildTotal <= 1;
@@ -147,6 +157,7 @@ public sealed class EditorModel : INotifyPropertyChanged
                 {
                     StepVm child = PreviewVm(preview![j], Path.GetFileName(flow));
                     child.Number = $"{displayNo[i]}.{j + 1}";
+                    child.Origin = "";   // 预览不是本文件的执行行，引擎的 origin 永远指向 call 那一行
                     child.Depth = 1;
                     child.Group = top;
                     child.FirstInGroup = j == 0;
@@ -161,6 +172,8 @@ public sealed class EditorModel : INotifyPropertyChanged
             {
                 StepVm child = VmFor(children[j]);
                 child.Number = $"{displayNo[i]}.{j + 1}";
+                child.Origin = $"{i + 1}.{j + 1}";
+                _byOrigin[child.Origin] = child;
                 child.Depth = 1;
                 child.Group = top;
                 child.FirstInGroup = j == 0;
@@ -311,6 +324,9 @@ public sealed class EditorModel : INotifyPropertyChanged
         return $"{Point(first)} → {Point(last)}";
     }
 
+    internal StepVm? VmForOrigin(string? origin) =>
+        origin is { Length: > 0 } && _byOrigin.TryGetValue(origin, out StepVm? vm) ? vm : null;
+
     /// <summary>
     /// 按 FlowStep 节点找回它对应的显示行。Runner 报的是**执行序号**（循环已展开、子流程已
     /// 内联），要落到界面上哪一行，必须回到同一个节点上认人——内联进来的子流程步骤不属于
@@ -333,21 +349,26 @@ public sealed class EditorModel : INotifyPropertyChanged
     /// 读一个子流程文件，只为**预览**它的步骤（相对调用它的文档解析路径）。
     /// 缓存按文件时间戳失效；读不出来就返回 null——坏掉的子流程不该拦住父流程的编辑。
     /// </summary>
-    private List<FlowStep>? Preview(string flow)
+    private List<FlowStep>? Preview(string flow, FlowStep? caller)
     {
         string? baseDir = _documentPath is { Length: > 0 } ? Path.GetDirectoryName(_documentPath) : null;
         if (baseDir is null) return null;
 
         string full = Path.GetFullPath(Path.Combine(baseDir, flow));
+        // 子流程可能合法地使用 call.vars 传下去的名字；预览时把这些名字也放进作用域，
+        // 否则一份能跑的流程在编辑器里会"预览不出来"。
+        string[] inherited = caller?.Vars?.Keys.ToArray() ?? [];
+        string cacheKey = full + "|" + string.Join('|', inherited);
         DateTime stamp = File.Exists(full) ? File.GetLastWriteTimeUtc(full) : default;
-        if (_previewCache.TryGetValue(full, out (DateTime Stamp, List<FlowStep>? Steps) hit) && hit.Stamp == stamp) return hit.Steps;
+        if (_previewCache.TryGetValue(cacheKey, out (DateTime Stamp, List<FlowStep>? Steps) hit) && hit.Stamp == stamp)
+            return hit.Steps;
 
         List<FlowStep>? steps = null;
         if (File.Exists(full))
         {
             try
             {
-                steps = FlowDocument.Load(full).Steps;
+                steps = FlowDocument.Load(full, null, null, inherited).Steps;
             }
             catch (CommandFailure)
             {
@@ -359,7 +380,7 @@ public sealed class EditorModel : INotifyPropertyChanged
             }
         }
 
-        _previewCache[full] = (stamp, steps);
+        _previewCache[cacheKey] = (stamp, steps);
         return steps;
     }
 
@@ -386,7 +407,12 @@ public sealed class EditorModel : INotifyPropertyChanged
     {
         var document = new FlowDocument
         {
-            RecordedAt = _documentPath is null ? null : null,
+            Variables = _source?.Variables,
+            AllowRestore = _source?.AllowRestore ?? false,
+            RecordedAt = _source?.RecordedAt,
+            DurationMs = _source?.DurationMs,
+            Screen = _source?.Screen,
+            Options = _source?.Options,
         };
         document.Steps.Clear();
         foreach (var step in Steps) document.Steps.Add(step.Step);
@@ -402,6 +428,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     public void Load(string path, bool keepPath = true)
     {
         FlowDocument document = FlowDocument.Load(path);
+        _source = document;
         Steps.Clear();
         _byNode.Clear();
         foreach (var step in document.Steps) Steps.Add(new StepVm(step, this));
@@ -437,6 +464,7 @@ public sealed class EditorModel : INotifyPropertyChanged
     internal void Reset()
     {
         _durationMs = null;
+        _source = null;
         Steps.Clear();
         _byNode.Clear();
         _documentPath = null;

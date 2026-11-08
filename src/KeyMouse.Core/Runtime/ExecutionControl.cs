@@ -15,7 +15,7 @@ internal interface IExecutionControl
     /// <summary>Blocks while the client has it paused; throws <see cref="OperationCanceledException"/> on cancel.</summary>
     void BetweenSteps(int index);
 
-    void StepStarted(int index, string type);
+    void StepStarted(int index, string type, string origin, FlowStep step);
 
     void StepFinished(int index, int exitCode, long durationMs);
 
@@ -33,7 +33,8 @@ internal static class Execution
 
     internal static void BetweenSteps(int index) => Control?.BetweenSteps(index);
 
-    internal static void StepStarted(int index, string type) => Control?.StepStarted(index, type);
+    internal static void StepStarted(int index, string type, string origin, FlowStep step) =>
+        Control?.StepStarted(index, type, origin, step);
 
     internal static void StepFinished(int index, int exitCode, long durationMs) =>
         Control?.StepFinished(index, exitCode, durationMs);

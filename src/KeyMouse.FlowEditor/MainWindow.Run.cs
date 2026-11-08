@@ -123,16 +123,6 @@ public sealed partial class MainWindow
             return;
         }
 
-        // 执行序号 ≠ 行号：循环会展开、子流程会内联。先在本地算一份计划，事件来了才认得人。
-        try
-        {
-            _plan = FlowPlan.Build(Model.BuildDocument(), Model.DocumentPath ?? "");
-        }
-        catch (Exception)
-        {
-            _plan = null;   // 计划建不起来不影响跑：Runner 自己会报格式错误
-        }
-
         LogBox.Text = "";
         _runSteps = 0;
         _runFailures = 0;
@@ -182,7 +172,6 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
             _run.Dispose();
             _run = null;
             _job = null;
-            _plan = null;
             _paused = false;
             StopButton.Visibility = Visibility.Collapsed;
             PauseButton.Visibility = Visibility.Collapsed;
@@ -274,7 +263,7 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
 
             case "step" when e.Index is int index:
                 // 状态显示在**那一行上**，不为每一步弹一次提示：跑二十步弹二十次，那不叫反馈，叫噪音。
-                StepVm? row = RowForExecution(index);
+                StepVm? row = RowForExecution(index, e.Origin);
                 if (e.State == "started")
                 {
                     // 只清上一行，不遍历全表：631 步 × 631 行的循环就是把 UI 卡死的那一半原因。
@@ -287,7 +276,9 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
                         _scrollTo = row;   // 滚动也按帧合并，别每步都滚一次
                     }
 
-                    Log($"  [{index}/{e.Total ?? _plan?.StepCount ?? Model.Rows.Count}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
+                    // 条件/循环流程的实际步数可能超过静态规划数；超过时只报序号，不编一个假分母。
+                    string counter = e.Total is int total && index <= total ? $"{index}/{total}" : index.ToString();
+                    Log($"  [{counter}] 开始 {StepCatalog.NameOf(e.Type ?? "")}");
                 }
                 else
                 {
@@ -317,17 +308,19 @@ exitCode = await KeyMouseBridge.RunFlowAsync(
     }
 
     /// <summary>
-    /// 执行项序号（1 起）→ 界面行。循环展开后会多次指向同一行，那时**同一行反复刷新**是对的：
-    /// 它确实又跑了一遍。
+    /// 执行项 → 界面行。动态循环下执行序号会跑得比行号快，所以先按引擎给的 origin 认行；
+    /// origin 缺失（旧协议/脚本）时才回落到执行序号。循环展开后会多次指向同一行，那时
+    /// **同一行反复刷新**是对的：它确实又跑了一遍。
     /// </summary>
-    private StepVm? RowForExecution(int index)
+    private StepVm? RowForExecution(int index, string? origin)
     {
-        if (_plan is null) return index - 1 >= 0 && index - 1 < Model.Rows.Count ? Model.Rows[index - 1] : null;
-        int i = index - 1;
-        if (i < 0 || i >= _plan.Items.Count) return null;
-
-        StepVm? vm = Model.VmForNode(_plan.Items[i].Step);
-        if (vm is null) return null;
+        StepVm? vm = Model.VmForOrigin(origin);
+        if (vm is null)
+        {
+            int i = index - 1;
+            if (i < 0 || i >= Model.Rows.Count) return null;
+            vm = Model.Rows[i];
+        }
         if (Model.Rows.Contains(vm)) return vm;
 
         // 折叠时子步骤不在 Rows 里。以前这种情况被当成"内联子流程"、结果只写日志

@@ -301,6 +301,12 @@ public sealed class StepVm : INotifyPropertyChanged
     /// <summary>分层编号：顶层 1、2、3，组里的 2.1、2.2。等宽右对齐，个位永远在同一条竖线上。</summary>
     public string Number { get; internal set; } = "";
 
+    /// <summary>
+    /// 文档里的位置（"3"、"6.1"），与 <see cref="Number"/> 分开：编号会因为折叠/过滤变，
+    /// 而 origin 是引擎报告里的行键，运行结果靠它落回这一行。
+    /// </summary>
+    internal string Origin { get; set; } = "";
+
     /// <summary>0 = 顶层，1 = 组内。只支持两层——格式本身就只有两层（分组是唯一的容器）。</summary>
     internal int Depth { get; set; }
 

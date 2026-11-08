@@ -52,7 +52,7 @@ internal static class RunnerProtocolTests
         var produced = new[]
         {
             RunnerEvent.Log(1, 1, "x").Kind,
-            RunnerEvent.Step(1, 1, 1, 1, "running", "click").Kind,
+            RunnerEvent.Step(1, 1, 1, 1, "started", "click").Kind,
             RunnerEvent.Finished(1, 1, 0, 1).Kind,
             RunnerEvent.Error(1, 1, "x").Kind,
             RunnerEvent.Result(1, default).Kind,
@@ -62,6 +62,13 @@ internal static class RunnerProtocolTests
             "后端能发出的事件种类都写进了契约",
             produced.All(eventKinds.Contains),
             "契约里没有: " + string.Join(", ", produced.Where(k => !eventKinds.Contains(k))));
+
+        var stepStates = root_.GetProperty("stepStates").EnumerateArray()
+            .Select(s => s.GetString()!).ToHashSet(StringComparer.Ordinal);
+        Harness.Check(
+            "stepStates 与代码实际发出的状态一致",
+            stepStates.SetEquals(["started", "finished"]),
+            string.Join(", ", stepStates));
 
         // ---- 终结事件规则：客户端靠这三个结束等待 ----
         var completion = new[] { "finished", "result", "error" };

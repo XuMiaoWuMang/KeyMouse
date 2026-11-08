@@ -134,6 +134,7 @@ internal static class Usage
             new("--retry-delay 毫秒", "重试前等待（默认 300）"),
             new("--set 名=值", "定义变量，脚本里用 ${name} 引用（可重复给；含空格的值仍然是一个参数）"),
             new("--report 文件.json", "写出机器可读的执行报告"),
+            new("--max-steps 步数", "运行的全局步数上限（默认 2000000）：条件循环只靠 maxRounds 挡不住嵌套乘法，这是最后一道闸"),
         ]),
 
         new("窗口选择器（多个条件之间是 AND；鼠标 / 键盘 / 窗口命令都接受）", null,

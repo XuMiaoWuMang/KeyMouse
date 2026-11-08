@@ -22,12 +22,6 @@ public sealed partial class MainWindow
 
     private bool _logShown;
 
-    /// <summary>
-    /// 这次运行的计划（循环展开、子流程内联后的线性序列）。它只用来回答一个界面问题：
-    /// Runner 报的"第 N 个执行项"对应界面上哪一行。
-    /// </summary>
-    private FlowPlan? _plan;
-
     /// <summary>没输出时整块收起——一个空的输出面板占着半屏，是最没道理的浪费。</summary>
     public Visibility OutputVisibility => Ui.Show(_logShown);
 

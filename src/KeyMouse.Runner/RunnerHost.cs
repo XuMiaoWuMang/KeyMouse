@@ -141,12 +141,13 @@ internal sealed class RunnerHost
                 // progress in the UI should count what will actually run.
                 FlowDocument document = FlowDocument.Load(p.Flow, null);
                 var plan = FlowPlan.Build(document, Path.GetFullPath(p.Flow!));
-                job.Total = plan.StepCount;
+                // The planned count is exact for legacy flows (repeat/foreach expanded) and a lower
+                // bound once conditions decide the path; the UI shows it as "planned".
+                job.Total = plan.PlannedSteps;
                 job.FlowPath = Path.GetFullPath(p.Flow!);
                 job.AllowRestore = document.AllowRestore;
                 job.Shots = p.Shots ?? false;
                 job.EvidenceFor = p.EvidenceFor;
-                job.Steps = plan.Items.Where(item => item.Step is not null).Select(item => item.Step!).ToList();
                 arguments.Add(p.Flow!);
                 if (p.DryRun == true) arguments.Add("--dry-run");
                 if (p.Echo != false) arguments.Add("--echo"); // a client wants to see what happened

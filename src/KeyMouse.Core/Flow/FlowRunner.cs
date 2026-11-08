@@ -2,12 +2,17 @@ using System.Diagnostics;
 using System.Globalization;
 
 namespace KeyMouse.Flow;
+
 /// <summary>
-/// Executes a JSON flow (`run flow.json`). It is deliberately thin: every step is compiled into the
-/// same command line a human would type, and dispatched through the same entry point, so selectors,
-/// the eligibility gate, focus verification, `--dry-run` and the exit codes mean exactly the same
-/// thing here as everywhere else. What the runner adds is sequencing, the two waiting steps that
-/// have no command-line equivalent, and the report.
+/// Executes a statement tree (`run flow.json`). It is deliberately thin: every executable step is
+/// compiled into the same command line a human would type, and dispatched through the same entry
+/// point, so selectors, the eligibility gate, focus verification, `--dry-run` and the exit codes mean
+/// exactly the same thing here as everywhere else.
+///
+/// The walk is recursive because conditions decide at run time. What it keeps from the old flat plan:
+/// one report row per **executed step**, one `origin` per document row, and exactly one place where
+/// pause, cancel, retry, delay and per-step events live. Blocks themselves are not steps; only their
+/// bodies are, which is why `origin` still points at the row the user is looking at.
 /// </summary>
 internal static class FlowRunner
 {
@@ -53,7 +58,9 @@ internal static class FlowRunner
         var options = new ScriptOptions();
         if (ScriptRunner.ParseOptions(args, options) is { } optionError) return Commands.Fail(2, optionError);
         if (options.Path is null)
-            return Commands.Fail(2, "用法：KeyMouse run <流程.json> [--delay 毫秒] [--keep-going] [--dry-run] [--retry 次数] [--report 文件.json]");
+            return Commands.Fail(2,
+                "用法：KeyMouse run <流程.json> [--delay 毫秒] [--keep-going] [--dry-run] [--retry 次数] " +
+                "[--max-steps 步数] [--report 文件.json]");
 
         FlowDocument document;
         try
@@ -68,11 +75,16 @@ internal static class FlowRunner
             return Commands.Fail(ex.Code, ex.Message);
         }
 
-        // Loops are flattened before anything runs: a `repeat`/`foreach` becomes the steps it would
-        // run, with the loop variables already substituted. One execution loop keeps one place where
-        // pause, cancel and step reporting live - no second interpreter for groups.
-        FlowPlan plan = FlowPlan.Build(document, Path.GetFullPath(options.Path!));
-        if (plan.StepCount == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
+        FlowPlan plan;
+        try
+        {
+            plan = FlowPlan.Build(document, Path.GetFullPath(options.Path!));
+        }
+        catch (CommandFailure ex)
+        {
+            return Commands.Fail(ex.Code, ex.Message);
+        }
+        if (plan.PlannedSteps == 0) return Commands.Fail(2, $"流程 '{options.Path}' 里没有任何步骤");
 
         string source = Path.GetFullPath(options.Path);
         var report = new ScriptReport
@@ -80,163 +92,53 @@ internal static class FlowRunner
             Script = source,
             StartedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
             DryRun = options.DryRun,
-            Total = plan.StepCount,
+            Total = plan.PlannedSteps,
         };
 
         Console.WriteLine($"流程 {source}");
-        Console.WriteLine($"  {plan.StepCount} 步" + (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
+        Console.WriteLine($"  {plan.PlannedSteps} 步" +
+                          (plan.HasDynamicControl ? "（含条件/循环，实际步数以运行为准）" : "") +
+                          (options.DryRun ? "（--dry-run：只做资格检查，不发送输入）" : ""));
         if (document.RecordedAt is not null) Console.WriteLine($"  录制于 {document.RecordedAt}");
         if (document.DurationMs is int recordedMs)
             Console.WriteLine($"  时长 {recordedMs / 1000.0:0.#} 秒（按录制时的时间线回放）");
 
-        int exitCode = 0;
+        var root = new VariableFrame(null, VariableFrame.FromTexts(document.Texts));
+        if (root.LookupValue("last") is null) root.SetText("last", "");
+
+        var state = new RunState
+        {
+            Options = options,
+            Plan = plan,
+            Report = report,
+            Execute = execute,
+            Root = root,
+        };
+
         _running = true;
         try
         {
-            // Numbered by step, not by plan item: an export item is bookkeeping, and counting it would
-            // report "23/21" in the log and in a UI's progress bar.
-            int stepNo = 0;
-
-            // 时间线回放：录制出来的每一步都带 atMs（从录制开始算的毫秒）。
-            // 回放按这个时间线排程，快速挥动就是一阵密集事件，中途停顿就是真的停——
-            // 以前只有"每个 move 固定睡 8ms"，所以速度均匀且偏慢（实测反馈）。
-            var timeline = Stopwatch.StartNew();
-            bool timelineDriven = plan.Items.Any(item => item.Step?.AtMs is not null);
-
-            for (int i = 0; i < plan.Items.Count; i++)
-            {
-                // A step-less item is a `call`'s export: copy the names the subflow agreed to hand back
-                // into the caller's frame, which is what makes a subflow reusable for real work.
-                if (plan.Items[i].Step is null)
-                {
-                    FlowPlan.Item export = plan.Items[i];
-                    foreach (string name in export.Export ?? [])
-                    {
-                        string? value = export.ExportFrom?.Lookup(name);
-                        if (value is not null) export.Frame.Set(name, value);
-                    }
-                    continue;
-                }
-                // The Runner's seam: with no control installed (the CLI path) these are no-ops; with a
-                // client attached they block while paused, throw when cancelled, and report the step
-                // boundary so a UI can highlight the row that is executing right now.
-                stepNo++;
-                Execution.BetweenSteps(stepNo);
-
-                // Resolved per step, not per run: a `read-text` can put something in scope that later
-                // steps interpolate, which is what makes variables worth having.
-                FlowPlan.Item item = plan.Items[i];
-                FlowStep step = FlowDocument.Resolve(item.Step!, item.Frame);
-
-                if (timelineDriven && !options.DryRun)
-                {
-                    // 等到时间线上的这一刻。等到就已经落后（例如上一步很慢）时不再补等，
-                    // 直接往下走：宁可晚一点，也不要越拖越晚。
-                    if (step.AtMs is int atMs) WaitForTimeline(timeline, atMs, stepNo);
-
-                    // sleep 的等待已经由 atMs 表达，执行它会变成双倍等待。
-                    if (step.Type == "sleep" && step.AtMs is not null) step = new FlowStep { Type = "sleep", Ms = 0 };
-                }
-                VariableFrame frame = item.Frame;
-                var record = new CommandRecord { Index = stepNo, Line = stepNo, Origin = item.Origin };
-                var clock = Stopwatch.StartNew();
-                int attempt = 0;
-                int code;
-                string output;
-                bool skipped = false;
-                Execution.StepStarted(stepNo, step.Type);
-
-                // A step may carry a precondition: run it only if that text is on screen in time.
-                // Skipping sends nothing, and failing is exit 3 for the same reason - the caller can
-                // retry without wondering whether half of something happened.
-                if (step.When is { } condition)
-                {
-                    PollResult when = EvaluateWhen(step, condition, options.DryRun, options.AllowRestore, stepNo);
-                    if (!when.Found)
-                    {
-                        if ((condition.Else ?? "skip") == "fail")
-                        {
-                            code = when.ExitCode;
-                            output = $"前提不成立（else=fail）：{when.Detail}";
-                            record.Attempts = 1;
-                            record.ExitCode = code;
-                            record.DurationMs = clock.ElapsedMilliseconds;
-                            record.Output = output;
-                            record.Command = Describe(step);
-                            report.Commands.Add(record);
-                            Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
-                            report.Failed++;
-                            exitCode = code;
-                            report.ExitCode = code;
-                            report.StoppedAtLine = stepNo;
-                            break;
-                        }
-
-                        skipped = true;
-                        code = 0;
-                        output = $"前提不成立，已跳过：{when.Detail}";
-                    }
-                    else
-                    {
-                        skipped = false;
-                        code = 0;
-                        output = $"前提成立：{when.Detail}";
-                    }
-                }
-                else
-                {
-                    code = 0;
-                    output = "";
-                }
-
-                while (!skipped && true)
-                {
-                    attempt++;
-                    (code, output) = RunStep(step, options, execute, stepNo, frame);
-                    if (code == 0 || attempt > options.Retry || !ScriptRunner.IsRetryable(code)) break;
-                    Console.WriteLine($"  [{stepNo,3}] 第 {attempt} 次重试（退出码 {code} 可重试，等 {options.RetryDelayMs} ms）");
-                    Thread.Sleep(options.RetryDelayMs);
-                }
-
-                clock.Stop();
-                Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
-                record.Attempts = attempt;
-                record.ExitCode = code;
-                record.DurationMs = clock.ElapsedMilliseconds;
-                record.Output = output;
-                record.Command = Describe(step);
-                record.Skipped = skipped;
-                report.Commands.Add(record);
-
-                string tag = skipped ? "skip" : code == 0 ? "ok" : $"exit {code}";
-                Console.WriteLine($"  [{stepNo,3}/{plan.StepCount}] {tag,-8} {record.Command}" +
-                                  (output.Length > 0 && (options.Echo || code != 0 || skipped) ? $"  <- {Shorten(output)}" : ""));
-
-                if (code == 0)
-                {
-                    report.Succeeded++;
-                }
-                else
-                {
-                    report.Failed++;
-                    if (!options.KeepGoing)
-                    {
-                        exitCode = code;
-                        report.ExitCode = code;
-                        report.StoppedAtLine = stepNo;
-                        break;
-                    }
-                    exitCode = exitCode == 0 ? code : exitCode;
-                }
-
-                if (options.DelayMs > 0 && i < plan.Items.Count - 1) Thread.Sleep(options.DelayMs);
-            }
+            ControlSignal signal = RunBlock(plan.Root, root, state);
+            if (signal is ControlSignal.Break or ControlSignal.Continue)
+                throw new CommandFailure(2, "break/continue 只能出现在循环里（加载时应该已经拒绝）");
+        }
+        catch (CommandFailure ex)
+        {
+            // A condition type error, a broken expression, or a cancellation. These are not step
+            // results, so there is no row to attach them to - say it once and stop.
+            Console.WriteLine($"  !! {ex.Message}");
+            state.ExitCode = ex.Code;
+            report.ExitCode = ex.Code;
+            // A cancellation is not a failed step; it is the client asking to stop.
+            if (ex.Code != 7) report.Failed++;
+            report.StoppedAtLine ??= state.StepNo;
         }
         finally
         {
             _running = false;
         }
 
+        int exitCode = state.ExitCode;
         report.ExitCode = exitCode;
         Console.WriteLine();
         Console.WriteLine($"流程结束：{report.Succeeded} 步成功，{report.Failed} 步失败，退出码 {exitCode}");
@@ -248,7 +150,451 @@ internal static class FlowRunner
         return exitCode;
     }
 
-    private static (int ExitCode, string Output) RunStep(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex, VariableFrame frame)
+    // ------------------------------------------------------------------ the walk
+
+    private enum ControlSignal
+    {
+        None,
+        Break,
+        Continue,
+        Stop,
+    }
+
+    private sealed class RunState
+    {
+        internal required ScriptOptions Options { get; init; }
+        internal required FlowPlan Plan { get; init; }
+        internal required ScriptReport Report { get; init; }
+        internal required Func<string[], int> Execute { get; init; }
+        internal required VariableFrame Root { get; init; }
+
+        /// <summary>From the first step of the flow; what expression <c>elapsed()</c> reports.</summary>
+        internal Stopwatch FlowClock { get; } = Stopwatch.StartNew();
+
+        /// <summary>Timeline replay (`atMs`) starts when the first step is about to run.</summary>
+        internal Stopwatch Timeline { get; } = Stopwatch.StartNew();
+
+        internal int StepNo;
+        internal int ExitCode;
+        internal long ExecutedSteps;
+        internal bool AnyStep;
+        internal bool Stop;
+
+        /// <summary>State behind <c>last</c>, <c>found()</c>: the most recent step that read the screen.</summary>
+        internal bool LastFound;
+        internal string LastText = "";
+        internal string? LastNeedle;
+        internal string? LastDetail;
+
+        internal bool Dynamic => Plan.HasDynamicControl;
+    }
+
+    private static ControlSignal RunBlock(FlowBlock block, VariableFrame frame, RunState state)
+    {
+        foreach (FlowStatement statement in block.Statements)
+        {
+            if (state.Stop) return ControlSignal.Stop;
+            ControlSignal signal = RunStatement(statement, frame, state);
+            if (signal != ControlSignal.None) return signal;
+        }
+        return ControlSignal.None;
+    }
+
+    private static ControlSignal RunStatement(FlowStatement statement, VariableFrame frame, RunState state)
+    {
+        switch (statement)
+        {
+            case StepStatement step:
+                return ExecuteStep(step, frame, state);
+
+            case IfStatement branch:
+            {
+                bool holds = EvaluateCondition(branch.Condition, branch.Probe, branch.Origin, "if 的条件", frame, state);
+                Console.WriteLine($"  [条件] if {Shorten(branch.Condition.Source)} → {(holds ? "成立" : "不成立")}");
+                FlowBlock chosen = holds ? branch.Then : branch.Else ?? EmptyBlock;
+                if (chosen.Statements.Count == 0) return ControlSignal.None;
+                // A branch has its own scope, like C's braces: a name first introduced inside it
+                // does not exist afterwards, while set on an existing outer name still updates it.
+                return RunBlock(chosen, new VariableFrame(frame), state);
+            }
+
+            case WhileStatement loop:
+                return RunWhile(loop, frame, state);
+
+            case DoStatement loop:
+                return RunDo(loop, frame, state);
+
+            case ForStatement loop:
+                return RunFor(loop, frame, state);
+
+            case RepeatStatement loop:
+            {
+                for (int round = 0; round < loop.Times; round++)
+                {
+                    if (state.Stop) return ControlSignal.Stop;
+                    Execution.BetweenSteps(state.StepNo);
+                    var loopFrame = new VariableFrame(frame, [
+                        new KeyValuePair<string, FlowValue>("index", FlowValue.Number(round)),
+                    ]);
+                    ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
+                    if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+                    if (signal == ControlSignal.Break) break;
+                }
+                return ControlSignal.None;
+            }
+
+            case ForeachStatement loop:
+            {
+                for (int index = 0; index < loop.Items.Length; index++)
+                {
+                    if (state.Stop) return ControlSignal.Stop;
+                    Execution.BetweenSteps(state.StepNo);
+                    var loopFrame = new VariableFrame(frame, [
+                        new KeyValuePair<string, FlowValue>("index", FlowValue.Number(index)),
+                        new KeyValuePair<string, FlowValue>("item", FlowValue.Text(loop.Items[index])),
+                    ]);
+                    ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
+                    if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+                    if (signal == ControlSignal.Break) break;
+                }
+                return ControlSignal.None;
+            }
+
+            case CallStatement call:
+                return RunCall(call, frame, state);
+
+            case BreakStatement:
+                return ControlSignal.Break;
+
+            case ContinueStatement:
+                return ControlSignal.Continue;
+
+            default:
+                throw new CommandFailure(2, $"运行时遇到不认识的语句：{statement.GetType().Name}");
+        }
+    }
+
+    private static readonly FlowBlock EmptyBlock = new();
+
+    private static ControlSignal RunWhile(WhileStatement loop, VariableFrame frame, RunState state)
+    {
+        var loopFrame = new VariableFrame(frame);
+        int rounds = 0;
+        bool leftByBreak = false;
+        while (true)
+        {
+            Execution.BetweenSteps(state.StepNo);
+            if (!EvaluateCondition(loop.Condition, loop.Probe, loop.Origin, "while 的条件", loopFrame, state)) break;
+
+            if (state.Options.DryRun)
+            {
+                ControlSignal dry = RunBlock(loop.Body, loopFrame, state);
+                if (dry == ControlSignal.Stop) return ControlSignal.Stop;
+                rounds++;
+                Console.WriteLine($"  [循环] while {Shorten(loop.Condition.Source)}（--dry-run 只走一遍）");
+                return ControlSignal.None;
+            }
+
+            if (rounds >= loop.MaxRounds)
+            {
+                StopWith(state, 3,
+                    $"while 循环跑了 {rounds} 轮仍未结束（maxRounds = {loop.MaxRounds}）：{Shorten(loop.Condition.Source)}",
+                    loop.Origin);
+                return ControlSignal.Stop;
+            }
+
+            rounds++;
+            ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
+            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal == ControlSignal.Break) { leftByBreak = true; break; }
+        }
+
+        Console.WriteLine($"  [循环] while 结束：{rounds} 轮{(leftByBreak ? "（break）" : "")}");
+        return ControlSignal.None;
+    }
+
+    private static ControlSignal RunDo(DoStatement loop, VariableFrame frame, RunState state)
+    {
+        var loopFrame = new VariableFrame(frame);
+        int rounds = 0;
+        bool leftByBreak = false;
+        while (true)
+        {
+            if (!state.Options.DryRun && rounds >= loop.MaxRounds)
+            {
+                StopWith(state, 3,
+                    $"do-while 循环跑了 {rounds} 轮仍未结束（maxRounds = {loop.MaxRounds}）：{Shorten(loop.Condition.Source)}",
+                    loop.Origin);
+                return ControlSignal.Stop;
+            }
+
+            Execution.BetweenSteps(state.StepNo);
+            rounds++;
+            ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
+            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal == ControlSignal.Break) { leftByBreak = true; break; }
+
+            bool again = EvaluateCondition(loop.Condition, loop.Probe, loop.Origin, "do-while 的条件", loopFrame, state);
+            if (state.Options.DryRun)
+            {
+                Console.WriteLine($"  [循环] do-while {Shorten(loop.Condition.Source)}（--dry-run 只走一遍）");
+                return ControlSignal.None;
+            }
+            if (!again) break;
+        }
+
+        Console.WriteLine($"  [循环] do-while 结束：{rounds} 轮{(leftByBreak ? "（break）" : "")}");
+        return ControlSignal.None;
+    }
+
+    private static ControlSignal RunFor(ForStatement loop, VariableFrame frame, RunState state)
+    {
+        var loopFrame = new VariableFrame(frame);
+        foreach (var (name, expression) in loop.Init)
+        {
+            loopFrame.Set(name, EvaluateExpression(expression, loop.Probe, loop.Origin, "for 的 init", loopFrame, state));
+        }
+
+        int rounds = 0;
+        bool leftByBreak = false;
+        while (true)
+        {
+            Execution.BetweenSteps(state.StepNo);
+            if (!EvaluateCondition(loop.Condition, loop.Probe, loop.Origin, "for 的条件", loopFrame, state)) break;
+
+            if (state.Options.DryRun)
+            {
+                ControlSignal dry = RunBlock(loop.Body, loopFrame, state);
+                if (dry == ControlSignal.Stop) return ControlSignal.Stop;
+                if (dry != ControlSignal.Break)
+                {
+                    foreach (var (name, expression) in loop.Step)
+                    {
+                        loopFrame.Assign(name, EvaluateExpression(expression, loop.Probe, loop.Origin, "for 的 step", loopFrame, state));
+                    }
+                }
+                rounds++;
+                Console.WriteLine($"  [循环] for {Shorten(loop.Condition.Source)}（--dry-run 只走一遍）");
+                return ControlSignal.None;
+            }
+
+            if (rounds >= loop.MaxRounds)
+            {
+                StopWith(state, 3,
+                    $"for 循环跑了 {rounds} 轮仍未结束（maxRounds = {loop.MaxRounds}）：{Shorten(loop.Condition.Source)}",
+                    loop.Origin);
+                return ControlSignal.Stop;
+            }
+
+            rounds++;
+            ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
+            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal == ControlSignal.Break) { leftByBreak = true; break; }
+
+            foreach (var (name, expression) in loop.Step)
+            {
+                loopFrame.Assign(name, EvaluateExpression(expression, loop.Probe, loop.Origin, "for 的 step", loopFrame, state));
+            }
+        }
+
+        Console.WriteLine($"  [循环] for 结束：{rounds} 轮{(leftByBreak ? "（break）" : "")}");
+        return ControlSignal.None;
+    }
+
+    private static ControlSignal RunCall(CallStatement call, VariableFrame frame, RunState state)
+    {
+        var overrides = new Dictionary<string, FlowValue>(StringComparer.Ordinal);
+        foreach (var (name, value) in call.Vars)
+        {
+            overrides[name] = FlowValue.Text(FlowDocument.Expand(value, frame));
+        }
+
+        var callFrame = new VariableFrame(
+            new VariableFrame(frame, VariableFrame.FromTexts(call.Document.Texts)), overrides);
+
+        ControlSignal signal = RunBlock(call.Body, callFrame, state);
+        if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+        if (signal is ControlSignal.Break or ControlSignal.Continue)
+            throw new CommandFailure(2, "子流程里不能 break/continue 到调用者的循环（加载时应该已经拒绝）");
+
+        // Export is the caller's side of the promise: only names listed there leave the subflow.
+        foreach (string name in call.Export)
+        {
+            if (callFrame.LookupValue(name) is { } value) frame.Set(name, value);
+        }
+        return ControlSignal.None;
+    }
+
+    // ------------------------------------------------------------------ one step
+
+    private static ControlSignal ExecuteStep(StepStatement statement, VariableFrame frame, RunState state)
+    {
+        if (state.Options.MaxSteps > 0 && state.ExecutedSteps >= state.Options.MaxSteps)
+        {
+            StopWith(state, 3,
+                $"超过 --max-steps（{state.Options.MaxSteps} 步）：流程可能写成了死循环", statement.Origin);
+            return ControlSignal.Stop;
+        }
+
+        // Delay is between steps, not after the last one - what the flat plan did, said the same way.
+        if (state.AnyStep && state.Options.DelayMs > 0) Thread.Sleep(state.Options.DelayMs);
+        state.AnyStep = true;
+        state.ExecutedSteps++;
+        state.StepNo++;
+        int stepNo = state.StepNo;
+
+        // The Runner's seam: no control installed (CLI) = no-op; a client gets pause/cancel and the
+        // row that is executing right now.
+        Execution.BetweenSteps(stepNo);
+
+        FlowStep step = FlowDocument.Resolve(statement.Step, frame);
+
+        if (state.Plan.HasTimeline && !state.Options.DryRun)
+        {
+            // 等到时间线上的这一刻。等到就已经落后（例如上一步很慢）时不再补等，
+            // 直接往下走：宁可晚一点，也不要越拖越晚。
+            if (step.AtMs is int atMs) WaitForTimeline(state.Timeline, atMs, stepNo);
+
+            // sleep 的等待已经由 atMs 表达，执行它会变成双倍等待。
+            if (step.Type == "sleep" && step.AtMs is not null) step = new FlowStep { Type = "sleep", Ms = 0 };
+        }
+
+        var record = new CommandRecord { Index = stepNo, Line = stepNo, Origin = statement.Origin };
+        var clock = Stopwatch.StartNew();
+        int attempt = 0;
+        int code;
+        string output;
+        bool skipped = false;
+        Execution.StepStarted(stepNo, step.Type, statement.Origin, step);
+
+        // A step may carry a precondition: run it only if that text is on screen in time.
+        // Skipping sends nothing, and failing is exit 3 for the same reason - the caller can
+        // retry without wondering whether half of something happened.
+        if (step.When is { } condition)
+        {
+            PollResult when = EvaluateWhen(step, condition, state.Options.DryRun, state.Options.AllowRestore, stepNo);
+            if (!when.Found)
+            {
+                if ((condition.Else ?? "skip") == "fail")
+                {
+                    code = when.ExitCode;
+                    output = $"前提不成立（else=fail）：{when.Detail}";
+                    record.Attempts = 1;
+                    record.ExitCode = code;
+                    record.DurationMs = clock.ElapsedMilliseconds;
+                    record.Output = output;
+                    record.Command = Describe(step);
+                    state.Report.Commands.Add(record);
+                    Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
+                    state.Report.Failed++;
+                    state.ExitCode = code;
+                    state.Report.ExitCode = code;
+                    state.Report.StoppedAtLine = stepNo;
+                    return ControlSignal.Stop;
+                }
+
+                skipped = true;
+                code = 0;
+                output = $"前提不成立，已跳过：{when.Detail}";
+            }
+            else
+            {
+                skipped = false;
+                code = 0;
+                output = $"前提成立：{when.Detail}";
+            }
+        }
+        else
+        {
+            code = 0;
+            output = "";
+        }
+
+        while (!skipped)
+        {
+            attempt++;
+            (code, output) = RunStep(statement, step, state.Options, state.Execute, stepNo, frame, state);
+            if (code == 0 || attempt > state.Options.Retry || !ScriptRunner.IsRetryable(code)) break;
+            Console.WriteLine($"  [{stepNo,3}] 第 {attempt} 次重试（退出码 {code} 可重试，等 {state.Options.RetryDelayMs} ms）");
+            Thread.Sleep(state.Options.RetryDelayMs);
+        }
+
+        clock.Stop();
+        Execution.StepFinished(stepNo, code, clock.ElapsedMilliseconds);
+        record.Attempts = attempt;
+        record.ExitCode = code;
+        record.DurationMs = clock.ElapsedMilliseconds;
+        record.Output = output;
+        record.Command = Describe(step);
+        record.Skipped = skipped;
+        state.Report.Commands.Add(record);
+
+        string tag = skipped ? "skip" : code == 0 ? "ok" : $"exit {code}";
+        string counter = state.Dynamic
+            ? $"[{stepNo,3}]"
+            : $"[{stepNo,3}/{state.Plan.PlannedSteps}]";
+        Console.WriteLine($"  {counter} {tag,-8} {record.Command}" +
+                          (output.Length > 0 && (state.Options.Echo || code != 0 || skipped)
+                              ? $"  <- {Shorten(output)}"
+                              : ""));
+
+        if (code == 0)
+        {
+            state.Report.Succeeded++;
+            return ControlSignal.None;
+        }
+
+        state.Report.Failed++;
+        if (!state.Options.KeepGoing)
+        {
+            state.ExitCode = code;
+            state.Report.ExitCode = code;
+            state.Report.StoppedAtLine = stepNo;
+            return ControlSignal.Stop;
+        }
+
+        state.ExitCode = state.ExitCode == 0 ? code : state.ExitCode;
+        return ControlSignal.None;
+    }
+
+    private static void StopWith(RunState state, int code, string message, string origin)
+    {
+        if (state.Stop) return;
+        Console.WriteLine($"  !! {message}");
+        state.Report.Commands.Add(new CommandRecord
+        {
+            Index = state.StepNo,
+            Line = state.StepNo,
+            Origin = origin,
+            Command = message,
+            ExitCode = code,
+            Attempts = 1,
+            Output = message,
+        });
+        state.Report.Failed++;
+        state.Report.ExitCode = code;
+        state.Report.StoppedAtLine = state.StepNo;
+        state.ExitCode = code;
+        state.Stop = true;
+    }
+
+    private static bool EvaluateCondition(
+        Expression expression, FlowProbe? probe, string origin, string what, VariableFrame frame, RunState state)
+    {
+        FlowValue value = EvaluateExpression(expression, probe, origin, what, frame, state);
+        return value.AsBool($"第 {origin} 步的 {what}");
+    }
+
+    private static FlowValue EvaluateExpression(
+        Expression expression, FlowProbe? probe, string origin, string what, VariableFrame frame, RunState state)
+    {
+        Execution.BetweenSteps(state.StepNo);
+        return expression.Evaluate(frame, new Sense(state, FlowDocument.ResolveProbe(probe, frame), state.StepNo));
+    }
+
+    private static (int ExitCode, string Output) RunStep(
+        StepStatement statement, FlowStep step, ScriptOptions options, Func<string[], int> execute,
+        int stepIndex, VariableFrame frame, RunState state)
     {
         switch (step.Type)
         {
@@ -256,6 +602,26 @@ internal static class FlowRunner
                 int ms = Number(step, "ms", 0);
                 if (!options.DryRun) Thread.Sleep(ms);
                 return (0, $"等待 {ms} ms");
+
+            case "set":
+            {
+                FlowValue value = statement.Value!.Evaluate(frame,
+                    new Sense(state, FlowDocument.ResolveProbe(statement.Probe, frame), stepIndex));
+                frame.Assign(step.Name!, value);
+                return (0, $"{step.Name} = {value.AsText()}");
+            }
+
+            case "assert":
+            {
+                bool holds = statement.Assertion!.Evaluate(frame,
+                        new Sense(state, FlowDocument.ResolveProbe(statement.Probe, frame), stepIndex))
+                    .AsBool($"第 {stepIndex} 步的 assert");
+                if (holds) return (0, "成立");
+                string reason = string.IsNullOrWhiteSpace(step.Message)
+                    ? $"断言不成立：{Shorten(statement.Assertion.Source)}"
+                    : step.Message!;
+                return (3, reason);
+            }
 
             // 长按是一步，不是三步：按下 → 按住 → 松开在同一步里做完。
             // 写成一步的好处是它可以被当一个操作来编辑（按键/落点/时长/窗口），
@@ -271,7 +637,7 @@ internal static class FlowRunner
                 if (options.DryRun) return (0, $"长按 {what} {holdMs} ms（试运行未真的按）");
 
                 bool mouse = step.Type == "mousehold" || (step.Type == "hold" && step.Button is { Length: > 0 });
-                if (mouse && step.At is { Space: FlowSpace.Screen }) NativeInput.MoveTo(step.At.X, step.At.Y);
+                if (mouse && step.At is { Space: FlowSpace.Screen } at) NativeInput.MoveTo(at.X, at.Y);
                 // 键盘长按不绕道 CLI 参数解析：直接按下/松开，少一层出错的机会。
                 (ushort Vk, bool Ext) key = default;
                 if (mouse) NativeInput.ButtonDown(step.Button!);
@@ -307,13 +673,13 @@ internal static class FlowRunner
                 return WaitWindow(step, options);
 
             case "wait-text":
-                return WaitText(step, options, stepIndex);
+                return WaitText(step, options, stepIndex, state);
 
             case "click-text":
-                return ClickText(step, options, execute, stepIndex);
+                return ClickText(step, options, execute, stepIndex, state);
 
             case "read-text":
-                return ReadText(step, options, stepIndex, frame);
+                return ReadText(step, options, stepIndex, frame, state);
 
             default:
                 string[] argv = FlowDocument.ToArguments(step);
@@ -328,13 +694,160 @@ internal static class FlowRunner
         }
     }
 
+    // ------------------------------------------------------------------ predicates
+
+    /// <summary>
+    /// The outside world as an expression sees it. One instance per evaluation, carrying the probe of
+    /// the statement whose condition is being evaluated; tests stub the interface instead of this.
+    /// </summary>
+    private sealed class Sense : IExpressionRuntime
+    {
+        private readonly RunState _state;
+        private readonly FlowProbe? _probe;
+        private readonly int _stepIndex;
+
+        internal Sense(RunState state, FlowProbe? probe, int stepIndex)
+        {
+            _state = state;
+            _probe = probe;
+            _stepIndex = stepIndex;
+        }
+
+        public FlowValue Call(string function, IReadOnlyList<FlowValue> args) => function switch
+        {
+            "text" => Text(args),
+            "window" => FlowValue.Bool(WindowExists(args[0].AsText())),
+            "front" => FlowValue.Bool(IsFront(args[0].AsText())),
+            "found" => FlowValue.Bool(Found(args)),
+            "elapsed" => FlowValue.Number(_state.FlowClock.ElapsedMilliseconds),
+            _ => throw new CommandFailure(2, $"不认识的函数 '{function}'"),
+        };
+
+        private FlowValue Text(IReadOnlyList<FlowValue> args)
+        {
+            if (_probe?.Region is not { } region ||
+                _probe.Target is not { } target ||
+                (string.IsNullOrWhiteSpace(target.Process) && string.IsNullOrWhiteSpace(target.Class)))
+            {
+                throw new CommandFailure(2, "text() 需要这一步的 probe（目标窗口与读的区域）");
+            }
+
+            string needle = args[0].AsText();
+            if (args.Count == 5)
+            {
+                region = new FlowRegion
+                {
+                    Space = region.Space,
+                    X = Whole(args[1], "x"),
+                    Y = Whole(args[2], "y"),
+                    Width = Whole(args[3], "宽"),
+                    Height = Whole(args[4], "高"),
+                };
+            }
+
+            bool windowSpace = region.Space == FlowSpace.Window;
+            var (x, y, width, height) = region.Rect();
+            var selector = new WindowSelector
+            {
+                ProcessName = string.IsNullOrWhiteSpace(target.Process) ? null : target.Process,
+                ClassName = string.IsNullOrWhiteSpace(target.Class) ? null : target.Class,
+            };
+            string mode = _probe.Match ?? TextPredicate.Contains;
+            int errors = _probe.MaxErrors ?? 1;
+
+            if (_state.Options.DryRun)
+            {
+                var dry = WindowResolver.Resolve(selector, _state.Options.AllowRestore);
+                if (dry.Usable.Count == 0)
+                    throw new CommandFailure(4, $"（dry-run）text() 的目标窗口现在不可用：{selector.Describe()}");
+                try
+                {
+                    Probe.ValidateRegion(dry.Usable[0], windowSpace, (x, y, width, height));
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new CommandFailure(2, ex.Message);
+                }
+                return FlowValue.Bool(true);
+            }
+
+            Execution.BetweenSteps(_stepIndex);
+            var resolution = WindowResolver.Resolve(selector, _state.Options.AllowRestore);
+            if (resolution.Usable.Count == 0)
+            {
+                _state.LastDetail = $"目标窗口不可用（{selector.Describe()}）";
+                return FlowValue.Bool(false);
+            }
+
+            try
+            {
+                var (read, _, _) = Probe.ReadOnce(resolution.Usable[0], windowSpace, (x, y, width, height));
+                bool found = TextPredicate.Matches(read, needle, mode, errors, out string why);
+                _state.LastDetail = found ? $"text(\"{needle}\") 成立" : why;
+                return FlowValue.Bool(found);
+            }
+            catch (CommandFailure ex)
+            {
+                _state.LastDetail = ex.Message;
+                return FlowValue.Bool(false);
+            }
+            catch (ArgumentException ex)
+            {
+                _state.LastDetail = ex.Message;
+                return FlowValue.Bool(false);
+            }
+        }
+
+        private bool Found(IReadOnlyList<FlowValue> args)
+        {
+            if (!_state.LastFound) return false;
+            if (args.Count == 0) return true;
+            string wanted = args[0].AsText();
+            if (string.Equals(_state.LastNeedle, wanted, StringComparison.Ordinal)) return true;
+            return TextPredicate.Matches(_state.LastText, wanted, TextPredicate.Contains, 0, out _);
+        }
+
+        private bool WindowExists(string process)
+        {
+            string name = ProcessName(process);
+            var resolution = WindowResolver.Resolve(
+                new WindowSelector { ProcessName = name }, _state.Options.AllowRestore);
+            return resolution.Usable.Count > 0;
+        }
+
+        private bool IsFront(string process)
+        {
+            IntPtr foreground = NativeWindow.GetForegroundWindow();
+            if (foreground == IntPtr.Zero) return false;
+            NativeWindow.GetWindowThreadProcessId(foreground, out uint pid);
+            return pid != 0 &&
+                   string.Equals(NativeWindow.ProcessNameOf(pid), ProcessName(process), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ProcessName(string value)
+        {
+            string name = value.Trim();
+            return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+        }
+
+        private static int Whole(FlowValue value, string what)
+        {
+            double number = value.AsNumber($"text() 的第 {what} 个参数");
+            if (number != Math.Truncate(number) || number < int.MinValue || number > int.MaxValue)
+                throw new CommandFailure(2, $"text() 的{what}坐标必须是整数，得到 {value.AsText()}");
+            return (int)number;
+        }
+    }
+
+    // ------------------------------------------------------------------ one action
+
     /// <summary>
     /// Reads a region once and stores what was read in a variable, so a flow can carry data from one
     /// step to the next ("read the total, then type it somewhere else"). With `text` given it stores
     /// the matched piece instead of the whole line - the same locator `--find` uses.
     /// </summary>
     private static (int ExitCode, string Output) ReadText(
-        FlowStep step, ScriptOptions options, int stepIndex, VariableFrame frame)
+        FlowStep step, ScriptOptions options, int stepIndex, VariableFrame frame, RunState state)
     {
         WindowSelector selector = SelectorOf(step.Target);
         if (!HasSelector(selector))
@@ -367,18 +880,34 @@ internal static class FlowRunner
                 TextMatch? match = TextLocator.Find(lines, step.Text!, step.Match ?? TextPredicate.Contains,
                     Number(step, "maxErrors", 1));
                 if (match is null)
+                {
+                    Remember(state, false, step.Text, text);
                     return (3, $"没找到「{step.Text}」（读到「{text}」）——{step.Into} 没被改动");
+                }
                 value = match.Matched;
             }
 
-            frame.Set(step.Into!, value);
+            frame.SetText(step.Into!, value);
+            Remember(state, true, step.Text, value);
             return (0, $"{step.Into} = 「{value}」" + (confidence is double c ? $"（置信度 {c:0.0}）" : ""));
         }
         catch (CommandFailure ex)
         {
+            Remember(state, false, step.Text, state.LastText);
             return (ex.Code, ex.Message);
         }
     }
+
+
+    /// <summary>The one place that updates `last` / `found()`: a screen read is the only thing that does.</summary>
+    private static void Remember(RunState state, bool found, string? needle, string text)
+    {
+        state.LastFound = found;
+        state.LastNeedle = needle;
+        state.LastText = text;
+        state.Root.SetText("last", text);
+    }
+
     /// <summary>Waits until a usable window matches the step's selector, then reports how long it took.</summary>
     private static (int ExitCode, string Output) WaitWindow(FlowStep step, ScriptOptions options)
     {
@@ -443,7 +972,8 @@ internal static class FlowRunner
             {
                 return new PollResult(false, null, 2, ex.Message, "");
             }
-            return new PollResult(true, null, 0, $"（dry-run）会等「{expected}」最多 {timeoutMs} ms（匹配方式 {mode}）", "");
+            return new PollResult(true, null, 0,
+                $"（dry-run）会等「{expected}」最多 {timeoutMs} ms（匹配方式 {mode}）", "");
         }
 
         var clock = Stopwatch.StartNew();
@@ -550,13 +1080,15 @@ internal static class FlowRunner
         }
     }
 
-    private static (int ExitCode, string Output) WaitText(FlowStep step, ScriptOptions options, int stepIndex)
+    private static (int ExitCode, string Output) WaitText(
+        FlowStep step, ScriptOptions options, int stepIndex, RunState state)
     {
         WindowSelector selector = SelectorOf(step.Target);
         if (!HasSelector(selector))
             return (2, "wait-text 需要 target（至少给 process 或 class，否则不知道该读哪个窗口）");
 
         PollResult poll = PollStep(step, options.DryRun, options.AllowRestore, stepIndex);
+        if (!options.DryRun) Remember(state, poll.Found, step.Text, poll.Match?.Matched ?? poll.LastText);
         return poll.ExitCode == 0 ? (0, poll.Detail) : (poll.ExitCode, poll.Detail);
     }
 
@@ -566,7 +1098,8 @@ internal static class FlowRunner
     /// region is client-relative), so "read the screen" and "click the thing" cannot disagree about
     /// where it is.
     /// </summary>
-    private static (int ExitCode, string Output) ClickText(FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex)
+    private static (int ExitCode, string Output) ClickText(
+        FlowStep step, ScriptOptions options, Func<string[], int> execute, int stepIndex, RunState state)
     {
         WindowSelector selector = SelectorOf(step.Target);
         if (!HasSelector(selector))
@@ -579,6 +1112,10 @@ internal static class FlowRunner
             // dry run: the rectangle was validated, nothing was read and nothing is clicked.
             return (0, poll.Detail);
         }
+
+        // The read succeeded before the click; last/found() should describe the read, not whether
+        // the click itself landed.
+        Remember(state, true, step.Text, poll.Match.Matched);
 
         FlowRegion region = step.Region!;
         int x = region.X + poll.Match.Rect[0] + poll.Match.Rect[2] / 2;
@@ -654,11 +1191,14 @@ internal static class FlowRunner
     private static string Describe(FlowStep step) => step.Type switch
     {
         "sleep" => $"等 {step.Ms ?? 0} ms",
+        "set" => $"设 {step.Name} = {step.Value}",
+        "assert" => $"确认 {step.Cond}",
         "wait-window" => $"等窗口 {step.Target?.Process ?? step.Target?.Class ?? "?"}（上限 {step.TimeoutMs ?? 5000} ms）",
         "wait-text" => $"等文字「{step.Text}」（{step.Match ?? TextPredicate.Contains}，" +
                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",
         "click-text" => $"找「{step.Text}」并点它的中心（{step.Match ?? TextPredicate.Contains}，" +
-                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",        "read-text" => $"读一块区域存进 {step.Into}",
+                        $"容错 {step.MaxErrors ?? 1}，上限 {step.TimeoutMs ?? 5000} ms）",
+        "read-text" => $"读一块区域存进 {step.Into}",
         _ => "KeyMouse " + string.Join(' ', FlowDocument.ToArguments(step)),
     };
 

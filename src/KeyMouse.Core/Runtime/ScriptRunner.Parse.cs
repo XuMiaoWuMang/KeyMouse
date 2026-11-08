@@ -56,6 +56,13 @@ internal static partial class ScriptRunner
                     options.DelayMs = delay;
                     break;
                 }
+                case "--max-steps":
+                {
+                    if (!int.TryParse(Value("步数"), out int maxSteps) || maxSteps < 1)
+                        return "--max-steps 需要一个正整数";
+                    options.MaxSteps = maxSteps;
+                    break;
+                }
                 case "--retry":
                 {
                     if (!int.TryParse(Value("次数"), out int retry) || retry < 0)

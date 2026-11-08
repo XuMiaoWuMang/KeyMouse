@@ -53,6 +53,7 @@ $modules = [ordered]@{
     'serve'     = '常驻 Runner：CLI 当客户端驱动它'
     'act'       = '--find / click-text / when'
     'flowloops' = '流程里的循环与变量'
+    'controlflow' = '流程里的 if/while/for：真实读屏分支与执行路径'
     'calls'     = '子流程：内联、vars 与 export'
 }
 

@@ -14,7 +14,8 @@
     "target": "窗口选择器 {process?, class?, title?}",
     "steps": "子步骤数组（分组步骤专用）",
     "vars": "变量表 {名字: 值}，值可含 {{占位符}}",
-    "stringList": "字符串数组"
+    "stringList": "字符串数组",
+    "probe": "读屏谓词的观察点 {target, region, match, maxErrors}，条件里用 text() 时使用"
   },
   "document": {
     "fields": [
@@ -433,6 +434,45 @@
         }
       ],
       "comment": "一个 when 只有在 text 非空时才算前提；text 为空时整个 when 被忽略（等于没有前提）。"
+    },
+    "probe": {
+      "comment": "条件里 text() 读的地方。target 与 region 都必填：不猜窗口，也不猜区域。",
+      "fields": [
+        {
+          "name": "target",
+          "kind": "target",
+          "required": true,
+          "label": { "zh": "读哪个窗口", "en": "target" }
+        },
+        {
+          "name": "region",
+          "kind": "region",
+          "required": true,
+          "label": { "zh": "读的区域", "en": "region" }
+        },
+        {
+          "name": "match",
+          "kind": "enum",
+          "required": false,
+          "values": [ "contains", "exact", "fuzzy" ],
+          "default": "contains",
+          "valueLabels": {
+            "contains": { "zh": "包含即可", "en": "contains" },
+            "exact": { "zh": "必须完全一致", "en": "exact" },
+            "fuzzy": { "zh": "容错匹配", "en": "fuzzy" }
+          },
+          "label": { "zh": "匹配方式", "en": "match" }
+        },
+        {
+          "name": "maxErrors",
+          "kind": "int",
+          "required": false,
+          "min": 0,
+          "max": 20,
+          "default": 1,
+          "label": { "zh": "容错字符数", "en": "max errors" }
+        }
+      ]
     }
   },
   "steps": {
@@ -1551,7 +1591,151 @@
         }
       ]
     },
-    "mousehold": {
+        "if": {
+      "summary": { "zh": "条件成立才执行一段", "en": "Run a block when the condition holds" },
+      "fields": [
+        {
+          "name": "cond", "kind": "text", "required": true,
+          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "help": { "zh": "C 风格表达式：i < 3、text(\"保存\")、found(\"副本\")、window(\"notepad\")、elapsed() < 5000。变量直接写名字，不要用 {{}}。", "en": "A C-like expression; bare variable names, not {{...}}." }
+        },
+        {
+          "name": "probe", "kind": "probe", "required": false,
+          "label": { "zh": "条件读哪里", "en": "probe" },
+          "help": { "zh": "条件里用 text() 时必须给：读哪个窗口的哪块区域、怎么匹配。", "en": "Required when cond calls text(): the window and rectangle to read." }
+        },
+        {
+          "name": "steps", "kind": "steps", "required": true,
+          "label": { "zh": "成立时执行", "en": "then" },
+          "help": { "zh": "else if 就写在 else 里再放一个 if。", "en": "Write else-if as another if inside else." }
+        },
+        {
+          "name": "else", "kind": "steps", "required": false,
+          "label": { "zh": "否则执行", "en": "else" }
+        }
+      ]
+    },
+    "while": {
+      "summary": { "zh": "条件成立就重复", "en": "Repeat while the condition holds" },
+      "fields": [
+        {
+          "name": "cond", "kind": "text", "required": true,
+          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "help": { "zh": "每一轮开始前重新求值；text() 每次都是一次新的读屏。", "en": "Re-evaluated before each round; text() takes a fresh read every time." }
+        },
+        {
+          "name": "probe", "kind": "probe", "required": false,
+          "label": { "zh": "条件读哪里", "en": "probe" },
+          "help": { "zh": "条件里用 text() 时必须给。", "en": "Required when cond calls text()." }
+        },
+        {
+          "name": "maxRounds", "kind": "int", "required": false, "min": 1, "max": 10000, "default": 200,
+          "label": { "zh": "最多几轮", "en": "max rounds" },
+          "help": { "zh": "超过就退出码 3——条件循环必须有上界，否则自动化的机器会被一条写错的流程卡住。", "en": "Exceeding it exits 3: a conditional loop must be bounded." }
+        },
+        {
+          "name": "steps", "kind": "steps", "required": true,
+          "label": { "zh": "每轮执行", "en": "body" }
+        }
+      ]
+    },
+    "do": {
+      "summary": { "zh": "先做一遍，再看条件（do-while）", "en": "Do once, then check (do-while)" },
+      "fields": [
+        {
+          "name": "cond", "kind": "text", "required": true,
+          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "help": { "zh": "每轮结束后求值；true 就再来一轮。", "en": "Evaluated after each round; true repeats." }
+        },
+        {
+          "name": "probe", "kind": "probe", "required": false,
+          "label": { "zh": "条件读哪里", "en": "probe" },
+          "help": { "zh": "条件里用 text() 时必须给；do-while 的条件在身体之后才读。", "en": "Required when cond calls text(); it is read after the body." }
+        },
+        {
+          "name": "maxRounds", "kind": "int", "required": false, "min": 1, "max": 10000, "default": 200,
+          "label": { "zh": "最多几轮", "en": "max rounds" },
+          "help": { "zh": "超过就退出码 3。", "en": "Exceeding it exits 3." }
+        },
+        {
+          "name": "steps", "kind": "steps", "required": true,
+          "label": { "zh": "每轮执行", "en": "body" }
+        }
+      ]
+    },
+    "for": {
+      "summary": { "zh": "计数循环（init; cond; step）", "en": "Counting loop (init; cond; step)" },
+      "fields": [
+        {
+          "name": "init", "kind": "vars", "required": false,
+          "label": { "zh": "初值（名字 = 表达式）", "en": "init" },
+          "help": { "zh": "循环开始前按顺序求值一次；这些名字只活在循环里。", "en": "Evaluated once, in order; the names live only inside the loop." }
+        },
+        {
+          "name": "cond", "kind": "text", "required": true,
+          "label": { "zh": "条件（表达式）", "en": "condition" }
+        },
+        {
+          "name": "step", "kind": "vars", "required": false,
+          "label": { "zh": "每轮之后（名字 = 表达式）", "en": "step" },
+          "help": { "zh": "continue 之后也会执行，和 C 的 for 一样。", "en": "Runs after continue, exactly like C's for." }
+        },
+        {
+          "name": "probe", "kind": "probe", "required": false,
+          "label": { "zh": "条件读哪里", "en": "probe" },
+          "help": { "zh": "条件里用 text() 时必须给。", "en": "Required when cond calls text()." }
+        },
+        {
+          "name": "maxRounds", "kind": "int", "required": false, "min": 1, "max": 10000, "default": 10000,
+          "label": { "zh": "最多几轮", "en": "max rounds" },
+          "help": { "zh": "计数循环的上界；超过仍然退出码 3。", "en": "Upper bound for a counting loop; exceeding it exits 3." }
+        },
+        {
+          "name": "steps", "kind": "steps", "required": true,
+          "label": { "zh": "每轮执行", "en": "body" }
+        }
+      ]
+    },
+    "break": {
+      "summary": { "zh": "跳出当前循环", "en": "Leave the current loop" },
+      "fields": []
+    },
+    "continue": {
+      "summary": { "zh": "进入当前循环的下一轮", "en": "Start the next round" },
+      "fields": []
+    },
+    "set": {
+      "summary": { "zh": "给变量赋值", "en": "Assign a variable" },
+      "fields": [
+        {
+          "name": "name", "kind": "text", "required": true,
+          "label": { "zh": "变量名", "en": "name" }
+        },
+        {
+          "name": "value", "kind": "text", "required": true,
+          "label": { "zh": "值（表达式）", "en": "value" },
+          "help": { "zh": "已有变量在原处更新，新变量定义在当前块；表达式里直接写名字。", "en": "Existing names update in place; new ones are defined in this block." }
+        }
+      ]
+    },
+    "assert": {
+      "summary": { "zh": "断言条件成立", "en": "Assert a condition" },
+      "fields": [
+        {
+          "name": "cond", "kind": "text", "required": true,
+          "label": { "zh": "条件（表达式）", "en": "condition" }
+        },
+        {
+          "name": "message", "kind": "text", "required": false,
+          "label": { "zh": "失败时说什么", "en": "message" }
+        },
+        {
+          "name": "probe", "kind": "probe", "required": false,
+          "label": { "zh": "条件读哪里", "en": "probe" },
+          "help": { "zh": "条件里用 text() 时必须给。", "en": "Required when cond calls text()." }
+        }
+      ]
+    },"mousehold": {
       "summary": {
         "zh": "鼠标长按：按住鼠标键一段时间再松开",
         "en": "Hold a mouse button for a while"

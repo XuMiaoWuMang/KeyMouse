@@ -58,8 +58,9 @@ Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent'
 一个普通控制台程序，**故意不用任何测试框架**：零依赖、离线可跑、`dotnet run` 就能执行，非零退出码即失败。入口是 `tests\KeyMouse.Tests\TestEntry.cs`（类名不叫 `Program`，是为了让命名空间里的 `Program` 仍然解析到 CLI 的 `Program`——runner 测试要直接调它）。
 
 ```pwsh
-.\km t                    # 全部 20 个模块
+.\km t                    # 全部模块（当前 22 个；只在提交前跑一次）
 .\km t parsing flow       # 只跑改到的模块，可写多个
+.\km t expr flow-control  # 表达式与 if/while/for 各跑各的
 .\km tl                   # 列出模块
 .\km t -n flow            # 不重新编译，直接跑
 .\km t bench              # 解析的吞吐基准，不参与关卡
@@ -72,7 +73,7 @@ dotnet run --project tests\KeyMouse.Tests -- --only loops
 tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 ```
 
-20 个模块与各自的覆盖：
+模块与各自的覆盖（当前 22 个）：
 
 | 模块 | 覆盖 |
 | --- | --- |
@@ -83,8 +84,10 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 | `locator` | 文字定位：框、并集与容错 |
 | `region` | 选区坐标换算与描述 |
 | `flow` | 流程编译、条件与前置条件 |
-| `loops` | 循环、变量与展平 |
-| `calls` | 子流程：内联、作用域与导出 |
+| `loops` | 循环、变量与每轮帧 |
+| `calls` | 子流程：语句树内联、作用域与导出 |
+| `expr` | 表达式求值：优先级、短路、类型、列号错误（不碰桌面） |
+| `flow-control` | `if/else`、`while/do`、`for`、`break/continue`、`--max-steps` 与 dry-run 护栏 |
 | `runner` | 常驻 Runner 协议与作业控制 |
 | `protocol` | 前后端通信契约：方法、事件、参数与终结规则 |
 | `newlines` | 换行归一：CRLF / 裸 CR 一律折成 LF |
@@ -98,7 +101,8 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 
 断言只有一个极小的 Harness（`tests\KeyMouse.Tests\Harness.cs`）：`Check(说明, 条件, 细节)`、`Equal`、`Sequence`、`Throws`，末尾打印 `N passed, M failed`，有失败就返回退出码 1。每个模块包在 `Section` 里跑，某个模块抛异常会被记成一条失败并继续跑后面的模块，不会让整轮测试中断。
 
-最近一次全跑：20 个模块 **719 passed, 0 failed**（0 警告）。
+**平时只跑改到的模块，全量只在提交前跑一次**：`passed` 数字不再每次维护在这里（维护它只会逼人为了对齐数字跑整套）。
+流程控制这一块按功能拆在 `tests\KeyMouse.Tests\FlowControl\`，同目录的 `README.md` 写清每个文件断言什么、怎么单跑。
 
 **什么时候必须跑**：动了参数解析、窗口选择、流程编译/执行、Runner 协议、录制格式中的任何一处，跑对应模块；发布前跑全部。单测不需要桌面，所以在 CI 里也照跑。
 
@@ -126,7 +130,7 @@ Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent'
 用 KeyMouse 自己的鼠标键盘去驱动一个**专门的靶子窗口**（`tests\KeyMouse.SmokeTarget`），验证"真的作用到桌面上了"：退出码、输入有没有落地、窗口有没有被误动、进程数对不对。
 
 ```pwsh
-.\km s                              # 全部 12 个模块（km 会把 bin 里的 CLI 传进去）
+.\km s                              # 全部 13 个模块（km 会把 bin 里的 CLI 传进去）
 .\km s -Only typing,features        # 只跑几个
 pwsh tests\smoke\run.ps1 -List      # 列出模块
 pwsh tests\smoke\run.ps1            # 默认用 artifacts\cli\KeyMouse.exe
@@ -135,7 +139,7 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 
 注意两个默认值不一样：`.\km s` 把 `src\KeyMouse.Cli\bin\Release\net10.0-windows\KeyMouse.exe`（刚编出来那份）传给 `run.ps1`，而直接跑 `run.ps1` 默认用 `artifacts\cli\KeyMouse.exe`（发布出去那份）。**六道关卡里的第 6 关用的是后者**——关卡验的是要发出去的产物，不是编译中间物。
 
-12 个模块（按顺序跑，共享同一个靶子与桌面）：
+13 个模块（按顺序跑，共享同一个靶子与桌面）：
 
 > **每个模块自己负责把舞台摆好。** 模块之间共享一个靶子窗口，"上一个模块把窗口最小化了""光标不在文本框里""终端窗口盖在靶子上"都是会真实发生的事。写新模块时按三条自检：要键盘就先点一下正文（`mouse click left -wx 120 -wy 60`），要判层序就先 `window focus`，要看某一步的过程就加 `run … --report <文件>` 把每条命令的退出码记下来。
 >
@@ -154,6 +158,7 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 | `serve` | 常驻 Runner：`serve` 起进程、CLI 走命名管道驱动它 |
 | `act` | 从"读到文字"到"照着文字点"：`probe --find` / `click-text` / `when` |
 | `flowloops` | 流程 JSON 里的 `foreach` 与变量，`read-text` 把屏幕内容读进变量再插值 |
+| `controlflow` | 真实读屏的 `text()` 分支、`while`/`for` 的执行次数、报告按 `origin` 落行、动态流程不打印分母 |
 | `calls` | 子流程 `call`：默认值、作用域、导出 |
 
 `tests\smoke\lib\common.ps1` 提供模块能直接用的东西：`$Exe`（被测的命令行）、`$RunDir`（本次运行的目录）、`$target` / `$targetInScript`（靶子的选择器，两种引号形态）、`Check 说明 条件 [细节]`、`Wait-ForWindow 正则 [超时] [稳定]`。它还负责：开头做一次中文往返自检（程序输出是中文，控制台码页不对就只报一条清晰错误并退出 1）、保存并在结束时还原剪贴板、拉起靶子后用 `window focus` 重试到成功。

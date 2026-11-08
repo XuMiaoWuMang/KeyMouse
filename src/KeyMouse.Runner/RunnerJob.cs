@@ -41,8 +41,14 @@ internal sealed class RunnerJob : IExecutionControl
     /// <summary>恢复最小化窗口是否被允许（与执行器用的是同一个判断）。</summary>
     internal bool AllowRestore { get; set; }
 
-    /// <summary>按执行序号排列的步骤，用来给每一步找到它的目标区域。</summary>
-    internal IReadOnlyList<FlowStep> Steps { get; set; } = [];
+    /// <summary>
+    /// 正在执行的那一步。动态循环下"第 n 次执行"不再能拿来索引一张静态表，所以证据截图直接用
+    /// 引擎在 StepStarted 里交过来的这一步。
+    /// </summary>
+    internal FlowStep? CurrentStep { get; private set; }
+
+    /// <summary>这一步的文档位置；finished 事件也要带上，否则动态循环下结果会落错行。</summary>
+    internal string? CurrentOrigin { get; private set; }
 
     /// <summary>queued | running | paused | finished | failed | cancelled.</summary>
     internal string State { get; set; } = "queued";
@@ -74,8 +80,12 @@ internal sealed class RunnerJob : IExecutionControl
     internal const int CancelledExitCode = 7;
     internal const string CancelledMessage = "已被客户端取消：取消点之后没有再发出任何输入";
 
-    public void StepStarted(int index, string type) =>
-        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "started", type));
+    public void StepStarted(int index, string type, string origin, FlowStep step)
+    {
+        CurrentStep = step;
+        CurrentOrigin = origin;
+        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "started", type, origin: origin));
+    }
 
     public void RecordingState(string state) =>
         Emit(RunnerEvent.Recording(RequestId, Job, state));
@@ -85,13 +95,13 @@ internal sealed class RunnerJob : IExecutionControl
     /// 而不是它动手之前的。
     /// </summary>
     public void StepFinished(int index, int exitCode, long durationMs) =>
-        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "finished", "", exitCode, durationMs, ShotFor(index)));
+        Emit(RunnerEvent.Step(RequestId, Job, index, Total, "finished", "", exitCode, durationMs,
+            ShotFor(index, CurrentStep), CurrentOrigin));
 
-    private string? ShotFor(int index)
+    private string? ShotFor(int index, FlowStep? step)
     {
-        if (!Shots || FlowPath is null) return null;
-        if (index - 1 < 0 || index - 1 >= Steps.Count) return null;
-        return RunShots.Capture(Steps[index - 1], FlowPath, EvidenceFor, index, AllowRestore);
+        if (!Shots || FlowPath is null || step is null) return null;
+        return RunShots.Capture(step, FlowPath, EvidenceFor, index, AllowRestore);
     }
 
     // ------------------------------------------------------------------ control

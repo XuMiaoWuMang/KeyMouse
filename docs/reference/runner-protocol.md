@@ -87,7 +87,7 @@ KeyMouse.FlowEditor（前端）  ──命名管道 JSON 行──▶  KeyMouse 
 | --- | --- | --- |
 | `hello` | `kind` `id`(=0) `message`(版本号) | **连接后的问候**（契约里的 `greeting`）：不构成应答，客户端不得 await 它 |
 | `log` | `kind` `id` `job` `line` | 能力层往 stdout/stderr 打的每一行都会变成一条 |
-| `step` | `kind` `id` `job` `index` `total` `state` `type` `shot` `exitCode` `durationMs` | `index` 从 1 开始；`state` ∈ running/finished/failed/skipped；`shot` 是这一步留下的证据截图路径（引擎抓不到就是 `null`，绝不编一个） |
+| `step` | `kind` `id` `job` `index` `total` `state` `type` `shot` `exitCode` `durationMs` `origin` | `index` 从 1 开始；`state` ∈ started/finished（一步的开始与结束各一条）；`origin` 是这一步在文档里的位置（`3`、`6.1`），**两条事件都带**——动态循环下 `index` 与行号不再一一对应，编辑器靠它落行；`shot` 是这一步留下的证据截图路径（引擎抓不到就是 `null`，绝不编一个） |
 | `finished` | `kind` `id` `job` `exitCode` `durationMs` | 执行类方法的终结事件 |
 | `result` | `kind` `id` `value` | 一问一答方法的终结事件，`value` 形状由方法决定 |
 | `error` | `kind` `id` `code` `message` | 终结事件；message 面向用户，必须是中文 |

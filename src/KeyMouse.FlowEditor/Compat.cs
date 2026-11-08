@@ -33,6 +33,14 @@ internal static class StepCatalog
         new("repeat", "重复 N 次", "\uE8EE", "把里面的步骤重复若干次（子步骤在 JSON 里编辑）"),
         new("foreach", "遍历列表", "\uE8FD", "对列表变量里的每一项执行一次里面的步骤"),
         new("call", "调用子流程", "\uE8F4", "运行另一个流程文件；子流程有独立的变量作用域，结果靠 export 交回来"),
+        new("if", "条件分支", "\uE8B7", "条件成立才执行里面的步骤；else 里再放一个 if 就是 else-if"),
+        new("while", "条件循环", "\uE8EE", "条件成立就重复；有 maxRounds 上界，超过退出码 3"),
+        new("do", "先做一遍", "\uE8EE", "先执行一遍身体，再判断条件（do-while）"),
+        new("for", "计数循环", "\uE8EE", "init / cond / step 三段式；continue 之后 step 照样执行"),
+        new("break", "跳出循环", "\uE71A", "离开当前循环"),
+        new("continue", "下一轮", "\uE72A", "跳过本轮剩下的步骤，进入下一轮"),
+        new("set", "设变量", "\uE8AC", "给变量赋值；已有变量在原处更新"),
+        new("assert", "断言", "\uE73E", "条件不成立就退出码 3，并带上你写的说明"),
     ];
 
     internal static Kind? Find(string type) => All.FirstOrDefault(k => k.Type == type);
@@ -119,6 +127,32 @@ internal static class StepCatalog
         "repeat" => new FlowStep { Type = type, Times = 3, Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
         "foreach" => new FlowStep { Type = type, In = "rows", Steps = [new FlowStep { Type = "sleep", Ms = 200 }] },
         "call" => new FlowStep { Type = type, Flow = "sub.json" },
+        "if" => new FlowStep
+        {
+            Type = type, Cond = "true",
+            Steps = [new FlowStep { Type = "sleep", Ms = 200 }],
+        },
+        "while" => new FlowStep
+        {
+            Type = type, Cond = "false", MaxRounds = 200,
+            Steps = [new FlowStep { Type = "sleep", Ms = 200 }],
+        },
+        "do" => new FlowStep
+        {
+            Type = type, Cond = "false", MaxRounds = 200,
+            Steps = [new FlowStep { Type = "sleep", Ms = 200 }],
+        },
+        "for" => new FlowStep
+        {
+            Type = type,
+            Init = new Dictionary<string, string> { ["i"] = "0" },
+            Cond = "i < 3",
+            Step = new Dictionary<string, string> { ["i"] = "i + 1" },
+            Steps = [new FlowStep { Type = "sleep", Ms = 200 }],
+        },
+        "break" or "continue" => new FlowStep { Type = type },
+        "set" => new FlowStep { Type = type, Name = "n", Value = "0" },
+        "assert" => new FlowStep { Type = type, Cond = "true" },
         _ => new FlowStep { Type = type },
     };
 
@@ -170,6 +204,14 @@ internal static class StepCatalog
             "repeat" => $"重复 {step.Times ?? 0} 次",
             "foreach" => $"遍历 {step.In}",
             "call" => $"调用子流程 {step.Flow}" + (step.Vars is { Count: > 0 } vars ? $"（传 {vars.Count} 个变量）" : "") + (step.Export is { Length: > 0 } export ? $"，导出 {string.Join("/", export)}" : ""),
+            "if" => $"如果 {Clip(step.Cond)}",
+            "while" => $"当 {Clip(step.Cond)} 时重复",
+            "do" => $"先做一遍，直到 {Clip(step.Cond)} 不成立",
+            "for" => $"计数 {Clip(step.Cond)}",
+            "break" => "跳出循环",
+            "continue" => "进入下一轮",
+            "set" => $"设 {step.Name} = {Clip(step.Value)}",
+            "assert" => $"确认 {Clip(step.Cond)}",
             _ => step.Type,
         };
     }

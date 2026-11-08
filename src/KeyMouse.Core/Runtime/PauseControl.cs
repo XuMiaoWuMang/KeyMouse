@@ -57,7 +57,7 @@ internal sealed class PauseControl : IExecutionControl, IDisposable
         Console.Error.WriteLine("继续。");
     }
 
-    public void StepStarted(int index, string type) { }
+    public void StepStarted(int index, string type, string origin, FlowStep step) { }
 
     public void StepFinished(int index, int exitCode, long durationMs) { }
 

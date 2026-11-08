@@ -1,117 +1,111 @@
 using KeyMouse;
+using KeyMouse.Flow;
 
 namespace KeyMouse.Tests;
 
 /// <summary>
-/// Subflows, without a desktop: a `call` is inlined into one flat plan, each step carrying the frame
-/// it runs in. The tests here pin the three things that make subflows reusable rather than surprising:
-/// the caller's values stay the caller's, the call's `vars` win over the subflow's own defaults, and
-/// only what the subflow explicitly exports lands back in the caller.
+/// Subflows, without a desktop: a `call` runs its steps in a chained frame, the call's `vars` win
+/// over the subflow's own defaults, and only what the subflow explicitly exports lands back in the
+/// caller. The behavioral assertions use `set` instead of `read-text` so no window is needed -
+/// the frame rules are the same either way.
 /// </summary>
 internal static class CallTests
 {
     public static void Run()
     {
-        Harness.Group("call: inlining and scope");
+        Harness.Group("call: scope, vars and export");
 
-        string directory = Path.Combine(Path.GetTempPath(), $"keymouse-call-{Environment.ProcessId}");
+        string directory = Path.Combine(Path.GetTempPath(), $"keymouse-call-{Environment.ProcessId}-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
         try
         {
-            // 子流程：自己的默认值 + 一个由调用者覆盖的值 + 一次捕获
-            File.WriteAllText(Path.Combine(directory, "sub.json"), """
-                {"format":"keymouse-flow","version":1,
-                 "variables":{"greeting":"你好"},
-                 "steps":[
-                   {"type":"type","text":"{{greeting}}-{{who}}","target":{"process":"p"}},
-                   {"type":"read-text","target":{"process":"p"},
-                    "region":{"space":"client","x":0,"y":0,"width":10,"height":10},"into":"seen"}]}
-                """);
+            string Sub(string steps, string variables = """{"greeting":"你好"}""") =>
+                $$"""{"format":"keymouse-flow","version":1,"variables":{{variables}},"steps":{{steps}}}""";
 
-            FlowDocument Main(string body)
-            {
-                string path = Path.Combine(directory, "main.json");
-                File.WriteAllText(path, $$"""{"format":"keymouse-flow","version":1,"variables":{"who":"调用者"},{{body}}}""");
-                return FlowDocument.Load(path);
-            }
+            File.WriteAllText(Path.Combine(directory, "sub.json"), Sub(
+                """
+                [{"type":"set","name":"seen","value":"\"屏幕上的字\""},
+                 {"type":"set","name":"composed","value":"greeting + \"-\" + who"}]
+                """));
 
-            FlowDocument main = Main(""" "steps":[{"type":"call","flow":"sub.json"}] """);
-            FlowPlan plan = FlowPlan.Build(main, Path.Combine(directory, "main.json"));
-            Harness.Equal("a call inlines the subflow's steps", 2, plan.StepCount);
-            Harness.Equal("...and leaves nothing else behind without an export", 2, plan.Items.Count);
+            string Main(string steps, string variables = """{"who":"调用者"}""") =>
+                $$"""{"format":"keymouse-flow","version":1,"variables":{{variables}},"steps":{{steps}}}""";
 
-            FlowStep first = FlowDocument.Resolve(plan.Items[0].Step!, plan.Items[0].Frame);
-            Harness.Equal("the subflow's own variables are in scope inside it", "你好-调用者", first.Text);
+            string mainPath = Path.Combine(directory, "main.json");
+            File.WriteAllText(mainPath, Main(
+                """
+                [{"type":"call","flow":"sub.json","vars":{"who":"{{who}}-改成"},"export":["seen","composed"]},
+                 {"type":"assert","cond":"seen == \"屏幕上的字\""},
+                 {"type":"assert","cond":"composed == \"你好-调用者-改成\""},
+                 {"type":"assert","cond":"who == \"调用者\""}]
+                """));
 
-            // vars 覆盖子流程默认值，并且能引用调用者的变量
-            FlowDocument overridden = Main(""" "steps":[{"type":"call","flow":"sub.json","vars":{"who":"{{who}}-改成"}}] """);
-            FlowPlan overriddenPlan = FlowPlan.Build(overridden, Path.Combine(directory, "main.json"));
-            FlowStep overriddenStep = FlowDocument.Resolve(overriddenPlan.Items[0].Step!, overriddenPlan.Items[0].Frame);
-            Harness.Equal("vars win over the subflow and may use the caller's values",
-                "你好-调用者-改成", overriddenStep.Text);
+            FlowDocument loaded = FlowDocument.Load(mainPath);
+            FlowPlan plan = FlowPlan.Build(loaded, mainPath);
+            Harness.Equal("a call plans the subflow's steps plus the caller's", 5, plan.PlannedSteps);
+
+            FlowRun.Result run = FlowRun.RunPath(mainPath);
+            Harness.Equal("the subflow runs in the caller's execution", 0, run.ExitCode);
+            Harness.Equal("...five executed steps", 5, run.Report?.Succeeded);
+            Harness.Sequence("...subflow rows keep the call's origin",
+                ["1.1", "1.2", "2", "3", "4"],
+                run.Report?.Commands.Select(c => c.Origin ?? "") ?? []);
 
             Harness.Group("call: what stays inside and what is handed back");
 
-            FlowDocument hidden = Main(""" "steps":[{"type":"call","flow":"sub.json"}] """);
-            FlowPlan hiddenPlan = FlowPlan.Build(hidden, Path.Combine(directory, "main.json"));
-            Harness.Check("a capture inside the subflow does not leak into the caller",
-                hiddenPlan.Items[0].Frame == hiddenPlan.Items[1].Frame &&
-                hiddenPlan.Items[1].Frame.Lookup("seen") is null);
+            File.WriteAllText(Path.Combine(directory, "hidden-sub.json"), Sub(
+                """[{"type":"set","name":"hidden","value":"\"只在里面\""}]"""));
 
-            FlowDocument exported = Main(""" "steps":[{"type":"call","flow":"sub.json","export":["seen"]}] """);
-            FlowPlan exportedPlan = FlowPlan.Build(exported, Path.Combine(directory, "main.json"));
-            Harness.Equal("an export adds one step-less item", 3, exportedPlan.Items.Count);
-            FlowPlan.Item exportItem = exportedPlan.Items[2];
-            Harness.Check("...which is a bookkeeping item, not a step", exportItem.Step is null);
-            Harness.Equal("...naming what to hand back", "seen", exportItem.Export?[0]);
-            Harness.Check("...reading from the subflow's frame and writing into the caller's",
-                exportItem.ExportFrom is not null && !ReferenceEquals(exportItem.ExportFrom, exportItem.Frame));
+            string hiddenPath = Path.Combine(directory, "hidden-main.json");
+            File.WriteAllText(hiddenPath, Main(
+                """
+                [{"type":"call","flow":"hidden-sub.json"},
+                 {"type":"assert","cond":"hidden == \"只在里面\""}]
+                """));
+            Harness.Throws<CommandFailure>("a name the subflow did not export is not in scope",
+                () => FlowDocument.Load(hiddenPath));
 
-            // 真的跑一遍导出逻辑：没有桌面也能验证"值回到调用者"
-            exportItem.ExportFrom!.Set("seen", "屏幕上的字");
-            Harness.Check("the caller does not have it before the export item runs",
-                exportItem.Frame.Lookup("seen") is null);
-            foreach (string name in exportItem.Export!)
-            {
-                if (exportItem.ExportFrom.Lookup(name) is { } value) exportItem.Frame.Set(name, value);
-            }
-            Harness.Equal("...and has it afterwards", "屏幕上的字", exportItem.Frame.Lookup("seen"));
+            File.WriteAllText(hiddenPath, Main(
+                """
+                [{"type":"call","flow":"hidden-sub.json","export":["hidden"]},
+                 {"type":"assert","cond":"hidden == \"只在里面\""}]
+                """));
+            FlowRun.Result exported = FlowRun.RunPath(hiddenPath);
+            Harness.Equal("...and it is once the call exports it", 0, exported.ExitCode);
+
+            Harness.Group("call: nesting");
+
+            File.WriteAllText(Path.Combine(directory, "outer.json"), """
+                {"format":"keymouse-flow","version":1,"variables":{"depth":"外层"},
+                 "steps":[{"type":"call","flow":"inner.json","vars":{"extra":"{{depth}}+额外"},"export":["composed"]},
+                          {"type":"assert","cond":"composed == \"外层/外层+额外\""}]}
+                """);
+            File.WriteAllText(Path.Combine(directory, "inner.json"), """
+                {"format":"keymouse-flow","version":1,
+                 "steps":[{"type":"set","name":"composed","value":"depth + \"/\" + extra"}]}
+                """);
+            FlowRun.Result nested = FlowRun.RunPath(Path.Combine(directory, "outer.json"));
+            Harness.Equal("nested calls keep the outer variables visible", 0, nested.ExitCode);
+            Harness.Equal("...and plan to two steps", 2, nested.Report?.Succeeded);
 
             Harness.Group("call: what the loader refuses");
 
-            string missing = Path.Combine(directory, "bare.json");
-            File.WriteAllText(missing, """{"format":"keymouse-flow","version":1,"steps":[{"type":"call"}]}""");
+            string broken = Path.Combine(directory, "broken.json");
+            File.WriteAllText(broken, """{"format":"keymouse-flow","version":1,"steps":[{"type":"call"}]}""");
             Harness.Throws<CommandFailure>("a call without flow is refused",
-                () => FlowDocument.Load(missing));
+                () => FlowDocument.Load(broken));
 
-            File.WriteAllText(missing, """{"format":"keymouse-flow","version":1,"steps":[{"type":"call","flow":"nope.json"}]}""");
+            File.WriteAllText(broken, """{"format":"keymouse-flow","version":1,"steps":[{"type":"call","flow":"nope.json"}]}""");
             Harness.Throws<CommandFailure>("...and one pointing at a file that is not there",
-                () => FlowDocument.Load(missing));
+                () => FlowDocument.Load(broken));
 
-            // 环：a -> b -> a
             File.WriteAllText(Path.Combine(directory, "a.json"),
                 """{"format":"keymouse-flow","version":1,"steps":[{"type":"call","flow":"b.json"}]}""");
             File.WriteAllText(Path.Combine(directory, "b.json"),
                 """{"format":"keymouse-flow","version":1,"steps":[{"type":"call","flow":"a.json"}]}""");
             FlowDocument cycle = FlowDocument.Load(Path.Combine(directory, "a.json"));
-            Harness.Throws<CommandFailure>("a cycle is caught",
+            Harness.Throws<CommandFailure>("a cycle is caught when the plan is built",
                 () => FlowPlan.Build(cycle, Path.Combine(directory, "a.json")));
-
-            // 嵌套：子流程里再调一层，作用域层层可见
-            File.WriteAllText(Path.Combine(directory, "outer.json"), """
-                {"format":"keymouse-flow","version":1,"variables":{"depth":"外层"},
-                 "steps":[{"type":"call","flow":"inner.json","vars":{"extra":"{{depth}}+额外"}}]}
-                """);
-            File.WriteAllText(Path.Combine(directory, "inner.json"), """
-                {"format":"keymouse-flow","version":1,
-                 "steps":[{"type":"type","text":"{{depth}}/{{extra}}","target":{"process":"p"}}]}
-                """);
-            FlowDocument nested = FlowDocument.Load(Path.Combine(directory, "outer.json"));
-            FlowPlan nestedPlan = FlowPlan.Build(nested, Path.Combine(directory, "outer.json"));
-            Harness.Equal("nested calls inline to one step", 1, nestedPlan.StepCount);
-            Harness.Equal("...where the outer variables are still visible",
-                "外层/外层+额外",
-                FlowDocument.Resolve(nestedPlan.Items[0].Step!, nestedPlan.Items[0].Frame).Text);
         }
         finally
         {

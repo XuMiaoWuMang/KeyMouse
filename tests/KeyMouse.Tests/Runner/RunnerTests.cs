@@ -112,6 +112,9 @@ internal static class RunnerTests
                 dry.Count(e => e.Kind == "step" && e.State == "started") == 3);
             Harness.Check("...and as it finishes",
                 dry.Count(e => e.Kind == "step" && e.State == "finished") == 3);
+            Harness.Check("...both events carry the document origin",
+                dry.Where(e => e.Kind == "step")
+                    .All(e => e.Origin is { Length: > 0 } && e.Origin == e.Index?.ToString()));
             Harness.Equal("...with the total step count on each event", 3, dry.First(e => e.Kind == "step").Total);
             Harness.Check("...and streams the log lines the capability layer prints",
                 dry.Any(e => e.Kind == "log" && (e.Line ?? "").Contains("流程结束")));

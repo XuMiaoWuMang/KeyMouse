@@ -56,7 +56,7 @@ internal static class NoWindowTests
             ],
         };
         Harness.Check("整篇没有一个窗口，也能通过加载与编译",
-            FlowPlan.Build(document, Path.Combine(Path.GetTempPath(), "keymouse-nowindow-test.json")).StepCount == 3);
+            FlowPlan.Build(document, Path.Combine(Path.GetTempPath(), "keymouse-nowindow-test.json")).PlannedSteps == 3);
 
         // 读屏必须落在某个窗口里：区域允许 client / window，不允许 screen。
         Harness.Group("nowindow: 读屏区域的空间");
