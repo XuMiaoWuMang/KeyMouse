@@ -24,7 +24,7 @@ pwsh tools\release\release.ps1 -Publish
 打标签（由作者手动做）：
 
 ```pwsh
-git tag gui-v0.2.1; git tag cli-v0.2.1; git push origin gui-v0.2.1 cli-v0.2.1
+git tag gui-v2.2.0; git tag cli-v2.2.0; git push origin gui-v2.2.0 cli-v2.2.0
 ```
 
 ## release.ps1
@@ -52,7 +52,7 @@ pwsh tools\release\release.ps1 -RevokeAll
 
 ```pwsh
 pwsh tools\release\release-notes.ps1                              # 预览（对比上一个同族标签）
-pwsh tools\release\release-notes.ps1 -Tag cli-v0.2.1 -Out notes.md
+pwsh tools\release\release-notes.ps1 -Tag cli-v2.2.0 -Out notes.md
 pwsh tools\release\release-notes.ps1 -Range "cli-v0.2.0..HEAD"
 ```
 

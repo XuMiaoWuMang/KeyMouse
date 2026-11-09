@@ -1,6 +1,6 @@
 [package]
 name = "keymouse-editor"
-version = "0.2.1"
+version = "2.2.0"
 description = "KeyMouse 流程编辑器（Tauri 外壳：界面不持有管理员权限）"
 edition = "2021"
 rust-version = "1.77"

@@ -6,7 +6,7 @@
  * 和数组指向同一份对象。
  */
 
-import type { FlowStep } from './model';
+import type { BranchKey, FlowStep } from './model';
 
 /** 在 `index` 之后插入；`index` 为 -1 时放到最前面。 */
 export function insertAfter(steps: readonly FlowStep[], index: number, step: FlowStep): FlowStep[] {
@@ -21,12 +21,29 @@ export function insertAfter(steps: readonly FlowStep[], index: number, step: Flo
  *
  * 组里原本没有 `steps` 时新建一个——空组也能被这一下填上。
  */
-export function appendChild(steps: readonly FlowStep[], index: number, child: FlowStep): FlowStep[] {
+function listOf(group: FlowStep, branch: BranchKey): FlowStep[] {
+  const value = branch === 'else' ? group.else : group.steps;
+  return Array.isArray(value) ? value : [];
+}
+
+function withChildren(group: FlowStep, branch: BranchKey, children: FlowStep[]): FlowStep {
+  const next = { ...group } as FlowStep;
+  if (children.length === 0) delete next[branch];
+  else next[branch] = children;
+  return next;
+}
+
+export function appendChild(
+  steps: readonly FlowStep[],
+  index: number,
+  child: FlowStep,
+  branch: BranchKey = 'steps',
+): FlowStep[] {
   if (index < 0 || index >= steps.length) return [...steps];
   const group = steps[index];
-  const children = Array.isArray(group.steps) ? [...group.steps, child] : [child];
+  const children = [...listOf(group, branch), child];
   const next = [...steps];
-  next[index] = { ...group, steps: children };
+  next[index] = withChildren(group, branch, children);
   return next;
 }
 
@@ -90,20 +107,20 @@ export function selectionAfterRemove(index: number, length: number): number {
  * 组里只剩一个时连 `steps` 字段一起收掉——留一个空数组会在 JSON 里写成
  * `"steps": []`，读起来像"这里本来有个循环，被清空了"，其实就该没有。
  */
-export function removeChildAt(steps: readonly FlowStep[], index: number, child: number): FlowStep[] {
+export function removeChildAt(
+  steps: readonly FlowStep[],
+  index: number,
+  child: number,
+  branch: BranchKey = 'steps',
+): FlowStep[] {
   if (index < 0 || index >= steps.length) return [...steps];
   const group = steps[index];
-  const children = group.steps;
-  if (!Array.isArray(children) || child < 0 || child >= children.length) return [...steps];
+  const children = listOf(group, branch);
+  if (child < 0 || child >= children.length) return [...steps];
 
   const kept = children.filter((_, i) => i !== child);
   const next = [...steps];
-  if (kept.length === 0) {
-    const { steps: _dropped, ...rest } = group;
-    next[index] = rest as FlowStep;
-  } else {
-    next[index] = { ...group, steps: kept };
-  }
+  next[index] = withChildren(group, branch, kept);
   return next;
 }
 
@@ -114,21 +131,30 @@ export function removeChildAt(steps: readonly FlowStep[], index: number, child: 
  * 和 `duplicateAt` 一样深拷贝：坐标、文字都是值，但 `vars`/`when` 是对象，
  * 共用引用会让"改了副本"顺手改了原件。
  */
-export function duplicateChildAt(steps: FlowStep[], index: number, child: number): FlowStep[] {
+export function duplicateChildAt(
+  steps: FlowStep[],
+  index: number,
+  child: number,
+  branch: BranchKey = 'steps',
+): FlowStep[] {
   const group = steps[index];
-  if (!group || !Array.isArray(group.steps) || child < 0 || child >= group.steps.length) {
-    return steps.slice();
-  }
-  const copy = JSON.parse(JSON.stringify(group.steps[child])) as FlowStep;
-  const children = group.steps.slice();
+  const source = group ? listOf(group, branch) : [];
+  if (!group || child < 0 || child >= source.length) return steps.slice();
+  const copy = JSON.parse(JSON.stringify(source[child])) as FlowStep;
+  const children = source.slice();
   children.splice(child + 1, 0, copy);
-  return steps.map((step, at) => (at === index ? { ...step, steps: children } : step));
+  return steps.map((step, at) => (at === index ? withChildren(step, branch, children) : step));
 }
-export function moveChild(steps: readonly FlowStep[], index: number, from: number, to: number): FlowStep[] {
+export function moveChild(
+  steps: readonly FlowStep[],
+  index: number,
+  from: number,
+  to: number,
+  branch: BranchKey = 'steps',
+): FlowStep[] {
   if (index < 0 || index >= steps.length) return [...steps];
   const group = steps[index];
-  const children = group.steps;
-  if (!Array.isArray(children)) return [...steps];
+  const children = listOf(group, branch);
   if (from === to || from < 0 || to < 0 || from >= children.length || to >= children.length) {
     return [...steps];
   }
@@ -136,6 +162,6 @@ export function moveChild(steps: readonly FlowStep[], index: number, from: numbe
   const [moved] = kept.splice(from, 1);
   kept.splice(to, 0, moved);
   const next = [...steps];
-  next[index] = { ...group, steps: kept };
+  next[index] = withChildren(group, branch, kept);
   return next;
 }

@@ -3,13 +3,13 @@
 这个页面只回答一件事：**怎么把 KeyMouse 放到机器上、怎么换版本、怎么拿走**。
 装完怎么用，看[流程编辑器](editor.md)与[命令参考](../reference/cli.md)；东西不工作了看[故障排查](troubleshooting.md)。
 
-当前版本 **0.2.1**（引擎 **2.3.0**）。开发树里怎么编译、怎么打包发版，是另一回事，见[开发与发布流程](../dev/development.md#版本与发布)。
+当前版本 **2.2.0**（引擎 **2.4.0**）。开发树里怎么编译、怎么打包发版，是另一回事，见[开发与发布流程](../dev/development.md#版本与发布)。
 
 ## 先选文件
 
 | 文件 | 需要预装什么 | 体积 | 适合 |
 | --- | --- | --- | --- |
-| `KeyMouseSetup-0.2.1.exe` | 什么都不用装 | 见发布页 | 想用图形编辑器的人（命令行顺带装上） |
+| `KeyMouseSetup-2.2.0.exe` | 什么都不用装 | 见发布页 | 想用图形编辑器的人（命令行顺带装上） |
 | `KeyMouse-x64.exe` | 什么都不用装 | 约 49 MB | 只要命令行 |
 | `KeyMouse-fx-x64.exe` | .NET 10 运行时 | 约 0.3 MB | 已经装了 .NET 10 运行时，只要能命令行 |
 
@@ -22,7 +22,7 @@
 
 ## 用安装程序装
 
-双击 `KeyMouseSetup-0.2.1.exe`。安装程序是个一屏的小对话框（不做多步向导），只有四处要看：
+双击 `KeyMouseSetup-2.2.0.exe`。安装程序是个一屏的小对话框（不做多步向导），只有四处要看：
 
 - **安装到**：默认位置是上次装过的地方（注册表 `GuiPath` 指的那份）；从没装过才是 `%LOCALAPPDATA%\Programs\KeyMouse`。点「浏览…」可以换，但拒绝装到磁盘根目录（`C:\` 这种）。
 - **一起装命令行**：首次安装时这个勾选框是灰的、强制勾上——没有命令行，编辑器跑不了流程；非首次安装时默认勾上「同时更新命令行到本安装包的版本」，取消勾选则保留机器上已有的那份命令行。
@@ -56,10 +56,10 @@
 CI 或脚本里装的时候用得上：
 
 ```pwsh
-.\KeyMouseSetup-0.2.1.exe --silent                                  # 装到默认位置
-.\KeyMouseSetup-0.2.1.exe --silent --dir D:\Tools\KeyMouse          # 指定目录
-.\KeyMouseSetup-0.2.1.exe --silent --no-cli                         # 只要编辑器，别动命令行
-.\KeyMouseSetup-0.2.1.exe --print-default                           # 只打印默认目录，不装
+.\KeyMouseSetup-2.2.0.exe --silent                                  # 装到默认位置
+.\KeyMouseSetup-2.2.0.exe --silent --dir D:\Tools\KeyMouse          # 指定目录
+.\KeyMouseSetup-2.2.0.exe --silent --no-cli                         # 只要编辑器，别动命令行
+.\KeyMouseSetup-2.2.0.exe --print-default                           # 只打印默认目录，不装
 ```
 
 退出码 `0` = 装好了，`1` = 没装成。装不成时先看 `%TEMP%\keymouse-setup.log`（开头一行是 `start <参数>`，失败那行是 `install failed: …`）；注册表写失败不拦安装，但会往同一个目录的 `keymouse-registry.log` 记一行。这两个日志在 `%TEMP%` 不可写时会落到备用目录，`KeyMouse doctor` 的「临时文件：」一行写的就是实际位置。
@@ -91,7 +91,7 @@ $env:Path += ';D:\Tools\KeyMouse'
 确认拿到的是哪一份：
 
 ```pwsh
-KeyMouse --version      # KeyMouse 0.2.1（引擎 2.3.0）
+KeyMouse --version      # KeyMouse 2.2.0（引擎 2.4.0）
 KeyMouse doctor         # 环境判定、自己是谁、命令行在哪、注册表里写着什么
 ```
 

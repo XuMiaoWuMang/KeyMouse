@@ -54,7 +54,7 @@ KeyMouse doctor                                      # 判不清环境时先跑�
 | **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
 | **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令 |
 | **录制** | `record` 全局监听键鼠（只观察、不拦截），把一次操作写成可回放的 JSON：屏幕坐标、抽稀后的轨迹、关键步骤截图 |
-| **图形编辑器** | 新外壳 `KeyMouse.Editor.exe`（Tauri + Svelte，界面进程不提权）：账本式步骤列表、按契约渲染的参数检视器、打开/保存、增删排序与撤销、试运行与播放、停止、录制；老外壳 `KeyMouse.FlowEditor.exe`（WinUI 3）过渡期保留，`KeyMouse flow edit 流程.json` 默认开新外壳、找不到才退到它 |
+| **图形编辑器** | 新外壳 `KeyMouse.Editor.exe`（Tauri + Svelte，界面进程不提权）：无限画布 + 三种形状（流程控制/循环控制/操作指令）、左键框选/右键平移、节点拖动排序与缩放、多选长按整组拖动、可拖进任意分支/换层、右侧详情抽屉、打开/保存、撤销、试运行与播放、停止、录制；录制、播放、取点/取区域默认隐藏主窗口，播放与录制用桌面浮条控制；老外壳 `KeyMouse.FlowEditor.exe`（WinUI 3）过渡期保留，`KeyMouse flow edit 流程.json` 默认开新外壳、找不到才退到它 |
 | **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提 |
 | **循环与变量** | 流程可以带 `variables`、用 `{{名字}}` 传值、用 `repeat` / `foreach` 循环；`read-text` 把屏幕内容读进变量 |
 | **控制流** | C 风格的 `if/else`、`while`、`do-while`、`for`、`break/continue`，条件是一套手写的小表达式（变量比较、`text("…")` 读屏谓词、`found()`、`elapsed()`），循环都有 `maxRounds` 与 `--max-steps` 上界 |

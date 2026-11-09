@@ -147,6 +147,7 @@ function Save-Bitmap($bmp, [string]$name, [string]$outPath) {
 }
 
 if ($FullScreen) {
+    Add-Type -AssemblyName System.Windows.Forms
     $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
     if (-not $bounds) {
         Add-Type -AssemblyName System.Windows.Forms

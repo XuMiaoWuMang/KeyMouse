@@ -183,7 +183,7 @@ CI 侧：`.github\workflows\ci.yml` 在 push 到 `main`、PR 和手动触发时�
 
 ## 版本与发布
 
-版本号只有一个来源：根 `Directory.Build.props` 的 `<ProductVersion>`（产品 0.2.1）与 `<EngineVersion>`（引擎 2.3.0）。规则由 `tools\dev\check-version.ps1` 强制：
+版本号只有一个来源：根 `Directory.Build.props` 的 `<ProductVersion>`（产品 2.2.0）与 `<EngineVersion>`（引擎 2.4.0）。规则由 `tools\dev\check-version.ps1` 强制：
 
 - `src\KeyMouse.Cli`、`src\KeyMouse.FlowEditor`、`src\KeyMouse.Setup` 用 `<Version>$(ProductVersion)</Version>`；`src\KeyMouse.Core`、`src\KeyMouse.Runner` 用 `$(EngineVersion)`；
 - `src\` 下的 csproj / props / targets 不许写死 `<(ProductVersion|EngineVersion|Version)>x.y.z`；
@@ -222,7 +222,7 @@ pwsh tools\build\pack-release.ps1         # -SkipEditor / -SkipCli 可跳过某�
 `tools\release\` 下是手动等价物：
 
 ```pwsh
-pwsh tools\release\release-notes.ps1 -Tag cli-v0.2.1 -Out release-notes.md
+pwsh tools\release\release-notes.ps1 -Tag cli-v2.2.0 -Out release-notes.md
 pwsh tools\release\release.ps1 -DryRun          # 需要 GITHUB_TOKEN（Contents: write）
 pwsh tools\release\clean-releases.ps1 -Remove gui,v0.1.0 -Yes
 ```

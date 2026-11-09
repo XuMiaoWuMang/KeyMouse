@@ -24,6 +24,7 @@
 } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { firstFailure, resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
+  import { pickSpaceLabel, shouldAttachWindow } from './lib/pick';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import {
     MIN_MOVE_RUN,
@@ -45,15 +46,36 @@
     spanOf,
     type Section,
   } from './lib/sections';
-  import { QUICK_TYPES, STEP_TEMPLATES, makeStep, missingHint, missingOf } from './lib/steps';
+  import { QUICK_TYPES, STEP_TEMPLATES, STEP_CATEGORY_LABELS, categoryOf, makeStep, missingHint, missingOf, templatesInCategory } from './lib/steps';
   import {
-    childSteps,
+    branchesOf,
     stepSummary,
     stepTitle,
+    type BranchKey,
     type FlowStep,
     type FlowTarget,
+    type StepCategory,
     type StepType,
   } from './lib/model';
+  import FlowCanvas from './lib/FlowCanvas.svelte';
+  import {
+    allNodes,
+    appendToBranch,
+    copyNodes,
+    duplicateAt as duplicateTreeNodeAt,
+    insertAt,
+    insertManyAt,
+    moveAt,
+    moveNodes,
+    originOf as originOfPath,
+    removeAt as removeNodeAt,
+    removeNodes,
+    replaceAt,
+    sequenceOf,
+    samePath,
+    stepAt,
+    type NodePath,
+  } from './lib/tree';
 
   type RuntimeInfo = {
     cliPath: string | null;
@@ -81,8 +103,17 @@
   let doc: FlowDocument | null = null;
   let steps: FlowStep[] = [];
   let selected = 0;
-  /** 选中的是分组里第几个子步骤；null = 选中的是顶层那一行。 */
+  /** 选中的是分组里第几个子步骤（「成立时」与「否则」摊平后的下标）；null = 选中的是顶层那一行。 */
   let childSel: number | null = null;
+  /** 画布上的选中节点；路径可以有多深，不再限制"顶层 + 一层子步骤"。 */
+  let selectedPath: NodePath | null = null;
+  /** Ctrl/⌘ 多选出来的路径；拖动其中任意一个会整组搬。 */
+  let selectedPaths: NodePath[] = [];
+  /** Ctrl+C 复制出来的步骤；Ctrl+V 时再深拷贝一次，连续粘贴不会共享对象。 */
+  let clipboardSteps: FlowStep[] = [];
+  /** 换文件/录完一次时递增，让画布把整张图放回视野。 */
+  let fitToken = 0;
+  let paletteOpen = false;
   let dirty = false;
   /** 上一次保存（或刚打开）时的序列化快照：撤销回到这一刻就不该再显示未保存。 */
   let savedJson = '';
@@ -171,6 +202,40 @@
   // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
   // 编辑器那两栏只会挡路；而工具栏一旦被盖住，「停止」就摸不到了。
   let mini = false;
+  /** 开始录制/播放时把编辑器藏起来；浮条负责暂停/停止，结束再回来。 */
+  let windowAction: Promise<void> = Promise.resolve();
+  let windowHidden = false;
+
+  function hideEditorWindow(): Promise<void> {
+    windowAction = windowAction.then(async () => {
+      if (windowHidden) return;
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        await getCurrentWindow().hide();
+        windowHidden = true;
+      } catch (e) {
+        note(`编辑器窗口藏不起来：${e}`, true);
+      }
+    });
+    return windowAction;
+  }
+
+  function restoreEditorWindow(): Promise<void> {
+    windowAction = windowAction.then(async () => {
+      if (!windowHidden) return;
+      windowHidden = false;
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const window = getCurrentWindow();
+        await window.show();
+        await window.unminimize();
+        await window.setFocus();
+      } catch {
+        // 恢复失败不拦着收尾：下一次打开还能用。
+      }
+    });
+    return windowAction;
+  }
   let miniSince = 0;
   let miniElapsed = 0;
   let ticker: ReturnType<typeof setInterval> | null = null;
@@ -216,6 +281,12 @@ $: rowKeys = steps.map((_, index) => String(index + 1));
   let moveOpen: Record<number, boolean> = {};
   /** 选中的是不是某个折叠组的题头（那它没有可改的字段，检查器换成只读卡片）。 */
   $: foldHeadSelected = childSel === null && isFoldHead(foldRuns, selected);
+  /** 当前这一行的所有子步骤，按"成立时 → 否则 / 循环体"的顺序摊平；childSel 是这个数组的下标。 */
+  $: current = selectedPath ? stepAt(steps, selectedPath) ?? null : null;
+  $: currentOrigin = selectedPath ? originOfPath(steps, selectedPath) : '';
+  $: currentCategory = current ? categoryOf(current.type) : null;
+  $: totalNodes = allNodes(steps).length;
+  const CATEGORY_ORDER: StepCategory[] = ['flow', 'loop', 'action'];
 
   function toggleMoveRun(index: number) {
     moveOpen = { ...moveOpen, [index]: !moveOpen[index] };
@@ -225,11 +296,38 @@ $: rowKeys = steps.map((_, index) => String(index + 1));
   /** 第几行之前有分组头：模板里要按行号查。 */
   $: sectionAt = new Set(sections.map((section) => section.at));
 /**
- * 一行在文档里的位置："3"、`"6.1"`。命令行报告的 `origin` 用的同一套写法，
+ * 一行在文档里的位置："3"、`"6.1"`、`"6.e1"`。命令行报告的 `origin` 用的同一套写法，
  * 所以结果能直接落到这一行上——分组步展开多少次都不影响。
+ *
+ * `if` 的否则分支用 `.e` 前缀：否则里的第 1 步是 `6.e1`，引擎也是这么写的。
  */
 function originOf(index: number, childIndex: number | null): string {
-  return childIndex === null ? rowKeys[index] : `${rowKeys[index]}.${childIndex + 1}`;
+  if (childIndex === null) return rowKeys[index];
+  const child = childrenOf(steps[index])[childIndex];
+  if (!child) return rowKeys[index];
+  return child.branch === 'else'
+    ? `${rowKeys[index]}.e${child.index + 1}`
+    : `${rowKeys[index]}.${child.index + 1}`;
+}
+
+/** 一个块的子步骤（两条分支一起），带分支与分支内下标；顺序就是界面上的顺序。 */
+function childrenOf(step: FlowStep | undefined): { branch: BranchKey; index: number; step: FlowStep }[] {
+  if (!step) return [];
+  return branchesOf(step).flatMap((branch) =>
+    branch.steps.map((child, index) => ({ branch: branch.key, index, step: child })),
+  );
+}
+
+/** 当前选中的子步骤；选的是顶层行时返回 null。 */
+function selectedChild(): { branch: BranchKey; index: number; step: FlowStep } | null {
+  return childSel === null ? null : childrenOf(steps[selected])[childSel] ?? null;
+}
+
+/** 点号编号里，一条分支在整块里的起始偏移：`if` 的两条分支共用一个 childSel。 */
+function branchOffset(index: number, branchIndex: number): number {
+  return branchesOf(steps[index])
+    .slice(0, branchIndex)
+    .reduce((count, branch) => count + branch.steps.length, 0);
 }
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
@@ -329,6 +427,8 @@ function originOf(index: number, childIndex: number | null): string {
         paused = false;
         progress = null;
         const { code, cancelled } = event.payload;
+        void restoreEditorWindow();
+        void invoke('hide_pill').catch(() => undefined);
 
         // 录制共用同一条子进程通道：结束时该做的是"把刚录出来的文件打开"，
         // 而不是用播放的结论去解释一次录制。
@@ -404,7 +504,6 @@ function originOf(index: number, childIndex: number | null): string {
 $: syncTitle(doc, path, dirty);
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
-  $: current = childSel === null ? steps[selected] ?? null : steps[selected]?.steps?.[childSel] ?? null;
   $: currentShot = current?.shot ?? null;
   // 选中带证据的步骤时才去读那张图；没存过盘就没有可比对的相对路径。
   $: if (currentShot && path) void ensureShot(currentShot);
@@ -474,6 +573,15 @@ $: syncTitle(doc, path, dirty);
     steps = next.steps;
     path = filePath;
     selected = 0;
+    childSel = null;
+    selectedPath = null;
+    selectedPaths = [];
+    fitToken += 1;
+    paletteOpen = false;
+    // 换文件时把上一份的运行痕迹清掉；否则新画布会挂着旧报告的 ✓/✗。
+    results = {};
+    progress = null;
+    runIsDry = false;
     dirty = filePath === null;
     savedJson = JSON.stringify(next);
     // 分组是跟着文件走的：换了一份文件就换一套分组头。异步捞，捞不到就先空着。
@@ -626,23 +734,21 @@ $: syncTitle(doc, path, dirty);
    * 第一条缺必填项的步骤（顶层与分组里的都算）。播放前用它拦一下，别让命令行去报错。
    * 判据是 missingOf（lib/steps.ts），与检查器右上角那句「还缺 …」同源。
    */
-  function firstIncomplete(): { origin: string; label: string; missing: string[] } | null {
-    for (let index = 0; index < steps.length; index++) {
-      const step = steps[index];
-      const own = missingOf(step);
-      if (own.length > 0) {
-        return { origin: String(index + 1), label: stepTitle(step.type), missing: own };
-      }
-      const children = childSteps(step);
-      for (let child = 0; child < children.length; child++) {
-        const lack = missingOf(children[child]);
-        if (lack.length > 0) {
-          return {
-            origin: `${index + 1}.${child + 1}`,
-            label: stepTitle(children[child].type),
-            missing: lack,
-          };
-        }
+  function firstIncomplete(): {
+    path: NodePath;
+    label: string;
+    missing: string[];
+    origin: string;
+  } | null {
+    for (const node of allNodes(steps)) {
+      const lack = missingOf(node.step);
+      if (lack.length > 0) {
+        return {
+          path: node.path,
+          label: stepTitle(node.step.type),
+          missing: lack,
+          origin: originOfPath(steps, node.path),
+        };
       }
     }
     return null;
@@ -663,9 +769,8 @@ $: syncTitle(doc, path, dirty);
           `第 ${incomplete.origin} 步（${incomplete.label}）还缺 ${incomplete.missing.join('、')}：补齐再播放，或者先按 Ctrl+Enter 试运行看看`,
           true,
         );
-        const [row, child] = incomplete.origin.split('.');
-        selected = Number(row) - 1;
-        childSel = child === undefined ? null : Number(child) - 1;
+        selected = incomplete.path[0]?.index ?? 0;
+        selectPath(incomplete.path);
         return;
       }
     }
@@ -716,13 +821,20 @@ $: syncTitle(doc, path, dirty);
     }
 
     try {
-      await invoke('run_flow', { path: target });
+      // 先把浮条和藏好的主窗口准备好，再启动命令行：流程可能 100ms 就失败退出，
+      // 反过来做会出现"退出了以后浮条才冒出来"的鬼影。
+      await invoke('show_run_pill').catch((e) => note(`播放浮条没起来：${e}`, true));
       running = true;
       paused = false;
       scratchRun = scratch;
+      await hideEditorWindow();
+      await invoke('run_flow', { path: target });
       note(runHint(false) + (scratch ? '（跑的是临时副本，磁盘上的文件没动）' : ''));
     } catch (e) {
+      running = false;
       note(`播放没起来：${e}`, true);
+      await restoreEditorWindow();
+      void invoke('hide_pill').catch(() => undefined);
     }
   }
 
@@ -789,14 +901,20 @@ $: syncTitle(doc, path, dirty);
     results = {};
     progress = null;
     outputOpen = true;
+    recordingPath = target;
+    recordMode = 'self';
+    running = true;
+    // 先把主窗口让开，再让录制命令行上钩子：录到一半才藏，会把开头的鼠标轨迹录成"点编辑器"。
+    await hideEditorWindow();
     try {
       await invoke('record_flow', { outPath: target, durationMs: 0 });
-      recordingPath = target;
-      recordMode = 'self';
-      running = true;
-      // 录制期间不缩窗口：浮条已经在桌面上了，缩成细带反而挡住用户要操作的地方。
-      note('开始录了：去操作你要录的窗口；浮条上的「停止」或 Esc 都能收尾');
+      note('开始录了：去操作你要录的窗口；浮条上的「停止」或 Ctrl+Alt+Q 都能收尾');
     } catch (e) {
+      running = false;
+      recordingPath = null;
+      recordMode = null;
+      await restoreEditorWindow();
+      void invoke('hide_pill').catch(() => undefined);
       note(`录制没起来：${e}`, true);
     }
   }
@@ -852,6 +970,7 @@ $: syncTitle(doc, path, dirty);
    * 收不起来不算录制失败：那条带子是本轮的"顺手"，录制本身还在跑，
    * 所以只写一行提示。
    */
+  /** 缩成一条细带（旧路径）。录制浮条接管后不再用，保留给老版本外壳的说明。 */
   async function enterMini(): Promise<void> {
     miniSince = Date.now();
     miniElapsed = 0;
@@ -964,6 +1083,13 @@ $: syncTitle(doc, path, dirty);
     doc = next;
     steps = next.steps ?? [];
     selected = Math.min(selected, Math.max(steps.length - 1, 0));
+    selectedPaths = selectedPaths.filter((path) => stepAt(steps, path) !== undefined);
+    // 撤销可能把当前节点（连同它的父分支）一起撤掉；路径失效就收起抽屉，别指向空气。
+    if (selectedPath && !stepAt(steps, selectedPath)) {
+      selectedPath = selectedPaths[selectedPaths.length - 1] ?? null;
+      selected = selectedPath?.[0]?.index ?? 0;
+      childSel = selectedPath && selectedPath.length > 1 ? selectedPath[1].index : null;
+    }
     // 撤销回到保存那一刻，脏标记就该跟着消失——否则用户明明回到了存盘状态，
     // 关窗还要被问一句要不要保存。
     dirty = json !== savedJson;
@@ -1179,26 +1305,198 @@ $: syncTitle(doc, path, dirty);
   }
 
 
-  /** 在选中步之后插一步；没有选中（空文档）就放到最前面。 */
+  /** 选中一个画布节点；路径失效时收起抽屉，不指向空气。 */
+  function selectPath(path: NodePath | null, additive = false, range = false) {
+    paletteOpen = false;
+    if (!path) {
+      applySelection([], null);
+      return;
+    }
+    if (range && selectedPath) {
+      const nodes = allNodes(steps);
+      const from = nodes.findIndex((node) => samePath(node.path, selectedPath));
+      const to = nodes.findIndex((node) => samePath(node.path, path));
+      if (from >= 0 && to >= 0) {
+        const [start, end] = from < to ? [from, to] : [to, from];
+        applySelection(nodes.slice(start, end + 1).map((node) => node.path), path);
+        return;
+      }
+    }
+    if (!additive) {
+      applySelection([path], path);
+      return;
+    }
+    const exists = selectedPaths.findIndex((item) => samePath(item, path)) >= 0;
+    if (exists) {
+      const paths = selectedPaths.filter((item) => !samePath(item, path));
+      const primary = selectedPath && !samePath(selectedPath, path)
+        ? selectedPath
+        : paths[paths.length - 1] ?? null;
+      applySelection(paths, primary);
+      return;
+    }
+    applySelection([...selectedPaths, path], path);
+  }
+
+  function applySelection(paths: NodePath[], primary: NodePath | null) {
+    selectedPaths = paths;
+    selectedPath = primary;
+    selected = primary?.[0]?.index ?? 0;
+    childSel = primary && primary.length > 1 ? primary[1].index : null;
+  }
+
+  /** 在选中节点之后插一步；选中块节点时进它的第一条分支（成立时/循环体）。 */
   async function addStep(type: StepType) {
-    // 起始页上点快捷按钮也应该有反应：没有文档就先建一份空的（老外壳同样不会静默吞掉这一下）。
     if (!doc) await newFlow();
     if (!doc) return;
-    const at = steps.length === 0 ? -1 : selected;
     const fresh = makeStep(type);
-    const host = at >= 0 ? steps[at] : null;
-    // 选中的是一行分组（repeat / foreach / call）时，新步骤进组而不是插在组后面——
-    // 这是老外壳的习惯：分组里想加东西，先选它再点动作。
-    if (host && Array.isArray(host.steps)) {
-      applySteps(appendChild(steps, at, fresh));
-      expanded = { ...expanded, [at]: true };
-      note(`往「${stepTitle(host.type)}」里加了一步${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
+    const host = current;
+    const hostPath = selectedPath;
+    let next = steps;
+    let target: NodePath;
+
+    if (host && hostPath && branchesOf(host).length > 0) {
+      const branch = branchesOf(host)[0].key;
+      const childCount = branchesOf(host)[0].steps.length;
+      next = appendToBranch(steps, hostPath, branch, fresh);
+      target = [...hostPath, { branch, index: childCount }];
+      note(`往「${stepTitle(host.type)}」里加了一步${missingOf(fresh).length > 0 ? '：抽屉里补齐还没填的项' : ''}`);
+    } else if (hostPath && hostPath.length > 0) {
+      const parent = hostPath.slice(0, -1);
+      const last = hostPath[hostPath.length - 1];
+      next = insertAt(steps, parent, last.branch, last.index + 1, fresh);
+      target = [...parent, { branch: last.branch, index: last.index + 1 }];
+      note(`加了「${stepTitle(type)}」${missingOf(fresh).length > 0 ? '：抽屉里补齐还没填的项' : ''}`);
     } else {
-      applySteps(insertAfter(steps, at, fresh), { kind: 'insert', at: at + 1 });
-      selected = at + 1;
-      note(`加了「${stepTitle(type)}」${missingOf(fresh).length > 0 ? '：右边补齐还没填的项' : ''}`);
+      next = insertAt(steps, [], 'steps', steps.length, fresh);
+      target = [{ branch: 'steps', index: steps.length }];
+      note(`加了「${stepTitle(type)}」${missingOf(fresh).length > 0 ? '：抽屉里补齐还没填的项' : ''}`);
     }
-    moreOpen = false;
+
+    applySteps(next);
+    selectPath(target);
+    paletteOpen = false;
+  }
+
+  /** 空分支上那个「加一步」：塞一个最小可用的等待步骤，随后就能在抽屉里改。 */
+  function addEmptyBranchPath(parent: NodePath, branch: BranchKey) {
+    if (!doc) return;
+    const host = stepAt(steps, parent);
+    if (!host) return;
+    const fresh = makeStep('sleep');
+    const count = sequenceOf(steps, parent, branch).length;
+    const next = appendToBranch(steps, parent, branch, fresh);
+    applySteps(next);
+    selectPath([...parent, { branch, index: count }]);
+    note(`往「${stepTitle(host.type)}」${branch === 'else' ? '的否则分支' : ''}里加了一步`);
+  }
+
+  function deleteSelected() {
+    if (!doc) return;
+    const paths = selectedPaths.length > 0 ? selectedPaths : selectedPath ? [selectedPath] : [];
+    if (paths.length === 0) return;
+    if (paths.length > 1) {
+      const count = paths.length;
+      applySteps(removeNodes(steps, paths));
+      applySelection([], null);
+      note(`删了 ${count} 步（Ctrl+Z 可以反悔）`);
+      return;
+    }
+    const path = paths[0];
+    const last = path[path.length - 1];
+    const parent = path.slice(0, -1);
+    const siblings = sequenceOf(steps, parent, last.branch);
+    const next = removeNodeAt(steps, path);
+    applySteps(next);
+    if (siblings.length <= 1) selectPath(parent.length > 0 ? parent : null);
+    else {
+      selectPath([...parent, { branch: last.branch, index: Math.min(last.index, siblings.length - 2) }]);
+    }
+    note('删了这一步（Ctrl+Z 可以反悔）');
+  }
+
+  function duplicateSelected() {
+    if (!doc || !selectedPath) return;
+    const path = selectedPath;
+    const last = path[path.length - 1];
+    const parent = path.slice(0, -1);
+    applySteps(duplicateTreeNodeAt(steps, path));
+    selectPath([...parent, { branch: last.branch, index: last.index + 1 }]);
+    note('复制了一步');
+  }
+
+  function copySelected() {
+    if (!doc) return;
+    const paths = selectedPaths.length > 0 ? selectedPaths : selectedPath ? [selectedPath] : [];
+    const copies = copyNodes(steps, paths);
+    if (copies.length === 0) {
+      note('先在画布上选中要复制的操作', true);
+      return;
+    }
+    clipboardSteps = copies;
+    note(`已复制 ${copies.length} 步`);
+  }
+
+  function pasteAfterSelected() {
+    if (!doc) return;
+    if (clipboardSteps.length === 0) {
+      note('还没有复制操作', true);
+      return;
+    }
+    const anchor = selectedPath;
+    const parent = anchor ? anchor.slice(0, -1) : [];
+    const branch: BranchKey = anchor ? anchor[anchor.length - 1].branch : 'steps';
+    const index = anchor ? anchor[anchor.length - 1].index + 1 : steps.length;
+    const next = insertManyAt(steps, parent, branch, index, clipboardSteps);
+    const pasted: NodePath[] = clipboardSteps.map((_, offset) => [
+      ...parent,
+      { branch, index: index + offset },
+    ]);
+    applySteps(next);
+    applySelection(pasted, pasted[0] ?? null);
+    note(
+      clipboardSteps.length > 1
+        ? `粘贴了 ${clipboardSteps.length} 步，已全部选中`
+        : '粘贴了一步',
+    );
+  }
+
+  function moveSelected(delta: -1 | 1) {
+    if (!doc || !selectedPath) return;
+    const path = selectedPath;
+    const last = path[path.length - 1];
+    const parent = path.slice(0, -1);
+    const siblings = sequenceOf(steps, parent, last.branch);
+    const target = delta < 0 ? last.index - 1 : last.index + 2;
+    if (target < 0 || target > siblings.length) return;
+    applySteps(moveAt(steps, path, parent, last.branch, target));
+    selectPath([...parent, { branch: last.branch, index: delta < 0 ? last.index - 1 : last.index + 1 }]);
+  }
+
+  function canMove(delta: -1 | 1): boolean {
+    if (!selectedPath) return false;
+    const last = selectedPath[selectedPath.length - 1];
+    const siblings = sequenceOf(steps, selectedPath.slice(0, -1), last.branch);
+    return delta < 0 ? last.index > 0 : last.index < siblings.length - 1;
+  }
+
+  /** 画布拖拽落点：可以换父节点/分支；被搬的一组节点保持文档顺序。 */
+  function handleMove(from: NodePath[], parent: NodePath, branch: BranchKey, index: number) {
+    if (!doc || from.length === 0) return;
+    const result = moveNodes(steps, from, parent, branch, index);
+    if (result.moved.length === 0) return;
+    applySteps(result.steps);
+    applySelection(result.moved, result.moved[0]);
+    if (result.moved.length > 1) note(`一起移动了 ${result.moved.length} 步`);
+  }
+
+  /** ↑ / ↓ 在画布的可读顺序里换一个节点（父 → 成立时 → 否则）。 */
+  function selectRelative(delta: -1 | 1) {
+    const nodes = allNodes(steps);
+    if (nodes.length === 0) return;
+    const at = selectedPath ? nodes.findIndex((node) => samePath(node.path, selectedPath)) : -1;
+    const next = Math.max(0, Math.min(nodes.length - 1, at < 0 ? (delta > 0 ? 0 : nodes.length - 1) : at + delta));
+    selectPath(nodes[next].path);
   }
 
   /** 复制这一步（右键菜单里的一项）。副本插在原件后面，并选中副本。 */
@@ -1223,14 +1521,18 @@ $: syncTitle(doc, path, dirty);
     if (!rowMenu) return false;
     const { index, child } = rowMenu;
     if (child === undefined) return index > 0;
-    return child > 0;
+    const ref = childrenOf(steps[index])[child];
+    return ref !== undefined && ref.index > 0;
   }
 
   function canMenuDown(): boolean {
     if (!rowMenu) return false;
     const { index, child } = rowMenu;
     if (child === undefined) return index < steps.length - 1;
-    return child < childSteps(steps[index]).length - 1;
+    const ref = childrenOf(steps[index])[child];
+    if (!ref) return false;
+    const branch = branchesOf(steps[index]).find((item) => item.key === ref.branch);
+    return (branch?.steps.length ?? 0) > ref.index + 1;
   }
   function menuDuplicate() {
     if (!rowMenu) return;
@@ -1338,32 +1640,49 @@ $: syncTitle(doc, path, dirty);
    */
   function deleteChildStep(index: number, child: number) {
     if (!doc) return;
-    applySteps(removeChildAt(steps, index, child));
-    if (selected === index && childSel === child) childSel = null;
+    const ref = childrenOf(steps[index])[child];
+    if (!ref) return;
+    const next = removeChildAt(steps, index, ref.index, ref.branch);
+    applySteps(next);
+    if (selected === index && childSel !== null) {
+      if (childSel === child) childSel = null;
+      else if (childSel > child) childSel -= 1;
+    }
     note('删了组里的一步（Ctrl+Z 可以反悔）');
   }
 
   function moveChildStep(index: number, child: number, delta: number) {
     if (!doc) return;
-    applySteps(moveChild(steps, index, child, child + delta));
+    const ref = childrenOf(steps[index])[child];
+    if (!ref) return;
+    applySteps(moveChild(steps, index, ref.index, ref.index + delta, ref.branch));
+    if (selected === index && childSel !== null) {
+      if (childSel === child) childSel += delta;
+      else if (childSel === child + delta) childSel = child;
+    }
   }
 
   function duplicateChildStep(index: number, child: number) {
     if (!doc) return;
-    const kids = childSteps(steps[index]);
-    applySteps(duplicateChildAt(steps, index, child));
+    const ref = childrenOf(steps[index])[child];
+    if (!ref) return;
+    const before = childrenOf(steps[index]).length;
+    applySteps(duplicateChildAt(steps, index, ref.index, ref.branch));
     expanded = { ...expanded, [index]: true };
     selected = index;
-    childSel = Math.min(child + 1, kids.length);
+    childSel = Math.min(child + 1, before);
     note('复制了组里的一步');
   }
   /** 删掉选中的那一步：选的是组里的子步骤就只删它，不动整组。 */
   function deleteStep(index = selected) {
     if (!doc || steps.length === 0) return;
-    if (childSel !== null) {
-      const kids = childSteps(steps[index]);
-      applySteps(removeChildAt(steps, index, childSel));
-      childSel = kids.length <= 1 ? null : Math.min(childSel, kids.length - 2);
+    if (childSel !== null && index === selected) {
+      const ref = childrenOf(steps[index])[childSel];
+      if (!ref) return;
+      const next = removeChildAt(steps, index, ref.index, ref.branch);
+      applySteps(next);
+      const after = childrenOf(next[index]).length;
+      childSel = after === 0 ? null : Math.min(childSel, after - 1);
       note('删了组里的一步（Ctrl+Z 可以反悔）');
       return;
     }
@@ -1375,9 +1694,10 @@ $: syncTitle(doc, path, dirty);
 
   function stepUp(index = selected) {
     if (!doc) return;
-    if (childSel !== null) {
-      if (childSel <= 0) return;
-      applySteps(moveChild(steps, index, childSel, childSel - 1));
+    if (childSel !== null && index === selected) {
+      const ref = childrenOf(steps[index])[childSel];
+      if (!ref || ref.index <= 0) return;
+      applySteps(moveChild(steps, index, ref.index, ref.index - 1, ref.branch));
       childSel -= 1;
       return;
     }
@@ -1388,10 +1708,12 @@ $: syncTitle(doc, path, dirty);
 
   function stepDown(index = selected) {
     if (!doc) return;
-    if (childSel !== null) {
-      const kids = childSteps(steps[index]);
-      if (childSel >= kids.length - 1) return;
-      applySteps(moveChild(steps, index, childSel, childSel + 1));
+    if (childSel !== null && index === selected) {
+      const ref = childrenOf(steps[index])[childSel];
+      if (!ref) return;
+      const branch = branchesOf(steps[index]).find((item) => item.key === ref.branch);
+      if (!branch || ref.index >= branch.steps.length - 1) return;
+      applySteps(moveChild(steps, index, ref.index, ref.index + 1, ref.branch));
       childSel += 1;
       return;
     }
@@ -1408,7 +1730,7 @@ $: syncTitle(doc, path, dirty);
     if (steps.length === 0) return;
     if (delta > 0) {
       if (childSel === null) {
-        const kids = childSteps(steps[selected]);
+        const kids = childrenOf(steps[selected]);
         if (kids.length > 0 && expanded[selected]) {
           childSel = 0;
           return;
@@ -1420,7 +1742,7 @@ $: syncTitle(doc, path, dirty);
         }
         return;
       }
-      const kids = childSteps(steps[selected]);
+      const kids = childrenOf(steps[selected]);
       if (childSel + 1 < kids.length) {
         childSel += 1;
         return;
@@ -1441,7 +1763,7 @@ $: syncTitle(doc, path, dirty);
     selected = Math.max(selected - 1, 0);
     // 往上走时落在组员上就退回题头：题头才是看得见的那一行。
     if (isFoldMember(foldRuns, selected)) selected = foldRuns[selected].head;
-    const kids = childSteps(steps[selected]);
+    const kids = childrenOf(steps[selected]);
     childSel = kids.length > 0 && expanded[selected] ? kids.length - 1 : null;
   }
 
@@ -1474,13 +1796,14 @@ $: syncTitle(doc, path, dirty);
    */
   function closePopups(except?: string) {
     if (except !== 'more') moreOpen = false;
+    if (except !== 'palette') paletteOpen = false;
     if (except !== 'record') recordMenuOpen = false;
     if (except !== 'ops') opsOpen = false;
     if (except !== 'row') rowMenu = null;
   }
 
   function onWindowPointerDown(event: PointerEvent) {
-    if (!moreOpen && !recordMenuOpen && !opsOpen && !rowMenu) return;
+    if (!moreOpen && !paletteOpen && !recordMenuOpen && !opsOpen && !rowMenu) return;
     const element = event.target as Element | null;
     const owner = element?.closest?.('[data-popup]');
     closePopups(owner?.getAttribute('data-popup') ?? undefined);
@@ -1537,11 +1860,10 @@ $: syncTitle(doc, path, dirty);
       return;
     }
 
-    // Ctrl+F：光标跳进过滤框。流程长的时候，找一步比滚快。
-    if (mod && key === 'f') {
+    // Ctrl+Shift+A：打开画布的添加面板（和旧版「更多」同一个手势）。
+    if (event.ctrlKey && event.shiftKey && key === 'a') {
       event.preventDefault();
-      filterBox?.focus();
-      filterBox?.select();
+      paletteOpen = true;
       return;
     }
 
@@ -1565,83 +1887,71 @@ $: syncTitle(doc, path, dirty);
       return;
     }
 
-    // Enter 长按：按住过阈值就打开这一行的菜单；短按仍然只是选中（由按钮自己处理）。
-    if (key === 'enter' && !mod && !event.altKey && doc) {
-      if (!event.repeat) startKeyboardPress(selected);
-      return;
-    }
-
-    // Esc 分两件事：跑着的时候它是"停止"（这是玩流程时手指最自然的位置），
-    // 否则把那张「+ 更多」卡片收起来——它在视觉上压住了列表。
     if (key === 'escape') {
       if (helpOpen) {
         helpOpen = false;
-        return;
-      }
-      if (rowMenu) {
-        rowMenu = null;
         return;
       }
       if (opsOpen) {
         opsOpen = false;
         return;
       }
+      if (paletteOpen) {
+        paletteOpen = false;
+        return;
+      }
+      if (current) {
+        selectPath(null);
+        return;
+      }
       if (running) void stopRun();
-      moreOpen = false;
       recordMenuOpen = false;
-      return;
-    }
-    if (event.ctrlKey && event.shiftKey && key === 'a') {
-      event.preventDefault();
-      moreOpen = true;
       return;
     }
 
     if (typing || !doc) return;
 
+    // Ctrl+C / Ctrl+V：复制选中的一组步骤，粘贴到主选节点后面。
+    if (mod && key === 'c') {
+      event.preventDefault();
+      copySelected();
+      return;
+    }
+    if (mod && key === 'v') {
+      event.preventDefault();
+      pasteAfterSelected();
+      return;
+    }
+    // Ctrl+A：把画布上的节点全选，之后可以整组拖到另一条分支里。
+    if (mod && key === 'a' && !shift) {
+      event.preventDefault();
+      const all = allNodes(steps);
+      if (all.length > 0) applySelection(all.map((node) => node.path), all[0].path);
+      return;
+    }
     if (event.altKey && event.key === 'ArrowUp') {
       event.preventDefault();
-      stepUp();
+      moveSelected(-1);
       return;
     }
     if (event.altKey && event.key === 'ArrowDown') {
       event.preventDefault();
-      stepDown();
+      moveSelected(1);
       return;
     }
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
-      deleteStep();
-      return;
-    }
-    // ← / → 收放当前分组：树形列表的通行手势，也让"先展开再进去"不必去够那个小箭头。
-    if (event.key === 'ArrowRight' && childSel === null) {
-      if (childSteps(steps[selected]).length > 0 && !expanded[selected]) {
-        event.preventDefault();
-        expanded = { ...expanded, [selected]: true };
-      }
-      return;
-    }
-    if (event.key === 'ArrowLeft') {
-      if (childSel !== null) {
-        event.preventDefault();
-        childSel = null;
-        return;
-      }
-      if (expanded[selected]) {
-        event.preventDefault();
-        expanded = { ...expanded, [selected]: false };
-      }
+      deleteSelected();
       return;
     }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      moveSelection(1);
+      selectRelative(1);
       return;
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      moveSelection(-1);
+      selectRelative(-1);
     }
   }
 
@@ -1766,17 +2076,9 @@ $: syncTitle(doc, path, dirty);
   }
 
   function replaceCurrent(next: FlowStep) {
-    const top = [...steps];
-    if (childSel === null) {
-      top[selected] = next;
-    } else {
-      const group = steps[selected];
-      if (!group || !Array.isArray(group.steps)) return;
-      const children = [...group.steps];
-      children[childSel] = next;
-      top[selected] = { ...group, steps: children };
-    }
-    doc = { ...doc!, steps: top };
+    if (!doc || !selectedPath) return;
+    const top = replaceAt(steps, selectedPath, next);
+    doc = { ...doc, steps: top };
     steps = top;
     touch();
   }
@@ -1799,7 +2101,11 @@ $: syncTitle(doc, path, dirty);
   async function pickField(kind: 'point' | 'region', path: string) {
     const step = current;
     if (!step) return;
+    const wasHidden = windowHidden;
     try {
+      // 取点/取区域时先藏主窗口：否则十字线和选区浮层会压在编辑器上，
+      // 用户想选的目标窗口也被挡住。默认就是藏；取消或失败都会在 finally 里还回来。
+      await hideEditorWindow();
       const picked = await invoke<{
         space: string;
         x: number;
@@ -1821,19 +2127,24 @@ $: syncTitle(doc, path, dirty);
         y: picked.y,
         ...(kind === 'region' ? { width: picked.width, height: picked.height } : {}),
       });
-      if (picked.process) {
-        next = writePath(next, 'target.process', picked.process);
-        if (picked.title) next = writePath(next, 'target.title', picked.title);
+      const attachWindow = shouldAttachWindow(picked.space);
+      if (attachWindow && picked.process) {
+        // `probe.region` / `when.region` 的窗口属于那个嵌套对象，不是步骤自己的 target；
+        // 写错层会让条件读一个空选择器。屏幕坐标不绑定窗口，不自动填进程名。
+        const owner = path.includes('.') ? path.slice(0, path.lastIndexOf('.') + 1) : '';
+        next = writePath(next, `${owner}target.process`, picked.process);
+        if (picked.title) next = writePath(next, `${owner}target.title`, picked.title);
       }
       replaceCurrent(next as unknown as FlowStep);
-      const where =
-        picked.space === 'client' ? '客户区' : picked.space === 'window' ? '窗口' : '屏幕';
+      const where = pickSpaceLabel(picked.space);
       note(
         '取了 ' + where + '上的 ' + picked.x + ',' + picked.y +
-          (picked.process ? '（' + picked.process + '）' : ''),
+          (attachWindow && picked.process ? '（' + picked.process + '）' : ''),
       );
     } catch (e) {
       note(`取点失败：${String(e)}`, true);
+    } finally {
+      if (!wasHidden) await restoreEditorWindow();
     }
   }
 
@@ -1844,9 +2155,9 @@ $: syncTitle(doc, path, dirty);
    * （比如「等待时间」）就如实说，别默默什么都不做。
    */
   async function pickForSelected() {
-    const step = steps[selected];
+    const step = current;
     if (!step) {
-      note('先在左边选中一步', true);
+      note('先在画布上选中一步', true);
       return;
     }
     if (!schema) {
@@ -1933,31 +2244,46 @@ $: syncTitle(doc, path, dirty);
   {#if view !== 'settings'}
   <nav class="toolbar">
     <div class="palette">
-      {#each QUICK_TYPES as type}
-        <button class="palette-item" on:click={() => void addStep(type)}>
-          <StepIcon name={type} />{stepTitle(type)}
-        </button>
-      {/each}
       <button
-        class="palette-item more"
-        class:open={moreOpen}
-        data-popup="more"
-        on:click={() => (moreOpen = !moreOpen)}
-        aria-expanded={moreOpen}
-      >+ 更多</button>
+        class="palette-add"
+        class:open={paletteOpen}
+        data-popup="palette"
+        on:click={() => (paletteOpen = !paletteOpen)}
+        aria-expanded={paletteOpen}
+      >
+        <span aria-hidden="true">＋</span> 添加
+      </button>
 
-      {#if moreOpen}
-        <div class="more-menu" role="menu" data-popup="more">
-          {#each moreGroups as group}
-            <p class="more-group">{group}</p>
-            {#each STEP_TEMPLATES.filter((item) => item.group === group && !quickTypes.has(item.type)) as item}
-              <button class="more-item" role="menuitem" on:click={() => addStep(item.type)}>
-                <StepIcon name={item.type} size={14} />{stepTitle(item.type)}
-              </button>
-            {/each}
+      {#if paletteOpen}
+        <div class="add-panel" role="menu" data-popup="palette">
+          {#each CATEGORY_ORDER as category}
+            <section class="add-group {category}">
+              <header>
+                <span class="swatch swatch-{category}" aria-hidden="true"></span>
+                {STEP_CATEGORY_LABELS[category]}
+              </header>
+              <div class="add-items">
+                {#each templatesInCategory(category) as item}
+                  <button class="add-item" role="menuitem" on:click={() => void addStep(item.type)}>
+                    <StepIcon name={item.type} size={14} />
+                    <span>{stepTitle(item.type)}</span>
+                    <small>{item.required.length > 0 ? item.required.length + ' 项必填' : '即插即用'}</small>
+                  </button>
+                {/each}
+              </div>
+            </section>
           {/each}
-          <p class="more-tip">新加的一步是半成品：右边补齐还没填的项才算能用。</p>
+          <p class="add-tip">选中块时加到块里；选中普通步骤时加在它后面。</p>
         </div>
+      {/if}
+    </div>
+
+    <div class="canvas-meta">
+      {#if doc}
+        <span class="meta-count">{totalNodes} 个节点</span>
+        <span class="meta-dim">拖节点排序 · 滚轮缩放</span>
+      {:else}
+        <span class="meta-dim">新建或打开一份流程</span>
       {/if}
     </div>
 
@@ -1998,7 +2324,6 @@ $: syncTitle(doc, path, dirty);
       <button class="ghost" on:click={() => startRun(true)} disabled={busy || running}>试运行</button>
       {#if running}
         {#if !recordingPath}
-          <!-- 暂停是"停在下一步之前"：命令行每一步前问一次命名事件，见 PauseControl.cs。 -->
           <button class="ghost" on:click={() => void togglePause()} disabled={busy}>
             {paused ? '继续' : '暂停'}
           </button>
@@ -2060,7 +2385,7 @@ $: syncTitle(doc, path, dirty);
   </nav>
   {/if}
 
-  {#if view === 'settings'}
+      {#if view === 'settings'}
     <main class="body settings-body">
       <Settings
         runtime={runtime}
@@ -2069,427 +2394,149 @@ $: syncTitle(doc, path, dirty);
       />
     </main>
   {:else}
-  <main class="body">
-    {#if !doc}
-      <section class="empty">
-        <p class="kicker">KeyMouse · 流程编辑器</p>
-        <h2>还没有打开流程</h2>
-        <p>一条流程就是一串动作：切到某个窗口、点一下、输入文字、等屏幕上出现某段字。写好后可以先试运行，确认真能走通再播放。</p>
-        <div class="empty-actions">
-          <button class="primary" on:click={newFlow}>新建流程</button>
-          <button class="ghost outline" on:click={openFlow}>打开流程…</button>
-          <button class="ghost" on:click={openSample}>看看示例</button>
-        </div>
-        <p class="tips">流程文件是 JSON，命令行也能跑：<code>KeyMouse run 流程.json --dry-run</code> 先看每一步的窗口在不在。</p>
-        {#if recent.length > 0}
-          <!-- 最近打开：老外壳的空页也有这一块。文件名在前、目录在后，因为同一目录下的文件名更容易区分。 -->
-          <div class="recent">
-            <h3>最近</h3>
-            <ul>
-              {#each recent.slice(0, 5) as item}
-                <li>
-                  <button class="recent-item" on:click={() => loadFrom(item)} title={item}>
-                    <span class="recent-name">{item.split(/[\\/]/).pop()}</span>
-                    <span class="recent-dir">{item}</span>
-                  </button>
-                </li>
-              {/each}
-            </ul>
+    <main class="body canvas-body">
+      {#if !doc}
+        <section class="empty">
+          <p class="kicker">KeyMouse · 流程编辑器</p>
+          <h2>还没有打开流程</h2>
+          <p>一条流程就是一串动作：切到某个窗口、点一下、输入文字、等屏幕上出现某段字。写好后可以先试运行，确认真能走通再播放。</p>
+          <div class="empty-actions">
+            <button class="primary" on:click={newFlow}>新建流程</button>
+            <button class="ghost outline" on:click={openFlow}>打开流程…</button>
+            <button class="ghost" on:click={openSample}>看看示例</button>
           </div>
-        {/if}
-      </section>
-    {:else}
-      <section class="list" aria-label="步骤">
-        {#if steps.length > 4}
-          <!-- 长流程里找一步不该靠滚：按类型或摘要里的字过滤；编号仍然是文档里的位置。 -->
-          <div class="filter">
-            <input
-              bind:this={filterBox}
-              value={filter}
-              placeholder="找一步：类型、文字、键名都行"
-              aria-label="过滤步骤"
-              on:input={(event) => (filter = event.currentTarget.value)}
-              on:keydown={(event) => {
-                if (event.key === 'Escape') {
-                  event.stopPropagation();
-                  filter = '';
-                }
-              }}
-            />
-            {#if filter}
-              <span class="filter-meta">
-                <button class="ghost filter-clear" on:click={() => (filter = '')} aria-label="清除过滤">清空</button>
-                <span class="filter-count">{visibleSteps.length}/{steps.length}</span>
-              </span>
-            {/if}
-          </div>
-        {/if}
-
-        {#each steps as step, index}
-          {#if matchesFilter(step, filter)}
-          {#if !filter && sectionAt.has(index)}
-            <!-- 分组头（父操作条）：只是列表里的抽屉，**不代表任何动作**——不进 JSON、不参与执行。
-                 拖它整段走，双击改名，右边 × 拆掉分隔线（步骤一步都不动）。 -->
-            <div
-              class="section-head"
-              class:bare={!sections.find((section) => section.at === index)?.title}
-              class:dragging={sectionDrag?.at === index}
-              class:drop-target={sectionDrag !== null && sectionDrag.before === index && sectionDrag.at !== index}
-              data-section-at={index}
-              data-row-index={index}
-              on:pointerdown={(event) => startSectionDrag(index, event)}
-            >
-              <span class="grip" aria-hidden="true">⠿</span>
-              {#if !sections.find((section) => section.at === index)?.title}
-                <!-- 没标题 = 一条分隔线。拖动分组时自动补的那条尾巴就长这样，不吵人。 -->
-                <span class="section-rule" aria-hidden="true"></span>
-              {:else if renaming === index}
-                <input
-                  class="section-input"
-                  bind:value={draftTitle}
-                  on:blur={commitRename}
-                  on:keydown={renameKey}
-                  aria-label="分组名"
-                />
-              {:else}
-                <button class="section-title" on:dblclick={() => beginRename(index)} title="双击改这一组的名字">
-                  {sections.find((section) => section.at === index)?.title}
-                </button>
-                <span class="section-meta">{spanOf(sections, index, steps.length)[1] - index} 步</span>
-              {/if}
-              <button
-                class="tiny section-x"
-                on:click|stopPropagation={() => dropSection(index)}
-                aria-label="拆掉这一组的分隔线"
-                title="拆掉这一组（步骤不动）"
-              >×</button>
-            </div>
-          {/if}
-          {#if isFoldHead(foldRuns, index)}
-            <!-- 自动折叠的连续移动 / 滚轮：题头像一步那样占一行，但内容只读——它不是真步骤。
-                 点整行展开/收起；展开后组里每一步都是真步骤，可以选中改。 -->
-            {@const run = foldRuns[index]}
-            {@const runName = runKind(foldRuns, index) ?? 'move'}
-            <div class="row-wrap move-run" data-row-index={index} data-move-head={index}>
-              <button
-                class="row move-head"
-                class:selected={index === selected && childSel === null}
-                aria-expanded={moveOpen[index] ?? false}
-                title={moveOpen[index]
-                  ? `点一下收起这组${runName === 'wheel' ? '滚轮' : '移动'}`
-                  : `点一下展开这组${runName === 'wheel' ? '滚轮' : '移动'}`}
-                on:click={() => {
-                  toggleMoveRun(index);
-                  selected = index;
-                  childSel = null;
-                  moreOpen = false;
-                  rowMenu = null;
-                }}
-              >
-                <span class="rail" aria-hidden="true"></span>
-                <span class="step-dot" aria-hidden="true"></span>
-                <span class="number">{rowNumber(index)}</span>
-                <span class="chip" aria-hidden="true"><StepIcon name={runName} size={14} /></span>
-                <span class="text">
-                  <span class="title">{stepTitle(runName)}</span>
-                  <span class="summary move-ends">{runSummary(steps, index, run.count)}</span>
-                </span>
-                <span class="tags">
-                  <span class="count">{run.count} 次</span>
-                  {#if foldRunResult(index)}
-                    <span class="result" class:bad={!foldRunResult(index)?.ok} title={foldRunResult(index)?.text}>
-                      {foldRunResult(index)?.ok ? '✓' : '✗'}<span class="result-text">{foldRunResult(index)?.text}</span>
-                    </span>
-                  {/if}
-                  {#if missingOf(steps[index]).length > 0}
-                    <span class="todo" title={missingHint(steps[index])}>待补</span>
-                  {/if}
-                  <span class="caret-hint" aria-hidden="true">{moveOpen[index] ? '▾' : '▸'}</span>
-                </span>
-              </button>
-
-              {#if moveOpen[index]}
-                {#each Array.from({ length: foldRuns[index].count }, (_, k) => k) as k}
-                  {@const real = index + k}
-                  <button
-                    class="row child move-child"
-                    class:selected={real === selected && childSel === null}
-                    on:click={() => {
-                      selected = real;
-                      childSel = null;
-                      moreOpen = false;
-                      rowMenu = null;
-                    }}
-                  >
-                    <span class="rail" aria-hidden="true"></span>
-                    <span class="step-dot" aria-hidden="true"></span>
-                    <span class="number">{rowNumber(index)}.{k + 1}</span>
-                    <span class="chip" aria-hidden="true"><StepIcon name={steps[real].type} size={14} /></span>
-                    <span class="text">
-                      <span class="title">{stepTitle(steps[real].type)}</span>
-                      <span class="summary">{stepSummary(steps[real])}</span>
-                    </span>
-                    {#if results[rowKeys[real]]}
-                      <span class="tags">
-                        <span class="result" class:bad={!results[rowKeys[real]].ok} title={results[rowKeys[real]].text}>
-                          {results[rowKeys[real]].ok ? '✓' : '✗'}
-                          {#if results[rowKeys[real]].dry}<span class="dry-tag">检查</span>{/if}
-                          <span class="result-text">{results[rowKeys[real]].text}</span>
-                        </span>
-                      </span>
-                    {/if}
-                  </button>
+          <p class="tips">流程文件是 JSON，命令行也能跑：<code>KeyMouse run 流程.json --dry-run</code> 先看每一步的窗口在不在。</p>
+          {#if recent.length > 0}
+            <div class="recent">
+              <h3>最近</h3>
+              <ul>
+                {#each recent.slice(0, 5) as item}
+                  <li>
+                    <button class="recent-item" on:click={() => loadFrom(item)} title={item}>
+                      <span class="recent-name">{item.split(/[\\/]/).pop()}</span>
+                      <span class="recent-dir">{item}</span>
+                    </button>
+                  </li>
                 {/each}
+              </ul>
+            </div>
+          {/if}
+        </section>
+      {:else}
+        <FlowCanvas
+          {steps}
+          selected={selectedPath}
+          {selectedPaths}
+          {results}
+          {fitToken}
+          onselect={selectPath}
+          onmove={handleMove}
+          onadd={addEmptyBranchPath}
+          onrange={(paths) => applySelection(paths, paths[0] ?? null)}
+        />
+
+        {#if helpOpen}
+          <div class="help-card" role="dialog" aria-label="键盘与版本">
+            <header>
+              <h3>画布手势</h3>
+              <button class="linkish" on:click={() => (helpOpen = false)}>收起</button>
+            </header>
+            <dl>
+              <dt>滚轮</dt><dd>以鼠标为中心缩放</dd>
+              <dt>拖空白</dt><dd>左键框选 · 右键平移画布</dd>
+              <dt>拖节点</dt><dd>拖动所选节点；可落进任意分支</dd>
+              <dt>长按节点</dt><dd>把节点加入选择，再拖可整组搬</dd>
+              <dt>Ctrl/⌘+点</dt><dd>追加或取消一个节点</dd>
+              <dt>Shift+点</dt><dd>从主选扩展到目标节点</dd>
+              <dt>Ctrl+A</dt><dd>全选节点，再拖可整组搬</dd>
+              <dt>Ctrl+C / Ctrl+V</dt><dd>复制选中项 / 粘到主选后面</dd>
+              <dt>点节点</dt><dd>打开右侧详情抽屉</dd>
+              <dt>Ctrl+Shift+A</dt><dd>打开添加面板</dd>
+              <dt>↑ / ↓</dt><dd>上一个 / 下一个节点</dd>
+              <dt>Alt+↑ / Alt+↓</dt><dd>把当前节点上移 / 下移</dd>
+              <dt>Delete</dt><dd>删掉当前节点</dd>
+            </dl>
+            <h3>这一份在哪</h3>
+            <p class="help-env">
+              命令行：<code>{runtime?.cliPath ?? '还没找到'}</code><br />
+              版本：{runtime ? `${runtime.cliVersion} · ${runtime.environment === 'development' ? '开发树' : '安装版'}` : '未知'}<br />
+              文件：<code>{path ?? '还没有保存'}</code>
+            </p>
+          </div>
+        {/if}
+
+        {#if current}
+          <aside class="drawer" aria-label="步骤详情">
+            <header class="drawer-head">
+              <div class="drawer-heading">
+                <span class="drawer-cat {currentCategory}">
+                  {currentCategory ? STEP_CATEGORY_LABELS[currentCategory] : ''}
+                </span>
+                <h2>{stepTitle(current.type)}</h2>
+                <span class="drawer-origin">第 {currentOrigin} 步</span>
+              </div>
+              <button class="drawer-x" on:click={() => selectPath(null)} aria-label="收起详情" title="收起详情（Esc）">×</button>
+            </header>
+
+            <div class="drawer-body">
+              {#if selectedPaths.length > 1}
+                <p class="drawer-multi">
+                  已选 <strong>{selectedPaths.length}</strong> 个节点
+                  <span class="drawer-multi-origins">（{selectedPaths.slice(0, 6).map((item) => originOfPath(steps, item)).join('、')}{selectedPaths.length > 6 ? '…' : ''}）</span>
+                  · 拖动任意一个会整组移动，抽屉显示主选节点。
+                </p>
+              {/if}
+              {#if missingOf(current).length > 0}
+                <p class="drawer-warn">{missingHint(current)}：补齐之后才能播放。</p>
+              {/if}
+
+              {#key selectedPath}
+                <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />
+              {/key}
+
+              {#if currentShot}
+                <h2 class="section">证据</h2>
+                <figure class="shot">
+                  {#if shots[currentShot]?.url}
+                    <button class="shot-frame" on:click={() => openShot(currentShot, false)} title="用系统看图程序打开">
+                      <img src={shots[currentShot].url} alt="这一步当时的样子" />
+                    </button>
+                  {:else if shots[currentShot]?.error}
+                    <p class="shot-hint">读不到这张图：{shots[currentShot].error}</p>
+                  {:else}
+                    <p class="shot-hint">正在读…</p>
+                  {/if}
+                  <figcaption>
+                    <span class="shot-name">{currentShot.split(/[\\/]/).pop()}</span>
+                    <span class="shot-actions">
+                      <button class="linkish" on:click={() => openShot(currentShot, false)}>看大图</button>
+                      <button class="linkish" on:click={() => openShot(currentShot, true)}>在文件夹里看</button>
+                    </span>
+                  </figcaption>
+                </figure>
+              {/if}
+
+              <button class="disclosure" on:click={() => (jsonOpen = !jsonOpen)} aria-expanded={jsonOpen}>
+                JSON <span aria-hidden="true">{jsonOpen ? '⌃' : '⌄'}</span>
+              </button>
+              {#if jsonOpen}
+                <pre class="json">{JSON.stringify(current, null, 2)}</pre>
               {/if}
             </div>
-          {:else if isFoldMember(foldRuns, index)}
-            <!-- 组员跟着题头画（见上一支）：这一支故意什么都不输出。 -->
-          {:else}
-          <div class="row-wrap" role="listitem"
-              data-row-index={index}
-              draggable="true"
-              class:grouped={childSteps(step).length > 0}
-              class:dragging={dragFrom === index}
-              class:drop-target={dragOver === index && dragFrom !== null && dragFrom !== index}
-              on:dragstart={dragStarter(index)}
-              on:dragover|preventDefault={() => (dragOver = index)}
-              on:dragleave={() => { if (dragOver === index) dragOver = null; }}
-              on:drop|preventDefault={() => dropOn(index)}
-              on:dragend={() => { dragFrom = null; dragOver = null; }}
-            >
-            <button
-              class="row"
-              class:selected={index === selected}
-              on:contextmenu={(event) => openRowMenu(index, event)}
-              on:pointerdown={(event) => startPress(index, event)}
-              on:pointermove={maybeCancelPress}
-              on:pointerup={cancelPress}
-              on:pointerleave={cancelPress}
-              on:pointercancel={cancelPress}
-              on:click={() => {
-                selected = index;
-                childSel = null;
-                moreOpen = false;
-                rowMenu = null;
-              }}
-            >
-              <span class="rail" aria-hidden="true"></span>
-              <span class="step-dot" aria-hidden="true"></span>
-              <span class="number">{rowNumber(index)}</span>
-              <span class="chip" aria-hidden="true"><StepIcon name={step.type} size={14} /></span>
-              <span class="text">
-                <span class="title">{stepTitle(step.type)}</span>
-                <span class="summary">{stepSummary(step)}</span>
-              </span>
-              <span class="tags">
-              {#if results[rowKeys[index]]}
-                <!-- 一步的结果写在行上（老外壳也这样）：键是这一行在文档里的位置，来自命令行报告的 origin。 -->
-                <span class="result" class:bad={!results[rowKeys[index]].ok} title={results[rowKeys[index]].text}>
-                  {results[rowKeys[index]].ok ? '✓' : '✗'} {#if results[rowKeys[index]].dry}<span class="dry-tag">检查</span>{/if}<span class="result-text">{results[rowKeys[index]].text}</span>
-                </span>
-              {/if}
-              {#if childSteps(step).length > 0}
-                <span class="count">{childSteps(step).length} 步</span>
-              {/if}
-              {#if missingOf(step).length > 0}
-                <span class="todo" title={missingHint(step)}>待补</span>
-              {/if}
-              {#if step.shot}
-                <!-- 行里只给一个"有图"的记号，不放大图：一行里塞缩略图会让列表变噪，
-                     而且按钮里不能再套按钮。图在右边检查器最下方，选中这一步就能看到。 -->
-                <span class="shot-mark" title={`这一步有录制时的证据图：${step.shot}`} aria-label="有证据图">▣</span>
-              {/if}
-              </span>
-            </button>
-            <span class="row-actions">
-              {#if childSteps(step).length > 0}
-                <!-- 展开/收起放在行外：行本身是 button，里面不能再套 button。 -->
-                <button
-                  class="tiny caret"
-                  on:click={() => (expanded = { ...expanded, [index]: !expanded[index] })}
-                  aria-label={expanded[index] ? '收起这一步的子步骤' : '展开这一步的子步骤'}
-                  aria-expanded={expanded[index] ?? false}
-                  title={expanded[index] ? '收起子步骤' : '展开子步骤'}
-                >{expanded[index] ? '▾' : '▸'}</button>
-              {/if}
-              <button class="tiny" on:click={() => stepUp(index)} disabled={index === 0} aria-label="上移" title="上移（Alt+↑）">↑</button>
-              <button class="tiny" on:click={() => stepDown(index)} disabled={index === steps.length - 1} aria-label="下移" title="下移（Alt+↓）">↓</button>
-              <button class="tiny" on:click={() => deleteStep(index)} aria-label="删除" title="删除（Delete）">×</button>
-            </span>
-          </div>
 
-          {#if expanded[index]}
-            {#each childSteps(step) as child, childIndex}
-              {#if childVisible(step, child, filter)}
-              <!-- 子步骤也能选中：不选中的话它自己的参数（循环体里那一步的文字、坐标）就只能去 JSON 里改。 -->
-              <button
-                class="row child"
-                on:contextmenu={(event) => openRowMenu(index, event, childIndex)}
-                class:selected={index === selected && childIndex === childSel}
-                on:click={() => selectChild(index, childIndex)}
-              >
-                <span class="rail" aria-hidden="true"></span>
-                <span class="step-dot" aria-hidden="true"></span>
-                <span class="number">{rowNumber(index)}.{childIndex + 1}</span>
-                <span class="chip" aria-hidden="true"><StepIcon name={child.type} size={14} /></span>
-                <span class="text">
-                  <span class="title">{stepTitle(child.type)}</span>
-                  <span class="summary">{stepSummary(child)}</span>
-                </span>
-                {#if results[originOf(index, childIndex)]}
-                  <span class="tags">
-                    <span
-                      class="result"
-                      class:bad={!results[originOf(index, childIndex)].ok}
-                      title={results[originOf(index, childIndex)].text}
-                    >
-                      {results[originOf(index, childIndex)].ok ? '✓' : '✗'}
-                      {#if results[originOf(index, childIndex)].dry}<span class="dry-tag">检查</span>{/if}
-                      <span class="result-text">{results[originOf(index, childIndex)].text}</span>
-                    </span>
-                  </span>
-                {/if}
-              </button>
+            <footer class="drawer-foot">
+              {#if current && branchesOf(current).length > 0}
+                <button class="ghost drawer-add" on:click={() => (paletteOpen = true)}>＋ 子步骤</button>
               {/if}
-            {/each}
-          {/if}
-          {/if}
-          {/if}
-        {/each}
-
-        {#if steps.length === 0}
-          <p class="blank">这一步还没加。上面那排按钮各加一步，按顺序往下执行。</p>
-        {:else if visibleSteps.length === 0}
-          <p class="blank">没有匹配的步骤。清掉过滤条件就能看到全部。</p>
+              <button class="ghost" on:click={duplicateSelected}>复制</button>
+              <button class="ghost" on:click={() => moveSelected(-1)} disabled={!canMove(-1)}>上移</button>
+              <button class="ghost" on:click={() => moveSelected(1)} disabled={!canMove(1)}>下移</button>
+              <button class="ghost danger" on:click={deleteSelected}>删除</button>
+            </footer>
+          </aside>
         {/if}
-      </section>
-
-      {#if helpOpen}
-        <!-- 就地答案：不翻文档也能查到键位和"我现在连的是哪个命令行"。 -->
-        <div class="help-card" role="dialog" aria-label="键盘与版本">
-          <header>
-            <h3>键盘</h3>
-            <button class="linkish" on:click={() => (helpOpen = false)}>收起</button>
-          </header>
-          <dl>
-            <dt>Ctrl+S / Ctrl+O / Ctrl+N</dt><dd>保存 / 打开 / 新建</dd>
-            <dt>Ctrl+Z / Ctrl+Shift+Z</dt><dd>撤销 / 重做</dd>
-            <dt>F5 / Ctrl+Enter</dt><dd>播放 / 试运行</dd>
-            <dt>↑ ↓</dt><dd>上一步 / 下一步</dd>
-            <dt>Alt+↑ / Alt+↓</dt><dd>把这一步上移 / 下移</dd>
-            <dt>Delete</dt><dd>删掉选中的这一步</dd>
-            <dt>Ctrl+Shift+A</dt><dd>全部步骤类型</dd>
-            <dt>Esc</dt><dd>收菜单；跑着的时候是停止</dd>
-          </dl>
-          <h3>这一份在哪</h3>
-          <p class="help-env">
-            命令行：<code>{runtime?.cliPath ?? '还没找到'}</code><br />
-            版本：{runtime ? `${runtime.cliVersion} · ${runtime.environment === 'development' ? '开发树' : '安装版'}` : '未知'}<br />
-            文件：<code>{path ?? '还没有保存'}</code>
-          </p>
-          <h3>长按</h3>
-          <p class="help-env">
-            按住一行（或按住 <kbd>Enter</kbd>）超过
-            <input
-              class="long-press"
-              type="number"
-              min="150"
-              max="3000"
-              step="50"
-              value={longPressMs}
-              aria-label="长按识别阈值（毫秒）"
-              on:change={(event) => void saveLongPress(Number(event.currentTarget.value))}
-            />
-            毫秒，就打开那一行的菜单；短按仍然是选中，不冲突。
-          </p>
-        </div>
       {/if}
-
-      {#if rowMenu}
-        <!-- 右键菜单：与老外壳同一组动作。位置用鼠标点，所以是 fixed + 页面坐标。 -->
-        <div class="row-menu" style="left: {rowMenu.x}px; top: {rowMenu.y}px" role="menu" data-popup="row">
-          <button role="menuitem" on:click={menuDuplicate}>复制这一步</button>
-          <button role="menuitem" disabled={rowMenu.index === 0} on:click={menuUp}>上移</button>
-          <button role="menuitem" disabled={rowMenu.index === steps.length - 1} on:click={menuDown}>下移</button>
-          <button role="menuitem" on:click={menuDelete}>删除这一步</button>
-          {#if rowMenu.child === undefined}
-            <div class="menu-sep" aria-hidden="true"></div>
-            {#if sectionAt.has(rowMenu.index)}
-              <button role="menuitem" on:click={menuDropSection}>取消这一组</button>
-            {:else}
-              <button role="menuitem" on:click={menuMakeSection}>从这里分一组</button>
-            {/if}
-          {/if}
-        </div>
-      {/if}
-
-      <aside class="side" aria-label="这一步的设置">
-        {#if current && foldHeadSelected}
-          <!-- 自动折叠的移动 / 滚轮组：题头不是任何一步，所以这里只给"看"，不给改。
-               要改就点开它，逐条选中组里的步骤再改——那才是真步骤。 -->
-          {@const headRun = foldRuns[selected]}
-          {@const headKind = runKind(foldRuns, selected) ?? 'move'}
-          {@const headIsWheel = headKind === 'wheel'}
-          <h2 class="section">这一组是自动折起来的</h2>
-          <dl class="fold-facts">
-            {#if headIsWheel}
-              <dt>位置</dt>
-              <dd>{runSummary(steps, selected, headRun.count).split(' · ')[0]}</dd>
-              <dt>合计</dt>
-              <dd>{runSummary(steps, selected, headRun.count).split(' · ')[1]}</dd>
-            {:else}
-              <dt>起点</dt>
-              <dd>{runSummary(steps, selected, headRun.count).split(' → ')[0]}</dd>
-              <dt>终点</dt>
-              <dd>{runSummary(steps, selected, headRun.count).split(' → ')[1]}</dd>
-            {/if}
-            <dt>次数</dt>
-            <dd>{headRun.count} 次连续{headIsWheel ? '滚轮' : '移动'}</dd>
-          </dl>
-          <p class="fold-note">
-            连续 {headIsWheel ? MIN_WHEEL_RUN : MIN_MOVE_RUN} 次以上的{headIsWheel ? '滚轮' : '鼠标移动'}会折成这样一行，读流程时先看{headIsWheel ? '"一共滚了多远"' : '"从哪儿到哪儿"'}。
-            这一行<strong>没有可改的内容</strong>：点它展开，组里每{headIsWheel ? '一次滚动' : '一次移动'}都是真步骤，选中就能改。
-          </p>
-          <button class="ghost fold-toggle" on:click={() => toggleMoveRun(selected)}>
-            {moveOpen[selected] ? `收起这组${headIsWheel ? '滚轮' : '移动'}` : `展开这组${headIsWheel ? '滚轮' : '移动'}`}
-          </button>
-        {:else if current}
-          <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />
-
-          {#if currentShot}
-            <h2 class="section">证据</h2>
-            <figure class="shot">
-              {#if shots[currentShot]?.url}
-                <button class="shot-frame" on:click={() => openShot(currentShot, false)} title="用系统看图程序打开">
-                  <img src={shots[currentShot].url} alt="这一步当时的样子" />
-                </button>
-              {:else if shots[currentShot]?.error}
-                <p class="shot-hint">读不到这张图：{shots[currentShot].error}</p>
-              {:else}
-                <p class="shot-hint">正在读…</p>
-              {/if}
-              <figcaption>
-                <span class="shot-name">{currentShot.split(/[\\/]/).pop()}</span>
-                <span class="shot-actions">
-                  <button class="linkish" on:click={() => openShot(currentShot, false)}>看大图</button>
-                  <button class="linkish" on:click={() => openShot(currentShot, true)}>在文件夹里看</button>
-                </span>
-              </figcaption>
-            </figure>
-          {/if}
-
-          <button class="disclosure" on:click={() => (jsonOpen = !jsonOpen)} aria-expanded={jsonOpen}>
-            JSON <span aria-hidden="true">{jsonOpen ? '⌃' : '⌄'}</span>
-          </button>
-          {#if jsonOpen}
-            <pre class="json">{JSON.stringify(current, null, 2)}</pre>
-          {/if}
-        {:else}
-          <p class="blank side-blank">左边还没有步骤。选中一步，这里显示它的设置。</p>
-        {/if}
-      </aside>
-    {/if}
-  </main>
+    </main>
   {/if}
 
   <footer class="foot">
@@ -2947,24 +2994,6 @@ $: syncTitle(doc, path, dirty);
 
   .filter-meta button {
     white-space: nowrap;
-  }
-
-  .filter input {
-    flex: 1 1 auto;
-    min-width: 0;
-    height: 30px;
-    padding: 0 10px;
-    border: 1px solid var(--kp-rule);
-    border-radius: var(--kp-radius-control);
-    background: var(--kp-field);
-    color: var(--kp-ink);
-    font-size: 13px;
-  }
-
-  .filter input:focus {
-    outline: none;
-    border-color: var(--kp-signal);
-    background: var(--kp-card);
   }
 
   /* 清空是文字按钮，别套 .tiny（那是 22px 的图标格，文字会溢出来压住计数）。 */
@@ -3538,6 +3567,58 @@ $: syncTitle(doc, path, dirty);
     padding-bottom: 6px;
   }
 
+  /* 两条分支的标题：等宽小字 + 一道通到右边的发丝线，像书页里的分节符。 */
+  .branch-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 16px 2px 46px;
+    font: 500 10px/1 var(--kp-font-mono);
+    letter-spacing: 0.12em;
+    color: var(--kp-ink3);
+  }
+
+  .branch-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--kp-rule);
+  }
+
+  .branch-label.elseBranch {
+    color: var(--kp-ink2);
+  }
+
+  /* 空分支：给一句"这里什么都没有"，以及唯一的下一步动作。 */
+  .branch-empty {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 16px 10px 46px;
+    font-size: var(--kp-fs-small);
+    color: var(--kp-ink3);
+  }
+
+  .branch-add {
+    padding: 0 0 1px;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: var(--kp-ink2);
+    font: inherit;
+    font-size: var(--kp-fs-small);
+    cursor: pointer;
+  }
+
+  .branch-add:hover {
+    color: var(--kp-signal);
+    border-bottom-color: var(--kp-signal);
+  }
+
+  .row.child .number {
+    font-size: 10.5px;
+  }
+
   .row.child .title,
   .row.child .summary {
     font-size: var(--kp-fs-small);
@@ -3593,17 +3674,6 @@ $: syncTitle(doc, path, dirty);
     font-size: var(--kp-fs-small);
   }
 
-  .fold-facts dt {
-    color: var(--kp-ink3);
-    text-align: right;
-  }
-
-  .fold-facts dd {
-    margin: 0;
-    color: var(--kp-ink);
-    font-family: var(--kp-mono);
-  }
-
   .fold-note {
     margin: 12px 0 10px;
     color: var(--kp-ink2);
@@ -3611,17 +3681,8 @@ $: syncTitle(doc, path, dirty);
     line-height: 1.7;
   }
 
-  .fold-note strong {
-    color: var(--kp-ink);
-    font-weight: 600;
-  }
-
   .fold-toggle {
     align-self: flex-start;
-  }
-
-  .move-head[aria-expanded='true'] .caret-hint {
-    color: var(--kp-ink2);
   }
 
   /* 展开后的每一小步：比普通子步骤更淡一档的左侧竖线，表明它们属于上一条题头。 */
@@ -4162,5 +4223,330 @@ $: syncTitle(doc, path, dirty);
     line-height: 1.7;
     white-space: pre-wrap;
     user-select: text;
+  }
+
+  /* ── 画布工作区 ───────────────────────────────────────── */
+  .body.canvas-body {
+    display: block;
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .canvas-body .empty {
+    height: 100%;
+    overflow: auto;
+    padding: 48px var(--kp-gap-2xl);
+  }
+
+  .canvas-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    padding-left: 4px;
+  }
+
+  .meta-count {
+    font: 500 11px/1 var(--kp-font-mono);
+    color: var(--kp-ink2);
+    white-space: nowrap;
+  }
+
+  .meta-dim {
+    font-size: var(--kp-fs-small);
+    color: var(--kp-ink3);
+    white-space: nowrap;
+  }
+
+  /* 添加面板：三组并排，像三张摊开的索引卡。 */
+  .palette {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .palette-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 13px;
+    border: 1px solid var(--kp-ink2);
+    border-radius: var(--kp-radius-control);
+    background: var(--kp-card);
+    color: var(--kp-ink);
+    font: 500 12.5px/1 var(--kp-font);
+    cursor: pointer;
+  }
+
+  .palette-add:hover,
+  .palette-add.open {
+    border-color: var(--kp-signal);
+    color: var(--kp-signal);
+  }
+
+  .add-panel {
+    position: absolute;
+    left: 0;
+    top: 39px;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+    gap: 0;
+    width: min(680px, calc(100vw - 220px));
+    border: 1px solid var(--kp-rule-strong);
+    border-radius: var(--kp-radius-panel);
+    background: var(--kp-card);
+  }
+
+  .add-group {
+    min-width: 0;
+    padding: 14px 12px 12px;
+    border-right: 1px solid var(--kp-rule);
+  }
+
+  .add-group:last-of-type {
+    border-right: 0;
+  }
+
+  .add-group header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 3px 8px;
+    font: 500 10px/1 var(--kp-font-mono);
+    letter-spacing: 0.15em;
+    color: var(--kp-ink2);
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--kp-signal);
+  }
+
+  .swatch-flow {
+    clip-path: polygon(20% 0, 80% 0, 100% 50%, 80% 100%, 20% 100%, 0 50%);
+  }
+
+  .swatch-loop {
+    border-radius: 999px;
+    background: var(--kp-ink2);
+  }
+
+  .swatch-action {
+    border-radius: 3px;
+    background: var(--kp-rule-strong);
+  }
+
+  .add-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .add-item {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    padding: 6px 5px;
+    border-radius: 3px;
+    color: var(--kp-ink2);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .add-item:hover {
+    background: var(--kp-field);
+    color: var(--kp-ink);
+  }
+
+  .add-item :global(svg) {
+    color: var(--kp-ink3);
+  }
+
+  .add-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .add-item small {
+    font: 400 9px/1 var(--kp-font-mono);
+    color: var(--kp-ink3);
+    white-space: nowrap;
+  }
+
+  .add-tip {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 8px 14px;
+    border-top: 1px solid var(--kp-rule);
+    font-size: 10.5px;
+    color: var(--kp-ink3);
+  }
+
+  /* 抽屉：从右边滑进来，不把画布挤窄。 */
+  .drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    width: min(390px, 42vw);
+    min-width: 320px;
+    border-left: 1px solid var(--kp-rule-strong);
+    background: var(--kp-card);
+    animation: drawer-in 160ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  @keyframes drawer-in {
+    from { transform: translateX(18px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .drawer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 13px;
+    border-bottom: 1px solid var(--kp-rule);
+  }
+
+  .drawer-heading {
+    min-width: 0;
+  }
+
+  .drawer-cat {
+    display: inline-block;
+    margin-bottom: 5px;
+    font: 500 9px/1 var(--kp-font-mono);
+    letter-spacing: 0.14em;
+    color: var(--kp-ink3);
+  }
+
+  .drawer-cat.flow { color: var(--kp-signal); }
+  .drawer-cat.loop { color: var(--kp-ink2); }
+
+  .drawer-head h2 {
+    margin: 0;
+    font: 500 18px/1.25 var(--kp-font-serif);
+    letter-spacing: 0.02em;
+  }
+
+  .drawer-origin {
+    display: block;
+    margin-top: 3px;
+    font: 400 10px/1 var(--kp-font-mono);
+    color: var(--kp-ink3);
+  }
+
+  .drawer-x {
+    width: 24px;
+    height: 24px;
+    margin-top: -2px;
+    border-radius: 50%;
+    color: var(--kp-ink3);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .drawer-x:hover {
+    background: var(--kp-field);
+    color: var(--kp-ink);
+  }
+
+  .drawer-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 2px 18px 24px;
+  }
+
+  .drawer-multi {
+    margin: 12px 0 2px;
+    padding: 8px 10px;
+    border-left: 2px solid var(--kp-signal);
+    background: var(--kp-card);
+    color: var(--kp-ink2);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .drawer-multi strong {
+    color: var(--kp-signal);
+    font-weight: 600;
+  }
+
+  .drawer-multi-origins {
+    color: var(--kp-ink3);
+    font-family: var(--kp-font-mono);
+    font-size: 10.5px;
+  }
+
+  .drawer-warn {
+    margin: 12px 0 2px;
+    padding: 8px 10px;
+    border-left: 2px solid var(--kp-signal);
+    background: var(--kp-signal-off);
+    color: var(--kp-ink2);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .drawer-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--kp-rule);
+    background: var(--kp-card);
+  }
+
+  .drawer-foot .ghost {
+    height: 27px;
+    padding: 0 8px;
+    font-size: 11.5px;
+  }
+
+  .drawer-foot .drawer-add {
+    margin-right: auto;
+    color: var(--kp-signal);
+  }
+
+  .drawer-foot .danger {
+    color: var(--kp-critical);
+  }
+
+  .drawer-foot .danger:hover {
+    background: var(--kp-field);
+  }
+
+  @media (max-width: 900px) {
+    .drawer {
+      width: min(360px, 82vw);
+    }
+
+    .add-panel {
+      width: calc(100vw - 32px);
+      grid-template-columns: 1fr;
+    }
+
+    .add-group {
+      border-right: 0;
+      border-bottom: 1px solid var(--kp-rule);
+    }
   }
 </style>

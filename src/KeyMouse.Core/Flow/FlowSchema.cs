@@ -60,6 +60,12 @@ internal sealed class FlowStepContract
     internal IReadOnlyList<string> OneOf { get; init; } = [];
     /// <summary>Everything the type accepts: its own fields plus the common ones every step has.</summary>
     internal IReadOnlyList<FlowField> All { get; init; } = [];
+
+    /// <summary>
+    /// 这一种步骤不能用公共的 `when`：块自己的 `cond` 已经承担了条件，再挂一个单步前提
+    /// 会在运行时被拒绝。编辑器据此不渲染那个开关。
+    /// </summary>
+    internal bool NoWhen { get; init; }
 }
 
 /// <summary>
@@ -147,6 +153,8 @@ internal static class FlowSchema
                 Own = own,
                 OneOf = oneOf,
                 All = [.. own, .. CommonFields],
+                NoWhen = step.Value.TryGetProperty("noWhen", out JsonElement noWhen) &&
+                         noWhen.ValueKind == JsonValueKind.True,
             };
         }
 

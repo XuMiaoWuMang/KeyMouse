@@ -154,7 +154,13 @@ internal sealed class FlowPlan
         internal bool HasDynamicControl { get; private set; }
         internal bool HasTimeline { get; private set; }
 
-        internal FlowBlock BuildBlock(FlowDocument document, List<FlowStep> steps, HashSet<string> scope, string prefix, int depth)
+        internal FlowBlock BuildBlock(
+            FlowDocument document,
+            List<FlowStep> steps,
+            HashSet<string> scope,
+            string prefix,
+            int depth,
+            string separator = ".")
         {
             var block = new FlowBlock();
             var names = new HashSet<string>(scope, StringComparer.Ordinal);
@@ -164,7 +170,7 @@ internal sealed class FlowPlan
                 FlowStep step = steps[index];
                 string origin = prefix.Length == 0
                     ? (index + 1).ToString(CultureInfo.InvariantCulture)
-                    : $"{prefix}.{index + 1}";
+                    : $"{prefix}{separator}{index + 1}";
 
                 FlowStatement statement = BuildStatement(document, step, origin, names, depth);
                 block.Statements.Add(statement);
@@ -216,7 +222,7 @@ internal sealed class FlowPlan
                     HasDynamicControl = true;
                     FlowBlock then = BuildBlock(document, step.Steps ?? [], Copy(names), origin, depth);
                     FlowBlock? otherwise = step.Else is { Count: > 0 } alternative
-                        ? BuildBlock(document, alternative, Copy(names), $"{origin}.e", depth)
+                        ? BuildBlock(document, alternative, Copy(names), $"{origin}.e", depth, separator: "")
                         : null;
                     return new IfStatement
                     {

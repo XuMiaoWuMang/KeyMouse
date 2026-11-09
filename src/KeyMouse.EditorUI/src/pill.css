@@ -124,6 +124,58 @@ body {
   opacity: 0.5;
 }
 
+/* 播放浮条：暂停在左、停止在右。暂停是"空心"，停止是"实心朱砂"，
+   扫一眼就知道哪个会结束这一轮。 */
+.pill.play .dot {
+  background: var(--pill-ink2);
+  box-shadow: 0 0 0 3px rgba(23, 20, 15, 0.08);
+}
+
+.pill.play.paused .dot {
+  animation: none;
+  opacity: 0.55;
+}
+
+.pause {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--pill-rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pill-ink2);
+  cursor: pointer;
+}
+
+.pause:hover {
+  border-color: var(--pill-ink2);
+  color: var(--pill-ink);
+}
+
+.pause .glyph {
+  width: 6px;
+  height: 8px;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+}
+
+.pause.on .glyph {
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid currentColor;
+  border-right: 0;
+}
+
+.pause:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
 /* 停不下来：红点停跳、按钮转暗，靠悬停提示说明原因（没有文字区可写） */
 .pill.failed .dot {
   animation: none;

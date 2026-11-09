@@ -31,12 +31,8 @@
     { id: 'night', name: '午夜墨', note: '夜间；强调色换暖金以便看清' },
   ];
 
-  const LONG_PRESS_MIN = 150;
-  const LONG_PRESS_MAX = 3000;
-
   let theme: ThemeId = 'paper';
   let themes: string[] = [];
-  let longPressMs = 500;
   let recent: string[] = [];
   let doctor = '';
   let doctorBusy = false;
@@ -65,11 +61,6 @@
     applyTheme(theme);
 
     try {
-      longPressMs = await invoke<number>('long_press_ms');
-    } catch {
-      longPressMs = 500;
-    }
-    try {
       recent = await invoke<string[]>('recent_files');
     } catch {
       recent = [];
@@ -90,17 +81,6 @@
       else say('');
     } catch (e) {
       say(`主题没存下来：${e}`, true);
-    }
-  }
-
-  async function commitLongPress(): Promise<void> {
-    const clamped = Math.min(LONG_PRESS_MAX, Math.max(LONG_PRESS_MIN, Math.round(longPressMs || 0)));
-    longPressMs = clamped;
-    try {
-      longPressMs = await invoke<number>('save_long_press_ms', { ms: clamped });
-      say(`长按判定改成 ${longPressMs} 毫秒`);
-    } catch (e) {
-      say(`没存下来：${e}`, true);
     }
   }
 
@@ -224,38 +204,6 @@
 
   <section class="chapter">
     <div class="ornament"><span>✦✦✦</span><b>02</b><span>✦✦✦</span></div>
-    <h2>交互</h2>
-
-    <div class="def">
-      <div class="def-term">长按判定<em>毫秒</em></div>
-      <div class="def-body">
-        <p>按住一行超过这个时长就弹出它的菜单；短按仍然只是选中。范围 <span class="nw">{LONG_PRESS_MIN}–{LONG_PRESS_MAX}</span> 毫秒。</p>
-        <div class="row">
-          <input
-            class="num"
-            type="number"
-            min={LONG_PRESS_MIN}
-            max={LONG_PRESS_MAX}
-            step="50"
-            bind:value={longPressMs}
-            on:change={commitLongPress}
-          />
-          <input
-            class="slider"
-            type="range"
-            min={LONG_PRESS_MIN}
-            max={LONG_PRESS_MAX}
-            step="50"
-            bind:value={longPressMs}
-            on:change={commitLongPress}
-          />
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="chapter">
-    <div class="ornament"><span>✦✦✦</span><b>03</b><span>✦✦✦</span></div>
     <h2>文件</h2>
 
     <div class="def">
@@ -285,14 +233,14 @@
     <div class="def">
       <div class="def-term">设置账本</div>
       <div class="def-body">
-        <p>最近文件、分组、窗口位置、主题、长按阈值都在 <span class="mono">%LOCALAPPDATA%\KeyMouse\editor-settings.json</span>。</p>
+        <p>最近文件、窗口位置、主题都在 <span class="mono">%LOCALAPPDATA%\KeyMouse\editor-settings.json</span>。</p>
         <button class="ghost" on:click={() => openFolder('settings')}><Icon name="folder" size={14} />打开所在目录</button>
       </div>
     </div>
   </section>
 
   <section class="chapter">
-    <div class="ornament"><span>✦✦✦</span><b>04</b><span>✦✦✦</span></div>
+    <div class="ornament"><span>✦✦✦</span><b>03</b><span>✦✦✦</span></div>
     <h2>环境与诊断</h2>
 
     <div class="def">
@@ -327,7 +275,7 @@
   </section>
 
   <section class="chapter">
-    <div class="ornament"><span>✦✦✦</span><b>05</b><span>✦✦✦</span></div>
+    <div class="ornament"><span>✦✦✦</span><b>04</b><span>✦✦✦</span></div>
     <h2>快捷键</h2>
     <table class="keys">
       <thead>
@@ -577,22 +525,6 @@
     flex-wrap: wrap;
   }
 
-  .num {
-    width: 84px;
-    height: 30px;
-    padding: 0 8px;
-    background: var(--kp-card);
-    border: 1px solid var(--kp-rule);
-    border-radius: var(--kp-radius-control);
-    font: 400 13px/1 var(--kp-font-mono);
-  }
-
-  .slider {
-    flex: 1;
-    min-width: 160px;
-    accent-color: var(--kp-signal);
-  }
-
   .recent {
     margin: 0 0 10px;
     padding: 0;
@@ -665,10 +597,6 @@
   .tiny:hover {
     color: var(--kp-critical);
     background: var(--kp-card);
-  }
-
-  .nw {
-    white-space: nowrap;
   }
 
   .muted {

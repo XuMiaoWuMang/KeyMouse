@@ -7,20 +7,21 @@
 功能对照（含每一项怎么验证）写在 [使用指南 → 两个编辑器现在差在哪](../guide/editor.md#两个编辑器现在差在哪)；
 接口契约在 [编辑器 IPC](../reference/editor-ipc.md)。
 
-## 右键菜单作用在"点的那一行"
+## 无限画布（当前界面）
 
-`rowMenu` 里除了位置还记一个可选 `child`：右键点在分组里的子步骤上时它是子下标，四个动作（复制 / 上移 / 下移 / 删除）就都走组内版本（`duplicateChildAt` / `moveChild` / `removeChildAt`），不动外层那一组；点在顶层行上时 `child` 是 `undefined`，走原来的 `duplicateAt` / `moveUp` / `moveDown` / `removeAt`。
+列表版已经退场：左边那条步骤栏不再存在，整份流程铺在一张可缩放/平移的画布上，右侧只在点节点时滑出抽屉。
 
-上移/下移的可用性由 `canMenuUp()` / `canMenuDown()` 算：有 `child` 时看组内位置，否则看顶层位置——同一个按钮两种含义，靠菜单打开时记下的那个 `child` 区分。
-## 列表过滤（`lib/filter.ts`）
+- **数据是任意深度的树**：`lib/tree.ts` 用路径表示一个节点——`[{steps,0}]` 是顶层第 1 步，`[{steps,0},{else,0}]` 是它的否则分支第 1 步。读/替换/删除/插入/复制/移动都走路径，所以 `if` 里再套 `while` 也能选中、改字段；`originOf` 与引擎 `6.e1` 同一套写法。
+- **视觉**：未选中的轮廓是墨黑（`--kp-ink`），选中/框选命中才换成朱砂；框选矩形内部透明，只留 1px 边。节点形状本身用 `clip-path` / `border-radius` 区分三组，不靠颜色。
+- **版式**：`lib/canvas.ts` 只算几何。顶层从上到下（一条主线），每个块的子步骤在**右边的一列里往下长**；`if` 的成立时与否则并排，循环只有一条循环体。节点 `208×82`，块下面的主线从整棵子树之后继续，嵌套再深也不会压到后续步骤。节点、分支标签、空分支槽、连线、拖拽缝隙全是数据，`canvas.test.ts` 盯住方位与缝隙归属。
+- **条件不是手写框**：`ConditionEditor.svelte` 从 `conditions.ts` 的选项生成 `cond`（总是/比较/text/window/front/found/elapsed/自定义）；缺必填项生成空串，`missingOf` 与 `missingHint` 会标「待补 / 还缺 条件」，`text()` 缺 `probe` 时还会多标「条件读哪里」。
+- **三种轮廓**：`categoryOf(type)` 分三组——流程控制（六边形：call/if/set/assert/break/continue）、循环控制（胶囊：repeat/foreach/while/do/for）、操作指令（纸卡：其余）。`FlowCanvas.svelte` 用 clip-path / border-radius 画轮廓，形状本身就是分类，不再重复写一行类别字。
+- **选中与抽屉**：`selectedPath` 是树路径，不再有"第几组第几个"的两层限制。点节点 → App 用 `stepAt` 取当前步骤 → 右侧抽屉复用 `Inspector.svelte`；点空白/`Esc` 收起。抽屉底部的复制/上移/下移/删除都按同一路径走。
+- **多选与长按**：`selectedPaths` 是选择集，`selectedPath` 只是抽屉的主选。`Ctrl/⌘+点`切换、`Shift+点`按文档顺序扩选、`Ctrl+A`全选、**左键拖空白画框**按矩形框选；按住节点 450ms（`LONG_PRESS_MS`）加入选择，之后拖动就是整组搬，轻点仍只开抽屉。`Delete` 删整组；`Ctrl+C` / `Ctrl+V` 复制选中项、按文档顺序粘到主选节点后面（`copyNodes` / `insertManyAt`，父与子同时选中时只复制父）。
+- **拖动排序**：`FlowCanvas` 为每条兄弟序列生成"缝隙"，拖动时所有分支的缝隙都可落，唯一拒绝的是落进被搬节点自己的子树；落点回调 `handleMove` → `moveNodes`。拖到任意节点卡片（含下沿）上会生成一个该节点同层级的虚拟落点，插入到它后面——所以一级/二级/三级之间可以任意互拖，不必去找整棵子树末尾的根缝隙。`Ctrl/⌘+点`把节点加进选择集，拖动其中任意一个会整组搬；`moveNodes` 按文档顺序删除再插入，并逐层重算因删兄弟而前移的目标父路径。空分支仍由虚线槽上的「＋」创建第一步。
+- **缩放/平移**：滚轮以鼠标为中心缩放（0.25–1.8），**右键拖空白平移**；`home()` 首屏按宽度给出可读比例（不为了塞下全部缩到 30%），左下角「适配」才把整张图缩到一屏。
+- **测试**：`tree.test.ts`（路径/增删改/嵌套 origin）、`canvas.test.ts`（方位/分支/缝隙）是纯函数测试；前端总数 157，命令 `km ut`。
 
-左栏超过四步时给一个过滤框。三条规则各写成一个纯函数并单测（`filter.test.ts`）：
-
-- `searchText` —— 只拼"肉眼看得见"的三样：类型标题、摘要、类型名，不搜 JSON 字段名；
-- `matchesFilter(step, query)` —— 父命中或任一子命中即保留（父命中时整组露出来，否则展开了看不见内容）；
-- `childVisible(step, child, query)` —— 父命中看全部子步骤，父没命中就只看自己命中的。
-
-编号始终按文档位置算（`rowNumber`），过滤只影响可见性，所以 `origin` 与行号的对应关系不受影响。`Ctrl+F` 由 `bind:this={filterBox}` 把焦点送进框里；「清空」用 `.filter-clear` 而不是通用的 `.tiny`——`.tiny` 是 22px 的图标格，文字按钮套上去会溢出压住计数（这个错犯过一次）。
 ## 为什么另起一个目录
 
 - 老外壳的界面进程要管理员权限（为了录得到提权窗口的点击）。新外壳**界面永不提权**：需要权限的动作
@@ -38,17 +39,24 @@ src/KeyMouse.EditorUI/
   tsconfig.json         独立配置，不继承外部预设
   src/
     main.ts             挂 App 到 #app，引入主题
-    App.svelte          整屏界面：顶栏 / 工具栏 / 两栏 / 底部输出 / 迷你模式 / 卡片
+    App.svelte          整屏界面：顶栏 / 工具栏 / 画布 / 抽屉 / 底部输出 / 卡片
     lib/theme.css       主题 var：纸、墨、朱砂、分隔线、字阶、圆角
-    lib/model.ts        流程文档类型、步骤标题与一行摘要
-    lib/schema.ts       解析 `KeyMouse schema` 的契约 JSON，供检查器按 kind 渲染
-    lib/steps.ts        十五种步骤模板、必填项、"还缺什么"的人话
-    lib/edit.ts         增删改排序（纯函数，单测覆盖）
+    lib/model.ts        流程文档类型、步骤标题与摘要、三种分类与分支
+    lib/tree.ts         任意深度的路径读写（选中 / 替换 / 删除 / 插入 / 复制 / 移动 / origin）
+    lib/canvas.ts       画布几何：节点、分支标签、空槽、连线、拖拽缝隙
+    lib/FlowCanvas.svelte 无限画布：缩放 / 平移 / 多选拖动 / 跨分支换层 / 空分支加步
+    lib/schema.ts       解析 `KeyMouse schema` 的契约 JSON，供抽屉按 kind 渲染
+    lib/steps.ts        二十三种步骤模板、三组分类、必填项
+    lib/edit.ts         顶层增删改排序（老纯函数，仍被部分逻辑复用）
     lib/fieldpath.ts    点号路径读写（空值删键、删空嵌套连父键）
-    lib/run.ts          退出码结论、行上结果（按报告 origin 落行）
+    lib/run.ts          退出码结论、节点结果（按报告 origin 落节点）
     lib/progress.ts     从 `[ 3/8 ]` 里读"跑到第几步"
     lib/StepIcon.svelte 一套自绘步骤图标
-    lib/Inspector.svelte 按契约渲染的参数检查器
+    lib/Inspector.svelte 按契约渲染的参数抽屉内容
+    lib/InspectorShape.svelte 嵌套形状（target/region/probe/when）的字段排版
+    lib/KeyValueEditor.svelte 名字 → 表达式的小表（for 的 init/step、call.vars）
+    lib/conditions.ts 条件选项 ↔ cond 表达式的解析与生成（含必填判定）
+    lib/ConditionEditor.svelte 条件类型下拉与必填输入（text()/window()/found()/elapsed()…）
   src-tauri/
     Cargo.toml          tauri / serde / 插件：dialog、opener、single-instance
     tauri.conf.json     窗口尺寸、devUrl 5183、bundle 关（安装程序自己打）
@@ -60,7 +68,7 @@ src/KeyMouse.EditorUI/
     src/pick.rs         屏幕取点/取块
     src/run.rs          试运行/播放/停止/暂停/读报告
     src/record.rs       录制（当前权限与提权两条路）
-    src/mini.rs         录制时把窗口缩成细带
+    src/mini.rs         旧版缩窗实现（现用 pill；保留以免老命令失效）
     src/store.rs        最近打开与窗口位置/尺寸（%LOCALAPPDATA%）
     src/process.rs      起命令行时隐藏控制台窗口
     src/crashlog.rs     panic 与界面异常落 editor-crash.log
@@ -85,53 +93,16 @@ pwsh tools\dev\editor-ui.ps1 build      # 产物在 dist/，约 17 kB js + 10 kB
 pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才算过
 ```
 
-## P0 现在是什么样
+## 现在是什么样
 
-已经有的：
+- **一张无限画布**：顶栏（标记 + 文件名 + 文件动作）、工具栏（＋添加 / 节点数 / 录制·试运行·播放····）、画布、底部输出条。没有左栏列表；节点详情从右侧抽屉进出。
+- **三组操作**：添加面板按流程控制 / 循环控制 / 操作指令排成三列；三种轮廓分别是六边形 / 胶囊 / 纸卡。`makeStep()` 只放"这一步是什么"，参数留空，节点标「待补」。
+- **任意深度**：`if` 里套 `while` 的每一层都能选中、改字段、增删和拖动排序；路径在 `lib/tree.ts`，origin 与引擎的 `6.e1` 对齐。
+- **画布手势**：滚轮缩放；**左键拖空白框选、右键拖空白平移**；拖节点排序（可跨分支/换层）、`Ctrl/⌘+点`多选、`Shift+点`范围、长按节点加入选择、`Ctrl+A`全选、点节点开抽屉；左下角有 `− / 百分比 / ＋ / 适配`。首屏按宽度给出可读比例，`适配` 才把整图缩到一屏。
+- **打开/保存/录制/播放/撤销**：文件对话框走 Tauri dialog；播放与录制默认隐藏主窗口，浮条负责停止（播放多一个暂停）；结束后主窗口自己回来；试运行不隐藏。
+- **输出与结论**：退出码翻译在 `lib/run.ts`，节点结果按 `origin` 落位；普通提示只更新底部一行，失败才展开输出面板。
+- **测试**：`tree` / `canvas` / `edit` / `filter` / `run` / `fieldpath` 等纯函数单测共 157 条（`km ut`），另有 `svelte-check` 与 cargo 测试。
 
-- 一屏完整的界面：顶栏（标记 + 文件名）、工具栏四个常用步骤 + 录制/试运行/播放、左栏步骤列表（串点的那条线、
-  序号、图标、标题、一行摘要、分组步的步数、子步骤 `6.1`）、右栏检查器、底部输出条。
-- 图标是一套自绘的 16×16 描边图形（`src/lib/StepIcon.svelte`），按"这一步在做什么"画，不按字段画。
-- 底部状态行显示 `KeyMouse 0.2.1（引擎 2.3.0）· 开发树`，来自 `runtime_info`——也就是它真的找到了命令行；
-  找不到时显示一行"没找到命令行 KeyMouse.exe"。
-- 界面进程不提权：状态行那颗点是朱砂色（普通权限）；提权时会变成警示色。
-- **能打开真实流程**（P1a）：`新建` / `打开` / `保存` / `另存为`，文件对话框走 Tauri 的 dialog 插件；
-  命令行点名 `KeyMouse.Editor.exe 流程.json` 时启动即载入。
-- **能改字段**：检查器里的进程名 / 窗口类名 / 标题 / 备注写回文档，改动后顶栏出现「未保存」，
-  `保存` 变为可用；会丢东西的动作（关掉未保存的文档）才弹确认框，其余都写进底部那行。
-- 底部那行提示是"轻提醒"：普通的成功只更新一行字，只有失败才展开「运行输出」面板；
-  那个面板是页面的一部分（占一行），不是浮层——浮层在窄窗口里正好盖住出问题的列表。
-
-- **能加能删能排序**（P1b）：工具栏四个常用按钮各加一步，`+ 更多` 按用途列出剩下十一种；
-  行尾浮出 ↑ ↓ ×，键盘 `Delete` 删、`Alt+↑/↓` 移、`↑/↓` 选行；
-  `Ctrl+Z` / `Ctrl+Shift+Z` 撤销重做（撤销栈存的是改动前的文档 JSON，不是对象引用）。
-- **新加的步骤是半成品**：`makeStep()` 只放"这一步是什么"，参数留空；缺必填项的步骤在列表里
-  标「待补」，检查器右上角写「还缺 文字」这类人话。规则表照抄
-  [`interface.md`](../reference/interface.md) 的参数契约，前端不重复实现校验。
-- **关窗会问一句**：改动没保存时点 × 先确认（外壳拦 `CloseRequested`、发事件、界面答完再关）。
-- 快捷键：`Ctrl+S` 保存、`Ctrl+O` 打开、`Ctrl+N` 新建、`Esc` 收起「+ 更多」。
-- **能跑起来了**（P1c）：`试运行` 跑 `KeyMouse.exe run <流程> --dry-run`（只做资格检查，
-  不发送任何输入），`播放` 跑同一条命令的真身；输出按行落到「运行输出」面板，
-  跑着的时候播放按钮换成「停止」，按 `Esc` 也能停（`taskkill /T /F` 杀整棵子树）。
-  跑完底部那一行说结论：`每一步都成功` / `没跑通（退出码 3）：窗口不满足条件` /
-  `已停止。`——退出码翻译在 `src\lib\run.ts`，有单测。
-- **跑的时候知道跑到第几步**：从命令行输出里读 `[ 3/8 ]`（`src\lib\progress.ts`），
-  底部显示「跑到 第 3/8 步」。不去猜"是列表里第几行"——`run` 的编号是执行序号，
-  循环会展开、子流程会内联，硬对行号会给出一个自信但错误的答案。
-- **能录了**（P2）：`录制` 先问你存到哪（默认"当前流程名-录制.json"），然后起
-  `KeyMouse.exe record --out <文件> --ignore-window 0x<自己的句柄>`；录着的时候按钮变成朱砂的
-  「录制中」，`停止` 发一次命令行自己的停止键 `Ctrl+Alt+Q`（5 秒没退再兜底杀），
-  结束后自动把文件打开。**不自我提权**：按当前权限录，提权窗口上的点击录不到，
-  命令行会把这句话写进输出。
-
-还没有的：
-
-- 拖拽排序、把子步骤拖进/拖出分组（现在只能在分组末尾追加，见 P1c 之后再定）。
-- 录制的"提权窗口"路线：现在只能按外壳的权限录；要录管理员窗口，得先用
-  `KeyMouse --elevate record`（这个取舍写在 ADR 的未决问题里）。
-- 列表里的"正在跑第几步"高亮：现在只有底部那一行数字，还没有把高亮落到行上。
-- 右键菜单与步骤复制粘贴。
-- 自绘标题栏（现在用系统标题栏）。
 
 ## P3：它已经进安装包了
 
@@ -168,18 +139,13 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **证据图**：录制时引擎会把每一步"当时看到的样子"存成 `<流程>.shots\NNNN-<类型>.png`，步骤里记的是
   相对路径（`shot` 字段）。界面按需向外壳要字节，自己造 `Blob` URL 显示——**不给 WebView 开文件系统权限、
   也不用 asset 协议**，能被读到的范围就等于外壳放行过的那几张图（`read_shot` 的三道检查见
-  [外壳契约](../reference/editor-ipc.md)）。位置：右侧检查器最下方「证据」一节（缩略图 + 文件名 +
-  「看大图」「在文件夹里看」），列表里带证据的那一行右侧有一个 ▣ 记号。
-  为什么缩略图只有 140px 高：再高就会把检查器其它字段顶到滚动外面，而它们是改这一步时要同时看见的。
+  [外壳契约](../reference/editor-ipc.md)）。位置：右侧抽屉最下方「证据」一节（缩略图 + 文件名 +
+  「看大图」「在文件夹里看」），画布节点右上角有一个 ▣ 记号。
+  为什么缩略图只有 140px 高：再高就会把抽屉其它字段顶到滚动外面，而它们是改这一步时要同时看见的。
   要不要点开由用户决定（点击交给系统看图程序，不是自己再写一个预览窗）。
-- **录制时够得着停止**：录制一开始把主窗口缩成 420×52 的细带（`src-tauri\src\mini.rs` 的
-  `enter_mini` / `leave_mini`），位置不动——只变矮，不跳角落。细带里只有抓手、`● 正在录制`、
-  `已录 N 秒`、一句提示和朱砂「停止」。停下（按钮、`Esc`、录制自己到时间、子进程意外退出）都要还原，
-  漏一条用户就看着一条细带打不开编辑器。
-  为什么不是另开一个悬浮球窗口：试过了，本机多开的那块 webview **内容区永远空白**
-  （`WebviewUrl::App`/`External`、透明与否、创建时机、连 `data:text/html` 都白），老外壳的球是
-  自绘 Win32 窗口所以不受影响。取舍与理由记在 [ADR 0001](adr/0001-editor-shell-tauri.md) 的已解决一节。
-- 还没做的（写在 ADR 的未决问题里）：录制的提权路线、拖拽排序、行内"跑到第几步"高亮。
+- **录制/播放时够得着停止**：两者都先隐藏主窗口，再亮独立的浮条（`pill.rs` + `pill.ts`）：录制只有时长 + 停止，
+  播放多一个暂停；结束后主窗口自己回来。细节见本文末尾「录制 / 播放浮条」。
+- 还没做的（写在 ADR 的未决问题里）：行内"跑到第几步"高亮。
 
 
 ## 检查器由契约画出来（P5）
@@ -190,9 +156,11 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   形状是 `{ comment, fields }` 而不是数组——第一版按数组写，运行时炸在
   `shapeFields(...).every is not a function`，这条教训留在函数注释里。
 - `src/lib/Inspector.svelte` 按 kind 渲染：`text`/`multiline`/`int`/`bool`/`enum`/`target`/
-  `point`/`region`/`when`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
+  `point`/`region`/`when`/`probe`/`vars`；`showWhen`（`button` / `!button`）决定二选一步骤里哪个字段出现。
+  嵌套形状交给 `InspectorShape.svelte`（同一套 slot 用于 target/region/probe/when），
+  `vars` 交给 `KeyValueEditor.svelte`（`for` 的初值/每轮、`call.vars` 都是同一张表）。
   契约把 `note`/`when`/`shot` 放在 `common` 里，所以每种步骤都把 common 拼进来——`shot` 例外，
-  证据图有自己的块。
+  证据图有自己的块。块步骤的契约标了 `noWhen`，检查器不画那个开关：条件已经写在 `cond` 里。
 - **窗口位置也记**：`store::remember_size` 关窗时一起存 `outer_position()`（物理像素），下次在 `.setup()`
   里用 `PhysicalPosition` 原样塞回。两者必须成对——一端按逻辑、一端按物理，窗口每开一次就漂一段
   （实测过：`outer_position` 与 `set_position(Physical)` 配对时，连开两次的坐标完全一致）。
@@ -203,13 +171,13 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **`···` 菜单的四件事之外还多两项**：「在文件夹里看这个流程」（走 `revealItemInDir`）与
   「键盘与版本…」——后者是一张就地卡片（键位表 + 当前命令行路径 / 版本 / 环境），
   不打开文档也能回答"我现在连的是哪一个 KeyMouse"。`Esc` 会先收这张卡片。
-- **分组行也有结果**：命令行给内联子流程/循环的位置是 `2.1`、`2.2`，分组行自己没有命令。
+- **块节点也有结果**：命令行给内联子流程/循环的位置是 `2.1`、`2.2`，块自己没有命令。
   `resultsFromReport` 会往上卷一层——父行没有自己的结果时，用孩子们的结果汇总成一句
   （「2 步都成功」/第一个失败的原因）。否则「调用另一个流程」那行永远是空的，明明它跑过了。
-- **组里的步骤也是一等公民**：`childSel` 记住"第几组的第几个"，删除 / 上下挪 / 改字段都按它分派
-  （`removeChildAt`、`moveChild`，纯函数 + 单测）；组里删到空时连 `steps` 字段一起收掉，
-  免得 JSON 里留下一个 `"steps": []`、读起来像"被清空过"。↑/↓ 走的是"看得见的顺序"：
-  分组行 → 展开后的子步骤 → 下一行；←/→ 收放分组。
+- **组里的步骤也是一等公民**：`childSel` 是"这个块所有分支摊平后的第几个"（`childrenOf`），
+  删除 / 上下挪 / 改字段都先换成 `{branch, index}` 再交给 `removeChildAt` / `moveChild`（纯函数 + 单测）；
+  组里删到空时连 `steps`/`else` 字段一起收掉，免得 JSON 里留下一个空数组、读起来像"被清空过"。
+  ↑/↓ 按画布阅读顺序走节点；Alt+↑/↓ 只在同一分支里换位。
 - **播放前先查必填项**：`firstIncomplete()` 用 `lib/steps.ts` 的 `missingOf`（与检查器右上角那句同源）
   找第一条缺项的步骤，缺就选中它并在底部说清楚，不放行——否则命令行会在中途报同样的错，
   而且是在已经发出一半输入之后。试运行不拦：它就是拿来看错的。
@@ -223,7 +191,7 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **脏标记不是"改过"而是"和上次存盘不一样"**：`savedJson` 记住载入/保存时的序列化快照，
   撤销回到那一刻自动清掉 `•`，关窗也不再问"要保存吗"。
 - **行上结果**：命令行带 `--report` 跑，报告里每步都有 `origin`（`3` 表示第三个顶层步、
-  `6.1` 表示第六步的第一个子步），`src/lib/run.ts` 的 `resultsFromReport` 把它读成
+  `6.1` 表示第六步的第一个子步、`6.e1` 表示否则分支的第一个子步），`src/lib/run.ts` 的 `resultsFromReport` 把它读成
   「行位置 → 结果」的字典，`App.svelte` 用 `originOf(index, childIndex)` 取同一个键。
   **分组步不再需要换算**：循环展开三次时 `origin` 三次都是 `6.1`，最后一次执行留在那一行上——
   这正是"这一行长什么样"的语义。子步骤行也有结果位，收起时看不到、展开就能看。
@@ -233,137 +201,32 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   窗口尺寸在 `.setup()` 里恢复（不是界面调 API）：那时窗口还没显示，不会先闪一下默认大小。
 - `src/lib/fieldpath.ts` 负责按 `when.timeoutMs` 这种点号路径读写：写空值等于删键，删空的
   嵌套对象连父键一起去掉，返回新对象（撤销栈是序列化快照，原地改会让快照跟着变）。
-- 老的"待补"判定（`lib/steps.ts`）还在，用于快速加步骤时给个提醒；检查器里的必填标来自契约的
+- 老的"待补"判定（`lib/steps.ts`）还在，用于快速加步骤时给个提醒；抽屉里的必填标来自契约的
   `required`。
-- 取点/取块走 `pick_region`（`src-tauri/src/pick.rs`）：外壳只把结果写成坐标 + 顺手填
+- 取点/取块走 `pick_region`（`src-tauri/src/pick.rs`）：点按钮先把主窗口 `hide()`，浮层选完/取消后 `finally` 里 `show()` + 聚焦；隐藏失败不让取点流程卡住。客户区/窗口坐标按 `shouldAttachWindow()` 自动填 `target.process` 与标题，屏幕坐标不绑定窗口。外壳只把结果写成坐标 + 顺手填
   `target.process`，浮层与坐标换算仍在命令行的 `region pick` 里。
 
-## 右键菜单与行上结果
+## 控制流块行（2.4.0）
 
-右键一行会先选中它，再在鼠标位置开一张小卡片：复制这一步、上移、下移、删除这一步。
-边界照旧：第一行不能上移、最后一行不能下移。位置用 `clientX/clientY` + `position: fixed`，
-因为"在哪弹"由鼠标决定，不该跟着列表滚动。
+引擎支持 C 风格控制流之后，编辑器必须能"看着改"，而不是只把 JSON 渲染成只读：
 
-**WebView2 自带的那张原生菜单要主动拦住**：不拦的话它会画在我们的卡片上面（实测出现过
-"返回 / 刷新 / 另存为 / 打印 / 更多工具"盖住列表）。所以 `onMount` 里在 `document` 上挂了
-一个 `contextmenu` 的 `preventDefault()`——应用里没有需要浏览器原生菜单的地方，粘贴走 Ctrl+V。
-
-**分组里的步骤也能选中、也能改**：点 `6.1` 这样的子行，检查器换成那个子步骤，
-改完写回 `steps[parent].steps[child]`（`replaceCurrent` 一处收口，顶层与子步骤共用）。
-往分组里加步骤照老外壳的习惯：选中分组那一行再点动作，新步骤进组而不是插在组后面，
-加完自动展开这个组。
-
-拖拽排序：把一行拖到另一行的位置上（HTML5 dragstart/dragover/drop，逻辑在 lib/edit.ts 的
-moveTo，单测覆盖越界与原地不动）。自动化里用注入的鼠标发不出浏览器的拖放手势，所以这条
-是按单测 + 人工点击验证的；行内 ↑↓ 与右键菜单是它的等价替代。
-
-行上结果：跑完一步，那一行右侧写 `✓ 等 200 ms` 或 `✗ 退出码 3：…`。位置由命令行报告里的
-`origin` 决定（`3`、`6.1`），所以带 `repeat` / `foreach` / `call` 的流程也能落到正确的行上；
-2.4.0 之后执行事件也带可选 `origin`（老 WinUI 外壳用它认行）；新外壳仍然读跑完后的报告，
-不依赖运行中的序号。
-循环跑完只剩最后一次执行的结论，因为它回答的是"这一行现在长什么样"。
-
-## 操作条分组：存边界，不存成员
-
-"把长流程切成几组"是纯界面的事（用户明确要求：分组不承载业务、不改执行链路），所以它有三个硬约束：
-**不进流程文件**、**不改步骤编号**、**拖动必须整段搬**。实现写在 `src/lib/sections.ts`：
-
-```ts
-interface Section { at: number; title: string }   // 在第 at 行之前开一组，管到下一个边界为止
-```
-
-为什么是"边界"而不是"成员 id 列表"：
-
-- 成员列表要在插入/删除/复制/拖动时逐项维护，还得给每一步发一个稳定 id（那等于改流程格式）；
-- 边界只有几个数字，插入时 `at >= 插入点` 的全部 +1，删除时 -1，两条函数就够（`shiftAfterInsert` /
-  `shiftAfterDelete`），单测盯住这两条就不会错位；
-- 拖分组头 = 把连续一段 `splice` 出去再插回来，组内顺序天然不变，不需要逐项搬运。
-
-代价是**分组只能连续**（做不到"第 1、4 步一组"）。这是有意的：连续才是"这一段在干什么"的语义。
-
-`moveSection` 里的边界换算是唯一容易写错的地方：先把保留下来的边界换算到"去掉这一段之后"的下标
-（`section.at < start ? at : at - size`），再让插入的块把落点之后的边界挤开
-（`inRest >= insertAt ? inRest + size : inRest`）。第一版少了这步换算，两个分组会被压到同一个 `at`，
-`normalizeSections` 一去重就丢了一组。
-
-**无名分隔线**：边界模型里"最后一个边界管到数组末尾"，所以把末尾那组拖到前面时，原来压着的那些行会被
-吞进组里。修法不是加成员列表，而是允许 `title === ''`：`moveSection` 在这种情况下补一条"没有名字的分隔线"
-（`{ at: movedEnd, title: '' }`），界面把它画成一根细线而不是 `⠿ 分组 N · M 步`。这样"组管到哪结束"
-始终有地方写。
-
-**拖动按帧合并**：`pointermove` 只记最新坐标，真正的命中测试放在 `requestAnimationFrame` 里做
-（`dragFrame` 去重）。命中不用坐标猜，用 `document.elementFromPoint(...).closest('[data-row-index]')`，
-所以**分组头自己也得带 `data-row-index`**——第一版漏了，拖到另一组的头上时拿到 `null`，
-`endSectionDrag` 直接返回，表现就是"怎么拖都不动"。
-
-**长按**：鼠标 `pointerdown` 与键盘 `Enter keydown` 共用一个计时器（`longPressMs`，默认 500，
-夹在 150–3000 之间，存进外壳账本），到点就 `openRowMenuAt()`；短按仍然是"选中/展开"。
-鼠标路径在挪动超过 6px 时取消计时——用户是在拖，不是要菜单。
-
-**分组头为什么不是"另一种步骤"**：那会让 `flow.schema.json`、引擎、`--dry-run` 全都要认识它，
-而它只有视觉价值。现在的做法是界面里一张平行表（`sections`），文档里一个字节都不多。
-
-## 连续移动与滚轮自动折叠：折的是显示，不是文档
-
-录一段轨迹，`move` 步骤会一串串连着出现，几十行淹掉真正的动作；滚轮也是，一下一下单独列出来没意义。
-`src/lib/fold.ts` 把它们折起来，规矩和老 WinUI 3 外壳一致，便于两边对照：
-
-- `MIN_MOVE_RUN = 3`、`MIN_WHEEL_RUN = 3`：连续 3 步以上才折，2 步折了反而更难读。
-- `foldRuns(steps)` 返回 **每个下标** 的归属：`{ kind, head, offset, count }`，`kind` 是 `'move' | 'wheel'`。
-  题头是这一段的第一条，`count - 1` 条是组员；不是组员的下标 `head === -1`。`foldMoves` 保留成别名，
-  只关心移动的调用方不用跟着改。
-- `displayNumbers(runs)` 给出"看得见的编号"：折叠组占一个号，组员借用题头号，后面的行前移。
-  所以 `等待时间` 会从第 6 步变成第 2 步。
-- `runSummary`/`moveRunSummary`/`wheelRunSummary`：移动产出 `100,200 → 260,280`，滚轮产出
-  `350,470 · 共 +960`（正数带 `+`、负数不带）。两端都取真实步骤的字段，缺的半成品写 `?`（让"这一组里有一步没填"露出来），不猜。
-
-三条实现上的取舍：
-
-1. **`steps` 一个字节都不改，只折显示**。`foldRuns` 是 `$:` 派生量，源码是"文档 → 折叠视图"的纯函数，
-   所以存盘、执行、证据、`origin` 全都不用跟着变。行上的执行结果仍然按 **文档下标** 落
-   （`rowKeys[i] = String(i + 1)`），不按看得见的编号落——两套编号各管各的，混起来必然错位。
-2. **过滤时一律不折**（`filter ? 空 runs : foldMoves(...)`）。过滤是在找"某一步"，把命中的行塞进
-   折叠组里，用户会以为它不见了。
-3. **题头复用 `.row` 的结构**（同样的 rail / 圆点 / 编号 / 图标片 / 标题 / 摘要 / 右侧记号），
-   只是多一个 `▸/▾` 和「N 次」，点击 = 展开 + 选中。检查器看到 `foldHeadSelected` 就换成一张只读卡片
-   （起点 / 终点 / 次数），因为这一行没有任何可写字段——它的内容全是自动算的。
-
-**踩过的两个排版坑**：`▸` 一开始作为 `.row` 的第 7 个子元素被挤到下一行（网格只有四列，
-两个装饰性 `span` 是绝对定位的），挪进 `.tags` 才对；子行缩进时 `.move-child` 覆写了 `padding-left: 6px`，
-把 `.row` 原本留给圆点的 40px 让没了，`1.1` 被圆点压成 `.1`——正确做法是 `margin-left: 18px` +
-`width: calc(100% - 18px)` + `padding-left: 46px`。
-
-**题头要有边界**：`▸ 移动鼠标 0,0 → 0,0 · N 次` 这一行如果背景和普通行一样，就跟上面那串点击行糊成一片，
-看不出"从这里开始是另一组"。现在题头用纸色底 + `inset 0 1px 0` 画一道上边线（不用 border-top，
-否则和上一行的 border-bottom 叠成 2px），列表第一组不画上边线（上面就是列表的框）。
-
-**串起来的那根竖线别画在滚动容器上**：原来它是 `.list::before`（`top: 30px; bottom: 30px`）。
-绝对定位的伪元素只按容器自己的高度算，**列表一滚动它就只剩一屏高**，下半截的线凭空断掉
-（长录制里一眼就看出来：线到第五行就没了）。改成每一行自己的 `::after` 画一段——
-`top: 0; bottom: 0`，配上 `:first-child { top: 50% }` 与 `:last-child { bottom: 50% }`。
-注意 `.row-wrap.drop-target::before` 已经占了 `::before`，所以这里用 `::after`。
-
-**点击摘要只写非默认键**：`点 120,64`，右键/中键才加「· 右键」「· 中键」（`clickLabel`）。
-左键是默认值，写出来只是噪音——这条规矩是老外壳就有的，用户明确要过。
-
-**检查器里的下拉框要把默认值显示出来**：`click.button` 在契约里是 `default: "left"`，步骤里通常
-**不写**这个键。早先 `Inspector.svelte` 的 enum 分支只读 `readText(...)`，于是选中「点击」时
-「鼠标键」是空的——用户看到的是"我明明点了左键，界面说没填"。
-现在 `enumText` 先取字段值、取不到再回落到 `field.default`；`commitEnum` 在"选回默认值"时写回
-`undefined`，所以**显示默认值不等于把它写进文件**，JSON 不会平白多出一堆 `"button": "left"`。
-
-**契约里同名的字段要补齐 `valueLabels`**：同一个 `button` 在 `click` 上有中文标签、在 `mousehold`
-上没有，界面就只能显示原始的 `left`。这类"看起来是界面 bug、其实是数据没给全"的问题，
-修的时候先看 `src/KeyMouse.Core/flow.schema.json`，别在下拉框里写死中文。
-顺带记住：**编辑器是通过 `flow_schema` 命令向 `artifacts\cli\KeyMouse.exe` 要这份契约的**
-（`src-tauri/src/schema.rs`），改了 schema 必须重跑 `tools\build\build.ps1`，只重建外壳没用——
-症状就是"代码明明改了，界面还是旧的"。
-
-**录制的长按类步骤要有中文名**：`keyhold` / `mousehold` / `keydown` / `keyup` / `mousedown` / `mouseup`
-是录制会写出来的真实类型。`lib/model.ts` 的 `TITLES` 和 `stepSummary` 早先只覆盖了 14 种类型，
-于是列表里出现 `keyhold`、摘要空着（用户的录制里一眼就看见）。
-补标题和摘要时顺手加了 `buttonLabel(step)`；注意 `FlowStep.button` 的类型只有 `'left' | 'right' | 'middle'`，
-在里面写 `x1`/`x2` 分支会被 svelte-check 判成"没有交集"。
+- **分支是模型的一部分**：`model.ts` 的 `branchesOf(step)` 给 `if` 返回「成立时 / 否则」两条，
+  给 `while/do/for/repeat/foreach` 返回一条；`childSteps` 是两条合起来（计数/过滤用），
+  `childSel` 是它们摊平后的下标。否则分支还没写时也返回空分支，界面上才能显示「否则」并往里加第一步。
+- **`else` 的 origin 用 `.e`**：否则分支第一行是 `6.e1`，与引擎 `FlowPlan` 生成的 origin 对齐；
+  行号也这么显示。不能写成 `6.2`——那会和「成立时」的第二个子步骤撞键，运行结果会落错行。
+- **新建模板自带最小身体**：`if`/`while`/`do` 插进来就带一个 `sleep`，`for` 带 `i=0; i<3; i=i+1`，
+  所以画布上立刻能展开、往里加步骤；条件空着，节点上照旧显示「待补」。
+- **条件输入是等宽的一行**（`cond` / `set.value`），`probe` 只在条件里出现 `text(` 或已经填过时展开，
+  `while (i < 3)` 不会逼人填窗口。`probe` 的字段（target/region/match/maxErrors）由 `InspectorShape` 排版。
+- **`for` 的三段式**：`init`/`step` 都是 `KeyValueEditor`，名字 → 表达式；`cond` 是单行表达式；
+  `maxRounds` 是数字框。契约把初值/每轮的说明放在 help 里，标签只留短名，窄抽屉不会折成两行。
+- **`noWhen` 来自契约**：`repeat/foreach/if/while/do/for/break/continue` 的契约条目标了 `noWhen`，
+  检查器不画「前提条件」；`set`/`assert` 仍然可以带单步前提。
+- **必填提示会走到两条分支**：`firstIncomplete()` 遍历 `childrenOf`，找到哪条分支的哪一步就选中哪一步
+  （`childSel` + 展开），而不是只报顶层。
+- **测试**：`steps.test.ts` 盯模板/分支/摘要；`edit.test.ts` 增加「否则分支增删改」；
+  `filter.test.ts` 确认否则里的步骤也能搜到；`pnpm check` 与 157 条前端单测（`km ut`）一起跑。
 
 ## 排版语汇：归藏 Page 的杂志风
 
@@ -409,11 +272,11 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 工具栏，列表和检查器也都不需要横向滚动。改字号之前先在那个尺寸里看一眼。
 ## 设置页（`src/Settings.svelte`）
 
-设置是**整页替换**，不是弹窗：它内容多（外观/交互/文件/环境/快捷键），弹窗装不下，
+设置是**整页替换**，不是弹窗：它内容多（外观/文件/环境/快捷键），弹窗装不下，
 而且文档式的长页正好是杂志风擅长的事。
 
 - 入口三处：顶栏齿轮、`···` 菜单「设置…」、`Ctrl+,`；返回：顶栏「← 返回流程」或 `Esc`。
-- 每一行都真的生效：主题 → `save_theme`；长按阈值 → `save_long_press_ms`；
+- 每一行都真的生效：主题 → `save_theme`；
   最近文件 → `recent_files` / `forget_recent` / `clear_recent`；体检 → `run_doctor`；
   诊断 → `collect_diagnostics`。
 - **设置页不自己判断环境**：判断只活在命令行的 `doctor` 里，这里只把它的输出搬回来贴成
@@ -425,7 +288,7 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 
 ## 弹窗一律"点外面就收起"
 
-菜单（`+ 更多`、录制 `▾`、`···`、行右键菜单）原本只有 `Esc` 和"点自己那一项"能关。拿着鼠标的人
+菜单（`添加`、录制 `▾`、`···`、抽屉）原本只有 `Esc` 和"点自己那一项"能关。拿着鼠标的人
 会去点别处，然后菜单挂在那儿压着列表。现在统一在 `<svelte:window on:pointerdown={onWindowPointerDown}>`
 里收：`closePopups(except)` 关掉除 `except` 之外的弹窗，`except` 取
 `event.target.closest('[data-popup]')?.dataset.popup`。
@@ -436,33 +299,17 @@ interface Section { at: number; title: string }   // 在第 at 行之前开一�
 - 判断用 `closest` 而不是坐标：菜单是浮层，它的 `getBoundingClientRect()` 里 `pointer-events` 之外的
   空白处也算"在里面"，按坐标算会误判。
 
-## 工具栏上的"常用"是算出来的，不是列出来的
-
-「+ 更多」里该列哪些类型，判据必须是"**这个类型在不在工具栏上**"，不能是"这个组叫不叫常用"。
-早先写的是 `.filter((g) => g !== '常用')`，于是 `切换窗口`（`focus`，也在常用组里）既不在工具栏、
-也被「+ 更多」整组排掉——界面上根本没有地方能加它，用户当场就问"切换窗口在哪里加"。
-现在 `moreGroups` 与菜单项都用 `!quickTypes.has(type)` 过滤，并且 `focus` 摆到工具栏第一个
-（一条流程几乎总从切窗口开始，录制出来的流程也自带这一步）。
-
 ## 界面与老外壳的关系
 
 P0 的目标是"两屏并排看不出这是两个程序"：
 
 - 顶栏：`▞` 标记 + `KeyMouse` + `流程编辑器` + 当前文件路径（居中，省略号在左侧）。
-- 工具栏：常用步骤四个（点击、输入文字、等文字出现、找字并点它）+ `+ 更多`；右侧 `录制`（圆点）/`试运行`/`播放`（朱砂实心）/`···`。
-- 两栏：左侧步骤列表（序号、图标片、标题、一行摘要、分组步的步数、子步骤 `6.1`），右侧检查器（按契约渲染：目标窗口、这一步、前提条件、备注、证据、JSON 折叠）。
+- 工具栏：`＋ 添加`（三组面板）+ 节点数；右侧 `录制`（圆点）/`试运行`/`播放`（朱砂实心）/`···`。
+- 画布：顶层从上到下、块内子步骤在右侧向下；三种轮廓（六边形/胶囊/纸卡）；节点带 origin、摘要、待补、计数与运行结果。
+- 抽屉：点节点从右侧滑出，契约字段 / 证据 / JSON / 复制·上下移·删除；点空白或 `Esc` 收起。
 - 底部：状态行 + 输出胶囊；点开是等宽字体的运行输出。
 
 配色与间距取的是 `src/KeyMouse.FlowEditor/Themes/Palette.xaml` 的同一套 token，`theme.css` 里以 `--kp-*` 变量落地。
-
-## 和老外壳对齐的细节（P6）
-
-| 老外壳有 | 新外壳 | 说明 |
-| --- | --- | --- |
-| `···` 菜单：打开… / 保存 / 另存为… / 从屏幕取区域… | 一样 | 「从屏幕取区域…」不问用户点了哪个字段，直接问契约：这一步有 `region` 就写区域，否则写 `at`，两样都没有就如实说 |
-| `Ctrl+Shift+A` 打开全部类型 | 一样 | 省得去点 `+ 更多` |
-| 暂停 / 继续 | 有（暂停时工具栏按钮变「继续」） | 命令行每次启动都建命名事件 `Local\KeyMouse-pause-<pid>`，`FlowRunner` 本来就在每一步之前问一次 `IExecutionControl.BetweenSteps`，`PauseControl` 就挂在那条缝上；外壳只负责 `SetEvent`/`ResetEvent`（`run.rs` 的 `pause_flow`）。停点永远落在两步之间，不会把半个组合键留在键盘上 |
-| 录制按外壳权限 | 多了「以管理员权限录制」 | 见 `docs/reference/editor-ipc.md` 录制第 5 条：按需 UAC、停不了也杀不掉 |
 
 ## 起命令行的方式：`process.rs`
 
@@ -476,7 +323,7 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]`——去掉它，release 版每次
 启动都会先弹一个黑框（class 为 `ConsoleWindowClass`，标题就是 exe 路径）。
 
-窗口的置顶只有"录制细带"会临时打开（`mini.rs` 里存原值、退出时还回去）；`main.rs` 的
+窗口的置顶只有录制/播放浮条会临时打开（`pill.rs` 用 `always_on_top` + `overlay_style`）；`main.rs` 的
 `.setup()` 里还会显式 `set_always_on_top(false)` 一次，避免上一轮被强杀留下的置顶被带进来。
 
 ## 诊断打包：`diagnostics.rs`
@@ -564,9 +411,9 @@ P0 的目标是"两屏并排看不出这是两个程序"：
   路径去跑。磁盘上正在编辑的文件一个字都不动，底部输出会写明"跑的是临时副本，磁盘上的
   文件没动"。已保存且无改动时仍直接跑原文件。
 
-## 录制浮条：一块真的透明的第二窗口
+## 录制 / 播放浮条：一块真的透明的第二窗口
 
-录制时屏幕上那条药丸是**独立的第二个 webview**（窗口 label `pill`，入口 `pill.html` + `src/pill.ts`），
+录制和播放都会先隐藏主窗口，屏幕上那条药丸是**独立的第二个 webview**（窗口 label `pill`，入口 `pill.html` + `src/pill.ts`），
 不是把主窗口缩成一条。它要同时满足三件事，缺一件就不是"浮条"：
 
 1. **真透明**：窗口 `transparent(true)` + `decorations(false)` + `shadow(false)`，页面根与 `body` 必须
@@ -584,7 +431,12 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 - **建窗不能在命令线程里直接干**：`#[tauri::command]` 跑在主线程上，`WebviewWindowBuilder::build()`
   要把建窗任务派回主线程，于是自锁——现象是日志停在"pill show：进入"，窗口一动不动。
-  正确写法是 `std::thread::spawn(move || pill::show(&app))`（`record.rs` 与 `main.rs` 的 `spawn_pill_spike` 都这么写）。
+  正确写法是 `std::thread::spawn(move || pill::show(&app))`（`record.rs`、`show_run_pill`、`spawn_pill_spike` 都这么写）。
+- **先显示浮条，再藏主窗口，最后起流程**：流程可能 100ms 就失败退出；反过来做会出现"进程已经退了，浮条才冒出来"。
+  `App.svelte` 用一条 `windowAction` 串行队列做 hide/show，退出事件与隐藏动作不会互相覆盖；Rust 的子进程等待线程
+  在退出时再兜底 `pill::hide`。
+- **播放浮条多一个暂停**：`pill.ts` 从 `?mode=play` 读模式；暂停调 `pause_flow`，停止调 `run_cancel` 再 `hide_pill`。
+  录制模式仍走 `pill_stop`（等录制自己写盘，不杀进程）。
 - **句柄/显示器要等一下**：`build()` 刚返回时 `hwnd()` 偶尔还拿不到真句柄、`current_monitor()` 也可能是 None。
   所以 `arrange()` 在 show 之后立刻跑一遍，再 sleep 260ms 在别的线程补一遍。
 - **capabilities 要单独开**：`src-tauri/capabilities/pill.json` 只给 `core:default` +
@@ -599,12 +451,13 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 
 ### 浮条上为什么只有三个图
 
-药丸里只放：呼吸的朱砂点（在录）、等宽时长（`0:07` → `12:34`）、朱砂实心圆里的白色方块（停）。
+药丸里只放：呼吸点（在录/在播）、等宽时长（`0:07` → `12:34`）、播放时多一个暂停（空心圆里两条竖线），
+最后是停止（朱砂实心圆里白色方块）。
 
 - **不写字**：它要一直悬在屏幕上，字越多越像贴纸。"正在录"和"停"各有公认图形，多一行"操作你要录的窗口"只是噪声。
 - **时长必须等宽**：`font-variant-numeric: tabular-nums` + `min-width`，否则 `0:59 → 1:00` 会让整条药丸抽一下。
 - **点和按钮不能长得像**：两者都是朱砂色，所以左边是**带光晕的小圆点**（指示）、右边是**实心圆包白方块**（控件）。
   第一版把右边画成"透明底上的红方块"，和左边那个点在缩略图里几乎分不清。
 - **失败时没有文字区可写**：`pill_stop` 失败就把点停跳、按钮转灰，并把原因放进按钮的 `title`（"没停成，请按 Ctrl+Alt+Q"）。
-- 尺寸钉在 `src-tauri/src/pill.rs` 的 `WIDTH = 104.0` / `HEIGHT = 38.0`（逻辑像素），单测把区间卡在 96..180 × 32..56——
+- 尺寸钉在 `src-tauri/src/pill.rs` 的 `WIDTH = 104.0` / `PLAY_WIDTH = 154.0` / `HEIGHT = 38.0`（逻辑像素），单测把区间卡在 96..180 × 32..56——
   改大之前先想清楚它凭什么要更大。

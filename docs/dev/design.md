@@ -428,6 +428,7 @@ CLI（KeyMouse.exe）──┘
    （条件写在 `cond` 里）；`times` 上限 10000；条件循环都有 `maxRounds`。
 
 **报告与进度**：报告仍按**执行的步骤**逐行记，`origin` 仍指向文档里的那一行；树里的块本身不占一行。
+`if` 的否则分支用 `origin.e<N>`（例如 `6.e1`），和成立时的 `6.1` 分开，避免同一行号落到两条分支上。
 没有条件流的旧流程，静态规划数与原展平数完全一致，所以控制台输出逐字不变。含条件/循环的流程，
 分母要到跑完才知道，于是只打印 `[  7]`，不打印 `[  7/20]`。
 
@@ -543,7 +544,9 @@ CLI（KeyMouse.exe）──┘
 
 > **后来者注**：图形编辑器正在换成 `src\KeyMouse.EditorUI`（Tauri + Svelte，见
 > [`adr/0001-editor-shell-tauri.md`](adr/0001-editor-shell-tauri.md)）。`flow edit` 现在先找
-> 新外壳 `KeyMouse.Editor.exe`，找不到才退到本文描述的 WinUI 外壳。下面三条设计决定
+> 新外壳 `KeyMouse.Editor.exe`，找不到才退到本文描述的 WinUI 外壳。**2026-11 起新外壳改成无限画布**：
+> 顶层从左到右、块内向下，三种轮廓区分流程控制/循环控制/操作指令；点节点开右侧抽屉，录制与播放默认隐藏主窗口、
+> 用桌面浮条控制。下面三条设计决定仍然成立。
 > ——"一份 schema 两个消费者""编辑不执行""不越权猜字段"——在新外壳里同样成立，只是换成了
 > `KeyMouse schema` 输出的 JSON 契约（见 [`../reference/editor-ipc.md`](../reference/editor-ipc.md)）。
 

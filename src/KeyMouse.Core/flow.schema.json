@@ -1487,6 +1487,7 @@
         "zh": "重复 N 次",
         "en": "Repeat N times"
       },
+      "noWhen": true,
       "fields": [
         {
           "name": "times",
@@ -1519,6 +1520,7 @@
         "zh": "遍历列表",
         "en": "Walk a list"
       },
+      "noWhen": true,
       "fields": [
         {
           "name": "in",
@@ -1591,12 +1593,13 @@
         }
       ]
     },
-        "if": {
+    "if": {
       "summary": { "zh": "条件成立才执行一段", "en": "Run a block when the condition holds" },
+      "noWhen": true,
       "fields": [
         {
           "name": "cond", "kind": "text", "required": true,
-          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "label": { "zh": "条件", "en": "condition" },
           "help": { "zh": "C 风格表达式：i < 3、text(\"保存\")、found(\"副本\")、window(\"notepad\")、elapsed() < 5000。变量直接写名字，不要用 {{}}。", "en": "A C-like expression; bare variable names, not {{...}}." }
         },
         {
@@ -1617,10 +1620,11 @@
     },
     "while": {
       "summary": { "zh": "条件成立就重复", "en": "Repeat while the condition holds" },
+      "noWhen": true,
       "fields": [
         {
           "name": "cond", "kind": "text", "required": true,
-          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "label": { "zh": "条件", "en": "condition" },
           "help": { "zh": "每一轮开始前重新求值；text() 每次都是一次新的读屏。", "en": "Re-evaluated before each round; text() takes a fresh read every time." }
         },
         {
@@ -1641,10 +1645,11 @@
     },
     "do": {
       "summary": { "zh": "先做一遍，再看条件（do-while）", "en": "Do once, then check (do-while)" },
+      "noWhen": true,
       "fields": [
         {
           "name": "cond", "kind": "text", "required": true,
-          "label": { "zh": "条件（表达式）", "en": "condition" },
+          "label": { "zh": "条件", "en": "condition" },
           "help": { "zh": "每轮结束后求值；true 就再来一轮。", "en": "Evaluated after each round; true repeats." }
         },
         {
@@ -1665,20 +1670,21 @@
     },
     "for": {
       "summary": { "zh": "计数循环（init; cond; step）", "en": "Counting loop (init; cond; step)" },
+      "noWhen": true,
       "fields": [
         {
           "name": "init", "kind": "vars", "required": false,
-          "label": { "zh": "初值（名字 = 表达式）", "en": "init" },
-          "help": { "zh": "循环开始前按顺序求值一次；这些名字只活在循环里。", "en": "Evaluated once, in order; the names live only inside the loop." }
+          "label": { "zh": "初值", "en": "init" },
+          "help": { "zh": "循环开始前按顺序求值一次；这些名字只活在循环里。每项是「名字 = 表达式」。", "en": "Evaluated once, in order; each row is name = expression and the names live only inside the loop." }
         },
         {
           "name": "cond", "kind": "text", "required": true,
-          "label": { "zh": "条件（表达式）", "en": "condition" }
+          "label": { "zh": "条件", "en": "condition" }
         },
         {
           "name": "step", "kind": "vars", "required": false,
-          "label": { "zh": "每轮之后（名字 = 表达式）", "en": "step" },
-          "help": { "zh": "continue 之后也会执行，和 C 的 for 一样。", "en": "Runs after continue, exactly like C's for." }
+          "label": { "zh": "每轮之后", "en": "step" },
+          "help": { "zh": "每轮 body 之后按顺序求值；continue 之后也会执行，和 C 的 for 一样。每项是「名字 = 表达式」。", "en": "Evaluated after each round, including after continue; each row is name = expression." }
         },
         {
           "name": "probe", "kind": "probe", "required": false,
@@ -1698,10 +1704,12 @@
     },
     "break": {
       "summary": { "zh": "跳出当前循环", "en": "Leave the current loop" },
+      "noWhen": true,
       "fields": []
     },
     "continue": {
       "summary": { "zh": "进入当前循环的下一轮", "en": "Start the next round" },
+      "noWhen": true,
       "fields": []
     },
     "set": {
@@ -1723,7 +1731,7 @@
       "fields": [
         {
           "name": "cond", "kind": "text", "required": true,
-          "label": { "zh": "条件（表达式）", "en": "condition" }
+          "label": { "zh": "条件", "en": "condition" }
         },
         {
           "name": "message", "kind": "text", "required": false,

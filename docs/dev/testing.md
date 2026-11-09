@@ -10,7 +10,7 @@ KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证�
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.0.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -41,7 +41,7 @@ Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent'
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.0.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -113,7 +113,7 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.0.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -176,7 +176,7 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.0.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -223,7 +223,7 @@ pwsh tools\diagnostics\evidence.ps1 -Samples 5 -Attempts 1  # 快速看一眼
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-0.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.0.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```

@@ -16,7 +16,8 @@ export type FieldKind =
   | 'steps'
   | 'vars'
   | 'stringList'
-  | 'when';
+  | 'when'
+  | 'probe';
 
 export interface LocalizedText {
   zh: string;
@@ -47,6 +48,8 @@ export interface ShapeContract {
 export interface StepContract {
   summary: LocalizedText;
   fields: FieldContract[];
+  /** 这种步骤不能用公共的 `when`：块自己的 cond 已经承担了条件。 */
+  noWhen?: boolean;
 }
 
 export interface FlowSchema {

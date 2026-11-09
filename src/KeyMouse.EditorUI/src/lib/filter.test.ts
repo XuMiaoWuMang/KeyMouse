@@ -60,4 +60,15 @@ describe('filterSteps', () => {
     expect(kept.map((step) => step.type)).toEqual(['repeat']);
     expect(filterSteps(steps, '')).toHaveLength(3);
   });
+
+  it('if 的否则分支也参与搜索', () => {
+    const branchy: FlowStep = {
+      type: 'if',
+      cond: 'n > 0',
+      steps: [{ type: 'sleep', ms: 1 }],
+      else: [{ type: 'type', text: '否则里的字' }],
+    };
+    expect(matchesFilter(branchy, '否则')).toBe(true);
+    expect(childVisible(branchy, branchy.else![0], '否则')).toBe(true);
+  });
 });

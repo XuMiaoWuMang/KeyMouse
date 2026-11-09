@@ -234,6 +234,34 @@ describe('child steps', () => {
   });
 });
 
+describe('if branches', () => {
+  const branchy = (): FlowStep => ({
+    type: 'if',
+    cond: 'true',
+    steps: [{ type: 'sleep', ms: 1 }],
+    else: [{ type: 'sleep', ms: 2 }],
+  });
+
+  it('appendChild 可以指定「否则」分支，不碰「成立时」', () => {
+    const next = appendChild([branchy()], 0, { type: 'wheel', delta: -120 }, 'else');
+    expect(next[0].steps).toEqual([{ type: 'sleep', ms: 1 }]);
+    expect(next[0].else).toEqual([{ type: 'sleep', ms: 2 }, { type: 'wheel', delta: -120 }]);
+  });
+
+  it('删掉否则的最后一步时连 else 键一起收掉', () => {
+    const next = removeChildAt([branchy()], 0, 0, 'else');
+    expect(next[0].else).toBeUndefined();
+    expect(next[0].steps).toEqual([{ type: 'sleep', ms: 1 }]);
+  });
+
+  it('否则分支里也能上下换位、复制', () => {
+    const source: FlowStep = { type: 'if', cond: 'true', else: [{ type: 'sleep', ms: 1 }, { type: 'sleep', ms: 2 }] };
+    expect(moveChild([source], 0, 0, 1, 'else')[0].else?.map((s) => s.ms)).toEqual([2, 1]);
+    const copied = duplicateChildAt([source], 0, 0, 'else');
+    expect(copied[0].else?.map((s) => s.ms)).toEqual([1, 1, 2]);
+  });
+});
+
 describe('duplicateChildAt', () => {
   const group = (): FlowStep[] => [
     { type: 'repeat', times: 2, steps: [{ type: 'sleep', ms: 100 }, { type: 'wheel', delta: -120 }] },

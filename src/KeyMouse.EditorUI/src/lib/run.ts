@@ -157,7 +157,12 @@ export function firstFailure(results: Record<string, StepResult>): string {
   const failing = Object.keys(results).filter((key) => !results[key].ok);
   if (failing.length === 0) return '';
 
-  const order = (key: string) => key.split('.').map((part) => Number(part) || 0);
+  // `6.e1` 里的 `e` 不是数字：否则分支排在成立时之后，而不是被 Number('e1') 当成 0 混到前面。
+  const order = (key: string) =>
+    key.split('.').map((part) => {
+      const branch = /^e(\d+)$/.exec(part);
+      return branch ? 1000 + Number(branch[1]) : Number(part) || 0;
+    });
   failing.sort((a, b) => {
     const left = order(a);
     const right = order(b);

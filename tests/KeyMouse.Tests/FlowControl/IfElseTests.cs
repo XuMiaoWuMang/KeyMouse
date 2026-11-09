@@ -19,6 +19,9 @@ internal static class IfElseTests
 
         FlowRun.Result otherwise = Run(0, "else");
         Harness.Equal("a false condition runs else", 0, otherwise.ExitCode);
+        Harness.Check("the else branch keeps its own origin (1.e1)",
+            otherwise.Report?.Commands.Any(c => c.Origin == "1.e1") == true,
+            string.Join(",", otherwise.Report?.Commands.Select(c => c.Origin ?? "?") ?? []));
 
         FlowRun.Result noElse = FlowRun.Run(FlowRun.Flow(
             """[{"type":"if","cond":"n > 0","steps":[{"type":"set","name":"hit","value":"\"then\""}]},{"type":"assert","cond":"hit == \"\""}]""",

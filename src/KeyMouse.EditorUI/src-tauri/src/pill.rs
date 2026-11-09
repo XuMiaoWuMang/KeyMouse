@@ -15,27 +15,40 @@ use tauri::{AppHandle, Manager, LogicalPosition, LogicalSize, WebviewUrl, Webvie
 
 /// 浮条窗口的尺寸（逻辑像素）。
 ///
-/// 只装得下三样东西：8px 呼吸点、等宽时长（`0:07` → `12:34` 宽度不变）、22px 方块按钮。
-/// 它要一直悬在屏幕上，多一个像素都在挡人——所以这里不写"正在录制""操作你要录的窗口"这类字。
+/// 录制只要三样：8px 呼吸点、等宽时长、22px 方块按钮；
+/// 播放多一个"暂停/继续"按钮，所以宽一点。
 pub const WIDTH: f64 = 104.0;
+pub const PLAY_WIDTH: f64 = 154.0;
 pub const HEIGHT: f64 = 38.0;
 
 /// 离屏幕底部的距离（逻辑像素）：留出任务栏高度以上的呼吸空间。
 const BOTTOM_MARGIN: f64 = 96.0;
 
-/// 显示浮条；已经存在就只把它摆好再抬到最上面。
+/// 显示录制浮条；已经存在就只把它摆好再抬到最上面。
 pub fn show(app: &AppHandle) -> Result<(), String> {
-    crate::crashlog::write("pill show：进入");
+    show_mode(app, "record")
+}
+
+/// 显示播放浮条：主窗口隐藏后，靠它暂停/停止。
+pub fn show_play(app: &AppHandle) -> Result<(), String> {
+    show_mode(app, "play")
+}
+
+fn show_mode(app: &AppHandle, mode: &str) -> Result<(), String> {
+    crate::crashlog::write(&format!("pill show：进入（{mode}）"));
+    let play = mode == "play";
     if let Some(window) = app.get_webview_window("pill") {
+        let _ = window.set_title(if play { "KeyMouse 播放中" } else { "KeyMouse 录制中" });
         place(&window);
         let _ = window.show();
         crate::overlay_style::make_overlay(&window);
         return Ok(());
     }
 
-    let window = WebviewWindowBuilder::new(app, "pill", WebviewUrl::App("pill.html".into()))
-        .title("KeyMouse 录制中")
-        .inner_size(WIDTH, HEIGHT)
+    let url = WebviewUrl::App(format!("pill.html?mode={mode}").into());
+    let window = WebviewWindowBuilder::new(app, "pill", url)
+        .title(if play { "KeyMouse 播放中" } else { "KeyMouse 录制中" })
+        .inner_size(if play { PLAY_WIDTH } else { WIDTH }, HEIGHT)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)

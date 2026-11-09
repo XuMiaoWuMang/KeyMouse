@@ -1,0 +1,52 @@
+{
+  "format": "keymouse-flow",
+  "version": 1,
+  "recordedAt": "2026-11-08T19:30:00+08:00",
+  "variables": {
+    "i": "0",
+    "sum": "0"
+  },
+  "steps": [
+    { "type": "focus", "target": { "process": "notepad" }, "note": "切到记事本" },
+    {
+      "type": "while",
+      "cond": "i < 3",
+      "maxRounds": 10,
+      "steps": [
+        { "type": "type", "text": "第 {{i}} 轮", "target": { "process": "notepad" } },
+        { "type": "key", "text": "enter", "target": { "process": "notepad" } },
+        { "type": "set", "name": "i", "value": "i + 1" },
+        {
+          "type": "if",
+          "cond": "i == 2",
+          "steps": [{ "type": "break" }],
+          "else": [{ "type": "sleep", "ms": 120 }]
+        }
+      ]
+    },
+    { "type": "assert", "cond": "i == 2", "message": "while 应该在第二轮停下" },
+    {
+      "type": "for",
+      "init": { "j": "0" },
+      "cond": "j < 2",
+      "step": { "j": "j + 1" },
+      "maxRounds": 10,
+      "steps": [
+        { "type": "type", "text": "for {{j}}", "target": { "process": "notepad" } },
+        { "type": "set", "name": "sum", "value": "sum + j" }
+      ]
+    },
+    { "type": "assert", "cond": "sum == 1", "message": "for 的计数不对" },
+    {
+      "type": "if",
+      "cond": "text(\"保存\")",
+      "probe": {
+        "target": { "process": "notepad" },
+        "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 40 },
+        "match": "contains"
+      },
+      "steps": [{ "type": "key", "combo": "ctrl+s", "target": { "process": "notepad" } }],
+      "else": [{ "type": "sleep", "ms": 200 }]
+    }
+  ]
+}

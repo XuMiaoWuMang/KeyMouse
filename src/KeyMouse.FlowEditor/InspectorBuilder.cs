@@ -76,7 +76,7 @@ internal sealed class InspectorBuilder
     /// </summary>
     private void AddWhen(FlowStepContract contract)
     {
-        if (!contract.All.Any(f => f.Name == "when")) return;
+        if (contract.NoWhen || !contract.All.Any(f => f.Name == "when")) return;
 
         var panel = new StackPanel { Spacing = 12 };
 

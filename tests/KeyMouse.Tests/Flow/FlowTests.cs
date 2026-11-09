@@ -152,6 +152,8 @@ internal static class FlowTests
         }
         Harness.Check("...and the contract does not invent types",
             FlowSchema.Steps.Keys.All(FlowDocument.KnownTypes.Contains), string.Join(", ", FlowSchema.Steps.Keys));
+        Harness.Check("块步骤在契约里标了 noWhen", new[] { "repeat", "foreach", "if", "while", "do", "for", "break", "continue" }
+            .All(type => FlowSchema.TryGetStep(type, out FlowStepContract contract) && contract.NoWhen));
 
         // 契约里出现的每一种字段，前端都必须有办法渲染；否则就是"格式里有、界面上没有"。
         string[] renderable = ["const", "text", "multiline", "int", "bool", "enum", "point", "region", "target", "when", "probe", "steps", "vars", "stringList"];

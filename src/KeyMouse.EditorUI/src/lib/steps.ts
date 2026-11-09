@@ -7,7 +7,7 @@
  * 那边是引擎的真规则，这里只用来提示，不参与校验（校验问命令行）。
  */
 
-import type { FlowStep, StepType } from './model';
+import type { FlowStep, StepCategory, StepType } from './model';
 
 export interface StepTemplate {
   type: StepType;
@@ -49,9 +49,40 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
   { type: 'repeat', group: '流程', required: ['times', 'steps'], labels: { times: '次数', steps: '子步骤' } },
   { type: 'foreach', group: '流程', required: ['in', 'steps'], labels: { in: '来源', steps: '子步骤' } },
   { type: 'call', group: '流程', required: ['flow'], labels: { flow: '流程文件' } },
+  { type: 'if', group: '流程', required: ['cond', 'steps'], labels: { cond: '条件', steps: '子步骤', probe: '条件读哪里' } },
+  { type: 'while', group: '流程', required: ['cond', 'steps'], labels: { cond: '条件', steps: '子步骤', probe: '条件读哪里' } },
+  { type: 'do', group: '流程', required: ['cond', 'steps'], labels: { cond: '条件', steps: '子步骤', probe: '条件读哪里' } },
+  { type: 'for', group: '流程', required: ['cond', 'steps'], labels: { cond: '条件', steps: '子步骤', probe: '条件读哪里' } },
+  { type: 'break', group: '流程', required: [] },
+  { type: 'continue', group: '流程', required: [] },
+  { type: 'set', group: '流程', required: ['name', 'value'], labels: { name: '变量名', value: '值' } },
+  { type: 'assert', group: '流程', required: ['cond'], labels: { cond: '条件', probe: '条件读哪里' } },
 ];
 
 const BY_TYPE = new Map(STEP_TEMPLATES.map((t) => [t.type, t]));
+
+const FLOW_TYPES = new Set<StepType>(['if', 'set', 'assert', 'break', 'continue', 'call']);
+const LOOP_TYPES = new Set<StepType>(['repeat', 'foreach', 'while', 'do', 'for']);
+
+export const STEP_CATEGORY_LABELS: Record<StepCategory, string> = {
+  flow: '流程控制',
+  loop: '循环控制',
+  action: '操作指令',
+};
+
+/**
+ * 三种轮廓的归类：条件/跳转/变量与断言走菱形六边形，循环走胶囊，其余是动作卡片。
+ * `set` 本身是一次动作，但它改的是"流程接下来读到的状态"，跟 if/assert 放一起更好找。
+ */
+export function categoryOf(type: StepType): StepCategory {
+  if (FLOW_TYPES.has(type)) return 'flow';
+  if (LOOP_TYPES.has(type)) return 'loop';
+  return 'action';
+}
+
+export function templatesInCategory(category: StepCategory): StepTemplate[] {
+  return STEP_TEMPLATES.filter((item) => categoryOf(item.type) === category);
+}
 
 /**
  * 工具栏上直接摆出来的几种，其余进「+ 更多」。
@@ -86,6 +117,27 @@ export function makeStep(type: StepType): FlowStep {
       return { type, times: 3, steps: [] };
     case 'foreach':
       return { type, in: 'items', steps: [] };
+    case 'if':
+      return { type, cond: '', steps: [{ type: 'sleep', ms: 300 }] };
+    case 'while':
+    case 'do':
+      return { type, cond: '', maxRounds: 200, steps: [{ type: 'sleep', ms: 300 }] };
+    case 'for':
+      return {
+        type,
+        init: { i: '0' },
+        cond: 'i < 3',
+        step: { i: 'i + 1' },
+        maxRounds: 10000,
+        steps: [{ type: 'sleep', ms: 300 }],
+      };
+    case 'break':
+    case 'continue':
+      return { type };
+    case 'set':
+      return { type, name: 'n', value: '0' };
+    case 'assert':
+      return { type, cond: 'true' };
     default:
       return { type };
   }
@@ -113,6 +165,15 @@ export function missingOf(step: FlowStep): string[] {
   // 二选一的那些：全空才记一条（用 ` 或 ` 拼起来，提示里再说人话）。
   if (template.anyOf && template.anyOf.every((key) => isBlank(raw[key]))) {
     missing.push(template.anyOf.join(' 或 '));
+  }
+  // 条件里调了 text() 就一定要有读屏观察点；否则加载器会拒绝，UI 不该等播放时才说。
+  if (/\btext\s*\(/.test(step.cond ?? '')) {
+    const probe = step.probe;
+    const target = probe?.target;
+    const region = probe?.region;
+    const hasTarget = !!target && !!(target.process || target.class || target.title);
+    const hasRegion = !!region && typeof region.width === 'number' && typeof region.height === 'number';
+    if (!hasTarget || !hasRegion) missing.push('probe');
   }
   return missing;
 }

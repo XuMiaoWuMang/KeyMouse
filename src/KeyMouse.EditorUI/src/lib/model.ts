@@ -18,11 +18,32 @@ export interface FlowPoint {
 }
 
 export interface FlowRegion {
-  space: 'client';
+  space: 'client' | 'window';
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+/** 条件读屏的观察点：`text()` 读的窗口与区域。 */
+export interface FlowProbe {
+  target?: FlowTarget;
+  region?: FlowRegion;
+  match?: 'contains' | 'exact' | 'fuzzy';
+  maxErrors?: number;
+}
+
+/** 单步前提（`when`）；与 `FlowCondition` 对齐。 */
+export interface FlowWhen {
+  target?: FlowTarget;
+  region?: FlowRegion;
+  text?: string;
+  match?: 'contains' | 'exact' | 'fuzzy';
+  maxErrors?: number;
+  timeoutMs?: number;
+  intervalMs?: number;
+  confirm?: number;
+  else?: 'skip' | 'fail';
 }
 
 export interface FlowStep {
@@ -44,15 +65,34 @@ export interface FlowStep {
   into?: string;
   'in'?: string;
   flow?: string;
-  vars?: Record<string, unknown>;
-  export?: Record<string, string>;
-  when?: string;
+  vars?: Record<string, string>;
+  export?: string[];
+  when?: FlowWhen;
   ms?: number;
   delta?: number;
   combo?: string;
   count?: number;
   times?: number;
   steps?: FlowStep[];
+
+  // ---------------------------------------------------------------- 控制流
+  /** 条件表达式：`if/while/do/for/assert`。变量直接写名字，不用 `{{}}`。 */
+  cond?: string;
+  /** 条件里 `text()` 读哪里。 */
+  probe?: FlowProbe;
+  /** 条件循环的上界。 */
+  maxRounds?: number;
+  /** `if` 的另一条分支。`else if` 就是这里再放一个 `if`。 */
+  else?: FlowStep[];
+  /** `for` 的初值与每轮之后的赋值（名字 → 表达式）。 */
+  init?: Record<string, string>;
+  step?: Record<string, string>;
+  /** `set` 的变量名与值。 */
+  name?: string;
+  value?: string;
+  /** `assert` 失败时给人的说明。 */
+  message?: string;
+
   /**
    * 录制留下的证据图，路径**相对流程文件**（`flow.shots/0001-click.png`）。
    *
@@ -90,7 +130,18 @@ export type StepType =
   | 'read-text'
   | 'repeat'
   | 'foreach'
-  | 'call';
+  | 'call'
+  | 'if'
+  | 'while'
+  | 'do'
+  | 'for'
+  | 'break'
+  | 'continue'
+  | 'set'
+  | 'assert';
+
+/** 画布上的三种轮廓，也是操作面板的三组。 */
+export type StepCategory = 'flow' | 'loop' | 'action';
 
 const TITLES: Record<StepType, string> = {
   focus: '切换窗口',
@@ -116,6 +167,14 @@ const TITLES: Record<StepType, string> = {
   repeat: '重复 N 次',
   foreach: '逐个遍历',
   call: '调用另一个流程',
+  if: '条件分支',
+  while: '条件循环',
+  do: '先做一遍',
+  for: '计数循环',
+  break: '跳出循环',
+  continue: '进入下一轮',
+  set: '设变量',
+  assert: '断言',
 };
 
 const MATCH_LABELS: Record<string, string> = {
@@ -138,6 +197,13 @@ export function targetLabel(target: FlowTarget | undefined): string {
 
 function pointLabel(p: FlowPoint): string {
   return `${p.x},${p.y}`;
+}
+
+/** 条件摘要太长会把一行撑爆，列表里只留能认出它的那一段。 */
+function clipExpr(value: string | undefined, fallback: string): string {
+  const text = (value ?? '').trim();
+  if (!text) return fallback;
+  return text.length <= 32 ? text : `${text.slice(0, 31)}…`;
 }
 
 /**
@@ -206,15 +272,77 @@ export function stepSummary(step: FlowStep): string {
     case 'repeat':
       return `重复 ${step.times ?? 0} 次`;
     case 'foreach':
-      return '逐个遍历';
+      return `遍历 ${step.in ?? '列表'}`;
     case 'call':
       return '调用另一个流程';
+    case 'if':
+      return `如果 ${clipExpr(step.cond, '（还没写条件）')}`;
+    case 'while':
+      return `当 ${clipExpr(step.cond, '（还没写条件）')} 时重复`;
+    case 'do':
+      return `先做一遍，直到 ${clipExpr(step.cond, '（还没写条件）')} 不成立`;
+    case 'for':
+      return `计数 ${clipExpr(step.cond, '（还没写条件）')}`;
+    case 'break':
+      return '跳出当前循环';
+    case 'continue':
+      return '进入下一轮';
+    case 'set':
+      return `设 ${step.name ?? '?'} = ${clipExpr(step.value, '?')}`;
+    case 'assert':
+      return `确认 ${clipExpr(step.cond, '（还没写条件）')}`;
     default:
       return '';
   }
 }
 
-/** 子步骤：只有分组类步骤才有。 */
+// ------------------------------------------------------------------ 分支
+
+/** `steps` 是 then / 循环体；`else` 是 `if` 的另一条路。 */
+export type BranchKey = 'steps' | 'else';
+
+export interface StepBranch {
+  key: BranchKey;
+  /** 界面上给这条分支的标题：`if` 有两条，才需要写出来。 */
+  label: string;
+  steps: FlowStep[];
+}
+
+/**
+ * 一个块有哪几条分支。`if` 永远有两条（`else` 可以还没写），循环只有一条。
+ *
+ * `else` 不存在时也返回空分支：界面上要能显示"否则"并往里加步骤；空数组不会写进 JSON，
+ * 只有真的加了子步骤才会出现 `else` 键。
+ */
+export function branchesOf(step: FlowStep): StepBranch[] {
+  switch (step.type) {
+    case 'if':
+      return [
+        { key: 'steps', label: '成立时', steps: step.steps ?? [] },
+        { key: 'else', label: '否则', steps: step.else ?? [] },
+      ];
+    case 'while':
+    case 'do':
+    case 'for':
+      return [{ key: 'steps', label: '循环体', steps: step.steps ?? [] }];
+    case 'repeat':
+      return [{ key: 'steps', label: '重复', steps: step.steps ?? [] }];
+    case 'foreach':
+      return [{ key: 'steps', label: '每一项', steps: step.steps ?? [] }];
+    default:
+      return [];
+  }
+}
+
+export function branchSteps(step: FlowStep, branch: BranchKey): FlowStep[] {
+  return branchesOf(step).find((item) => item.key === branch)?.steps ?? [];
+}
+
+/** 子步骤：所有分支合起来，用于计数、过滤和"还缺什么"。 */
 export function childSteps(step: FlowStep): FlowStep[] {
-  return step.steps ?? [];
+  return branchesOf(step).flatMap((branch) => branch.steps);
+}
+
+export function hasChildren(step: FlowStep): boolean {
+  return childSteps(step).length > 0;
 }

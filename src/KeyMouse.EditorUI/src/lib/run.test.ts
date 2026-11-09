@@ -93,6 +93,18 @@ describe('resultsFromReport', () => {
     expect(results['2'].ok).toBe(false);
     expect(results['2'].text).toContain('退出码 3');
   });
+  it('否则分支的结果也卷到 if 那一行', () => {
+    const report = JSON.stringify({
+      commands: [
+        { index: 1, origin: '2.1', command: '等 120 ms', exitCode: 0 },
+        { index: 2, origin: '2.e1', command: '等 200 ms', exitCode: 0 },
+      ],
+    });
+    const results = resultsFromReport(report, false);
+    expect(results['2']).toEqual({ ok: true, text: '2 步都成功', dry: false });
+    expect(results['2.e1']?.ok).toBe(true);
+  });
+
   it('空报告、坏 JSON、没有 origin 的都被忽略', () => {
     expect(resultsFromReport('', true)).toEqual({});
     expect(resultsFromReport('{ not json', true)).toEqual({});
@@ -117,5 +129,13 @@ describe('firstFailure', () => {
     };
     expect(firstFailure(results)).toBe('目标窗口不可用：HYP 已最小化');
     expect(firstFailure({ '1': { ok: true, text: 'x' } })).toBe('');
+  });
+
+  it('否则分支排在成立时之后，不把 6.e1 当成 6.0', () => {
+    const results = {
+      '6.e1': { ok: false, text: '退出码 3：否则里的错' },
+      '6.1': { ok: false, text: '退出码 3：成立时里的错' },
+    };
+    expect(firstFailure(results)).toContain('成立时');
   });
 });

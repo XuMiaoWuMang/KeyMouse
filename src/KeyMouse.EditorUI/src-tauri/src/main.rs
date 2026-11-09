@@ -65,6 +65,26 @@ fn pill_stop(app: AppHandle) -> Result<&'static str, String> {
     Ok(outcome)
 }
 
+/// 播放时主窗口先隐藏，浮条是唯一的暂停/停止入口。
+///
+/// 必须另起线程：建 WebView 窗口要回主线程，而命令本身就在主线程上，直接建会卡住
+/// （录制那边有同样一条注释，踩过一次）。命令立刻返回，界面才能继续隐藏窗口、起流程。
+#[tauri::command]
+fn show_run_pill(app: AppHandle) -> Result<(), String> {
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        if let Err(error) = pill::show_play(&handle) {
+            crashlog::write(&format!("播放浮条没起来：{error}"));
+        }
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn hide_pill(app: AppHandle) {
+    pill::hide(&app);
+}
+
 /// 探针：环境变量 `KEYMOUSE_PILL_SPIKE=1` 时自动亮一次浮条。
 ///
 /// 浮条平时只在录制期间出现，可"它长得对不对"不该逼着人先真录一轮。给自动化验证
@@ -235,6 +255,8 @@ fn main() {
             record::record_flow_elevated,
             record::record_stop,
             pill_stop,
+            show_run_pill,
+            hide_pill,
             schema::flow_schema,
             pick::pick_region,
             mini::enter_mini,

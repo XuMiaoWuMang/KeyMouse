@@ -16,6 +16,9 @@
     type FlowSchema,
   } from './schema';
   import { readBool, readPath, readText } from './fieldpath';
+  import InspectorShape from './InspectorShape.svelte';
+  import KeyValueEditor from './KeyValueEditor.svelte';
+  import ConditionEditor from './ConditionEditor.svelte';
 
   export let schema: FlowSchema | null = null;
   export let step: object;
@@ -31,11 +34,20 @@
         .filter((field) => visibleBy(field, step as Record<string, unknown>))
     : [];
   $: target = fields.find((field) => field.kind === 'target') ?? null;
-  $: when = fields.find((field) => field.kind === 'when') ?? null;
+  // 块步骤的条件已经写在 cond 里，再挂一个单步 when 会在加载时被拒；契约用 noWhen 说明。
+  $: when = schema?.steps[type]?.noWhen ? null : fields.find((field) => field.kind === 'when') ?? null;
   $: note = fields.find((field) => field.name === 'note') ?? null;
   $: plain = fields.filter(
-    (field) => field.kind !== 'target' && field.kind !== 'when' && field.name !== 'note',
+    (field) =>
+      field.kind !== 'target' &&
+      field.kind !== 'when' &&
+      field.name !== 'note' &&
+      (field.kind !== 'probe' || showProbe),
   );
+  $: hasWhen = readPath(step, 'when') !== undefined;
+  $: condText = readText(step, 'cond');
+  // probe 只在条件真的读屏（text(...)）或已经填过时出现：`while (i < 3)` 不该逼人填窗口。
+  $: showProbe = readPath(step, 'probe') !== undefined || /\btext\s*\(/.test(condText);
   $: targetEmpty =
     target !== null &&
     schema !== null &&
@@ -64,6 +76,14 @@
 
   function asText(value: unknown): string {
     return value === null || value === undefined ? '' : String(value);
+  }
+
+  /** `vars` 字段在 JSON 里是对象，Svelte 模板里不能直接写 TS 的 `as`，收在这里。 */
+  function varsOf(target: object, name: string): Record<string, string> | undefined {
+    const value = readPath(target, name);
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, string>)
+      : undefined;
   }
 
   /**
@@ -128,7 +148,38 @@
   {#if plain.length > 0}
     <h2 class="section-head">这一步</h2>
     {#each plain as field}
-      {#if field.kind === 'bool'}
+      {#if field.kind === 'probe'}
+        <div class="field wide">
+          <span class="label">
+            {label(field)}
+            {#if helpOf(field)}<span class="info" title={helpOf(field)}>i</span>{/if}
+          </span>
+          <div class="probe-card">
+            <InspectorShape
+              {schema}
+              {step}
+              fields={shapeFields(schema, 'probe')}
+              prefix="probe"
+              {onchange}
+              {onpick}
+            />
+          </div>
+        </div>
+      {:else if field.kind === 'vars'}
+        <div class="field">
+          <span class="label">
+            {label(field)}
+            {#if helpOf(field)}<span class="info" title={helpOf(field)}>i</span>{/if}
+          </span>
+          <KeyValueEditor
+            value={varsOf(step, field.name)}
+            onchange={(value) => onchange(field.name, value)}
+            keyPlaceholder="名字"
+            valuePlaceholder={type === 'call' ? '值或 {{占位符}}' : '表达式'}
+            addLabel="加一项"
+          />
+        </div>
+      {:else if field.kind === 'bool'}
         <div class="toggle-row">
           <button
             class="switch"
@@ -145,7 +196,10 @@
           </span>
         </div>
       {:else}
-        <div class="field" class:wide={field.kind === 'point' || field.kind === 'region'}>
+        <div
+          class="field"
+          class:wide={field.kind === 'point' || field.kind === 'region' || field.name === 'cond'}
+        >
           <span class="label">
             {label(field)}
             {#if helpOf(field)}<span class="info" title={helpOf(field)}>i</span>{/if}
@@ -208,16 +262,35 @@
                 {field.kind === 'point' ? '取点' : '取一块'}
               </button>
             </div>
+          {:else if field.kind === 'text' && field.name === 'cond'}
+            <ConditionEditor
+              value={readText(step, 'cond')}
+              onchange={(value) => onchange('cond', value)}
+            />
+          {:else if field.kind === 'text' && field.name === 'value'}
+            <input
+              class="expression"
+              spellcheck="false"
+              value={readText(step, field.name)}
+              placeholder={'例如 n + 1 或 "你好" + name'}
+              on:input={(event) => onchange(field.name, event.currentTarget.value)}
+            />
           {:else if field.kind === 'text'}
             <input
               value={readText(step, field.name)}
               on:input={(event) => onchange(field.name, event.currentTarget.value)}
             />
+          {:else if field.kind === 'steps' || field.kind === 'stringList'}
+            <p class="readonly">
+              {field.name === 'else'
+                ? '否则分支在画布上（标着「否则」）加、删、点选；这里只改块本身。'
+                : field.name === 'steps'
+                  ? '子步骤在画布上展开、加删、点选；这里只改块本身。'
+                  : '名字数组先在 JSON 里写（见下面的折叠块）。'}
+            </p>
           {:else}
             <p class="readonly">
-              {field.kind === 'steps' || field.kind === 'vars' || field.kind === 'stringList'
-                ? '这里只读：子步骤在左边列表里加、删、点选着改；键值表（vars）先在 JSON 里写（见下面的折叠块）。'
-                : asText(readPath(step, field.name)) || '——'}
+              {asText(readPath(step, field.name)) || '——'}
             </p>
           {/if}
         </div>
@@ -230,64 +303,27 @@
     <div class="toggle-row">
       <button
         class="switch"
-        class:on={readBool(step, 'when')}
+        class:on={hasWhen}
         role="switch"
-        aria-checked={readBool(step, 'when')}
-        on:click={() => onchange('when', readBool(step, 'when') ? undefined : {})}
+        aria-checked={hasWhen}
+        on:click={() => onchange('when', hasWhen ? undefined : {})}
       >
         <span class="knob"></span>
       </button>
-      <span>{readBool(step, 'when') ? '满足条件才执行' : '每次都执行'}</span>
+      <span>{hasWhen ? '满足条件才执行' : '每次都执行'}</span>
     </div>
 
-    {#if readBool(step, 'when')}
-      {#each shapeFields(schema, 'when') as sub}
-        {#if sub.kind === 'bool'}
-          <div class="toggle-row">
-            <button
-              class="switch"
-              class:on={readBool(step, `when.${sub.name}`)}
-              role="switch"
-              aria-checked={readBool(step, `when.${sub.name}`)}
-              on:click={() => onchange(`when.${sub.name}`, !readBool(step, `when.${sub.name}`))}
-            >
-              <span class="knob"></span>
-            </button>
-            <span>{label(sub)}</span>
-          </div>
-        {:else if sub.kind === 'enum'}
-          <label class="field">
-            <span class="label">{label(sub)}</span>
-            <select
-              value={readText(step, `when.${sub.name}`)}
-              on:change={(event) => onchange(`when.${sub.name}`, event.currentTarget.value)}
-            >
-              {#each sub.values ?? [] as value}
-                <option value={value}>{sub.valueLabels?.[value]?.zh ?? value}</option>
-              {/each}
-            </select>
-          </label>
-        {:else if sub.kind === 'int'}
-          <label class="field">
-            <span class="label">{label(sub)}</span>
-            <input
-              type="number"
-              value={asText(readPath(step, `when.${sub.name}`))}
-              on:input={(event) => commitInt(`when.${sub.name}`, event.currentTarget.value, sub)}
-            />
-          </label>
-        {:else if sub.kind === 'text'}
-          <label class="field">
-            <span class="label">{label(sub)}</span>
-            <input
-              value={readText(step, `when.${sub.name}`)}
-              on:input={(event) => onchange(`when.${sub.name}`, event.currentTarget.value)}
-            />
-          </label>
-        {:else}
-          <p class="readonly">条件里的「{label(sub)}」先到 JSON 里写（见下面的折叠块）。</p>
-        {/if}
-      {/each}
+    {#if hasWhen}
+      <div class="probe-card">
+        <InspectorShape
+          {schema}
+          {step}
+          fields={shapeFields(schema, 'when')}
+          prefix="when"
+          {onchange}
+          {onpick}
+        />
+      </div>
     {/if}
   {/if}
 
@@ -488,6 +524,20 @@
     grid-template-columns: 1fr auto;
     align-items: end;
     gap: 10px;
+  }
+
+  /* 条件表达式用等宽字：`i < 3` 里的空格和括号该看得出来，衬线正文会把它们糊在一起。 */
+  .expression {
+    font-family: var(--kp-font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0;
+  }
+
+  /* 嵌套的观察点 / 前提：只用一道发丝线表示从属，不套第二层卡片。 */
+  .probe-card {
+    margin: 2px 0 4px;
+    padding: 2px 0 2px 12px;
+    border-left: 1px solid var(--kp-rule);
   }
 
   .pick {
