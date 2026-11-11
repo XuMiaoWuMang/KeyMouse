@@ -400,7 +400,7 @@ KeyMouse --version
 ```
 
 调用方需要自己解析输出时（编辑器外壳、Node/Python/Rust 脚本）**应当**设它：猜控制台码页对终端是对的，
-对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 2.2.0��� 2.4.0��`。
+对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 2.2.1��� 2.4.0��`。
 
 设了这个变量就不再看控制台码页；不设则行为与以前完全一致。
 
@@ -579,7 +579,7 @@ KeyMouse run flow.json                          # 回放
 | `wheel` | `delta`、`at` | `mouse wheel`（连续滚动会合并成一个 delta） |
 | `drag` | `from`、`to`、`durationMs` | `mouse drag --duration` |
 | `type` | `text`、`intervalMs` | `key type --interval` |
-| `key` | `combo`（组合）或 `text`（单个键） | `key combo` / `key press` |
+| `key` | `combo`（单键或 `+` 组合） | `key combo` |
 | `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
 | `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
 | `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |

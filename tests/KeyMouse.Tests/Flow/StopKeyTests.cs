@@ -24,7 +24,7 @@ internal static class StopKeyTests
         single.OnEvent(Key(0x1B, 1000));
         single.Finish();
         Harness.Equal("单按 ESC 会被记进流程", 1,
-            single.Steps.Count(s => s.Type == "key" && (s.Text ?? "").Contains("esc")));
+            single.Steps.Count(s => s.Type == "key" && (s.Combo ?? "").Contains("esc")));
 
         Harness.Group("stopkey: 连按两次 ESC 停止，且一个 esc 都不留");
 
@@ -35,7 +35,7 @@ internal static class StopKeyTests
         Harness.Check("第二次 ESC 触发停止", twice.ShouldStop());
         twice.Finish();
         Harness.Equal("停止键不进流程", 0,
-            twice.Steps.Count(s => s.Type == "key" && (s.Text ?? "").Contains("esc")));
+            twice.Steps.Count(s => s.Type == "key" && (s.Combo ?? "").Contains("esc")));
 
         Harness.Group("stopkey: 两次 ESC 隔太远就不算「连按」");
         // 0.3 秒是"人手双击"的上限。再宽一点，编辑器里按 ESC 取消、游戏里关面板这类
@@ -55,7 +55,7 @@ internal static class StopKeyTests
         // 只要求它"没被当成停止键吞掉"：慢拍的第二下会留在待定槽里，
         // 结束时才补记，具体落几条取决于补记顺序（那是刷新逻辑的细节，不是这条规则）。
         Harness.Check("那一下 ESC 没被当成停止键吞掉，仍旧记进流程",
-            slow.Steps.Any(s => s.Type == "key" && (s.Text ?? "").Contains("esc")));
+            slow.Steps.Any(s => s.Type == "key" && (s.Combo ?? "").Contains("esc")));
 
         Harness.Group("stopkey: Ctrl+Alt+Q 用左右 Ctrl 都要认");
 

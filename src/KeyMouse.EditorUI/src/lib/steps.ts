@@ -35,13 +35,12 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
   { type: 'drag', group: '鼠标', required: ['from', 'to', 'target'], labels: { from: '起点', to: '终点', target: '目标窗口' } },
   { type: 'move', group: '鼠标', required: ['at'], labels: { at: '坐标' } },
   { type: 'wheel', group: '鼠标', required: [] },
-  // 组合键与单个键名二选一（契约里就是 `oneOf`）：给一个就发得出去。
+  // 单键与组合键共用 `combo`：enter / f5 / ctrl+shift+s。
   {
     type: 'key',
     group: '键盘',
-    required: [],
-    anyOf: ['combo', 'text'],
-    labels: { combo: '组合键', text: '单个键名' },
+    required: ['combo'],
+    labels: { combo: '按键' },
   },
   { type: 'sleep', group: '等待', required: [] },
   { type: 'wait-window', group: '等待', required: ['target'], labels: { target: '目标窗口' } },

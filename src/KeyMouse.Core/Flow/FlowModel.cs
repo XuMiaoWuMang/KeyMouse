@@ -289,6 +289,7 @@ internal sealed class FlowDocument
         {
             if (step.When is { } condition && string.IsNullOrWhiteSpace(condition.Text)) step.When = null;
         }
+        NormalizeKeySteps(document.Steps);
 
         if (document.Version is < 1 or > CurrentVersion)
             throw new CommandFailure(2, $"'{path}' 的 version 是 {document.Version}，这个版本只认 1");
@@ -322,8 +323,26 @@ internal sealed class FlowDocument
         return document;
     }
 
-    internal static IEnumerable<string> Placeholders(FlowStep step)
+    /// <summary>
+    /// 2.2.0 起 key/keydown/keyup/keyhold 只有一个 `combo` 字段：
+    /// 单键写 `enter`，组合键写 `ctrl+shift+s`。旧文件里的 `text` 在加载时搬进 combo，
+    /// 保存后自然消失；不能让旧文件因为少一个 combo 就拒绝加载。
+    /// </summary>
+    private static void NormalizeKeySteps(List<FlowStep> steps)
     {
+        foreach (FlowStep step in steps)
+        {
+            if (step.Type is "key" or "keydown" or "keyup" or "keyhold")
+            {
+                if (string.IsNullOrWhiteSpace(step.Combo)) step.Combo = step.Text;
+                step.Text = null;
+            }
+            if (step.Steps is { } children) NormalizeKeySteps(children);
+            if (step.Else is { } otherwise) NormalizeKeySteps(otherwise);
+        }
+    }
+
+    internal static IEnumerable<string> Placeholders(FlowStep step)    {
         // A group's children are validated on their own, with the scope their loop provides - so a
         // group is checked for the placeholders in its *own* fields. Serializing the whole step here
         // would make `foreach` look like it used `{{item}}` before the loop variable existed.
@@ -559,8 +578,8 @@ internal sealed class FlowDocument
                 break;
 
             case "key":
-                if (!string.IsNullOrEmpty(step.Combo)) args.AddRange(["key", "combo", step.Combo]);
-                else args.AddRange(["key", "press", step.Text ?? ""]);
+                // 单键也走 combo：文件里只有一个按键字段，CLI 的 combo 解析器接受单键。
+                args.AddRange(["key", "combo", step.Combo ?? step.Text ?? ""]);
                 args.AddRange(selector);
                 break;
 

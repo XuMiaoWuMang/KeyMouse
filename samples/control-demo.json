@@ -14,7 +14,7 @@
       "maxRounds": 10,
       "steps": [
         { "type": "type", "text": "第 {{i}} 轮", "target": { "process": "notepad" } },
-        { "type": "key", "text": "enter", "target": { "process": "notepad" } },
+        { "type": "key", "combo": "enter", "target": { "process": "notepad" } },
         { "type": "set", "name": "i", "value": "i + 1" },
         {
           "type": "if",

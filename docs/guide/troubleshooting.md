@@ -17,7 +17,7 @@ KeyMouse doctor
 编辑器：C:\Users\你\AppData\Local\Programs\KeyMouse\KeyMouse.FlowEditor.exe
         来自：自己所在目录（安装版：编辑器与命令行同在 <安装目录>\ 时）
 
-版本：2.2.0（引擎 2.4.0）
+版本：2.2.1（引擎 2.4.0）
 权限：普通用户（提权窗口会拦下输入）
 编码：输出用 utf-8（跟随控制台码页；重定向时按 UTF-8）
 注册表：HKCU\Software\KeyMouse GuiPath=C:\…\KeyMouse.FlowEditor.exe CliPath=C:\…\cli\KeyMouse.exe
@@ -289,7 +289,7 @@ pwsh tools\dev\check-input.ps1
 
 ## 安装版与开发版混用
 
-**症状**：在仓库里改了引擎代码、重新编译，编辑器里跑起来还是老行为；或者编辑器播放时报「不认识 --parent」这类**只有旧版才有的错**。也可能反过来：`--version` 显示 2.2.0，行为却是别的版本。
+**症状**：在仓库里改了引擎代码、重新编译，编辑器里跑起来还是老行为；或者编辑器播放时报「不认识 --parent」这类**只有旧版才有的错**。也可能反过来：`--version` 显示 2.2.1，行为却是别的版本。
 
 **为什么**：编辑器不自己执行，它找一份 `KeyMouse.exe` 来当引擎。查找顺序是"离自己最近的在前、注册表和 PATH 在最后"：开发树里先看 `artifacts\cli\KeyMouse.exe`，安装版才看 `<安装目录>\cli\`。这几种错配都会发生：`dotnet build` 只更新了 `bin\`，没更新 `artifacts\cli`；或者编辑器（开发版）拉起了注册表里上一次装的那个旧命令行。
 

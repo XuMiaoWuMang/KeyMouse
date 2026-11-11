@@ -172,6 +172,7 @@ internal static class RegionCommand
                 {
                     handle = $"0x{w.Handle.ToInt64():X}",
                     title = w.Title,
+                    process = w.ProcessName,
                     pid = w.ProcessId,
                     @class = w.ClassName,
                 }

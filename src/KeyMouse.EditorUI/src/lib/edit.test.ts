@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { appendChild, duplicateAt, duplicateChildAt, insertAfter, moveChild, moveDown, moveTo, moveUp, removeAt, removeChildAt, selectionAfterRemove } from './edit';
 import type { FlowStep } from './model';
+import { normalizeKeySteps } from './model';
 import { missingHint, missingOf } from './steps';
 
 const a: FlowStep = { type: 'focus' };
@@ -131,23 +132,31 @@ describe('missingOf / missingHint', () => {
     expect(missingOf({ type: 'repeat', times: 3, steps: [] })).toEqual(['steps']);
   });
 
-  it('key 给组合键就算齐', () => {
+  it('key 只有一个按键字段，组合键也写在这里', () => {
     expect(missingOf({ type: 'key', combo: 'Ctrl+S' })).toEqual([]);
+    expect(missingOf({ type: 'key', combo: 'enter' })).toEqual([]);
     expect(missingHint({ type: 'key', combo: 'Ctrl+S' })).toBe('齐全');
   });
 
-  it('key 只给单个键名也算齐——组合键与键名二选一', () => {
-    expect(missingOf({ type: 'key', text: 'delete' })).toEqual([]);
-    expect(missingHint({ type: 'key', text: 'delete' })).toBe('齐全');
-  });
-
-  it('key 两个都不给才缺，而且提示说清是二选一', () => {
-    expect(missingOf({ type: 'key' })).toEqual(['combo 或 text']);
-    expect(missingHint({ type: 'key' })).toBe('还缺 组合键 或 单个键名');
+  it('key 没填按键才缺', () => {
+    expect(missingOf({ type: 'key' })).toEqual(['combo']);
+    expect(missingHint({ type: 'key' })).toBe('还缺 按键');
   });
 
   it('key 的空白串不算填', () => {
-    expect(missingOf({ type: 'key', combo: '  ', text: '' })).toEqual(['combo 或 text']);
+    expect(missingOf({ type: 'key', combo: '  ' })).toEqual(['combo']);
+  });
+
+  it('旧文件的 text 会在打开时搬进 combo', () => {
+    const steps: FlowStep[] = [
+      { type: 'key', text: 'enter' },
+      { type: 'if', cond: 'true', steps: [{ type: 'keydown', text: 'ctrl+s' }] },
+    ];
+    normalizeKeySteps(steps);
+    expect(steps[0]).toMatchObject({ type: 'key', combo: 'enter' });
+    expect(steps[0].text).toBeUndefined();
+    expect(steps[1].steps?.[0]).toMatchObject({ type: 'keydown', combo: 'ctrl+s' });
+    expect(steps[1].steps?.[0].text).toBeUndefined();
   });
 });
 

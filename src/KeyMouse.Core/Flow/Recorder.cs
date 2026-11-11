@@ -878,8 +878,7 @@ internal static class Recorder
                 else
                 {
                     step.At = null;   // 键盘长按没有落点
-                    if (holding.Contains('+')) step.Combo = holding;
-                    else step.Text = holding;
+                    step.Combo = holding;
                 }
             }
             if (type == "wheel")
@@ -893,11 +892,10 @@ internal static class Recorder
                 step.Text = detail;
                 step.IntervalMs = e.Data > 0 ? e.Data : 15; // measured pace, see FlushTyping
             }
-            // 长按的两半按同一个键名走：Combo 里有 + 才算组合键。
+            // 单键与组合键共用一个字段：enter、ctrl+shift+s 都写进 combo。
             if (type is "key" or "keydown" or "keyup")
             {
-                step.Combo = detail?.Contains('+') == true ? detail : null;
-                if (step.Combo is null) step.Text = detail;
+                step.Combo = detail;
             }
 
             if (e.Sampled)

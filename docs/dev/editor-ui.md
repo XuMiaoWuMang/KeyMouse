@@ -181,9 +181,8 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 - **播放前先查必填项**：`firstIncomplete()` 用 `lib/steps.ts` 的 `missingOf`（与检查器右上角那句同源）
   找第一条缺项的步骤，缺就选中它并在底部说清楚，不放行——否则命令行会在中途报同样的错，
   而且是在已经发出一半输入之后。试运行不拦：它就是拿来看错的。
-  契约里 `key` 是"组合键与单个键名**二选一**"，所以模板除了 `required` 还有个 `anyOf`：
-  `anyOf` 里全空才算缺，提示写成「还缺 组合键 或 单个键名」。别把 `combo` 塞进 `required`——
-  那样只写了 `text: delete` 的步骤会被判成半成品，播放直接被拦（这个错犯过一次）。
+  `key` 只有一个 `combo` 必填字段：单键写 `enter`，组合键写 `ctrl+shift+s`；
+  旧文件的 `text` 在打开时由 `normalizeKeySteps` 搬进 `combo`，保存后旧字段消失。
 - **窗口标题跟着文件和脏标记走**：`syncTitle()` 把标题写成「文件名 · KeyMouse 流程编辑器」，
   未保存时前面加 `•`。任务栏上光看「流程编辑器」分不出开的是哪一份。`setTitle` 要
   `core:window:allow-set-title` 能力（`src-tauri/capabilities/default.json`），没有它调用会
@@ -203,7 +202,7 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   嵌套对象连父键一起去掉，返回新对象（撤销栈是序列化快照，原地改会让快照跟着变）。
 - 老的"待补"判定（`lib/steps.ts`）还在，用于快速加步骤时给个提醒；抽屉里的必填标来自契约的
   `required`。
-- 取点/取块走 `pick_region`（`src-tauri/src/pick.rs`）：点按钮先把主窗口 `hide()`，浮层选完/取消后 `finally` 里 `show()` + 聚焦；隐藏失败不让取点流程卡住。客户区/窗口坐标按 `shouldAttachWindow()` 自动填 `target.process` 与标题，屏幕坐标不绑定窗口。外壳只把结果写成坐标 + 顺手填
+- 取点/取块走 `pick_region`（`src-tauri/src/pick.rs`）：点按钮先把主窗口 `hide()`，浮层选完/取消后 `finally` 里 `show()` + 聚焦；隐藏失败不让取点流程卡住。客户区/窗口坐标按 `shouldAttachWindow()` 自动填 `target.process` 与标题，屏幕坐标不绑定窗口。`region pick --json` 必须带 `window.process`（CLI 的 `RegionCommand.WriteJson` 负责；只有 pid 时前端补不出进程名）。外壳只把结果写成坐标 + 顺手填
   `target.process`，浮层与坐标换算仍在命令行的 `region pick` 里。
 
 ## 控制流块行（2.4.0）

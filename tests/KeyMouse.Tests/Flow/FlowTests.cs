@@ -98,9 +98,9 @@ internal static class FlowTests
             ["key", "combo", "ctrl+s", "--process", "notepad"],
             FlowDocument.ToArguments(combo));
 
-        var single = new FlowStep { Type = "key", Text = "enter", Target = new FlowTarget { Process = "notepad" } };
-        Harness.Sequence("a single key is a press",
-            ["key", "press", "enter", "--process", "notepad"],
+        var single = new FlowStep { Type = "key", Combo = "enter", Target = new FlowTarget { Process = "notepad" } };
+        Harness.Sequence("a single key also goes through combo",
+            ["key", "combo", "enter", "--process", "notepad"],
             FlowDocument.ToArguments(single));
 
         var focus = new FlowStep { Type = "focus", Target = new FlowTarget { Process = "notepad", Class = "Notepad" } };
@@ -120,12 +120,31 @@ internal static class FlowTests
             FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }).Length == 0,
             "sleep");
         Harness.Check("holds compile to nothing",
-            FlowDocument.ToArguments(new FlowStep { Type = "keyhold", Text = "a", Ms = 500 }).Length == 0 &&
+            FlowDocument.ToArguments(new FlowStep { Type = "keyhold", Combo = "a", Ms = 500 }).Length == 0 &&
             FlowDocument.ToArguments(new FlowStep { Type = "mousehold", Button = "left", Ms = 500 }).Length == 0,
             "keyhold/mousehold");
 
-        Harness.Group("flow: an empty when is the absence of a precondition");
+        Harness.Group("flow: an old single-key text migrates into combo");
 
+        string oldKey = Path.Combine(Path.GetTempPath(), $"keymouse-old-key-{Environment.ProcessId}.json");
+        try
+        {
+            File.WriteAllText(oldKey, """
+                {"format":"keymouse-flow","version":1,"steps":[
+                  {"type":"key","text":"enter"},
+                  {"type":"if","cond":"true","steps":[{"type":"keydown","text":"ctrl+s"}]}]}
+                """);
+            FlowDocument migrated = FlowDocument.Load(oldKey);
+            Harness.Equal("...single key becomes combo", "enter", migrated.Steps[0].Combo);
+            Harness.Check("...old text is gone", migrated.Steps[0].Text is null);
+            Harness.Equal("...nested combo too", "ctrl+s", migrated.Steps[1].Steps![0].Combo);
+        }
+        finally
+        {
+            if (File.Exists(oldKey)) File.Delete(oldKey);
+        }
+
+        Harness.Group("flow: an empty when is the absence of a precondition");
         string emptyWhen = Path.Combine(Path.GetTempPath(), $"keymouse-empty-when-{Environment.ProcessId}.json");
         try
         {
@@ -175,7 +194,10 @@ internal static class FlowTests
         Harness.Check("read-text needs into", Required("read-text", "into"));
         Harness.Check("drag needs both ends, and a window only for client coordinates",
             Required("drag", "from") && Required("drag", "to") && !Required("drag", "target"));
-        Harness.Check("a key is either a combo or a single key", FlowSchema.Steps["key"].OneOf.Count == 2);
+        Harness.Check("a key uses one combo field",
+            FlowSchema.Steps["key"].OneOf.Count == 0 &&
+            FlowSchema.Steps["key"].Own.Any(field => field.Name == "combo" && field.Required) &&
+            FlowSchema.Steps["key"].Own.All(field => field.Name != "text"));
         Harness.Check("a repeat needs a count and a body",
             Required("repeat", "times") && Required("repeat", "steps"));
         Harness.Check("a call needs a flow", Required("call", "flow"));

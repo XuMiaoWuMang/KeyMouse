@@ -150,7 +150,7 @@ const TITLES: Record<StepType, string> = {
   move: '移动鼠标',
   wheel: '滚轮',
   type: '输入文字',
-  key: '按键/组合键',
+  key: '按键',
   // 这四个是"按下 / 松开"分开写的那一对，录制与命令行都能产生；
   // 少了它们列表里就只剩英文类型名（实测：用户录一段长按，行上写着 keyhold）。
   keydown: '按住键',
@@ -225,6 +225,22 @@ export function buttonLabel(step: FlowStep): string {
 }
 
 /**
+ * 2.2.0 起键盘按键只有一个 `combo` 字段：单键写 enter，组合键写 ctrl+shift+s。
+ * 旧文件里的 `text` 在打开时搬进 combo；保存后不会再出现两个键字段。
+ */
+export function normalizeKeySteps(steps: FlowStep[]): void {
+  const keyTypes = new Set<StepType>(['key', 'keydown', 'keyup', 'keyhold']);
+  for (const step of steps) {
+    if (keyTypes.has(step.type)) {
+      if (!step.combo?.trim() && step.text) step.combo = step.text;
+      delete step.text;
+    }
+    if (step.steps) normalizeKeySteps(step.steps);
+    if (step.else) normalizeKeySteps(step.else);
+  }
+}
+
+/**
  * 一行摘要。规则和 WinUI 版的 `StepVm.Summary` 一致：**说"这一步做什么"，
  * 不说"字段是什么"**——参数只写人会关心的那几个。
  */
@@ -238,7 +254,7 @@ export function stepSummary(step: FlowStep): string {
       return step.intervalMs ? `${text}，间隔 ${step.intervalMs} ms` : text;
     }
     case 'key':
-      return step.combo ? `按 ${step.combo}` : step.text ? `敲「${step.text}」` : '按键';
+      return step.combo ? `按 ${step.combo}` : step.text ? `按 ${step.text}` : '按键';
     case 'keydown':
     case 'keyup': {
       const which = step.combo ?? step.text ?? '?';

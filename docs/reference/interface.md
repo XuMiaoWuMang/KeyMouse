@@ -126,7 +126,7 @@ click-text：找字并点击它
 | `move` | `at` | `target`（客户区时必须）、`note`、`when` |
 | `wheel` | — | `delta`、`at`、`target`（客户区时必须）、`note`、`when` |
 | `type` | — | `text`、`intervalMs`、`target`、`note`、`when` |
-| `key` | `combo` 或 `text` **之一** | `count`、`target`、`note`、`when` |
+| `key` | `combo`（单键或 `+` 组合） | `count`、`target`、`note`、`when` |
 | `sleep` | — | `ms`、`when` |
 | `wait-window` | `target` | `timeoutMs`、`intervalMs`、`note`、`when` |
 | `wait-text` | `target`、`region`、`text` | `match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm`、`note`、`when` |

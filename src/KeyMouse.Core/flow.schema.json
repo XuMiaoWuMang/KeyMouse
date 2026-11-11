@@ -747,38 +747,21 @@
     },
     "key": {
       "summary": {
-        "zh": "按一个键或一组组合键",
+        "zh": "按一个键或组合键",
         "en": "Press a key or a combination"
       },
-      "oneOf": [
-        "combo",
-        "text"
-      ],
       "fields": [
         {
           "name": "combo",
           "kind": "text",
-          "required": false,
+          "required": true,
           "label": {
-            "zh": "组合键",
-            "en": "combo"
-          },
-          "help": {
-            "zh": "如 ctrl+shift+s。与「单个键」二者给一个。",
-            "en": "e.g. ctrl+shift+s; give this or the single key."
-          }
-        },
-        {
-          "name": "text",
-          "kind": "text",
-          "required": false,
-          "label": {
-            "zh": "单个键名",
+            "zh": "按键",
             "en": "key"
           },
           "help": {
-            "zh": "如 enter / f5 / a。",
-            "en": "e.g. enter, f5, a."
+            "zh": "单个键如 enter / f5；组合键用 +，如 ctrl+shift+s。",
+            "en": "e.g. enter, f5, or ctrl+shift+s."
           }
         },
         {
@@ -998,31 +981,18 @@
         "zh": "按住某个键不放（与 keyup 配对；两步之间就是按住时长）",
         "en": "Hold a key down (pair with keyup; the gap between them is the hold)"
       },
-      "oneOf": [
-        "combo",
-        "text"
-      ],
       "fields": [
         {
           "name": "combo",
           "kind": "text",
-          "required": false,
+          "required": true,
           "label": {
-            "zh": "组合键",
-            "en": "combo"
-          }
-        },
-        {
-          "name": "text",
-          "kind": "text",
-          "required": false,
-          "label": {
-            "zh": "单个键名",
+            "zh": "按键",
             "en": "key"
           },
           "help": {
-            "zh": "如 w / shift。",
-            "en": "e.g. w, shift."
+            "zh": "如 w / shift / ctrl+s。",
+            "en": "e.g. w, shift, ctrl+s."
           }
         },
         {
@@ -1041,31 +1011,18 @@
         "zh": "松开某个键（与 keydown 配对）",
         "en": "Release a key (pair with keydown)"
       },
-      "oneOf": [
-        "combo",
-        "text"
-      ],
       "fields": [
         {
           "name": "combo",
           "kind": "text",
-          "required": false,
+          "required": true,
           "label": {
-            "zh": "组合键",
-            "en": "combo"
-          }
-        },
-        {
-          "name": "text",
-          "kind": "text",
-          "required": false,
-          "label": {
-            "zh": "单个键名",
+            "zh": "按键",
             "en": "key"
           },
           "help": {
-            "zh": "如 w / shift。",
-            "en": "e.g. w, shift."
+            "zh": "如 w / shift / ctrl+s。",
+            "en": "e.g. w, shift, ctrl+s."
           }
         },
         {
@@ -1825,23 +1782,19 @@
         "zh": "键盘长按：按住一个键一段时间再松开",
         "en": "Hold a keyboard key for a while"
       },
-      "oneOf": [
-        "text"
-      ],
       "fields": [
         {
-          "name": "text",
+          "name": "combo",
           "kind": "text",
-          "required": false,
+          "required": true,
           "label": {
-            "zh": "键名（键盘）",
+            "zh": "按键",
             "en": "key"
           },
           "help": {
-            "zh": "如 a / enter / f5。",
-            "en": "e.g. a, enter, f5."
-          },
-          "showWhen": "!button"
+            "zh": "如 a / enter / ctrl+s。",
+            "en": "e.g. a, enter, ctrl+s."
+          }
         },
         {
           "name": "ms",

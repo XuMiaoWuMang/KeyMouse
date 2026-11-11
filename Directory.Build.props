@@ -8,13 +8,13 @@
 
     改版本只改这里。以下三处会跟着动：
       · 各 csproj 用 $(ProductVersion) / $(EngineVersion)
-      · 程序运行时从程序集版本读取，代码里没有 "2.2.0" 这种字面量
+      · 程序运行时从程序集版本读取，代码里没有 "2.2.1" 这种字面量
       · tools\dev\check-version.ps1 把关（CI 与 verify.ps1 都跑它）
 
     发版流程见 docs/guide/release.md：改这里 → 提交 → 打 cli-v* / gui-v* 标签。
   -->
   <PropertyGroup>
-    <ProductVersion>2.2.0</ProductVersion>
+    <ProductVersion>2.2.1</ProductVersion>
     <EngineVersion>2.4.0</EngineVersion>
   </PropertyGroup>
 

@@ -49,6 +49,7 @@
   import { QUICK_TYPES, STEP_TEMPLATES, STEP_CATEGORY_LABELS, categoryOf, makeStep, missingHint, missingOf, templatesInCategory } from './lib/steps';
   import {
     branchesOf,
+    normalizeKeySteps,
     stepSummary,
     stepTitle,
     type BranchKey,
@@ -569,6 +570,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function useDocument(next: FlowDocument, filePath: string | null) {
+    normalizeKeySteps(next.steps);
     doc = next;
     steps = next.steps;
     path = filePath;
@@ -1080,6 +1082,7 @@ $: syncTitle(doc, path, dirty);
 
   function restore(json: string) {
     const next = JSON.parse(json) as FlowDocument;
+    normalizeKeySteps(next.steps ?? []);
     doc = next;
     steps = next.steps ?? [];
     selected = Math.min(selected, Math.max(steps.length - 1, 0));
