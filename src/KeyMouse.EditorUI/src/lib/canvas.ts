@@ -11,7 +11,12 @@
 
 import { branchesOf, type FlowStep, type StepCategory } from './model';
 import { categoryOf } from './steps';
-import { originOf, type NodePath } from './tree';
+import { originOf, pathKey, type NodePath } from './tree';
+
+export interface NodePosition {
+  x: number;
+  y: number;
+}
 
 export const NODE_W = 208;
 export const NODE_H = 82;
@@ -230,6 +235,59 @@ export function layoutFlow(steps: readonly FlowStep[]): CanvasLayout {
     empties,
     edges,
     gaps,
+    width: Math.max(PAD * 2, maxX + PAD),
+    height: Math.max(PAD * 2, maxY + PAD),
+  };
+}
+
+/**
+ * 自由布局：保留自动布局给出的初始位置，把用户拖过的节点换成手工坐标。
+ *
+ * 分支标题在自由布局里会让位给语义连线上的 true/false 标签；空分支按钮仍跟着它所属
+ * 的块走，否则块被拖走后按钮会留在原地，看起来像另一个节点的。
+ *
+ * 手工坐标只影响显示，不改流程树；宽高按所有节点重新算，拖到画布边缘也不会被裁掉。
+ */
+export function applyNodePositions(
+  layout: CanvasLayout,
+  positions: Record<string, NodePosition>,
+): CanvasLayout {
+  const nodes = layout.nodes.map((node) => {
+    const manual = positions[pathKey(node.path)];
+    return manual ? { ...node, x: manual.x, y: manual.y } : node;
+  });
+  const byPath = new Map(nodes.map((node) => [pathKey(node.path), node]));
+
+  const empties = layout.empties.map((empty) => {
+    const parent = byPath.get(pathKey(empty.parentPath));
+    if (!parent) return empty;
+    // 空槽也要站回它自己的分支列：否则分支的 "+" 会跑到分支左侧，
+    // 和 if 的 true/false 箭头看起来不是一回事。
+    const column = empty.branch === 'else' ? 1 : 0;
+    return {
+      ...empty,
+      x: parent.x + column * (NODE_W + BRANCH_GAP),
+      y: parent.y + parent.h + 36,
+    };
+  });
+
+  let maxX = PAD;
+  let maxY = PAD;
+  for (const node of nodes) {
+    maxX = Math.max(maxX, node.x + node.w);
+    maxY = Math.max(maxY, node.y + node.h);
+  }
+  for (const empty of empties) {
+    maxX = Math.max(maxX, empty.x + empty.w);
+    maxY = Math.max(maxY, empty.y + empty.h);
+  }
+
+  return {
+    nodes,
+    labels: [],
+    empties,
+    edges: [],
+    gaps: [],
     width: Math.max(PAD * 2, maxX + PAD),
     height: Math.max(PAD * 2, maxY + PAD),
   };

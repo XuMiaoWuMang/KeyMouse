@@ -11,13 +11,24 @@
   import { onMount } from 'svelte';
   import StepIcon from './StepIcon.svelte';
   import {
+    applyNodePositions,
     layoutFlow,
     type CanvasGap,
     type CanvasNode,
+    type NodePosition,
   } from './canvas';
+  import { buildGraph, graphEdgeKey, type GraphEdge } from './graph';
+  import {
+    nearestPort,
+    routeEdge,
+    type EdgePort,
+    type EdgePorts,
+    type RoutingRect,
+    type RoutedEdge,
+  } from './routing';
   import { branchesOf, stepSummary, stepTitle, type BranchKey, type FlowStep } from './model';
   import { missingHint, missingOf } from './steps';
-  import { isPathPrefix, samePath, type NodePath } from './tree';
+  import { isPathPrefix, pathKey, samePath, type NodePath } from './tree';
   import type { StepResult } from './run';
 
   export let steps: FlowStep[] = [];
@@ -27,6 +38,18 @@
   export let results: Record<string, StepResult> = {};
   /** 换一份文件/录完一次时 +1，让画布把内容铺到适合阅读的位置。 */
   export let fitToken = 0;
+  /** 自由布局：拖动节点改变位置；关掉以后恢复结构视图，拖动用于换排序。 */
+  export let freeLayout = true;
+  /** 自由布局的手工坐标；没有坐标的节点沿用自动布局。 */
+  export let positions: Record<string, NodePosition> = {};
+
+  /** 按边的语义键保存的手工接口；缺省时按两个节点的夹角自动选边。 */
+  export let ports: Record<string, EdgePorts> = {};
+  export let onportchange: (key: string, end: EdgeEnd, port: EdgePort) => void = () => undefined;
+  export let onportreset: (key: string) => void = () => undefined;
+
+  /** 选中节点四向箭头：before = 插在它前面，after = 插在它后面（同父、同分支）。 */
+  export let onquickadd: (path: NodePath, position: 'before' | 'after') => void = () => undefined;
 
   export let onselect: (path: NodePath | null, additive?: boolean, range?: boolean) => void = () => undefined;
   export let onmove: (
@@ -35,8 +58,23 @@
     branch: BranchKey,
     index: number,
   ) => void = () => undefined;
+  export let onmovefree: (moves: { path: NodePath; x: number; y: number }[]) => void = () => undefined;
   export let onadd: (parent: NodePath, branch: BranchKey) => void = () => undefined;
   export let onrange: (paths: NodePath[]) => void = () => undefined;
+
+  type EdgeEnd = 'from' | 'to';
+  type DrawnEdge = GraphEdge & RoutedEdge & {
+    key: string;
+    fromRect: RoutingRect;
+    toRect: RoutingRect;
+  };
+
+  /**
+   * 逻辑坐标的 0 点左边/上边预留一块空间，再把这整块画布平移进视口。
+   * 这样节点可以拖到负数坐标，而不会被 `.canvas` 的 overflow:hidden 裁掉。
+   * 它只影响渲染和视口换算；流程 JSON 和 localStorage 里仍然是逻辑坐标。
+   */
+  const WORLD_ORIGIN = 4096;
 
   let viewport: HTMLDivElement;
   let scale = 1;
@@ -44,11 +82,118 @@
   let oy = 0;
   let lastFitToken = -1;
   let fittedOnce = false;
+  // 拖动状态要和连线几何放在同一组响应式更新里：拖动过程中边也按预览坐标重画，
+  // 否则卡片已经挪走、箭头还停在旧位置，松手时才"跳"过去。
+  let draggingPaths: NodePath[] = [];
+  let dragOffset = { x: 0, y: 0 };
+  /** 点中的线会露出两个端点圆点；拖圆点改接口，双击线恢复自动。 */
+  let activeEdgeKey: string | null = null;
+  let portDrag: {
+    key: string;
+    end: EdgeEnd;
+    rect: RoutingRect;
+    port: EdgePort;
+  } | null = null;
 
-  $: layout = layoutFlow(steps);
+  $: baseLayout = layoutFlow(steps);
+  $: layout = freeLayout ? applyNodePositions(baseLayout, positions) : baseLayout;
+  /**
+   * 内容真实包围盒：负坐标节点也要算进「适配」里，否则拖到左边以后点适配，
+   * 视图只围住正坐标那一半。空分支按钮也算，它跟着块走。
+   */
+  $: contentBounds = (() => {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const node of layout.nodes) {
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + node.w);
+      maxY = Math.max(maxY, node.y + node.h);
+    }
+    for (const empty of layout.empties) {
+      minX = Math.min(minX, empty.x);
+      minY = Math.min(minY, empty.y);
+      maxX = Math.max(maxX, empty.x + empty.w);
+      maxY = Math.max(maxY, empty.y + empty.h);
+    }
+    if (!Number.isFinite(minX)) {
+      return { minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height };
+    }
+    return {
+      minX,
+      minY,
+      maxX,
+      maxY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+    };
+  })();
+  /** 只给单选节点显示四向快速添加入口；多选时拖动/批量操作优先。 */
+  $: quickTargetKey = selectedPaths.length === 1
+    ? pathKey(selectedPaths[0])
+    : selectedPaths.length === 0 && selected
+      ? pathKey(selected)
+      : null;
+  /**
+   * 拖一个块时，块里的子步骤跟着一起走——它们属于这个块，单独留在原地会让
+   * 分支和箭头断开。选中的如果是普通步骤，集合里就只有它自己。
+   */
+  $: previewPaths = (() => {
+    const keys = new Set<string>();
+    if (!freeLayout || draggingPaths.length === 0) return keys;
+    for (const node of layout.nodes) {
+      if (draggingPaths.some((path) => isPathPrefix(path, node.path))) keys.add(pathKey(node.path));
+    }
+    return keys;
+  })();
+  $: nodeByPath = new Map(layout.nodes.map((node) => {
+    const key = pathKey(node.path);
+    const moved = previewPaths.has(key);
+    return [key, moved ? { ...node, x: node.x + dragOffset.x, y: node.y + dragOffset.y } : node];
+  }));
+  $: graphEdges = (() => {
+    // 直接读一次 props，确保 Svelte 把 ports 算进这条响应式语句的依赖里；
+    // 只在 flatMap 回调里读时，props 更新不一定会触发重算。
+    const portOverrides = ports;
+    return buildGraph(steps).flatMap((edge): DrawnEdge[] => {
+      const from = nodeByPath.get(pathKey(edge.from));
+      const to = nodeByPath.get(pathKey(edge.to));
+      if (!from || !to) return [];
+      const key = graphEdgeKey(edge);
+      const saved = portOverrides[key];
+      const override = portDrag?.key === key
+        ? { ...saved, [portDrag.end]: portDrag.port }
+        : saved;
+      const routed = routeEdge(from, to, {
+        kind: edge.kind,
+        fromPort: override?.from,
+        toPort: override?.to,
+        obstacles: Array.from(nodeByPath.values()),
+      });
+      return [{
+        ...edge,
+        key,
+        fromRect: from,
+        toRect: to,
+        ...routed,
+        labelY: routed.labelY + labelOffset(edge.kind),
+      }];
+    });
+  })();
+  $: activeEdge = activeEdgeKey
+    ? graphEdges.find((edge) => edge.key === activeEdgeKey) ?? null
+    : null;
   $: if (fitToken !== lastFitToken) {
     lastFitToken = fitToken;
     void homeSoon();
+  }
+
+  function labelOffset(kind: GraphEdge['kind']): number {
+    if (kind === 'true' || kind === 'loop') return -8;
+    if (kind === 'false' || kind === 'exit') return 10;
+    return 0;
   }
 
   function clamp(value: number, min: number, max: number): number {
@@ -69,10 +214,13 @@
     const rect = viewport.getBoundingClientRect();
     if (rect.width < 40 || rect.height < 40) return;
     const usableW = Math.max(80, rect.width - 96);
-    const next = Math.min(0.9, usableW / Math.max(layout.width, 1));
+    const next = Math.min(0.9, usableW / Math.max(contentBounds.width, 1));
     scale = clamp(next, 0.5, 0.9);
-    ox = Math.max(28, (rect.width - Math.min(layout.width, rect.width / scale)) / 2);
-    oy = 24;
+    const left = Math.max(28, (rect.width - Math.min(contentBounds.width, rect.width / scale)) / 2);
+    // 内容包在固定原点的 world-content 里；视口偏移要把原点一起扣掉，否则负数区域
+    // 虽然存在，却会被推到屏幕外。
+    ox = left - (WORLD_ORIGIN + contentBounds.minX) * scale;
+    oy = 24 - (WORLD_ORIGIN + contentBounds.minY) * scale;
     fittedOnce = true;
   }
 
@@ -83,10 +231,10 @@
     const pad = 56;
     const usableW = Math.max(80, rect.width - pad * 2);
     const usableH = Math.max(80, rect.height - pad * 2);
-    const next = Math.min(1, usableW / layout.width, usableH / layout.height);
+    const next = Math.min(1, usableW / contentBounds.width, usableH / contentBounds.height);
     scale = clamp(next, 0.2, 1.1);
-    ox = (rect.width - layout.width * scale) / 2;
-    oy = (rect.height - layout.height * scale) / 2;
+    ox = (rect.width - contentBounds.width * scale) / 2 - (WORLD_ORIGIN + contentBounds.minX) * scale;
+    oy = (rect.height - contentBounds.height * scale) / 2 - (WORLD_ORIGIN + contentBounds.minY) * scale;
     fittedOnce = true;
   }
 
@@ -132,6 +280,8 @@
 
   function onViewportDown(event: PointerEvent): void {
     if (isControl(event.target)) return;
+    activeEdgeKey = null;
+    portDrag = null;
     // 右键/中键按住拖动 = 平移画布；左键按住拖动 = 框选。
     if (event.button === 1 || event.button === 2) {
       pan = {
@@ -156,6 +306,10 @@
   }
 
   function onViewportMove(event: PointerEvent): void {
+    if (portDrag) {
+      onPortMove(event);
+      return;
+    }
     if (pan) {
       const dx = event.clientX - pan.startX;
       const dy = event.clientY - pan.startY;
@@ -174,6 +328,10 @@
   }
 
   function onViewportUp(event: PointerEvent): void {
+    if (portDrag) {
+      onPortUp();
+      return;
+    }
     if (pan) {
       const moved = pan.moved;
       pan = null;
@@ -204,10 +362,10 @@
     const x2 = Math.max(box.startX, box.currentX);
     const y1 = Math.min(box.startY, box.currentY);
     const y2 = Math.max(box.startY, box.currentY);
-    const wx1 = (x1 - rect.left - ox) / scale;
-    const wx2 = (x2 - rect.left - ox) / scale;
-    const wy1 = (y1 - rect.top - oy) / scale;
-    const wy2 = (y2 - rect.top - oy) / scale;
+    const wx1 = (x1 - rect.left - ox) / scale - WORLD_ORIGIN;
+    const wx2 = (x2 - rect.left - ox) / scale - WORLD_ORIGIN;
+    const wy1 = (y1 - rect.top - oy) / scale - WORLD_ORIGIN;
+    const wy2 = (y2 - rect.top - oy) / scale - WORLD_ORIGIN;
     return layout.nodes
       .filter((node) => node.x < wx2 && node.x + node.w > wx1 && node.y < wy2 && node.y + node.h > wy1)
       .map((node) => node.path);
@@ -223,6 +381,51 @@
     return `left: ${left}px; top: ${top}px; width: ${width}px; height: ${height}px;`;
   }
 
+  // ---------------------------------------------------------------- 连线接口
+
+  function activateEdge(key: string): void {
+    activeEdgeKey = key;
+    portDrag = null;
+    onselect(null);
+  }
+
+  function selectEdge(event: PointerEvent, key: string): void {
+    event.stopPropagation();
+    activateEdge(key);
+  }
+
+  function onPortDown(event: PointerEvent, edge: DrawnEdge, end: EdgeEnd): void {
+    event.stopPropagation();
+    activeEdgeKey = edge.key;
+    portDrag = {
+      key: edge.key,
+      end,
+      rect: end === 'from' ? edge.fromRect : edge.toRect,
+      port: end === 'from' ? edge.fromPort : edge.toPort,
+    };
+  }
+
+  function onPortMove(event: PointerEvent): void {
+    if (!portDrag || !viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const wx = (event.clientX - rect.left - ox) / scale - WORLD_ORIGIN;
+    const wy = (event.clientY - rect.top - oy) / scale - WORLD_ORIGIN;
+    const port = nearestPort(portDrag.rect, wx, wy);
+    if (port.side === portDrag.port.side && Math.abs(port.t - portDrag.port.t) < 0.001) return;
+    portDrag = { ...portDrag, port };
+  }
+
+  function onPortUp(): void {
+    if (!portDrag) return;
+    const current = portDrag;
+    portDrag = null;
+    onportchange(current.key, current.end, current.port);
+  }
+
+  function onWindowPortUp(): void {
+    if (portDrag) onPortUp();
+  }
+
   // ---------------------------------------------------------------- 拖动排序
 
   let press: {
@@ -232,8 +435,6 @@
     startY: number;
     pointerId: number;
   } | null = null;
-  let draggingPaths: NodePath[] = [];
-  let dragOffset = { x: 0, y: 0 };
   let dropGap: CanvasGap | null = null;
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
   let longPressed = false;
@@ -250,6 +451,8 @@
     if (event.button !== 0) return;
     // 节点自己处理拖动，别让背景跟着平移。
     event.stopPropagation();
+    activeEdgeKey = null;
+    portDrag = null;
     longPressed = false;
     clearPressTimer();
     const inSelection = selectedPaths.some((path) => samePath(path, node.path));
@@ -287,7 +490,7 @@
     if (draggingPaths.length === 0 && Math.hypot(dx, dy) < 5) return;
     if (draggingPaths.length === 0) draggingPaths = press.paths;
     dragOffset = { x: dx / scale, y: dy / scale };
-    dropGap = nearestGap(event, draggingPaths);
+    dropGap = freeLayout ? null : nearestGap(event, draggingPaths);
   }
 
   function onNodeUp(event: PointerEvent): void {
@@ -295,8 +498,10 @@
     clearPressTimer();
     const current = press.node;
     const paths = press.paths;
+    const movedKeys = new Set(previewPaths);
     const wasDragging = draggingPaths.length > 0;
     const target = dropGap;
+    const offset = { ...dragOffset };
     const held = longPressed;
     press = null;
     draggingPaths = [];
@@ -309,6 +514,19 @@
       if (!held) onselect(current.path, event.ctrlKey || event.metaKey, event.shiftKey);
       return;
     }
+    if (freeLayout) {
+      // 一个块连同它的所有后代一起落盘，箭头才能在下一帧继续接在正确的边上。
+      const moves = layout.nodes.flatMap((node) => {
+        if (!movedKeys.has(pathKey(node.path))) return [];
+        return [{
+          path: node.path,
+          x: Math.round(node.x + offset.x),
+          y: Math.round(node.y + offset.y),
+        }];
+      });
+      if (moves.length > 0) onmovefree(moves);
+      return;
+    }
     if (target) {
       onmove(paths, target.parentPath, target.branch, target.index);
     }
@@ -317,8 +535,8 @@
   function nearestGap(event: PointerEvent, paths: NodePath[]): CanvasGap | null {
     if (!viewport) return null;
     const rect = viewport.getBoundingClientRect();
-    const wx = (event.clientX - rect.left - ox) / scale;
-    const wy = (event.clientY - rect.top - oy) / scale;
+    const wx = (event.clientX - rect.left - ox) / scale - WORLD_ORIGIN;
+    const wy = (event.clientY - rect.top - oy) / scale - WORLD_ORIGIN;
 
     // 拖到任意节点卡片上 = 放到这个节点后面（同父、同分支）。
     // 这样二级拖到一级、三级拖到一级、一级拖到三级都能用同一个手势完成；
@@ -389,6 +607,8 @@
   });
 </script>
 
+<svelte:window on:pointerup={onWindowPortUp} on:pointercancel={onWindowPortUp} />
+
 <div
   class="canvas"
   class:panning={pan !== null}
@@ -404,11 +624,73 @@
 >
   <div
     class="world"
-    style="width: {layout.width}px; height: {layout.height}px; transform: translate3d({ox}px, {oy}px, 0) scale({scale});"
+    style="width: {layout.width + WORLD_ORIGIN * 2}px; height: {layout.height + WORLD_ORIGIN * 2}px; transform: translate3d({ox}px, {oy}px, 0) scale({scale});"
   >
-    <svg class="edges" width={layout.width} height={layout.height} aria-hidden="true">
-      {#each layout.edges as edge}
-        <path d={edge.d} class={edge.kind} />
+    <div
+      class="world-content"
+      style="width: {layout.width}px; height: {layout.height}px; transform: translate3d({WORLD_ORIGIN}px, {WORLD_ORIGIN}px, 0);"
+    >
+    <svg
+      class="edges"
+      width={layout.width + WORLD_ORIGIN * 2}
+      height={layout.height + WORLD_ORIGIN * 2}
+      viewBox={`${-WORLD_ORIGIN} ${-WORLD_ORIGIN} ${layout.width + WORLD_ORIGIN * 2} ${layout.height + WORLD_ORIGIN * 2}`}
+      style={`left: ${-WORLD_ORIGIN}px; top: ${-WORLD_ORIGIN}px;`}
+      aria-hidden="true"
+    >
+      <defs>
+        <marker
+          id="km-arrow"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="5.5"
+          markerHeight="5.5"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--kp-rule-strong)"></path>
+        </marker>
+        <marker
+          id="km-arrow-active"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="5.5"
+          markerHeight="5.5"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--kp-signal)"></path>
+        </marker>
+      </defs>
+      {#each graphEdges as edge}
+        <g
+          class="edge-group {edge.kind}"
+          class:active={activeEdgeKey === edge.key}
+          class:dragging-port={portDrag?.key === edge.key}
+        >
+          <path
+            class="edge-hit"
+            d={edge.d}
+            role="button"
+            tabindex="0"
+            aria-label="选中这条连线，拖动两端圆点改接口"
+            on:pointerdown={(event) => selectEdge(event, edge.key)}
+            on:keydown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              activateEdge(edge.key);
+            }}
+            on:dblclick|stopPropagation|preventDefault={() => onportreset(edge.key)}
+          ></path>
+          <path
+            class="edge-path {edge.kind}"
+            d={edge.d}
+            marker-end={activeEdgeKey === edge.key ? 'url(#km-arrow-active)' : 'url(#km-arrow)'}
+          ></path>
+          {#if edge.label}
+            <text class="edge-label {edge.kind}" x={edge.labelX} y={edge.labelY} text-anchor="middle" dominant-baseline="middle">{edge.label}</text>
+          {/if}
+        </g>
       {/each}
     </svg>
 
@@ -425,7 +707,9 @@
     {#each layout.empties as empty}
       <button
         class="empty-branch"
-        style="left: {empty.x}px; top: {empty.y}px; width: {empty.w}px; height: {empty.h}px;"
+        style="left: {empty.x}px; top: {empty.y}px; width: {empty.w}px; height: {empty.h}px; {previewPaths.has(pathKey(empty.parentPath))
+          ? `transform: translate(${dragOffset.x}px, ${dragOffset.y}px);`
+          : ''}"
         on:pointerdown|stopPropagation={() => undefined}
         on:click|stopPropagation={() => onadd(empty.parentPath, empty.branch)}
         title={empty.branch === 'else' ? '给否则分支加第一步' : '给循环体加第一步'}
@@ -444,13 +728,13 @@
         class:selected={selectedPaths.some((path) => samePath(path, node.path)) ||
           (selectedPaths.length === 0 && samePath(selected, node.path))}
         class:primary={samePath(selected, node.path)}
-        class:dragging={draggingPaths.some((path) => samePath(path, node.path))}
+        class:dragging={previewPaths.has(pathKey(node.path))}
         class:marquee-hit={marqueeHits.some((path) => samePath(path, node.path))}
         class:failed={result !== undefined && !result.ok}
         role="button"
         tabindex="0"
         aria-label={`${stepTitle(node.step.type)}，${node.origin}`}
-        style="left: {node.x}px; top: {node.y}px; width: {node.w}px; height: {node.h}px; {draggingPaths.some((path) => samePath(path, node.path))
+        style="left: {node.x}px; top: {node.y}px; width: {node.w}px; height: {node.h}px; {previewPaths.has(pathKey(node.path))
           ? `transform: translate(${dragOffset.x}px, ${dragOffset.y}px);`
           : ''}"
         on:pointerdown={(event) => onNodeDown(event, node)}
@@ -488,8 +772,86 @@
             {/if}
           </div>
         </div>
+
+        {#if quickTargetKey === pathKey(node.path) && draggingPaths.length === 0}
+          <div class="quick-add" aria-label="快速添加上一步或下一步">
+            <button
+              class="quick-step top"
+              type="button"
+              aria-label="在前面插入一步"
+              title="在前面插入一步"
+              on:pointerdown|stopPropagation={() => undefined}
+              on:click|stopPropagation={() => onquickadd(node.path, 'before')}
+            >
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M6 1.6 10.4 7H7.6v3.4H4.4V7H1.6Z" fill="currentColor"></path>
+              </svg>
+            </button>
+            <button
+              class="quick-step left"
+              type="button"
+              aria-label="在前面插入一步"
+              title="在前面插入一步"
+              on:pointerdown|stopPropagation={() => undefined}
+              on:click|stopPropagation={() => onquickadd(node.path, 'before')}
+            >
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M6 1.6 10.4 7H7.6v3.4H4.4V7H1.6Z" fill="currentColor"></path>
+              </svg>
+            </button>
+            <button
+              class="quick-step right"
+              type="button"
+              aria-label="在后面加一步"
+              title="在后面加一步"
+              on:pointerdown|stopPropagation={() => undefined}
+              on:click|stopPropagation={() => onquickadd(node.path, 'after')}
+            >
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M6 1.6 10.4 7H7.6v3.4H4.4V7H1.6Z" fill="currentColor"></path>
+              </svg>
+            </button>
+            <button
+              class="quick-step bottom"
+              type="button"
+              aria-label="在后面加一步"
+              title="在后面加一步"
+              on:pointerdown|stopPropagation={() => undefined}
+              on:click|stopPropagation={() => onquickadd(node.path, 'after')}
+            >
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M6 1.6 10.4 7H7.6v3.4H4.4V7H1.6Z" fill="currentColor"></path>
+              </svg>
+            </button>
+          </div>
+        {/if}
       </div>
     {/each}
+
+    {#if activeEdge}
+      <button
+        class="port-handle from"
+        class:dragging={portDrag?.end === 'from'}
+        type="button"
+        aria-label="拖动连线起点，改到图形边缘的其他位置"
+        title="拖动改起点；双击线恢复自动"
+        style="left: {activeEdge.start.x}px; top: {activeEdge.start.y}px;"
+        on:pointerdown={(event) => onPortDown(event, activeEdge, 'from')}
+      >
+        <span></span>
+      </button>
+      <button
+        class="port-handle to"
+        class:dragging={portDrag?.end === 'to'}
+        type="button"
+        aria-label="拖动连线终点，改到图形边缘的其他位置"
+        title="拖动改终点；双击线恢复自动"
+        style="left: {activeEdge.end.x}px; top: {activeEdge.end.y}px;"
+        on:pointerdown={(event) => onPortDown(event, activeEdge, 'to')}
+      >
+        <span></span>
+      </button>
+    {/if}
 
     {#if draggingPaths.length > 0 && dropGap}
       <div
@@ -499,6 +861,7 @@
         <span></span>
       </div>
     {/if}
+    </div>
   </div>
 
   {#if marquee && marquee.active}
@@ -512,7 +875,9 @@
     </div>
   {/if}
 
-  <div class="canvas-hint" aria-hidden="true">滚轮缩放 · 左键拖空白框选 · 右键拖空白平移</div>
+  <div class="canvas-hint" aria-hidden="true">
+    {freeLayout ? '自由布局 · 拖节点移动 · 滚轮缩放 · 左键空白框选 · 右键平移' : '滚轮缩放 · 左键拖空白框选 · 右键拖空白平移'}
+  </div>
 
   {#if draggingPaths.length > 1}
     <div class="drag-badge" aria-live="polite">拖动 {draggingPaths.length} 个节点</div>
@@ -549,6 +914,14 @@
     transform-origin: 0 0;
   }
 
+  /* 原点在内层，逻辑坐标可以为负数；外层只负责缩放/平移。 */
+  .world-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+  }
+
   .edges {
     position: absolute;
     left: 0;
@@ -557,7 +930,7 @@
     pointer-events: none;
   }
 
-  .edges path {
+  .edge-path {
     fill: none;
     stroke: var(--kp-rule-strong);
     stroke-width: 1.1;
@@ -566,9 +939,86 @@
     opacity: 0.62;
   }
 
-  .edges path.branch {
-    stroke-dasharray: 3 4;
-    opacity: 0.48;
+  .edge-path.false,
+  .edge-path.back {
+    stroke-dasharray: 4 4;
+    opacity: 0.5;
+  }
+
+  .edge-path.loop {
+    stroke: var(--kp-signal);
+    opacity: 0.5;
+  }
+
+  .edge-label {
+    fill: var(--kp-ink3);
+    stroke: var(--kp-paper);
+    stroke-width: 4px;
+    paint-order: stroke fill;
+    font: 500 8.5px/1 var(--kp-font-mono);
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+
+  .edge-label.true,
+  .edge-label.loop {
+    fill: var(--kp-signal);
+  }
+
+  /* 线的可点击区域比视觉线宽得多，但不改变图面密度。 */
+  .edge-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 14;
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+
+  .edge-group.active .edge-path {
+    stroke: var(--kp-signal);
+    opacity: 1;
+    stroke-width: 1.8;
+  }
+
+  .edge-group.active .edge-label {
+    fill: var(--kp-signal);
+    opacity: 1;
+  }
+
+  /* 端点圆点：选中线后出现，拖动时沿目标图形四边投影。 */
+  .port-handle {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 1.5px solid var(--kp-signal);
+    border-radius: 50%;
+    background: var(--kp-card);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--kp-ink) 12%, transparent);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    touch-action: none;
+    z-index: 20;
+  }
+
+  .port-handle span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--kp-signal);
+  }
+
+  .port-handle:hover,
+  .port-handle.dragging {
+    background: var(--kp-signal);
+    cursor: grabbing;
+  }
+
+  .port-handle:hover span,
+  .port-handle.dragging span {
+    background: var(--kp-card);
   }
 
   /* ── 分支标题：一条极轻的线把"进入哪条路"说明白 ─────────────── */
@@ -639,6 +1089,81 @@
 
   .node:active {
     cursor: grabbing;
+  }
+
+  /* drawio 式四向入口：只服务"选中一个节点"时，方向键负责前插/后插。 */
+  .quick-add {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .quick-step {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--kp-cue);
+    border-radius: 999px;
+    background: var(--kp-card);
+    color: var(--kp-cue);
+    cursor: pointer;
+    pointer-events: auto;
+    /* WebView2 会给刚点过的按钮补一圈原生焦点框；它又黑又是方的，看起来像选中了
+       一块画布。四向箭头不是表单控件，去掉原生框，只保留 hover/focus-visible 的底色。 */
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 120ms ease, color 120ms ease;
+  }
+
+  .quick-step:focus {
+    outline: none;
+  }
+
+  .quick-step:hover,
+  .quick-step:focus-visible {
+    background: var(--kp-cue);
+    color: var(--kp-card);
+    outline: none;
+  }
+
+  .quick-step.top {
+    left: 50%;
+    top: -11px;
+    transform: translateX(-50%);
+  }
+
+  .quick-step.bottom {
+    left: 50%;
+    bottom: -11px;
+    transform: translateX(-50%);
+  }
+
+  .quick-step.left {
+    left: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .quick-step.right {
+    right: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .quick-step.left svg {
+    transform: rotate(-90deg);
+  }
+
+  .quick-step.right svg {
+    transform: rotate(90deg);
+  }
+
+  .quick-step.bottom svg {
+    transform: rotate(180deg);
   }
 
   .node.dragging {

@@ -54,13 +54,14 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
   { type: 'for', group: '流程', required: ['cond', 'steps'], labels: { cond: '条件', steps: '子步骤', probe: '条件读哪里' } },
   { type: 'break', group: '流程', required: [] },
   { type: 'continue', group: '流程', required: [] },
+  { type: 'return', group: '流程', required: [] },
   { type: 'set', group: '流程', required: ['name', 'value'], labels: { name: '变量名', value: '值' } },
   { type: 'assert', group: '流程', required: ['cond'], labels: { cond: '条件', probe: '条件读哪里' } },
 ];
 
 const BY_TYPE = new Map(STEP_TEMPLATES.map((t) => [t.type, t]));
 
-const FLOW_TYPES = new Set<StepType>(['if', 'set', 'assert', 'break', 'continue', 'call']);
+const FLOW_TYPES = new Set<StepType>(['if', 'set', 'assert', 'break', 'continue', 'return', 'call']);
 const LOOP_TYPES = new Set<StepType>(['repeat', 'foreach', 'while', 'do', 'for']);
 
 export const STEP_CATEGORY_LABELS: Record<StepCategory, string> = {
@@ -132,6 +133,7 @@ export function makeStep(type: StepType): FlowStep {
       };
     case 'break':
     case 'continue':
+    case 'return':
       return { type };
     case 'set':
       return { type, name: 'n', value: '0' };

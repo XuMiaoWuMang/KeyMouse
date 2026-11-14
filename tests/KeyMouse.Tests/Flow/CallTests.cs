@@ -88,6 +88,57 @@ internal static class CallTests
             Harness.Equal("nested calls keep the outer variables visible", 0, nested.ExitCode);
             Harness.Equal("...and plan to two steps", 2, nested.Report?.Succeeded);
 
+            Harness.Group("call: return ends the child, not the caller");
+
+            File.WriteAllText(Path.Combine(directory, "return-sub.json"), Sub(
+                """
+                [{"type":"set","name":"seen","value":"\"before\""},
+                 {"type":"return"},
+                 {"type":"set","name":"seen","value":"\"after\""}]
+                """));
+
+            string returnPath = Path.Combine(directory, "return-main.json");
+            File.WriteAllText(returnPath, Main(
+                """
+                [{"type":"call","flow":"return-sub.json","export":["seen"]},
+                 {"type":"assert","cond":"seen == \"before\""},
+                 {"type":"set","name":"parent","value":"\"continued\""}]
+                """));
+            FlowRun.Result returned = FlowRun.RunPath(returnPath);
+            Harness.Equal("return ends the subflow successfully", 0, returned.ExitCode);
+            Harness.Equal("...the caller keeps going and sees the export", 3, returned.Report?.Succeeded);
+            Harness.Sequence("...steps after return in the child never run",
+                ["1.1", "2", "3"],
+                returned.Report?.Commands.Select(c => c.Origin ?? "") ?? []);
+
+            File.WriteAllText(Path.Combine(directory, "return-loop-sub.json"), Sub(
+                """
+                [{"type":"set","name":"rounds","value":"0"},
+                 {"type":"while","cond":"true","maxRounds":5,"steps":[
+                   {"type":"set","name":"rounds","value":"rounds + 1"},
+                   {"type":"return"}]}]
+                """));
+            string loopPath = Path.Combine(directory, "return-loop-main.json");
+            File.WriteAllText(loopPath, Main(
+                """
+                [{"type":"call","flow":"return-loop-sub.json","export":["rounds"]},
+                 {"type":"assert","cond":"rounds == 1"},
+                 {"type":"set","name":"parent","value":"\"continued\""}]
+                """));
+            FlowRun.Result loopReturn = FlowRun.RunPath(loopPath);
+            Harness.Equal("return inside a while leaves the whole subflow", 0, loopReturn.ExitCode);
+            Harness.Equal("...before the next round and without an error", 4, loopReturn.Report?.Succeeded);
+
+            File.WriteAllText(Path.Combine(directory, "return-root.json"), Main(
+                """
+                [{"type":"set","name":"seen","value":"\"before\""},
+                 {"type":"return"},
+                 {"type":"set","name":"seen","value":"\"after\""}]
+                """));
+            FlowRun.Result rootReturn = FlowRun.RunPath(Path.Combine(directory, "return-root.json"));
+            Harness.Equal("return at the root ends the run successfully", 0, rootReturn.ExitCode);
+            Harness.Equal("...and the remaining root steps do not run", 1, rootReturn.Report?.Succeeded);
+
             Harness.Group("call: what the loader refuses");
 
             string broken = Path.Combine(directory, "broken.json");

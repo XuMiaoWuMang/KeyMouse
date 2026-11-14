@@ -14,8 +14,8 @@
     发版流程见 docs/guide/release.md：改这里 → 提交 → 打 cli-v* / gui-v* 标签。
   -->
   <PropertyGroup>
-    <ProductVersion>2.2.1</ProductVersion>
-    <EngineVersion>2.4.0</EngineVersion>
+    <ProductVersion>2.2.4</ProductVersion>
+    <EngineVersion>2.4.1</EngineVersion>
   </PropertyGroup>
 
   <!-- 所有项目共用的编译约定：语言版本与确定性构建。 -->

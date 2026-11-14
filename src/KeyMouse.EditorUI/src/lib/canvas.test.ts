@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { layoutFlow, NODE_H, NODE_W, PAD } from './canvas';
+import { applyNodePositions, BRANCH_GAP, layoutFlow, NODE_H, NODE_W, PAD } from './canvas';
 import type { FlowStep } from './model';
+import { pathKey, type NodePath } from './tree';
 
 const simple: FlowStep[] = [
   { type: 'focus' },
@@ -74,5 +75,50 @@ describe('layoutFlow', () => {
     expect(layout.width).toBeGreaterThan(0);
     expect(layout.height).toBeGreaterThan(0);
     expect(Number.isFinite(layout.width)).toBe(true);
+  });
+});
+
+describe('applyNodePositions', () => {
+  const top = (path: NodePath): string => pathKey(path);
+
+  it('只覆盖拖过的节点，其余仍用自动布局', () => {
+    const base = layoutFlow(simple);
+    const first = top(base.nodes[0].path);
+    const free = applyNodePositions(base, { [first]: { x: 700, y: 160 } });
+
+    expect(free.nodes[0].x).toBe(700);
+    expect(free.nodes[0].y).toBe(160);
+    expect(free.nodes[1].x).toBe(base.nodes[1].x);
+    expect(free.nodes[1].y).toBe(base.nodes[1].y);
+    expect(free.labels).toEqual([]);
+    expect(free.gaps).toEqual([]);
+    expect(free.edges).toEqual([]);
+  });
+
+  it('被拖到右下角时画布跟着长大，不裁掉节点', () => {
+    const base = layoutFlow(simple);
+    const second = top(base.nodes[1].path);
+    const free = applyNodePositions(base, { [second]: { x: 1600, y: 900 } });
+
+    expect(free.nodes[1].x).toBe(1600);
+    expect(free.width).toBeGreaterThanOrEqual(1600 + NODE_W + PAD);
+    expect(free.height).toBeGreaterThanOrEqual(900 + NODE_H + PAD);
+  });
+
+  it('空分支的「＋」跟着所属块移动', () => {
+    const base = layoutFlow([
+      {
+        type: 'if',
+        cond: 'true',
+        steps: [{ type: 'sleep', ms: 1 }],
+      },
+    ]);
+    const ifPath = base.nodes[0].path;
+    const free = applyNodePositions(base, { [top(ifPath)]: { x: 600, y: 400 } });
+    const empty = free.empties.find((item) => item.branch === 'else')!;
+
+    expect(empty.x).toBeGreaterThanOrEqual(600);
+    expect(empty.x).toBe(600 + NODE_W + BRANCH_GAP);
+    expect(empty.y).toBeGreaterThan(400);
   });
 });

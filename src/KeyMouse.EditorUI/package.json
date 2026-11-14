@@ -1,7 +1,7 @@
 {
   "name": "keymouse-editor",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.2.4",
   "type": "module",
   "description": "KeyMouse 流程编辑器（Tauri + Svelte 外壳）",
   "scripts": {

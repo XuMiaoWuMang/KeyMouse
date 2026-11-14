@@ -90,6 +90,10 @@ internal sealed class BreakStatement : FlowStatement { }
 
 internal sealed class ContinueStatement : FlowStatement { }
 
+/// <summary>`return`: end the current flow successfully. A call catches it, keeps the exports and
+/// lets the caller continue; at the root it simply ends the run.</summary>
+internal sealed class ReturnStatement : FlowStatement { }
+
 /// <summary>
 /// The statement tree a flow will run.
 ///
@@ -297,6 +301,10 @@ internal sealed class FlowPlan
                 case "continue":
                     HasDynamicControl = true;
                     return new ContinueStatement { Origin = origin };
+
+                case "return":
+                    HasDynamicControl = true;
+                    return new ReturnStatement { Origin = origin };
 
                 case "set":
                     if (step.AtMs is not null) HasTimeline = true;

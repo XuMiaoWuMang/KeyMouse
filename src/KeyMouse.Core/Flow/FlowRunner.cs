@@ -121,6 +121,8 @@ internal static class FlowRunner
             ControlSignal signal = RunBlock(plan.Root, root, state);
             if (signal is ControlSignal.Break or ControlSignal.Continue)
                 throw new CommandFailure(2, "break/continue 只能出现在循环里（加载时应该已经拒绝）");
+            if (signal == ControlSignal.Return)
+                Console.WriteLine("  流程在 return 处结束");
         }
         catch (CommandFailure ex)
         {
@@ -144,8 +146,9 @@ internal static class FlowRunner
         Console.WriteLine($"流程结束：{report.Succeeded} 步成功，{report.Failed} 步失败，退出码 {exitCode}");
         if (options.ReportPath is not null)
         {
+            // 写报告的人知道实际落点（主路径写不了会改到临时目录），不要在这里
+            // 再按用户给的路径打印一遍：那会出现“已写到 A / 报告 B”的自相矛盾。
             ScriptRunner.WriteReport(options.ReportPath, report);
-            Console.WriteLine($"报告 {Path.GetFullPath(options.ReportPath)}");
         }
         return exitCode;
     }
@@ -157,6 +160,7 @@ internal static class FlowRunner
         None,
         Break,
         Continue,
+        Return,
         Stop,
     }
 
@@ -237,7 +241,7 @@ internal static class FlowRunner
                         new KeyValuePair<string, FlowValue>("index", FlowValue.Number(round)),
                     ]);
                     ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
-                    if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+                    if (signal is ControlSignal.Stop or ControlSignal.Return) return signal;
                     if (signal == ControlSignal.Break) break;
                 }
                 return ControlSignal.None;
@@ -254,7 +258,7 @@ internal static class FlowRunner
                         new KeyValuePair<string, FlowValue>("item", FlowValue.Text(loop.Items[index])),
                     ]);
                     ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
-                    if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+                    if (signal is ControlSignal.Stop or ControlSignal.Return) return signal;
                     if (signal == ControlSignal.Break) break;
                 }
                 return ControlSignal.None;
@@ -268,6 +272,9 @@ internal static class FlowRunner
 
             case ContinueStatement:
                 return ControlSignal.Continue;
+
+            case ReturnStatement:
+                return ControlSignal.Return;
 
             default:
                 throw new CommandFailure(2, $"运行时遇到不认识的语句：{statement.GetType().Name}");
@@ -289,7 +296,7 @@ internal static class FlowRunner
             if (state.Options.DryRun)
             {
                 ControlSignal dry = RunBlock(loop.Body, loopFrame, state);
-                if (dry == ControlSignal.Stop) return ControlSignal.Stop;
+                if (dry is ControlSignal.Stop or ControlSignal.Return) return dry;
                 rounds++;
                 Console.WriteLine($"  [循环] while {Shorten(loop.Condition.Source)}（--dry-run 只走一遍）");
                 return ControlSignal.None;
@@ -305,7 +312,7 @@ internal static class FlowRunner
 
             rounds++;
             ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
-            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal is ControlSignal.Stop or ControlSignal.Return) return signal;
             if (signal == ControlSignal.Break) { leftByBreak = true; break; }
         }
 
@@ -331,7 +338,7 @@ internal static class FlowRunner
             Execution.BetweenSteps(state.StepNo);
             rounds++;
             ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
-            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal is ControlSignal.Stop or ControlSignal.Return) return signal;
             if (signal == ControlSignal.Break) { leftByBreak = true; break; }
 
             bool again = EvaluateCondition(loop.Condition, loop.Probe, loop.Origin, "do-while 的条件", loopFrame, state);
@@ -365,7 +372,7 @@ internal static class FlowRunner
             if (state.Options.DryRun)
             {
                 ControlSignal dry = RunBlock(loop.Body, loopFrame, state);
-                if (dry == ControlSignal.Stop) return ControlSignal.Stop;
+                if (dry is ControlSignal.Stop or ControlSignal.Return) return dry;
                 if (dry != ControlSignal.Break)
                 {
                     foreach (var (name, expression) in loop.Step)
@@ -388,7 +395,7 @@ internal static class FlowRunner
 
             rounds++;
             ControlSignal signal = RunBlock(loop.Body, loopFrame, state);
-            if (signal == ControlSignal.Stop) return ControlSignal.Stop;
+            if (signal is ControlSignal.Stop or ControlSignal.Return) return signal;
             if (signal == ControlSignal.Break) { leftByBreak = true; break; }
 
             foreach (var (name, expression) in loop.Step)
@@ -466,6 +473,13 @@ internal static class FlowRunner
         string output;
         bool skipped = false;
         Execution.StepStarted(stepNo, step.Type, statement.Origin, step);
+
+        // 给桌面 HUD 一条“现在开始”的行。只在编辑器起的进程里打（外壳设 KEYMOUSE_HUD=1），
+        // 直接跑命令行时输出保持原样。HUD 按步骤号合并开始/完成两行，所以日志不会翻倍。
+        if (!state.Dynamic && Environment.GetEnvironmentVariable("KEYMOUSE_HUD") == "1")
+        {
+            Console.WriteLine($"  [{stepNo,3}/{state.Plan.PlannedSteps}] 执行中  {Describe(step)}");
+        }
 
         // A step may carry a precondition: run it only if that text is on screen in time.
         // Skipping sends nothing, and failing is exit 3 for the same reason - the caller can

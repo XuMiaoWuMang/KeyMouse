@@ -26,6 +26,9 @@
   import { firstFailure, resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
   import { pickSpaceLabel, shouldAttachWindow } from './lib/pick';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
+  import type { NodePosition } from './lib/canvas';
+  import { buildGraph, graphEdgeKey } from './lib/graph';
+  import { isPortSide, type EdgePort, type EdgePorts } from './lib/routing';
   import {
     MIN_MOVE_RUN,
     MIN_WHEEL_RUN,
@@ -69,6 +72,7 @@
     moveAt,
     moveNodes,
     originOf as originOfPath,
+    pathKey,
     removeAt as removeNodeAt,
     removeNodes,
     replaceAt,
@@ -110,11 +114,33 @@
   let selectedPath: NodePath | null = null;
   /** Ctrl/⌘ 多选出来的路径；拖动其中任意一个会整组搬。 */
   let selectedPaths: NodePath[] = [];
+  /**
+   * 自由布局：拖动节点只改画布坐标，不改流程顺序。
+   * 关掉以后回到结构视图，拖动节点仍然是"挪到另一个分支/位置"。
+   */
+  let freeLayout = true;
+  /**
+   * 手工坐标记在步骤对象本身上，而不是记在路径上。
+   * 这样在前面插入/删除步骤时，后面的节点不会因为路径下标变化而突然挪位；
+   * 只有保存到本机时才按路径落盘。
+   */
+  let nodePositionByStep = new WeakMap<FlowStep, NodePosition>();
+  let positionVersion = 0;
+  /**
+   * 手工接口按语义边的稳定键保存：键来自（起点路径、终点路径、边类型）。
+   * 改结构后路径会变，旧键自然失效；这是视图数据，不影响流程语义。
+   */
+  let edgePorts: Record<string, EdgePorts> = {};
   /** Ctrl+C 复制出来的步骤；Ctrl+V 时再深拷贝一次，连续粘贴不会共享对象。 */
   let clipboardSteps: FlowStep[] = [];
   /** 换文件/录完一次时递增，让画布把整张图放回视野。 */
   let fitToken = 0;
   let paletteOpen = false;
+  /**
+   * 画布四向箭头点开的"待插入位置"：选完类型后插到目标节点的同一分支里，
+   * 不再走「选中块就加进块里」的老规则。关掉面板即作废。
+   */
+  let quickAdd: { path: NodePath; position: 'before' | 'after' } | null = null;
   let dirty = false;
   /** 上一次保存（或刚打开）时的序列化快照：撤销回到这一刻就不该再显示未保存。 */
   let savedJson = '';
@@ -153,9 +179,38 @@
   }
 
   $: if (outputOpen && lines.length) void followOutput();
+
+  /** 当前选择是不是真的落在输出面板里：别把编辑器别处选中的字也复制走。 */
+  function selectedOutputText(): string {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return '';
+    const node = selection.anchorNode;
+    if (!node || !outputBox?.contains(node)) return '';
+    return selection.toString();
+  }
+
+  function refreshOutputSelection(): void {
+    outputHasSelection = selectedOutputText().trim().length > 0;
+  }
+
+  async function copyOutputSelection(): Promise<void> {
+    const text = selectedOutputText();
+    if (!text.trim()) {
+      note('先在运行输出里选中一段文字', true);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      note(`已复制 ${text.length} 个字符`);
+    } catch (error) {
+      note(`复制失败：${error}`, true);
+    }
+  }
   /** 输出面板的可滚动容器：新日志默认跟着最后一行走（除非用户自己往上翻过）。 */
   let outputBox: HTMLPreElement | null = null;
   let outputStick = true;
+  /** 输出里有没有一段可复制的选中文字；按钮据此变亮/变灰。 */
+  let outputHasSelection = false;
 
   let jsonOpen = false;
   let moreOpen = false;
@@ -203,7 +258,7 @@
   // 录制期间主窗口缩成一条细带：那时候用户要操作的是别的窗口，
   // 编辑器那两栏只会挡路；而工具栏一旦被盖住，「停止」就摸不到了。
   let mini = false;
-  /** 开始录制/播放时把编辑器藏起来；浮条负责暂停/停止，结束再回来。 */
+  /** 开始录制/播放时把编辑器藏起来；日志 HUD 在左上角显示进度，结束再回来。 */
   let windowAction: Promise<void> = Promise.resolve();
   let windowHidden = false;
 
@@ -284,9 +339,20 @@ $: rowKeys = steps.map((_, index) => String(index + 1));
   $: foldHeadSelected = childSel === null && isFoldHead(foldRuns, selected);
   /** 当前这一行的所有子步骤，按"成立时 → 否则 / 循环体"的顺序摊平；childSel 是这个数组的下标。 */
   $: current = selectedPath ? stepAt(steps, selectedPath) ?? null : null;
+  $: quickAddHost = quickAdd ? stepAt(steps, quickAdd.path) ?? null : null;
   $: currentOrigin = selectedPath ? originOfPath(steps, selectedPath) : '';
   $: currentCategory = current ? categoryOf(current.type) : null;
   $: totalNodes = allNodes(steps).length;
+  /** 手工坐标按步骤对象取；路径只用于落盘，不在编辑过程中当身份。 */
+  $: nodePositions = (() => {
+    positionVersion;
+    const map: Record<string, NodePosition> = {};
+    for (const node of allNodes(steps)) {
+      const position = nodePositionByStep.get(node.step);
+      if (position) map[pathKey(node.path)] = position;
+    }
+    return map;
+  })();
   const CATEGORY_ORDER: StepCategory[] = ['flow', 'loop', 'action'];
 
   function toggleMoveRun(index: number) {
@@ -416,9 +482,13 @@ function branchOffset(index: number, branchIndex: number): number {
     // 命令行的输出是一行一行来的：每行都收进面板，不在这里做解释。
     keep(
       listen<{ stream: string; line: string }>('shell://run-output', (event) => {
-        lines = [...lines, event.payload];
-        // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
-        progress = parseRunProgress(event.payload.line) ?? progress;
+        // “执行中”是给 HUD 的开始行；主输出面板只保留完成行，免得每一步都出现两遍。
+        const live = /^\s*\[\s*\d+\s*\/\s*\d+\s*\]\s*执行中\s/.test(event.payload.line);
+        if (!live) {
+          lines = [...lines, event.payload];
+          // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
+          progress = parseRunProgress(event.payload.line) ?? progress;
+        }
       }),
     );
 
@@ -429,7 +499,7 @@ function branchOffset(index: number, branchIndex: number): number {
         progress = null;
         const { code, cancelled } = event.payload;
         void restoreEditorWindow();
-        void invoke('hide_pill').catch(() => undefined);
+        void invoke('hide_hud').catch(() => undefined);
 
         // 录制共用同一条子进程通道：结束时该做的是"把刚录出来的文件打开"，
         // 而不是用播放的结论去解释一次录制。
@@ -486,12 +556,14 @@ function branchOffset(index: number, branchIndex: number): number {
     */
     const blockNativeMenu = (event: MouseEvent) => event.preventDefault();
     document.addEventListener('contextmenu', blockNativeMenu);
+    document.addEventListener('selectionchange', refreshOutputSelection);
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onRejection);
     return () => {
       window.removeEventListener('error', onError);
       window.removeEventListener('unhandledrejection', onRejection);
       document.removeEventListener('contextmenu', blockNativeMenu);
+      document.removeEventListener('selectionchange', refreshOutputSelection);
     };
   });
 
@@ -569,11 +641,184 @@ $: syncTitle(doc, path, dirty);
     return candidate;
   }
 
+  // ---------------------------------------------------------------- 自由布局
+  //
+  // 坐标是"编辑器视图"的一部分，不写进流程 JSON：流程文件仍然只有语义步骤，
+  // 命令行/回放不会因为换一台机器而改变。这里把坐标按文件路径存在浏览器本机，
+  // 打开同一份文件时恢复；拖节点本身不会把文档标成未保存。
+
+  function layoutStorageKey(filePath: string | null): string {
+    return `keymouse.layout.v1:${filePath ?? '<untitled>'}`;
+  }
+
+  function readStoredPositions(filePath: string | null): Record<string, NodePosition> {
+    try {
+      if (typeof localStorage === 'undefined') return {};
+      const raw = localStorage.getItem(layoutStorageKey(filePath));
+      if (!raw) return {};
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      const result: Record<string, NodePosition> = {};
+      for (const [key, value] of Object.entries(parsed)) {
+        if (!value || typeof value !== 'object') continue;
+        const candidate = value as { x?: unknown; y?: unknown };
+        if (typeof candidate.x !== 'number' || typeof candidate.y !== 'number') continue;
+        if (!Number.isFinite(candidate.x) || !Number.isFinite(candidate.y)) continue;
+        result[key] = { x: candidate.x, y: candidate.y };
+      }
+      return result;
+    } catch {
+      return {};
+    }
+  }
+
+  /** 换文件时把本机坐标挂回当前步骤对象；路径下标只是落盘时的键，不是编辑时的身份。 */
+  function seedStoredPositions(filePath: string | null, nextSteps: FlowStep[]) {
+    nodePositionByStep = new WeakMap();
+    const stored = readStoredPositions(filePath);
+    for (const node of allNodes(nextSteps)) {
+      const position = stored[pathKey(node.path)];
+      if (position) nodePositionByStep.set(node.step, position);
+    }
+    positionVersion += 1;
+  }
+
+  function persistPositions() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const map: Record<string, NodePosition> = {};
+      for (const node of allNodes(steps)) {
+        const position = nodePositionByStep.get(node.step);
+        if (position) map[pathKey(node.path)] = position;
+      }
+      const key = layoutStorageKey(path);
+      if (Object.keys(map).length === 0) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(map));
+    } catch {
+      // 本机布局坏了不该挡住保存流程本身。
+    }
+  }
+
+  function handleFreeMove(moves: { path: NodePath; x: number; y: number }[]) {
+    for (const move of moves) {
+      const step = stepAt(steps, move.path);
+      if (!step) continue;
+      nodePositionByStep.set(step, { x: move.x, y: move.y });
+    }
+    positionVersion += 1;
+    persistPositions();
+  }
+
+  function resetNodeLayout() {
+    nodePositionByStep = new WeakMap();
+    positionVersion += 1;
+    edgePorts = {};
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(layoutStorageKey(path));
+        localStorage.removeItem(portsStorageKey(path));
+      }
+    } catch {
+      // 同 persistPositions：读不到就算了。
+    }
+    fitToken += 1;
+    note('已按自动布局整理，连线接口恢复自动');
+  }
+
+  function toggleFreeLayout() {
+    freeLayout = !freeLayout;
+    fitToken += 1;
+    note(freeLayout ? '自由布局：拖动节点只改位置' : '结构视图：拖动节点改顺序');
+  }
+
+  // ---------------------------------------------------------------- 连线接口
+  //
+  // 端点位置也只是编辑器视图：不写进流程 JSON，按文件路径存在本机。
+  // 自动接口由两个节点的夹角决定；用户拖过的一端才写进 edgePorts。
+
+  function portsStorageKey(filePath: string | null): string {
+    return `keymouse.ports.v1:${filePath ?? '<untitled>'}`;
+  }
+
+  function readStoredPorts(filePath: string | null): Record<string, EdgePorts> {
+    try {
+      if (typeof localStorage === 'undefined') return {};
+      const raw = localStorage.getItem(portsStorageKey(filePath));
+      if (!raw) return {};
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      const result: Record<string, EdgePorts> = {};
+      for (const [key, value] of Object.entries(parsed)) {
+        if (!value || typeof value !== 'object') continue;
+        const ports: EdgePorts = {};
+        for (const end of ['from', 'to'] as const) {
+          const candidate = (value as Record<string, unknown>)[end];
+          if (!candidate || typeof candidate !== 'object') continue;
+          const port = candidate as { side?: unknown; t?: unknown };
+          if (!isPortSide(port.side) || typeof port.t !== 'number' || !Number.isFinite(port.t)) continue;
+          ports[end] = { side: port.side, t: Math.min(0.92, Math.max(0.08, port.t)) };
+        }
+        if (ports.from || ports.to) result[key] = ports;
+      }
+      return result;
+    } catch {
+      return {};
+    }
+  }
+
+  /** 结构编辑会让路径键过期；只保留当前图里真实存在的边。 */
+  function prunePorts(ports: Record<string, EdgePorts>, nextSteps: FlowStep[]): Record<string, EdgePorts> {
+    const live = new Set(buildGraph(nextSteps).map(graphEdgeKey));
+    const result: Record<string, EdgePorts> = {};
+    for (const [key, value] of Object.entries(ports)) {
+      if (!live.has(key)) continue;
+      if (!value.from && !value.to) continue;
+      result[key] = value;
+    }
+    return result;
+  }
+
+  function seedStoredPorts(filePath: string | null, nextSteps: FlowStep[]) {
+    edgePorts = prunePorts(readStoredPorts(filePath), nextSteps);
+  }
+
+  function persistPorts() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const current = prunePorts(edgePorts, steps);
+      const key = portsStorageKey(path);
+      if (Object.keys(current).length === 0) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(current));
+      // 内存里也顺手清掉过期键，避免反复编辑后越积越多。
+      edgePorts = current;
+    } catch {
+      // 本机视图数据坏了不该挡住流程本身。
+    }
+  }
+
+  function handlePortChange(key: string, end: 'from' | 'to', port: EdgePort) {
+    const previous = edgePorts[key] ?? {};
+    edgePorts = { ...edgePorts, [key]: { ...previous, [end]: port } };
+    persistPorts();
+    note(`已改${end === 'from' ? '起点' : '终点'}接口（${port.side}）`);
+  }
+
+  function handlePortReset(key: string) {
+    if (!(key in edgePorts)) return;
+    const next = { ...edgePorts };
+    delete next[key];
+    edgePorts = next;
+    persistPorts();
+    note('已恢复自动接口');
+  }
+
   function useDocument(next: FlowDocument, filePath: string | null) {
     normalizeKeySteps(next.steps);
     doc = next;
     steps = next.steps;
     path = filePath;
+    seedStoredPositions(filePath, next.steps);
+    seedStoredPorts(filePath, next.steps);
     selected = 0;
     childSel = null;
     selectedPath = null;
@@ -700,8 +945,10 @@ $: syncTitle(doc, path, dirty);
       path = picked;
       dirty = false;
       savedJson = JSON.stringify(doc);
-      // 刚换了落盘位置：把这一套分组头记到新路径名下。
+      // 刚换了落盘位置：把这一套分组头和画布坐标记到新路径名下。
       persistSections();
+      persistPositions();
+      persistPorts();
       note(`已保存 ${picked}`);
     } catch (e) {
       note(String(e), true);
@@ -823,9 +1070,9 @@ $: syncTitle(doc, path, dirty);
     }
 
     try {
-      // 先把浮条和藏好的主窗口准备好，再启动命令行：流程可能 100ms 就失败退出，
-      // 反过来做会出现"退出了以后浮条才冒出来"的鬼影。
-      await invoke('show_run_pill').catch((e) => note(`播放浮条没起来：${e}`, true));
+      // 先把日志窗和藏好的主窗口准备好，再启动命令行：流程可能 100ms 就失败退出，
+      // 反过来做会出现“退出了以后日志窗才冒出来”的鬼影。
+      await invoke('show_hud').catch((e) => note(`日志窗没起来：${e}`, true));
       running = true;
       paused = false;
       scratchRun = scratch;
@@ -836,7 +1083,7 @@ $: syncTitle(doc, path, dirty);
       running = false;
       note(`播放没起来：${e}`, true);
       await restoreEditorWindow();
-      void invoke('hide_pill').catch(() => undefined);
+      void invoke('hide_hud').catch(() => undefined);
     }
   }
 
@@ -910,13 +1157,13 @@ $: syncTitle(doc, path, dirty);
     await hideEditorWindow();
     try {
       await invoke('record_flow', { outPath: target, durationMs: 0 });
-      note('开始录了：去操作你要录的窗口；浮条上的「停止」或 Ctrl+Alt+Q 都能收尾');
+      note('开始录了：去操作你要录的窗口；按 Ctrl+Alt+Q 停止');
     } catch (e) {
       running = false;
       recordingPath = null;
       recordMode = null;
       await restoreEditorWindow();
-      void invoke('hide_pill').catch(() => undefined);
+      void invoke('hide_hud').catch(() => undefined);
       note(`录制没起来：${e}`, true);
     }
   }
@@ -972,7 +1219,7 @@ $: syncTitle(doc, path, dirty);
    * 收不起来不算录制失败：那条带子是本轮的"顺手"，录制本身还在跑，
    * 所以只写一行提示。
    */
-  /** 缩成一条细带（旧路径）。录制浮条接管后不再用，保留给老版本外壳的说明。 */
+  /** 缩成一条细带（旧路径）。录制 HUD 接管后不再用，保留给老版本外壳的说明。 */
   async function enterMini(): Promise<void> {
     miniSince = Date.now();
     miniElapsed = 0;
@@ -1311,6 +1558,7 @@ $: syncTitle(doc, path, dirty);
   /** 选中一个画布节点；路径失效时收起抽屉，不指向空气。 */
   function selectPath(path: NodePath | null, additive = false, range = false) {
     paletteOpen = false;
+    quickAdd = null;
     if (!path) {
       applySelection([], null);
       return;
@@ -1348,6 +1596,18 @@ $: syncTitle(doc, path, dirty);
     childSel = primary && primary.length > 1 ? primary[1].index : null;
   }
 
+  /** 画布四向入口：记下待插入位置，再打开同一个添加面板。 */
+  function openQuickAdd(path: NodePath, position: 'before' | 'after') {
+    selectPath(path);
+    quickAdd = { path, position };
+    paletteOpen = true;
+  }
+
+  function togglePalette() {
+    paletteOpen = !paletteOpen;
+    if (!paletteOpen) quickAdd = null;
+  }
+
   /** 在选中节点之后插一步；选中块节点时进它的第一条分支（成立时/循环体）。 */
   async function addStep(type: StepType) {
     if (!doc) await newFlow();
@@ -1358,7 +1618,19 @@ $: syncTitle(doc, path, dirty);
     let next = steps;
     let target: NodePath;
 
-    if (host && hostPath && branchesOf(host).length > 0) {
+    if (quickAdd && stepAt(steps, quickAdd.path)) {
+      // 四向箭头永远插成同父、同分支的兄弟节点：它表达的是"加在下一步"，
+      // 不是"进这个块"。选中块时普通的 ＋ 添加仍然走下面的分支逻辑。
+      const anchor = quickAdd.path;
+      const parent = anchor.slice(0, -1);
+      const last = anchor[anchor.length - 1];
+      const index = last.index + (quickAdd.position === 'after' ? 1 : 0);
+      const anchorStep = stepAt(steps, anchor);
+      next = insertAt(steps, parent, last.branch, index, fresh);
+      target = [...parent, { branch: last.branch, index }];
+      note(`在「${anchorStep ? stepTitle(anchorStep.type) : '这一步'}」${quickAdd.position === 'before' ? '前面' : '后面'}加了一步${missingOf(fresh).length > 0 ? '：抽屉里补齐还没填的项' : ''}`);
+      quickAdd = null;
+    } else if (host && hostPath && branchesOf(host).length > 0) {
       const branch = branchesOf(host)[0].key;
       const childCount = branchesOf(host)[0].steps.length;
       next = appendToBranch(steps, hostPath, branch, fresh);
@@ -1799,7 +2071,10 @@ $: syncTitle(doc, path, dirty);
    */
   function closePopups(except?: string) {
     if (except !== 'more') moreOpen = false;
-    if (except !== 'palette') paletteOpen = false;
+    if (except !== 'palette') {
+      paletteOpen = false;
+      quickAdd = null;
+    }
     if (except !== 'record') recordMenuOpen = false;
     if (except !== 'ops') opsOpen = false;
     if (except !== 'row') rowMenu = null;
@@ -1901,6 +2176,7 @@ $: syncTitle(doc, path, dirty);
       }
       if (paletteOpen) {
         paletteOpen = false;
+        quickAdd = null;
         return;
       }
       if (current) {
@@ -2251,7 +2527,7 @@ $: syncTitle(doc, path, dirty);
         class="palette-add"
         class:open={paletteOpen}
         data-popup="palette"
-        on:click={() => (paletteOpen = !paletteOpen)}
+        on:click={togglePalette}
         aria-expanded={paletteOpen}
       >
         <span aria-hidden="true">＋</span> 添加
@@ -2276,7 +2552,14 @@ $: syncTitle(doc, path, dirty);
               </div>
             </section>
           {/each}
-          <p class="add-tip">选中块时加到块里；选中普通步骤时加在它后面。</p>
+          {#if quickAddHost}
+            <p class="add-tip quick-tip">
+              <span class="quick-tip-mark" aria-hidden="true">→</span>
+              在「{stepTitle(quickAddHost.type)}」{quickAdd?.position === 'before' ? '前面' : '后面'}插入一步
+            </p>
+          {:else}
+            <p class="add-tip">选中块时加到块里；选中普通步骤时加在它后面。</p>
+          {/if}
         </div>
       {/if}
     </div>
@@ -2284,7 +2567,18 @@ $: syncTitle(doc, path, dirty);
     <div class="canvas-meta">
       {#if doc}
         <span class="meta-count">{totalNodes} 个节点</span>
-        <span class="meta-dim">拖节点排序 · 滚轮缩放</span>
+        <button
+          class="layout-toggle"
+          class:active={freeLayout}
+          on:click={toggleFreeLayout}
+          title={freeLayout ? '拖动节点只改位置；切回结构视图可按顺序挪动' : '拖动节点改变排序；切到自由布局可自由摆放'}
+        >
+          {freeLayout ? '自由布局' : '结构视图'}
+        </button>
+        {#if freeLayout}
+          <button class="layout-reset" on:click={resetNodeLayout} title="清除手工坐标与连线接口，恢复自动布局">整理</button>
+        {/if}
+        <span class="meta-dim">{freeLayout ? '拖节点移动 · 滚轮缩放' : '拖节点排序 · 滚轮缩放'}</span>
       {:else}
         <span class="meta-dim">新建或打开一份流程</span>
       {/if}
@@ -2432,9 +2726,16 @@ $: syncTitle(doc, path, dirty);
           {selectedPaths}
           {results}
           {fitToken}
+          {freeLayout}
+          positions={nodePositions}
+          ports={edgePorts}
           onselect={selectPath}
           onmove={handleMove}
+          onmovefree={handleFreeMove}
           onadd={addEmptyBranchPath}
+          onquickadd={openQuickAdd}
+          onportchange={handlePortChange}
+          onportreset={handlePortReset}
           onrange={(paths) => applySelection(paths, paths[0] ?? null)}
         />
 
@@ -2447,13 +2748,15 @@ $: syncTitle(doc, path, dirty);
             <dl>
               <dt>滚轮</dt><dd>以鼠标为中心缩放</dd>
               <dt>拖空白</dt><dd>左键框选 · 右键平移画布</dd>
-              <dt>拖节点</dt><dd>拖动所选节点；可落进任意分支</dd>
+              <dt>拖节点</dt><dd>{freeLayout ? '自由移动位置；切到结构视图后拖动排序' : '拖动所选节点；可落进任意分支'}</dd>
               <dt>长按节点</dt><dd>把节点加入选择，再拖可整组搬</dd>
               <dt>Ctrl/⌘+点</dt><dd>追加或取消一个节点</dd>
               <dt>Shift+点</dt><dd>从主选扩展到目标节点</dd>
               <dt>Ctrl+A</dt><dd>全选节点，再拖可整组搬</dd>
               <dt>Ctrl+C / Ctrl+V</dt><dd>复制选中项 / 粘到主选后面</dd>
               <dt>点节点</dt><dd>打开右侧详情抽屉</dd>
+              <dt>节点四边箭头</dt><dd>上/左前插一步 · 下/右后插一步</dd>
+              <dt>点连线 / 拖端点</dt><dd>选中线后拖两端的圆点改接口 · 双击线恢复自动</dd>
               <dt>Ctrl+Shift+A</dt><dd>打开添加面板</dd>
               <dt>↑ / ↓</dt><dd>上一个 / 下一个节点</dd>
               <dt>Alt+↑ / Alt+↓</dt><dd>把当前节点上移 / 下移</dd>
@@ -2574,13 +2877,25 @@ $: syncTitle(doc, path, dirty);
         <h2>运行输出</h2>
         <div class="output-actions">
           {#if lines.length}
+            <button
+              class="ghost small"
+              disabled={!outputHasSelection}
+              title="复制在输出里选中的文字"
+              on:click={() => void copyOutputSelection()}
+            >
+              复制选中
+            </button>
             <button class="ghost small" on:click={() => (lines = [])}>清空</button>
           {/if}
           <button class="ghost small" on:click={() => (outputOpen = false)}>收起</button>
         </div>
       </header>
       {#if lines.length}
-        <pre class="run" bind:this={outputBox} on:scroll={onOutputScroll}>{#each lines as item}<span class:err={item.stream === 'err'}>{item.line}{'\n'}</span>{/each}</pre>
+        <pre
+          class="run"
+          bind:this={outputBox}
+          on:scroll={onOutputScroll}
+        >{#each lines as item}<span class:err={item.stream === 'err'}>{item.line}{'\n'}</span>{/each}</pre>
       {:else}
         <p class="output-empty">还没有输出。跑一次流程或录一段，这里会跟着往下滚。</p>
       {/if}
@@ -4245,8 +4560,8 @@ $: syncTitle(doc, path, dirty);
 
   .canvas-meta {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
+    align-items: center;
+    gap: 10px;
     flex: 1;
     min-width: 0;
     padding-left: 4px;
@@ -4262,6 +4577,37 @@ $: syncTitle(doc, path, dirty);
     font-size: var(--kp-fs-small);
     color: var(--kp-ink3);
     white-space: nowrap;
+  }
+
+  .layout-toggle,
+  .layout-reset {
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid var(--kp-rule-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--kp-ink3);
+    font: 500 9.5px/1 var(--kp-font-mono);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .layout-toggle:hover,
+  .layout-reset:hover {
+    border-color: var(--kp-ink2);
+    color: var(--kp-ink);
+  }
+
+  .layout-toggle.active {
+    border-color: var(--kp-signal);
+    background: color-mix(in srgb, var(--kp-signal) 7%, transparent);
+    color: var(--kp-signal);
+  }
+
+  .layout-reset {
+    border-color: transparent;
+    padding: 0 4px;
   }
 
   /* 添加面板：三组并排，像三张摊开的索引卡。 */
@@ -4394,6 +4740,16 @@ $: syncTitle(doc, path, dirty);
     border-top: 1px solid var(--kp-rule);
     font-size: 10.5px;
     color: var(--kp-ink3);
+  }
+
+  .add-tip.quick-tip {
+    color: var(--kp-cue);
+  }
+
+  .quick-tip-mark {
+    display: inline-block;
+    margin-right: 6px;
+    font-family: var(--kp-font-mono);
   }
 
   /* 抽屉：从右边滑进来，不把画布挤窄。 */

@@ -137,6 +137,7 @@ export type StepType =
   | 'for'
   | 'break'
   | 'continue'
+  | 'return'
   | 'set'
   | 'assert';
 
@@ -173,6 +174,7 @@ const TITLES: Record<StepType, string> = {
   for: '计数循环',
   break: '跳出循环',
   continue: '进入下一轮',
+  return: '结束流程',
   set: '设变量',
   assert: '断言',
 };
@@ -303,6 +305,8 @@ export function stepSummary(step: FlowStep): string {
       return '跳出当前循环';
     case 'continue':
       return '进入下一轮';
+    case 'return':
+      return '结束当前流程，调用方继续';
     case 'set':
       return `设 ${step.name ?? '?'} = ${clipExpr(step.value, '?')}`;
     case 'assert':

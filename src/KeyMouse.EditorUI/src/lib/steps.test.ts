@@ -21,10 +21,11 @@ describe('control-flow step templates', () => {
     expect(makeStep('for')).toMatchObject({ init: { i: '0' }, cond: 'i < 3', step: { i: 'i + 1' } });
   });
 
-  it('set / assert / break / continue 有各自的必填项', () => {
+  it('set / assert / break / continue / return 有各自的必填项', () => {
     expect(missingOf(makeStep('set'))).toEqual([]);
     expect(missingOf(makeStep('assert'))).toEqual([]);
     expect(missingOf(makeStep('break'))).toEqual([]);
+    expect(missingOf(makeStep('return'))).toEqual([]);
     expect(missingHint({ type: 'assert', cond: '' })).toBe('还缺 条件');
   });
 
@@ -77,5 +78,6 @@ describe('control-flow summaries', () => {
     expect(stepSummary({ type: 'for', cond: 'i < 3' })).toContain('计数 i < 3');
     expect(stepSummary({ type: 'set', name: 'n', value: 'n + 1' })).toBe('设 n = n + 1');
     expect(stepSummary({ type: 'break' })).toBe('跳出当前循环');
+    expect(stepSummary({ type: 'return' })).toBe('结束当前流程，调用方继续');
   });
 });

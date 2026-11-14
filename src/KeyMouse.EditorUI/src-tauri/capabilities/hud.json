@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "hud",
+  "description": "运行日志 HUD：透明、置顶、鼠标穿透的只读窗口。只保留事件监听，不能开文件、不能发命令，也不接收点击。",
+  "windows": ["hud"],
+  "permissions": ["core:default"]
+}

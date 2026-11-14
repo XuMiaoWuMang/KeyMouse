@@ -32,6 +32,8 @@
   --kp-signal-pressed: #8e2e06;
   --kp-signal-off: #f0e4d7;
   --kp-critical: #b3261e;
+  /* 画布四向添加入口：只在这一处用的冷色提示，和朱砂"当前/可动"分开。 */
+  --kp-cue: #557b8c;
   --kp-mask: rgb(10 10 11 / 32%);
 
   /* —— 字体三级：标题衬线 / 正文无衬线 / 元信息等宽 —— */
@@ -79,6 +81,7 @@
   --kp-signal-pressed: #74401e;
   --kp-signal-off: #e8d6ba;
   --kp-critical: #a33a25;
+  --kp-cue: #5f7d78;
 }
 
 /* 午夜墨：夜读；深色下 accent 换暖金（朱砂压在近黑上看不清） */
@@ -98,6 +101,7 @@
   --kp-signal-pressed: #c8963f;
   --kp-signal-off: #33291a;
   --kp-critical: #d98b6d;
+  --kp-cue: #8cb5c2;
   --kp-mask: rgb(0 0 0 / 55%);
 }
 

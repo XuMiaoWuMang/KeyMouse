@@ -11,10 +11,11 @@
 mod crashlog;
 mod diagnostics;
 mod files;
-mod mini;
+mod hotkey;
+mod hud;
 mod layout;
+mod mini;
 mod overlay_style;
-mod pill;
 mod pick;
 mod process;
 mod record;
@@ -57,49 +58,30 @@ fn log_error(message: String) {
     crashlog::write(&format!("ui {message}"));
 }
 
-/// 浮条上的「停止」：和主窗口那个按钮走同一条命令。
-#[tauri::command]
-fn pill_stop(app: AppHandle) -> Result<&'static str, String> {
-    let outcome = record::record_stop(app.clone())?;
-    pill::hide(&app);
-    Ok(outcome)
-}
-
-/// 播放时主窗口先隐藏，浮条是唯一的暂停/停止入口。
+/// 播放前先把日志窗摆好：流程可能 100ms 就失败退出，反过来做会出现“退出了才冒窗”的鬼影。
 ///
 /// 必须另起线程：建 WebView 窗口要回主线程，而命令本身就在主线程上，直接建会卡住
 /// （录制那边有同样一条注释，踩过一次）。命令立刻返回，界面才能继续隐藏窗口、起流程。
 #[tauri::command]
-fn show_run_pill(app: AppHandle) -> Result<(), String> {
+fn show_hud(app: AppHandle) -> Result<(), String> {
     let handle = app.clone();
     std::thread::spawn(move || {
-        if let Err(error) = pill::show_play(&handle) {
-            crashlog::write(&format!("播放浮条没起来：{error}"));
+        if let Err(error) = hud::show(&handle) {
+            crashlog::write(&format!("日志窗没起来：{error}"));
         }
     });
     Ok(())
 }
 
 #[tauri::command]
-fn hide_pill(app: AppHandle) {
-    pill::hide(&app);
+fn hide_hud(app: AppHandle) {
+    hud::hide(&app);
 }
 
-/// 探针：环境变量 `KEYMOUSE_PILL_SPIKE=1` 时自动亮一次浮条。
-///
-/// 浮条平时只在录制期间出现，可"它长得对不对"不该逼着人先真录一轮。给自动化验证
-/// （改完就跑、不用人手按键）留一个不靠键盘的入口；平时没人设这个变量，等于不存在。
-pub fn spawn_pill_spike(app: &tauri::AppHandle) {
-    if std::env::var_os("KEYMOUSE_PILL_SPIKE").is_none() {
-        return;
-    }
-    let app = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(900));
-        if let Err(error) = pill::show(&app) {
-            crate::crashlog::write(&format!("pill spike 失败：{error}"));
-        }
-    });
+/// HUD 页面挂载时补拉最近一次运行的输出：事件只发给已经挂载的页面，早到的行会丢。
+#[tauri::command]
+fn hud_lines(app: AppHandle) -> Vec<String> {
+    app.state::<hud::HudLog>().snapshot()
 }
 
 /// 把窗口夹进当前显示器：大小不超过屏，位置不越界。
@@ -228,7 +210,6 @@ fn main() {
                 });
             }
 
-            spawn_pill_spike(app.handle());
             Ok(())
         })
         .manage(ShellState {
@@ -236,6 +217,7 @@ fn main() {
         })
         .manage(run::RunState::default())
         .manage(mini::MiniState::default())
+        .manage(hud::HudLog::default())
         .invoke_handler(tauri::generate_handler![
             layout::runtime_info,
             layout::run_doctor,
@@ -254,9 +236,9 @@ fn main() {
             record::record_flow,
             record::record_flow_elevated,
             record::record_stop,
-            pill_stop,
-            show_run_pill,
-            hide_pill,
+            show_hud,
+            hide_hud,
+            hud_lines,
             schema::flow_schema,
             pick::pick_region,
             mini::enter_mini,

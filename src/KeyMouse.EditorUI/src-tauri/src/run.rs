@@ -26,6 +26,8 @@ pub struct RunState {
     cancelled: std::sync::atomic::AtomicBool,
     /// 子进程 pid：暂停/继续要按它去开那个命名事件（名字里带着它）。
     pub(crate) pid: Mutex<Option<u32>>,
+    /// 播放期间注册的全局停止键。录制不装它：录制命令行自己听 `Ctrl+Alt+Q`。
+    pub(crate) hotkey: Mutex<Option<crate::hotkey::Handle>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -60,11 +62,38 @@ fn report_path() -> std::path::PathBuf {
     base.join("editor-run-report.json")
 }
 
+/// 与命令行 `ScriptRunner.FallbackReportPath` 约定一致：主目录写不进去时报告会落到这里。
+fn fallback_report_path() -> std::path::PathBuf {
+    std::env::temp_dir()
+        .join("KeyMouse")
+        .join("editor-run-report.json")
+}
+
 /// 把上一次运行留下的报告原样读给界面。读不到就返回空串：报告是锦上添花，不该让一次
-/// 跑成功的流程因为"报告没了"变成错误。
+/// 跑成功的流程因为“报告没了”变成错误。
+///
+/// 两个位置都可能有文件：主路径可能还是上一轮的旧报告，而这一次已经写到了备用路径。
+/// 因此按修改时间取新的，不能盲目先读主路径。
 #[tauri::command]
 pub fn read_run_report() -> String {
-    std::fs::read_to_string(report_path()).unwrap_or_default()
+    [report_path(), fallback_report_path()]
+        .into_iter()
+        .filter_map(|path| {
+            std::fs::metadata(&path)
+                .and_then(|meta| meta.modified())
+                .ok()
+                .map(|modified| (modified, path))
+        })
+        .max_by_key(|(modified, _)| *modified)
+        .and_then(|(_, path)| std::fs::read_to_string(path).ok())
+        .unwrap_or_default()
+}
+
+/// 每轮开始前清掉旧报告，免得子进程 100ms 失败、界面却读到上一轮的成功报告。
+fn clear_run_reports() {
+    for path in [report_path(), fallback_report_path()] {
+        let _ = std::fs::remove_file(path);
+    }
 }
 
 /// 一条命令的参数。抽出来是为了能单测：`--dry-run` 必须在路径后面，不能丢。
@@ -84,6 +113,7 @@ fn run_args(path: &str, dry_run: bool) -> Vec<String> {
 #[tauri::command]
 pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
     let cli = cli_path_of()?;
+    clear_run_reports();
     let output = crate::process::cli_command(&cli)
         .args(run_args(&path, true))
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
@@ -107,7 +137,17 @@ pub fn validate_flow(app: AppHandle, path: String) -> Result<RunExit, String> {
 
 #[tauri::command]
 pub fn run_flow(app: AppHandle, path: String) -> Result<(), String> {
-    spawn_streaming(&app, run_args(&path, false)).map_err(|e| e.to_string())
+    clear_run_reports();
+    app.state::<crate::hud::HudLog>().clear();
+    // 先装全局停止键再起进程：注册失败就不该开始一段没人能叫停的播放。
+    let hotkey = crate::hotkey::start(app.clone())?;
+    *app.state::<RunState>().hotkey.lock().unwrap() = Some(hotkey);
+    if let Err(error) = spawn_streaming(&app, run_args(&path, false)) {
+        // 子进程没起来：把热键线程收掉，别让它占着组合键。
+        let _ = app.state::<RunState>().hotkey.lock().unwrap().take();
+        return Err(error.to_string());
+    }
+    Ok(())
 }
 
 /// 起一条命令行的子进程，把它的输出按行转成事件，并把句柄留在槽位里等"停止"。
@@ -125,6 +165,9 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         let mut child = crate::process::cli_command(&cli)
             .args(args)
             .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
+            // 让流程输出多一条“执行中”的行，HUD 才能在长步骤（例如等待）里显示当前操作；
+            // 主输出面板会过滤掉这类行，命令行直接运行时则完全不会产生它们。
+            .env("KEYMOUSE_HUD", "1")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -181,10 +224,11 @@ pub(crate) fn spawn_streaming(app: &AppHandle, args: Vec<String>) -> Result<(), 
         };
 
         let cancelled = state.cancelled.swap(false, std::sync::atomic::Ordering::Relaxed);
-        // 不管这一趟是录制还是播放，子进程一退，录制浮条就没有理由留在屏幕上。
-        // 用户用 Esc / Ctrl+Alt+Q / 到时长自动停时不会有人来点"停止"，只能在这儿撤；
-        // 跑的是流程时浮条本来就不存在，hide 是空操作。
-        crate::pill::hide(&wait_handle);
+        // 子进程一退就注销播放热键；录制那条路没有装过热键，take 是空操作。
+        let _ = state.hotkey.lock().unwrap().take();
+        // 不管这一趟是录制还是播放，子进程一退，日志窗就没有理由留在屏幕上。
+        // 用户按 Ctrl+Alt+Q / 到时长自动停时不会有人来关窗，只能在这儿撤。
+        crate::hud::hide(&wait_handle);
         let _ = wait_handle.emit("shell://run-exit", RunExit { code, cancelled });
     });
 
@@ -252,6 +296,8 @@ fn pump<R: std::io::Read + Send + 'static>(stream: R, kind: &'static str, app: A
 }
 
 fn emit_line(app: &AppHandle, stream: &'static str, line: &str) {
+    // HUD 页面可能比这条输出晚挂载；留一份给页面挂载时补拉，别让第一步永远空着。
+    app.state::<crate::hud::HudLog>().push(line);
     let _ = app.emit(
         "shell://run-output",
         RunLine {

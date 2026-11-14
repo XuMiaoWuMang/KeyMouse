@@ -23,7 +23,7 @@ use crate::run::{spawn_streaming, RunState};
 
 /// 外壳自己的进程名（开发版跑 `keymouse-editor.exe`，安装版跑 `KeyMouse.Editor.exe`）。
 ///
-/// 录制时整进程排除：浮条窗口是录制中途才建出来的，句柄拿不到，只能按进程名跳过。
+/// 录制时整进程排除：日志 HUD 是录制中途才建出来的，句柄拿不到，只能按进程名跳过。
 /// 取自身可执行文件名而不是写常量——两种构建的文件名不一样。
 fn self_process_name() -> String {
     std::env::current_exe()
@@ -32,7 +32,7 @@ fn self_process_name() -> String {
         .unwrap_or_else(|| "KeyMouse.Editor".to_string())
 }
 
-/// 录制时把自己这个窗口排除掉：否则"点一下编辑器"也会被录成一步。
+/// 录制时把自己这个窗口排除掉：否则“点一下编辑器”也会被录成一步。
 fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str) -> Vec<String> {
     let mut args = vec![
         "record".to_string(),
@@ -50,8 +50,8 @@ fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, s
         args.push(format!("0x{handle:X}"));
     }
 
-    // 整个进程都排除：主窗口、录制浮条、以后可能还有别的窗口。
-    // 尤其"点浮条上的停止"这一下——回放时去点那块屏幕毫无意义。
+    // 整个进程都排除：主窗口、日志 HUD、以后可能还有别的窗口。
+    // 日志窗是鼠标穿透的，本来也点不到；排除它是为了以后加别的面板时不再逐一处理。
     args.push("--ignore-process".to_string());
     args.push(skip_process.to_string());
 
@@ -75,16 +75,16 @@ pub fn record_flow(
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
     spawn_streaming(&app, record_args(&out_path, duration_ms, ignore, &self_process_name()))?;
-    // 浮条：录制期间浮在桌面上，带一个"停止"。浮条起不来不算录制失败，
+    // 日志 HUD：录制期间浮在左上角，只读、鼠标穿透。起不来不算录制失败，
     // 用户仍然可以用 Ctrl+Alt+Q 停——所以失败只记日志。
     //
-    // 必须另起线程调 `pill::show`：建 webview 窗口要回到主线程执行，
+    // 必须另起线程调 `hud::show`：建 webview 窗口要回到主线程执行，
     // 而命令本身就跑在主线程上，直接调会**静默卡住**（日志停在"进入"、窗口永远不出现）。
     // 从别的线程调，Tauri 会把建窗派给主线程排队，反而正确。
-    let pill_app = app.clone();
+    let hud_app = app.clone();
     std::thread::spawn(move || {
-        if let Err(error) = crate::pill::show(&pill_app) {
-            crate::crashlog::write(&format!("录制浮条没起来：{error}"));
+        if let Err(error) = crate::hud::show(&hud_app) {
+            crate::crashlog::write(&format!("录制日志窗没起来：{error}"));
         }
     });
     Ok(())
@@ -119,8 +119,8 @@ pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let cli = crate::run::cli_path_of()?;
 
     // 先试命名事件：录制进程建了 `Local\KeyMouse-record-stop-<pid>`，置上它，那一轮就在
-    // 下一步之前收尾并写盘。这条路不依赖前台窗口，也不依赖注入的键被钩子看见——而浮条
-    // 自己就是前台窗口（WebView2），注入组合键实测时灵时不灵。
+    // 下一步之前收尾并写盘。这条路不依赖前台窗口，也不依赖注入的键被钩子看见——
+    // HUD 不抢焦点，但它也不是可靠的按键接收者。
     // 置不上（老版本命令行没建这个事件）才回落到注入 Ctrl+Alt+Q。
     if !signal_stop(&app) {
         crate::process::cli_command(&cli)
@@ -136,18 +136,18 @@ pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
     let started = Instant::now();
     while started.elapsed() < Duration::from_millis(5000) {
         if !is_running(&app) {
-            // 命令行自己收尾了（按 Esc 连按、Ctrl+Alt+Q、或到时长自动停），浮条一并撤走。
-            crate::pill::hide(&app);
+            // 命令行自己收尾了（按 Esc 连按、Ctrl+Alt+Q、或到时长自动停），日志窗一并撤走。
+            crate::hud::hide(&app);
             return Ok("stopped");
         }
         std::thread::sleep(Duration::from_millis(100));
     }
 
     if crate::run::run_cancel(app.clone()) {
-        crate::pill::hide(&app);
+        crate::hud::hide(&app);
         return Ok("killed");
     }
-    crate::pill::hide(&app);
+    crate::hud::hide(&app);
     Ok("idle")
 }
 

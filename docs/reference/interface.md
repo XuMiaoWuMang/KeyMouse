@@ -140,6 +140,7 @@ click-text：找字并点击它
 | `do` | `steps`、`cond` | `maxRounds`、`probe`、`note` |
 | `for` | `cond`、`steps` | `init`、`step`、`maxRounds`、`probe`、`note` |
 | `break` / `continue` | — | —（只能放在循环体内） |
+| `return` | — | —（结束当前流程；子流程的 `export` 仍生效，调用方继续） |
 | `set` | `name`、`value` | `note`、`when` |
 | `assert` | `cond` | `message`、`probe`、`note`、`when` |
 
@@ -170,6 +171,10 @@ JSON 的数字放不下占位符，这是限制不是疏忽。**表达式字段�
 `text()` 读 `probe` 指定的窗口与区域（**单次取样**，不轮询）；`probe` 的形状、`maxRounds` 的上下限、
 循环/步数护栏、`--dry-run` 下"条件按成立算、循环只走一遍"的行为，见
 [`cli.md` 的「控制流」](cli.md)。
+
+`return` 立即结束当前流程，不执行同一流程里它后面的步骤。放在子流程里时，`call` 会把它当成正常结束：
+按 `export` 把变量交回调用者，调用者继续执行；放在根流程里则整次运行正常结束。它可以在 `if`/循环里使用，
+只结束当前流程，不越过 `call` 边界。`return` 不能带 `when`、`steps` 或 `else`，也不占执行步号与报告行。
 
 编辑器把 `cond` 做成有限选项（总是成立/比较两个值/屏幕文字/窗口存在/前台/上次读字/运行时长），
 选项只生成上面这套表达式，覆盖不了时退回「自定义表达式」。必填项没填完不会写出半截条件，

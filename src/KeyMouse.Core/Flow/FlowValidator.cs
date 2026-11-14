@@ -61,7 +61,7 @@ internal static class FlowValidator
             throw new CommandFailure(2, $"{where}的 {step.Type} 不能有 steps（只有循环和 if 有子步骤）");
         if (step.Type != "if" && step.Else is not null)
             throw new CommandFailure(2, $"{where}的 {step.Type} 不能有 else（只有 if 有另一条分支）");
-        if (step.When is { } when && step.Type is "if" or "while" or "do" or "for" or "break" or "continue" or "repeat" or "foreach")
+        if (step.When is { } when && step.Type is "if" or "while" or "do" or "for" or "break" or "continue" or "return" or "repeat" or "foreach")
         {
             throw new CommandFailure(2,
                 $"{where}的 {step.Type} 不能带 when：条件请写进 cond；循环体内每一步各自判断");
@@ -185,6 +185,10 @@ internal static class FlowValidator
                 if (loopDepth == 0)
                     throw new CommandFailure(2,
                         $"{where}的 {step.Type} 不在循环里（要放在 while / do / for / repeat / foreach 的体内）");
+                return;
+
+            case "return":
+                RejectSteps(step, where);
                 return;
 
             case "set":

@@ -43,24 +43,69 @@ internal static partial class ScriptRunner
         return buffer.ToArray();
     }
 
+    /// <summary>
+    /// 编辑器临时目录之外的另一处报告落点。`LOCALAPPDATA\KeyMouse\tmp` 可能被安全软件锁住、
+    /// 被上一个进程留下的只读文件占住，或权限被改坏；报告只是补充，换一个用户一定能写的
+    /// `%TEMP%` 不应该让整次运行看起来失败。
+    /// </summary>
+    internal static string FallbackReportPath =>
+        Path.Combine(Path.GetTempPath(), "KeyMouse", "editor-run-report.json");
+
     internal static void WriteReport(string path, ScriptReport report)
     {
-        try
+        string json = JsonSerializer.Serialize(report, new JsonSerializerOptions
         {
-            string json = JsonSerializer.Serialize(report, new JsonSerializerOptions
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            // Keep CJK window titles and quotes readable instead of \uXXXX escapes.
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+        string body = json + Environment.NewLine;
+
+        Exception? first = null;
+        foreach (string candidate in new[] { path, FallbackReportPath })
+        {
+            try
             {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                // Keep CJK window titles and quotes readable instead of \uXXXX escapes.
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-            File.WriteAllText(path, json + Environment.NewLine, new UTF8Encoding(false));
-            Console.WriteLine($"报告已写入 {Path.GetFullPath(path)}");
+                WriteWithRetry(candidate, body);
+                if (!string.Equals(candidate, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.Error.WriteLine($"提示：主报告路径写不了（{first?.Message}），已改写到 '{candidate}'");
+                }
+                Console.WriteLine($"报告已写入 {Path.GetFullPath(candidate)}");
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                first ??= ex;
+            }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+
+        // The script's own result stays authoritative; a broken report path must not hide it.
+        Console.Error.WriteLine($"错误：写不了报告 '{path}'：{first?.Message}");
+    }
+
+    /// <summary>
+    /// Windows 上杀毒/索引器短暂打开目标文件是常态；一次 AccessDenied 不代表路径真的坏了。
+    /// 三次短重试后还不行才换备用路径。
+    /// </summary>
+    private static void WriteWithRetry(string path, string body)
+    {
+        string? directory = Path.GetDirectoryName(Path.GetFullPath(path));
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+
+        for (int attempt = 1; ; attempt++)
         {
-            // The script's own result stays authoritative; a broken report path must not hide it.
-            Console.Error.WriteLine($"错误：写不了报告 '{path}'：{ex.Message}");
+            try
+            {
+                File.WriteAllText(path, body, new UTF8Encoding(false));
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (attempt >= 3) throw;
+                Thread.Sleep(80 * attempt);
+            }
         }
     }
 

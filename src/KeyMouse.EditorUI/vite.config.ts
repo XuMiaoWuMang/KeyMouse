@@ -21,10 +21,10 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      // 两个入口：主界面，以及录制时那块透明浮条（src-tauri/src/pill.rs 建的窗口）。
+      // 两个入口：主界面，以及运行日志 HUD（src-tauri/src/hud.rs 建的透明窗口）。
       input: {
         main: 'index.html',
-        pill: 'pill.html',
+        hud: 'hud.html',
       },
     },
   },

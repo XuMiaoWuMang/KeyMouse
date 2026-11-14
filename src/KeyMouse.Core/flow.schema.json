@@ -1669,6 +1669,11 @@
       "noWhen": true,
       "fields": []
     },
+    "return": {
+      "summary": { "zh": "结束当前流程，回到调用者", "en": "End this flow and return to the caller" },
+      "noWhen": true,
+      "fields": []
+    },
     "set": {
       "summary": { "zh": "给变量赋值", "en": "Assign a variable" },
       "fields": [

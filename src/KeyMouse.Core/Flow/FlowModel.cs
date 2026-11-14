@@ -466,7 +466,7 @@ internal sealed class FlowDocument
     [
         "focus", "click", "drag", "move", "wheel", "type", "key", "sleep", "wait-window", "wait-text",
         "click-text", "read-text", "repeat", "foreach", "call",
-        "if", "while", "do", "for", "break", "continue", "set", "assert",
+        "if", "while", "do", "for", "break", "continue", "return", "set", "assert",
         "keydown", "keyup", "mousedown", "mouseup", "hold", "mousehold", "keyhold",
     ];
 
@@ -477,7 +477,7 @@ internal sealed class FlowDocument
     internal static readonly string[] RunnerTypes =
     [
         "sleep", "hold", "mousehold", "keyhold", "wait-window", "wait-text", "click-text", "read-text",
-        "repeat", "foreach", "if", "while", "do", "for", "break", "continue", "set", "assert",
+        "repeat", "foreach", "if", "while", "do", "for", "break", "continue", "return", "set", "assert",
     ];
 
     /// <summary>Step types that carry a block of child steps in `steps`.</summary>

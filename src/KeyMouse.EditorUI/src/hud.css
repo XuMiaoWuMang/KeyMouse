@@ -1,0 +1,169 @@
+/*
+  运行日志 HUD：窗口透明、鼠标穿透，信息压在左上角。
+
+  刻意不用浮条的白纸色：它要在任意桌面/窗口上都能读，又不能像一块弹窗。深色半透明
+  底 + 暖白字与编辑器画布的纸色保持同一套气质；只让当前一行有朱砂侧标，不做进度条。
+*/
+
+:root {
+  --hud-panel: rgba(16, 14, 11, 0.82);
+  --hud-panel-edge: rgba(255, 248, 238, 0.16);
+  --hud-ink: rgba(250, 244, 234, 0.92);
+  --hud-dim: rgba(250, 244, 234, 0.54);
+  --hud-faint: rgba(250, 244, 234, 0.34);
+  --hud-signal: #e06a3d;
+  --hud-bad: #ff9d7d;
+  --hud-warn: #d9b36b;
+  --hud-good: rgba(250, 244, 234, 0.72);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+body {
+  user-select: none;
+  cursor: default;
+}
+
+.hud {
+  position: absolute;
+  inset: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 8px 11px;
+  border: 1px solid var(--hud-panel-edge);
+  border-radius: 10px;
+  background: var(--hud-panel);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+  color: var(--hud-ink);
+  backdrop-filter: blur(12px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  padding-bottom: 5px;
+  color: var(--hud-dim);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hud-signal);
+  box-shadow: 0 0 0 2px rgba(224, 106, 61, 0.16);
+  animation: hud-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes hud-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.title {
+  flex: 1;
+}
+
+.tally {
+  color: var(--hud-faint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 42px 76px 5px minmax(0, 1fr) 34px;
+  align-items: baseline;
+  gap: 4px;
+  min-height: 20px;
+  padding: 1px 5px 1px 4px;
+  border-left: 2px solid transparent;
+  border-radius: 3px;
+  color: var(--hud-ink);
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.row.current {
+  border-left-color: var(--hud-signal);
+  background: rgba(224, 106, 61, 0.13);
+}
+
+.counter {
+  color: var(--hud-faint);
+  font-family: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--hud-dim);
+  text-overflow: ellipsis;
+}
+
+.colon {
+  color: var(--hud-faint);
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--hud-ink);
+  text-overflow: ellipsis;
+}
+
+.status {
+  color: var(--hud-good);
+  font-size: 10px;
+  text-align: right;
+}
+
+.row.failed .status,
+.row.failed .detail {
+  color: var(--hud-bad);
+}
+
+.row.skipped .status {
+  color: var(--hud-warn);
+}
+
+.empty {
+  margin: 2px 4px;
+  color: var(--hud-faint);
+  font-size: 11px;
+}
+
+.hud.ended .pulse {
+  animation: none;
+  opacity: 0.42;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

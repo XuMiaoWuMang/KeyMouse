@@ -10,7 +10,7 @@ KeyMouse 的测试分三层，界限是**能不能碰桌面**：单元测试证�
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.4.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -41,7 +41,7 @@ Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent'
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.4.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -96,7 +96,7 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 | `timeline` | 录制时间线：`atMs` 的写入与往返 |
 | `nowindow` | 无窗口执行：默认不要求窗口在前台 |
 | `schema-range` | 数字范围与默认值只认契约：越界加载即失败，`when` 这类嵌套形状一样管 |
-| `record-ignore` | 录制跳过指定进程的窗口：外壳浮条的点击不该进流程 |
+| `record-ignore` | 录制跳过指定进程的窗口：外壳自己的窗口/日志 HUD 不该进流程 |
 | `ocr` | 内置 OCR：张量布局、DB 后处理、CTC 解码、字符表与模型加载（有模型时才真的加载） |
 
 断言只有一个极小的 Harness（`tests\KeyMouse.Tests\Harness.cs`）：`Check(说明, 条件, 细节)`、`Equal`、`Sequence`、`Throws`，末尾打印 `N passed, M failed`，有失败就返回退出码 1。每个模块包在 `Section` 里跑，某个模块抛异常会被记成一条失败并继续跑后面的模块，不会让整轮测试中断。
@@ -113,7 +113,7 @@ tests\KeyMouse.Tests\bin\Release\net10.0-windows\KeyMouse.Tests.exe --list
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.4.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -176,7 +176,7 @@ pwsh tests\smoke\run.ps1 -Exe artifacts\cli-self\KeyMouse.exe   # 自包含那�
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.4.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```
@@ -223,7 +223,7 @@ pwsh tools\diagnostics\evidence.ps1 -Samples 5 -Attempts 1  # 快速看一眼
 
 ```powershell
 pwsh tools\build\pack-release.ps1
-Start-Process artifacts\release\KeyMouseSetup-2.2.1.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
+Start-Process artifacts\release\KeyMouseSetup-2.2.4.exe -ArgumentList '--silent','--dir','D:\Data\KeyMouse\artifacts\tests\install-smoke' -Wait
 & artifacts\tests\install-smoke\cli\KeyMouse.exe --version
 & artifacts\tests\install-smoke\uninstall.exe --silent
 ```

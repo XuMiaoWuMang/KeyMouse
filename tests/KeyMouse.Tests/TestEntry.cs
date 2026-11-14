@@ -1,4 +1,5 @@
 using KeyMouse.Tests.Recognition;
+using KeyMouse.Tests.Runtime;
 
 namespace KeyMouse.Tests;
 
@@ -35,6 +36,7 @@ internal static class TestEntry
         ("nowindow", "无窗口执行：默认不要求窗口在前台", NoWindowTests.Run),
         ("schema-range", "数字范围与默认值只认契约，越界加载即失败", SchemaRangeTests.Run),
         ("record-ignore", "录制跳过指定进程的窗口（外壳浮条的点击不该进流程）", RecordIgnoreProcessTests.Run),
+        ("report", "报告落盘：主路径坏了改写到临时目录", ReportTests.Run),
         ("ocr", "内置 OCR：张量布局、DB 后处理、CTC 解码与模型加载", OcrTests.Run),
     ];
 

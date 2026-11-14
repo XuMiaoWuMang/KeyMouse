@@ -13,14 +13,18 @@
 
 - **数据是任意深度的树**：`lib/tree.ts` 用路径表示一个节点——`[{steps,0}]` 是顶层第 1 步，`[{steps,0},{else,0}]` 是它的否则分支第 1 步。读/替换/删除/插入/复制/移动都走路径，所以 `if` 里再套 `while` 也能选中、改字段；`originOf` 与引擎 `6.e1` 同一套写法。
 - **视觉**：未选中的轮廓是墨黑（`--kp-ink`），选中/框选命中才换成朱砂；框选矩形内部透明，只留 1px 边。节点形状本身用 `clip-path` / `border-radius` 区分三组，不靠颜色。
-- **版式**：`lib/canvas.ts` 只算几何。顶层从上到下（一条主线），每个块的子步骤在**右边的一列里往下长**；`if` 的成立时与否则并排，循环只有一条循环体。节点 `208×82`，块下面的主线从整棵子树之后继续，嵌套再深也不会压到后续步骤。节点、分支标签、空分支槽、连线、拖拽缝隙全是数据，`canvas.test.ts` 盯住方位与缝隙归属。
+- **版式**：`lib/canvas.ts` 只算几何。自动布局是顶层从上到下（一条主线），每个块的子步骤在**右边的一列里往下长**；`if` 的成立时与否则并排，循环只有一条循环体。节点 `208×82`，块下面的主线从整棵子树之后继续，嵌套再深也不会压到后续步骤。自由布局下，`applyNodePositions` 用 `NodePosition` 覆盖手工坐标，并清空自动分支标签/缝隙/旧连线；空分支的「＋」跟着所属块走，画布宽高按所有节点重新算。坐标允许为负：`FlowCanvas` 把逻辑原点放在 `WORLD_ORIGIN=4096`，外层 `.world` 只负责缩放平移，内层 `.world-content` 平移回固定原点，因此左侧/上方不会被裁；`contentBounds` 汇总节点与空槽包围盒，`home()/fit()` 都用它算偏移。节点、分支标签、空分支槽、连线、拖拽缝隙全是数据，`canvas.test.ts` 盯住方位、缝隙归属与坐标覆盖。
 - **条件不是手写框**：`ConditionEditor.svelte` 从 `conditions.ts` 的选项生成 `cond`（总是/比较/text/window/front/found/elapsed/自定义）；缺必填项生成空串，`missingOf` 与 `missingHint` 会标「待补 / 还缺 条件」，`text()` 缺 `probe` 时还会多标「条件读哪里」。
-- **三种轮廓**：`categoryOf(type)` 分三组——流程控制（六边形：call/if/set/assert/break/continue）、循环控制（胶囊：repeat/foreach/while/do/for）、操作指令（纸卡：其余）。`FlowCanvas.svelte` 用 clip-path / border-radius 画轮廓，形状本身就是分类，不再重复写一行类别字。
+- **三种轮廓**：`categoryOf(type)` 分三组——流程控制（六边形：call/if/set/assert/break/continue/return）、循环控制（胶囊：repeat/foreach/while/do/for）、操作指令（纸卡：其余）。`FlowCanvas.svelte` 用 clip-path / border-radius 画轮廓，形状本身就是分类，不再重复写一行类别字。
+- **语义连线**：`lib/graph.ts` 的 `buildGraph(steps)` 沿树生成 `next/true/false/loop/back/exit` 边，与节点坐标无关。`if` 两条出口分别到成立/否则首步（空分支直接连汇合点）；循环体末步同时有 `back`（返回循环头）和 `exit`（去下一步），`break` 只连循环后的 `exit`（跳出），`continue` 只连循环头（继续）；`return` 是终端，不画它之后的 `next`。`lib/routing.ts` 只做几何：先算两端中心连线与纵轴的夹角，`<45°` 选上/下边、否则选左/右边；两端各外推 `STUB=18`，候选直角折线优先，被其它节点挡住时用网格 A*（`CLEARANCE=10`、`TURN_COST=24`）绕行；`points` 保留两端引线，输出 `M/L` 直角折线，标签取路径总长中点。`EdgePort {side,t}` 可覆盖任一端，t 限制在 8%–92%，由 `FlowCanvas` 的端点拖拽写入。`graph.test.ts` 与 `routing.test.ts` 是纯函数测试。
 - **选中与抽屉**：`selectedPath` 是树路径，不再有"第几组第几个"的两层限制。点节点 → App 用 `stepAt` 取当前步骤 → 右侧抽屉复用 `Inspector.svelte`；点空白/`Esc` 收起。抽屉底部的复制/上移/下移/删除都按同一路径走。
 - **多选与长按**：`selectedPaths` 是选择集，`selectedPath` 只是抽屉的主选。`Ctrl/⌘+点`切换、`Shift+点`按文档顺序扩选、`Ctrl+A`全选、**左键拖空白画框**按矩形框选；按住节点 450ms（`LONG_PRESS_MS`）加入选择，之后拖动就是整组搬，轻点仍只开抽屉。`Delete` 删整组；`Ctrl+C` / `Ctrl+V` 复制选中项、按文档顺序粘到主选节点后面（`copyNodes` / `insertManyAt`，父与子同时选中时只复制父）。
-- **拖动排序**：`FlowCanvas` 为每条兄弟序列生成"缝隙"，拖动时所有分支的缝隙都可落，唯一拒绝的是落进被搬节点自己的子树；落点回调 `handleMove` → `moveNodes`。拖到任意节点卡片（含下沿）上会生成一个该节点同层级的虚拟落点，插入到它后面——所以一级/二级/三级之间可以任意互拖，不必去找整棵子树末尾的根缝隙。`Ctrl/⌘+点`把节点加进选择集，拖动其中任意一个会整组搬；`moveNodes` 按文档顺序删除再插入，并逐层重算因删兄弟而前移的目标父路径。空分支仍由虚线槽上的「＋」创建第一步。
+- **自由移动**：`FlowCanvas` 的 `freeLayout` 默认开；拖动节点时把被拖根节点及其全部后代放进 `previewPaths`，节点用实时 transform，`graphEdges` 也用预览坐标，所以拖动过程中箭头一直跟着。松手后 `onmovefree` 把每个移动节点的新 `{path,x,y}` 交给 App，写进 `nodePositionByStep`（`WeakMap<FlowStep, NodePosition>`）并持久化到 `localStorage` 的 `keymouse.layout.v1:<文件路径>`；布局不写进流程 JSON。坐标不再 clamp 到 0，允许左侧/上方负坐标。切「结构视图」后位置仍在，切回来继续用；「整理」清空 WeakMap、`edgePorts` 与两条本地存储并重新适配。
+- **四向快速添加**：`FlowCanvas` 只对单选节点渲染 `.quick-add`。上/左按钮的回调是 `onquickadd(path,'before')`，下/右是 `'after'`；`App.svelte` 的 `openQuickAdd` 把 `{path,position}` 存进 `quickAdd` 并打开同一个添加面板，`addStep` 优先按这个 target 在**同父同分支**插入兄弟节点（上=前插，下=后插），不会再套用「选中块→加进第一条分支」。面板底部 `quickAddHost` 会写明插入位置；`selectPath`/关闭面板/Esc 都清空 `quickAdd`。
+- **连线端点**：`FlowCanvas` 为每条边画一条 `.edge-hit` 透明宽命中路径；单击选中（`activeEdgeKey`），双击调 `onportreset` 恢复自动。选中后两端渲染 `.port-handle`，按下只记录 `portDrag {key,end,rect,port}`，移动和提交统一由画布/窗口的 pointerup 处理（`onViewportMove` / `onWindowPortUp`），避免 pointer capture 在 WebView 里丢失；坐标按 `WORLD_ORIGIN` 转回逻辑坐标，投影到 `nearestPort`。松手调 `onportchange(key,end,port)`；App 写 `edgePorts` 并持久化到 `localStorage` 的 `keymouse.ports.v1:<文件路径>`，不写流程 JSON。
+- **拖动排序（结构视图）**：`FlowCanvas` 为每条兄弟序列生成"缝隙"，拖动时所有分支的缝隙都可落，唯一拒绝的是落进被搬节点自己的子树；落点回调 `handleMove` → `moveNodes`。拖到任意节点卡片（含下沿）上会生成一个该节点同层级的虚拟落点，插入到它后面——所以一级/二级/三级之间可以任意互拖，不必去找整棵子树末尾的根缝隙。`Ctrl/⌘+点`把节点加进选择集，拖动其中任意一个会整组搬；`moveNodes` 按文档顺序删除再插入，并逐层重算因删兄弟而前移的目标父路径。空分支仍由虚线槽上的「＋」创建第一步。
 - **缩放/平移**：滚轮以鼠标为中心缩放（0.25–1.8），**右键拖空白平移**；`home()` 首屏按宽度给出可读比例（不为了塞下全部缩到 30%），左下角「适配」才把整张图缩到一屏。
-- **测试**：`tree.test.ts`（路径/增删改/嵌套 origin）、`canvas.test.ts`（方位/分支/缝隙）是纯函数测试；前端总数 157，命令 `km ut`。
+- **测试**：`tree.test.ts`（路径/增删改/嵌套 origin）、`canvas.test.ts`（方位/分支/缝隙/手工坐标）、`graph.test.ts`（顺序、if 双出口、循环回边/退出、break/continue、return 终端、空分支/空循环）、`routing.test.ts`（角度选边、45° 边界、固定/自动接口、障碍绕行、引线、标签，共 16 条）是纯函数测试；前端总数 185，命令 `km ut`。
 
 ## 为什么另起一个目录
 
@@ -43,8 +47,10 @@ src/KeyMouse.EditorUI/
     lib/theme.css       主题 var：纸、墨、朱砂、分隔线、字阶、圆角
     lib/model.ts        流程文档类型、步骤标题与摘要、三种分类与分支
     lib/tree.ts         任意深度的路径读写（选中 / 替换 / 删除 / 插入 / 复制 / 移动 / origin）
-    lib/canvas.ts       画布几何：节点、分支标签、空槽、连线、拖拽缝隙
-    lib/FlowCanvas.svelte 无限画布：缩放 / 平移 / 多选拖动 / 跨分支换层 / 空分支加步
+    lib/canvas.ts       画布几何：节点、分支标签、空槽、连线、拖拽缝隙、手工坐标覆盖
+    lib/graph.ts        流程树 → 语义连线（next/true/false/loop/back/exit），含 break/continue/return
+    lib/routing.ts      两个矩形 + 端口 → 直角折线路由、避障与标签位置
+    lib/FlowCanvas.svelte 无限画布：自由摆位 / 结构排序 / 缩放平移 / 多选 / 实时连线
     lib/schema.ts       解析 `KeyMouse schema` 的契约 JSON，供抽屉按 kind 渲染
     lib/steps.ts        二十三种步骤模板、三组分类、必填项
     lib/edit.ts         顶层增删改排序（老纯函数，仍被部分逻辑复用）
@@ -68,7 +74,10 @@ src/KeyMouse.EditorUI/
     src/pick.rs         屏幕取点/取块
     src/run.rs          试运行/播放/停止/暂停/读报告
     src/record.rs       录制（当前权限与提权两条路）
-    src/mini.rs         旧版缩窗实现（现用 pill；保留以免老命令失效）
+    src/hud.rs          左上角运行日志 HUD（透明、置顶、鼠标穿透）
+    src/hotkey.rs       播放的全局停止键 Ctrl+Alt+Q
+    src/overlay_style.rs 透明置顶窗口的 Win32 样式位
+    src/mini.rs         旧版缩窗实现（保留以免老命令失效）
     src/store.rs        最近打开与窗口位置/尺寸（%LOCALAPPDATA%）
     src/process.rs      起命令行时隐藏控制台窗口
     src/crashlog.rs     panic 与界面异常落 editor-crash.log
@@ -95,13 +104,13 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
 
 ## 现在是什么样
 
-- **一张无限画布**：顶栏（标记 + 文件名 + 文件动作）、工具栏（＋添加 / 节点数 / 录制·试运行·播放····）、画布、底部输出条。没有左栏列表；节点详情从右侧抽屉进出。
+- **一张无限画布**：顶栏（标记 + 文件名 + 文件动作）、工具栏（＋添加 / 自由布局·结构视图·整理 / 节点数 / 录制·试运行·播放····）、画布、底部输出条。没有左栏列表；节点详情从右侧抽屉进出。
 - **三组操作**：添加面板按流程控制 / 循环控制 / 操作指令排成三列；三种轮廓分别是六边形 / 胶囊 / 纸卡。`makeStep()` 只放"这一步是什么"，参数留空，节点标「待补」。
-- **任意深度**：`if` 里套 `while` 的每一层都能选中、改字段、增删和拖动排序；路径在 `lib/tree.ts`，origin 与引擎的 `6.e1` 对齐。
-- **画布手势**：滚轮缩放；**左键拖空白框选、右键拖空白平移**；拖节点排序（可跨分支/换层）、`Ctrl/⌘+点`多选、`Shift+点`范围、长按节点加入选择、`Ctrl+A`全选、点节点开抽屉；左下角有 `− / 百分比 / ＋ / 适配`。首屏按宽度给出可读比例，`适配` 才把整图缩到一屏。
-- **打开/保存/录制/播放/撤销**：文件对话框走 Tauri dialog；播放与录制默认隐藏主窗口，浮条负责停止（播放多一个暂停）；结束后主窗口自己回来；试运行不隐藏。
-- **输出与结论**：退出码翻译在 `lib/run.ts`，节点结果按 `origin` 落位；普通提示只更新底部一行，失败才展开输出面板。
-- **测试**：`tree` / `canvas` / `edit` / `filter` / `run` / `fieldpath` 等纯函数单测共 157 条（`km ut`），另有 `svelte-check` 与 cargo 测试。
+- **任意深度**：`if` 里套 `while` 的每一层都能选中、改字段、增删和摆放；路径在 `lib/tree.ts`，origin 与引擎的 `6.e1` 对齐。自由布局的坐标按路径/步骤对象保存，结构排序仍由 `moveNodes` 改树，二者互不覆盖。
+- **画布手势**：滚轮缩放；**左键拖空白框选、右键拖空白平移**；自由布局下拖节点只改位置（块连同后代一起走），切到结构视图后拖节点才是排序（可跨分支/换层）、`Ctrl/⌘+点`多选、`Shift+点`范围、长按节点加入选择、`Ctrl+A`全选、点节点开抽屉；左下角有 `− / 百分比 / ＋ / 适配`。首屏按宽度给出可读比例，`适配` 才把整图缩到一屏。
+- **打开/保存/录制/播放/撤销**：文件对话框走 Tauri dialog；播放与录制默认隐藏主窗口，左上角留一块只读日志 HUD；停止统一按 `Ctrl+Alt+Q`，结束后主窗口自己回来；试运行不隐藏。
+- **输出与结论**：退出码翻译在 `lib/run.ts`，节点结果按 `origin` 落位；普通提示只更新底部一行，失败才展开输出面板。输出里选中的文字可以点「复制选中」。
+- **测试**：`tree` / `canvas` / `edit` / `filter` / `run` / `fieldpath` / `hud` 等纯函数单测共 195 条（`km ut`），另有 `svelte-check` 与 cargo 测试（36 条）。
 
 
 ## P3：它已经进安装包了
@@ -143,8 +152,9 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   「看大图」「在文件夹里看」），画布节点右上角有一个 ▣ 记号。
   为什么缩略图只有 140px 高：再高就会把抽屉其它字段顶到滚动外面，而它们是改这一步时要同时看见的。
   要不要点开由用户决定（点击交给系统看图程序，不是自己再写一个预览窗）。
-- **录制/播放时够得着停止**：两者都先隐藏主窗口，再亮独立的浮条（`pill.rs` + `pill.ts`）：录制只有时长 + 停止，
-  播放多一个暂停；结束后主窗口自己回来。细节见本文末尾「录制 / 播放浮条」。
+- **录制/播放时看得见进度、停得下来**：两者都先隐藏主窗口，左上角亮一块只读 HUD
+  （`hud.rs` + `hud.ts`，最近 7 步、没有按钮、鼠标穿透）；停止统一按 `Ctrl+Alt+Q`。
+  细节见本文末尾「运行日志 HUD」。
 - 还没做的（写在 ADR 的未决问题里）：行内"跑到第几步"高亮。
 
 
@@ -220,12 +230,12 @@ pwsh tools\dev\editor-ui.ps1 check      # svelte-check：0 error 0 warning 才�
   `while (i < 3)` 不会逼人填窗口。`probe` 的字段（target/region/match/maxErrors）由 `InspectorShape` 排版。
 - **`for` 的三段式**：`init`/`step` 都是 `KeyValueEditor`，名字 → 表达式；`cond` 是单行表达式；
   `maxRounds` 是数字框。契约把初值/每轮的说明放在 help 里，标签只留短名，窄抽屉不会折成两行。
-- **`noWhen` 来自契约**：`repeat/foreach/if/while/do/for/break/continue` 的契约条目标了 `noWhen`，
+- **`noWhen` 来自契约**：`repeat/foreach/if/while/do/for/break/continue/return` 的契约条目标了 `noWhen`，
   检查器不画「前提条件」；`set`/`assert` 仍然可以带单步前提。
 - **必填提示会走到两条分支**：`firstIncomplete()` 遍历 `childrenOf`，找到哪条分支的哪一步就选中哪一步
   （`childSel` + 展开），而不是只报顶层。
 - **测试**：`steps.test.ts` 盯模板/分支/摘要；`edit.test.ts` 增加「否则分支增删改」；
-  `filter.test.ts` 确认否则里的步骤也能搜到；`pnpm check` 与 157 条前端单测（`km ut`）一起跑。
+  `filter.test.ts` 确认否则里的步骤也能搜到；`pnpm check` 与 185 条前端单测（`km ut`）一起跑。
 
 ## 排版语汇：归藏 Page 的杂志风
 
@@ -322,7 +332,7 @@ P0 的目标是"两屏并排看不出这是两个程序"：
 `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]`——去掉它，release 版每次
 启动都会先弹一个黑框（class 为 `ConsoleWindowClass`，标题就是 exe 路径）。
 
-窗口的置顶只有录制/播放浮条会临时打开（`pill.rs` 用 `always_on_top` + `overlay_style`）；`main.rs` 的
+窗口的置顶只有录制/播放 HUD 会临时打开（`hud.rs` 用 `always_on_top` + `overlay_style`）；`main.rs` 的
 `.setup()` 里还会显式 `set_always_on_top(false)` 一次，避免上一轮被强杀留下的置顶被带进来。
 
 ## 诊断打包：`diagnostics.rs`
@@ -410,53 +420,41 @@ P0 的目标是"两屏并排看不出这是两个程序"：
   路径去跑。磁盘上正在编辑的文件一个字都不动，底部输出会写明"跑的是临时副本，磁盘上的
   文件没动"。已保存且无改动时仍直接跑原文件。
 
-## 录制 / 播放浮条：一块真的透明的第二窗口
+## 录制 / 播放日志 HUD：一块只读的透明第二窗口
 
-录制和播放都会先隐藏主窗口，屏幕上那条药丸是**独立的第二个 webview**（窗口 label `pill`，入口 `pill.html` + `src/pill.ts`），
-不是把主窗口缩成一条。它要同时满足三件事，缺一件就不是"浮条"：
+录制和播放都会先隐藏主窗口，左上角那块深色小面板是**独立的第二个 webview**
+（窗口 label `hud`，入口 `hud.html` + `src/hud.ts`）。它没有按钮，也不接收点击，
+只显示最近 7 步在做什么。旧版那条带停止/计时器的浮动药丸已经删除。
 
-1. **真透明**：窗口 `transparent(true)` + `decorations(false)` + `shadow(false)`，页面根与 `body` 必须
-   `background: transparent`，圆角与投影全交给 CSS（`src/pill.css`）。系统阴影一开，圆角外面会多出一圈
-   不透明的方块。
-2. **不抢前台（这条最后没做，见下）**：桌宠项目 `dsh-pet-indesktop` 的 `pet/platform_win.py` 用
-   `WS_EX_NOACTIVATE` 做到"点它不夺焦点"，但那是**自己画原生窗口**。WebView2 在 `WS_EX_NOACTIVATE`
-   的窗口里收不到鼠标点击——实测点「停止」毫无反应、日志里连一次 `pill_stop` 都没有。
-   所以这里只保留 `WS_EX_TOOLWINDOW`（不进 Alt+Tab / 任务栏），点击会激活浮条，可以接受：
-   点它就是要停。
-3. **每次显示都重排 z 序**：`SetWindowPos(HWND_TOPMOST, …SWP_NOACTIVATE)`。只设一次 `always_on_top`
-   的话，窗口只是"身在置顶带"，被别的置顶窗盖住就再也回不来（这条也是桌宠踩出来的）。
+**位置与尺寸**：`src-tauri/src/hud.rs` 的 `hud_position(origin, size, scale)` 把窗口钉在当前显示器
+左上角，`LEFT_MARGIN = TOP_MARGIN = 16` 逻辑像素，尺寸 `468 × 210`；多显示器用
+`current_monitor()` 的 origin/scale，副屏在主屏左侧也能落对。
 
-其它几条实现上的硬约束：
+**只读、不抢焦点**：`overlay_style.rs` 给窗口加
+`WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT`，并 `set_ignore_cursor_events(true)`；
+`show()` 用 `focused(false)`，不进 Alt+Tab / 任务栏。`hide()` 用 `close` 而不是 `hide`：
+透明无边框窗口 hide 后再次 show，第一帧常常是未重绘的黑块。
 
-- **建窗不能在命令线程里直接干**：`#[tauri::command]` 跑在主线程上，`WebviewWindowBuilder::build()`
-  要把建窗任务派回主线程，于是自锁——现象是日志停在"pill show：进入"，窗口一动不动。
-  正确写法是 `std::thread::spawn(move || pill::show(&app))`（`record.rs`、`show_run_pill`、`spawn_pill_spike` 都这么写）。
-- **先显示浮条，再藏主窗口，最后起流程**：流程可能 100ms 就失败退出；反过来做会出现"进程已经退了，浮条才冒出来"。
-  `App.svelte` 用一条 `windowAction` 串行队列做 hide/show，退出事件与隐藏动作不会互相覆盖；Rust 的子进程等待线程
-  在退出时再兜底 `pill::hide`。
-- **播放浮条多一个暂停**：`pill.ts` 从 `?mode=play` 读模式；暂停调 `pause_flow`，停止调 `run_cancel` 再 `hide_pill`。
-  录制模式仍走 `pill_stop`（等录制自己写盘，不杀进程）。
-- **句柄/显示器要等一下**：`build()` 刚返回时 `hwnd()` 偶尔还拿不到真句柄、`current_monitor()` 也可能是 None。
-  所以 `arrange()` 在 show 之后立刻跑一遍，再 sleep 260ms 在别的线程补一遍。
-- **capabilities 要单独开**：`src-tauri/capabilities/pill.json` 只给 `core:default` +
-  `allow-start-dragging` + `allow-hide` + `allow-close`。**没有它，浮条里的 `invoke('pill_stop')`
-  会被 ACL 挡掉**——那种失败只有前端控制台看得见。
-- **把自己录进去就糟了**：浮条是录制**中途**才建出来的，`--ignore-window` 拿不到它的句柄，
-  所以外壳用 `--ignore-process KeyMouse.Editor`（引擎侧 `Recorder.ParseIgnoreProcess`）把
-  自己整棵进程树的点击都排除掉，否则每份录制都会多一步"点屏幕中间"。
-- **停止不靠注入键**：见 [`../reference/cli.md`](../reference/cli.md) 的"录制的优雅停止事件"——
-  外壳置命名事件，录制侧轮询到就写盘收尾。
-- 单独验浮条：`set KEYMOUSE_PILL_SPIKE=1` 再启动外壳，`setup()` 末尾的 `spawn_pill_spike` 会在 900ms 后亮一次浮条，不必真录一轮（没有主窗口快捷键，免得界面上多一个说不清来历的键）。
+**不被 OCR / 截图看见**：`overlay_style.rs` 还给窗口调了
+`SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)`。HUD 对用户仍然可见，但本项目的
+屏幕抓取（`BitBlt` + `CAPTUREBLT`）和系统截图 API 都拿不到它——`probe` 抓到的是 HUD 下面的
+窗口内容，不是日志文字。该标记从 Windows 10 2004 起可用；更旧的系统会返回失败，此时 HUD
+仍可能进入截图。
 
-### 浮条上为什么只有三个图
+**为什么轮询而不是事件**：HUD 是第二个 WebView，页面加载时间不由命令行决定；第一条
+`执行中` 往往在它挂载前就发出了。`run.rs` 把每一行同时推进 `HudLog`
+（`Mutex<VecDeque<String>>`，容量 240），`hud.ts` 每 250ms 调 `invoke('hud_lines')`
+拿完整快照再比较重绘。晚挂载也能立刻看到当前进度，长 `sleep` 期间不会只剩一句
+“等待第一步…”。
 
-药丸里只放：呼吸点（在录/在播）、等宽时长（`0:07` → `12:34`）、播放时多一个暂停（空心圆里两条竖线），
-最后是停止（朱砂实心圆里白色方块）。
+**当前步骤行**：`FlowRunner` 在 `Execution.StepStarted` 后，若 `KEYMOUSE_HUD=1` 且不是动态步骤，
+打印 `  [{stepNo,3}/{PlannedSteps}] 执行中  {Describe(step)}`；`run.rs` 给编辑器起的子进程注入
+这个环境变量。主输出面板会过滤掉这类开始行，HUD 则把开始行和完成行按步骤号合并。
 
-- **不写字**：它要一直悬在屏幕上，字越多越像贴纸。"正在录"和"停"各有公认图形，多一行"操作你要录的窗口"只是噪声。
-- **时长必须等宽**：`font-variant-numeric: tabular-nums` + `min-width`，否则 `0:59 → 1:00` 会让整条药丸抽一下。
-- **点和按钮不能长得像**：两者都是朱砂色，所以左边是**带光晕的小圆点**（指示）、右边是**实心圆包白方块**（控件）。
-  第一版把右边画成"透明底上的红方块"，和左边那个点在缩略图里几乎分不清。
-- **失败时没有文字区可写**：`pill_stop` 失败就把点停跳、按钮转灰，并把原因放进按钮的 `title`（"没停成，请按 Ctrl+Alt+Q"）。
-- 尺寸钉在 `src-tauri/src/pill.rs` 的 `WIDTH = 104.0` / `PLAY_WIDTH = 154.0` / `HEIGHT = 38.0`（逻辑像素），单测把区间卡在 96..180 × 32..56——
-  改大之前先想清楚它凭什么要更大。
+**停止**：`src-tauri/src/hotkey.rs` 在 `run_flow` 起子进程前注册
+`Ctrl+Alt+Q`（`RegisterHotKey`，独立消息线程），收到 `WM_HOTKEY` 调 `run_cancel`；
+子进程退出时等待线程注销热键。注册失败就不启动流程，避免一段没人能叫停的播放。
+录制仍走命令行自己的全局停止键与命名事件。
+
+**capabilities**：`src-tauri/capabilities/hud.json` 只给 `core:default`，窗口不能开文件、
+不能发别的命令，也收不到点击。
