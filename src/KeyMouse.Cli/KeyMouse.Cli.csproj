@@ -19,12 +19,31 @@
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(UIAccessFlavor)' == 'true'">
+    <OutputType>WinExe</OutputType>
+    <ApplicationManifest>uiaccess.manifest</ApplicationManifest>
+    <DefineConstants>$(DefineConstants);UIACCESS_FLAVOR</DefineConstants>
+    <StartupHookSupport>false</StartupHookSupport>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\KeyMouse.Core\KeyMouse.Core.csproj" />
     <ProjectReference Include="..\KeyMouse.Runner\KeyMouse.Runner.csproj" />
   </ItemGroup>
 
-  <!-- Capability namespaces used from here; the folder layout under src\KeyMouse.Core carries the same split. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="KeyMouse.UIAccess.Tests" />
+  </ItemGroup>
+
+  <!-- The privileged helper never hosts an MCP session. -->
+  <ItemGroup Condition="'$(UIAccessFlavor)' != 'true'">
+    <PackageReference Include="ModelContextProtocol.Core" Version="2.4.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UIAccessFlavor)' == 'true'">
+    <Compile Remove="Mcp\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Capability namespaces used from here; the source layout under src\KeyMouse.Core.* follows these capability boundaries. -->
   <ItemGroup>
     <Using Include="KeyMouse.Capture" />
     <Using Include="KeyMouse.Product" />

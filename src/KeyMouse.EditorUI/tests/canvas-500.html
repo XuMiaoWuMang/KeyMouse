@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><title>FlowCanvas 500-step fixture</title>
+<div id="host"></div><script type="module">
+import FlowCanvas from '/src/lib/FlowCanvas.svelte';
+const steps=Array.from({length:500}, (_,i)=>({type:'type',text:`row ${i+1}`}));
+const frame=()=>new Promise(requestAnimationFrame);
+window.measureCanvas=async()=>{
+  const start=performance.now();
+  const app=new FlowCanvas({target:document.querySelector('#host'),props:{steps}});
+  await frame(); await frame(); await frame();
+  const ms=performance.now()-start, nodes=document.querySelectorAll('.node').length;
+  window.disposeCanvas=()=>app.$destroy();
+  return {ms,nodes};
+};
+</script>

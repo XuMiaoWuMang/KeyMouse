@@ -31,6 +31,9 @@ internal static class RunnerProtocolTests
 
         Harness.Equal("契约格式名", "keymouse-runner-protocol", root_.GetProperty("format").GetString());
         Harness.Equal("契约版本", 1, root_.GetProperty("version").GetInt32());
+        Harness.Check("协商版本与能力在契约里有据可查", root_.GetProperty("supportedProtocols").EnumerateArray().Last().GetString() == RunnerProtocol.Latest &&
+            root_.GetProperty("v2Capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(RunnerProtocol.Capabilities));
+
 
         // ---- 方法：后端真的处理这些，前端真的只调用这些 ----
         var declared = Methods(root_).ToHashSet(StringComparer.Ordinal);

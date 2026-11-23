@@ -1,7 +1,7 @@
 #requires -Version 7
 <#
 .SYNOPSIS
-    新编辑器外壳（src\KeyMouse.EditorUI）的日常命令：装依赖、起开发窗口、打包前端、类型检查。
+    新编辑器外壳（src\KeyMouse.EditorUI）的日常命令：装依赖、起开发窗口、编译前端或 Tauri exe、类型检查。
 
 .DESCRIPTION
     Tauri 的第一次构建有三处环境坑，这个脚本把它们收在一处，免得每人踩一遍：
@@ -17,7 +17,8 @@
 .PARAMETER Verb
     setup    只装依赖（pnpm install）
     dev      起开发窗口（vite + cargo run）
-    build    只打前端产物（pnpm build）
+    build    只打前端产物（src\KeyMouse.EditorUI\dist\）
+    package  编译完整 Tauri exe（src-tauri\target\release\KeyMouse.Editor.exe）
     check    svelte-check 类型与模板检查
     test     前端单测（vitest）与外壳单测（cargo test）
     icons    从 src-tauri\icons\source.png 重新生成整套图标
@@ -33,7 +34,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('setup', 'dev', 'build', 'check', 'test', 'icons', 'clean')]
+    [ValidateSet('setup', 'dev', 'build', 'package', 'check', 'test', 'icons', 'clean')]
     [string]$Verb = 'dev',
 
     [string]$Registry = 'https://registry.npmmirror.com'
@@ -89,6 +90,16 @@ try {
             Get-ChildItem $dist -Recurse -File |
                 Measure-Object -Property Length -Sum |
                 ForEach-Object { Write-Host ("dist/ 共 {0} 个文件，{1:N1} KB" -f $_.Count, ($_.Sum / 1KB)) -ForegroundColor DarkGray }
+        }
+
+        'package' {
+            $env:CARGO_HTTP_CHECK_REVOKE = 'false'
+            $env:CARGO_NET_RETRY = '5'
+            $env:CARGO_HTTP_TIMEOUT = '120'
+            Invoke-Step '编译完整 Tauri 编辑器（pnpm tauri build --no-bundle）' { pnpm tauri build --no-bundle }
+            $exe = Join-Path $app 'src-tauri\target\release\KeyMouse.Editor.exe'
+            if (-not (Test-Path -LiteralPath $exe)) { throw "构建没有生成预期的 exe：$exe" }
+            Write-Host "可运行编辑器：$exe" -ForegroundColor Green
         }
 
         'check' {

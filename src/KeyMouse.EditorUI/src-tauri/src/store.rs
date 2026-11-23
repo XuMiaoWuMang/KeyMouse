@@ -241,7 +241,7 @@ pub fn save_window_size(width: f64, height: f64, x: Option<i32>, y: Option<i32>)
 /// 一份流程文件对应账本里的哪个键。
 ///
 /// 用规范化后的**绝对路径**：界面上 `samples\demo-flow.json` 与
-/// `D:\Data\KeyMouse\samples\demo-flow.json` 说的是同一份文件，键也该是一个。
+/// `<repo>\samples\demo-flow.json` 说的是同一份文件，键也该是一个。
 pub fn sections_key(path: &str) -> String {
     normalize(path)
 }

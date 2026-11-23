@@ -63,15 +63,14 @@ internal static class ParseBench
         var pids = windows.Select(w => w.ProcessId).Distinct().ToList();
         double enumMs = Measure(20, () => WindowLocator.EnumerateTopLevel());
 
-        NativeWindow.ClearProcessNameCache();
         double coldNameMs = Measure(1, () =>
         {
-            foreach (uint pid in pids) NativeWindow.ClearProcessNameCache();
             foreach (uint pid in pids) _ = NativeWindow.ProcessNameOf(pid);
         });
+        var snapshot = new System.Collections.Concurrent.ConcurrentDictionary<uint,string>();
         double cachedNameMs = Measure(50, () =>
         {
-            foreach (uint pid in pids) _ = NativeWindow.ProcessNameOf(pid);
+            foreach (uint pid in pids) _ = snapshot.GetOrAdd(pid,NativeWindow.ProcessNameOf);
         });
         double dotnetMs = Measure(10, () =>
         {

@@ -58,6 +58,36 @@ pub fn save_flow(path: String, text: String) -> Result<(), ShellError> {
         .map_err(|e| ShellError::new("shell.io", format!("写不了 {path}：{e}")))
 }
 
+/// 按父文件目录解析调用引用；展开只读真实文件，不展开变量占位符。
+#[tauri::command]
+pub fn open_child_flow(parent_path: Option<String>, flow: String, ancestors: Vec<String>) -> Result<FlowFile, ShellError> {
+    if flow.trim().is_empty() || flow.contains("{{") {
+        return Err(ShellError::new("flow.dynamic-reference", "请先填写具体的子流程文件路径；变量路径只能在运行时解析"));
+    }
+    let requested = PathBuf::from(&flow);
+    let requested = if requested.is_absolute() { requested } else {
+        let parent = parent_path.as_ref().ok_or_else(|| ShellError::new("flow.parent-unsaved", "请先保存父流程，再展开相对路径的子流程"))?;
+        Path::new(parent).parent().unwrap_or_else(|| Path::new(".")).join(requested)
+    };
+    let real = fs::canonicalize(&requested).map_err(|e| ShellError::new("shell.io", format!("读不到子流程 {}：{e}", requested.display())))?;
+    for ancestor in ancestors.iter().chain(parent_path.iter()) {
+        if fs::canonicalize(ancestor).ok().is_some_and(|path| path == real) {
+            return Err(ShellError::new("flow.circular-reference", "这份子流程已在上层展开，不能循环展开"));
+        }
+    }
+    if ancestors.len() >= 16 { return Err(ShellError::new("flow.depth", "子流程展开已达 16 层，请收起部分调用")); }
+    open_flow(real.display().to_string())
+}
+
+/// 子文件独立保存；外部已改动时保留草稿并提示冲突。
+#[tauri::command]
+pub fn save_child_flow(path: String, text: String, expected_text: String) -> Result<(), ShellError> {
+    let current = fs::read_to_string(&path).map_err(|e| ShellError::new("shell.io", format!("读不了 {path}：{e}")))?;
+    if current != expected_text { return Err(ShellError::new("flow.conflict", "子流程已被其他窗口或程序修改；当前草稿已保留，请核对后重新打开")); }
+    serde_json::from_str::<serde_json::Value>(&text).map_err(|e| ShellError::new("flow.invalid-json", format!("子流程不是合法 JSON：{e}")))?;
+    save_flow(path, text)
+}
+
 /// 外壳自己的工作目录：`%LOCALAPPDATA%\KeyMouse\tmp`，拿不到变量就退到程序目录。
 ///
 /// 与命令行那边的 `Scratch`（TEMP → LOCALAPPDATA → 程序目录）不是同一份实现，但**同一套
@@ -154,6 +184,33 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).expect("建测试目录");
         dir
+    }
+
+    #[test]
+    fn child_reference_uses_parent_directory_and_rejects_cycles() {
+        let dir = scratch(&format!("child-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let parent = dir.join("parent.json");
+        let child = dir.join("child.json");
+        fs::write(&parent, "{\"steps\":[]}").unwrap();
+        fs::write(&child, "{\"steps\":[]}").unwrap();
+        let opened = open_child_flow(Some(parent.display().to_string()), "child.json".into(), vec![]).unwrap();
+        assert_eq!(PathBuf::from(opened.path), fs::canonicalize(&child).unwrap());
+        assert_eq!(open_child_flow(Some(parent.display().to_string()), "parent.json".into(), vec![]).unwrap_err().code, "flow.circular-reference");
+        assert_eq!(open_child_flow(None, "child.json".into(), vec![]).unwrap_err().code, "flow.parent-unsaved");
+        assert_eq!(open_child_flow(None, "{{file}}".into(), vec![]).unwrap_err().code, "flow.dynamic-reference");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn child_save_rejects_external_changes_and_preserves_parent() {
+        let dir = scratch(&format!("child-save-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let child = dir.join("child.json");
+        fs::write(&child, "{\"steps\":[]}").unwrap();
+        save_child_flow(child.display().to_string(), "{\"steps\":[{\"type\":\"return\"}]}".into(), "{\"steps\":[]}".into()).unwrap();
+        let saved = fs::read_to_string(&child).unwrap();
+        assert_eq!(save_child_flow(child.display().to_string(), "{}".into(), "{\"steps\":[]}".into()).unwrap_err().code, "flow.conflict");
+        assert_eq!(fs::read_to_string(&child).unwrap(), saved);
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

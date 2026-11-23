@@ -1,3 +1,4 @@
+using static KeyMouse.Runtime.CommandLine;
 using System.Globalization;
 
 namespace KeyMouse.Runtime;
@@ -30,28 +31,28 @@ internal static partial class Commands
     {
         if (rest.Length == 0)
         {
-            Console.WriteLine(FlowSchema.Json);
+            CommandOutput.Out.WriteLine(FlowSchema.Json);
             return 0;
         }
 
         string type = rest[0];
         if (!FlowSchema.TryGetStep(type, out FlowStepContract contract))
         {
-            Console.WriteLine($"不认识的步骤类型 '{type}'（可用：{string.Join(" | ", FlowSchema.Steps.Keys)}）");
+            CommandOutput.Out.WriteLine($"不认识的步骤类型 '{type}'（可用：{string.Join(" | ", FlowSchema.Steps.Keys)}）");
             return 2;
         }
 
-        Console.WriteLine($"{type}：{contract.SummaryZh}");
+        CommandOutput.Out.WriteLine($"{type}：{contract.SummaryZh}");
         foreach (FlowField field in contract.All)
         {
             string mark = field.Required ? "必须" : field.RequiredWhen is { } when ? $"条件必须（{when}）" : "可选";
             string latin = field.Values.Length > 0 ? $"  取值：{string.Join(" | ", field.Values)}" : field.Kind == "int" && (field.Min is not null || field.Max is not null) ? $"  范围：{field.Min} .. {field.Max}" : "";
-            Console.WriteLine($"  {field.Name,-14} {mark,-22} {field.LabelZh}{latin}");
+            CommandOutput.Out.WriteLine($"  {field.Name,-14} {mark,-22} {field.LabelZh}{latin}");
         }
 
         if (contract.OneOf.Count > 0)
         {
-            Console.WriteLine($"  以上 {string.Join(" / ", contract.OneOf)} 至少给一个。");
+            CommandOutput.Out.WriteLine($"  以上 {string.Join(" / ", contract.OneOf)} 至少给一个。");
         }
         return 0;
     }
@@ -61,7 +62,10 @@ internal static partial class Commands
     /// a single-threaded apartment, and everything else here is unaffected by the choice.
     /// </summary>
     [STAThread]
-    internal static int Execute(string[] args)
+    internal static int Execute(string[] args) => Execute(args, allowTextStdin: false);
+
+    // Only the top-level CLI owns stdin. A nested flow or resident Runner must never consume its host's stream.
+    internal static int Execute(string[] args, bool allowTextStdin)
     {
         // Speak the console's code page, so that whoever reads us decodes what we wrote.
         ConsoleText.ConfigureOutputEncoding();
@@ -69,31 +73,29 @@ internal static partial class Commands
         try
         {
             string[] rest = ExtractGlobalOptions(args, out GlobalOptions global);
-            if (rest.Length == 0) { PrintUsage(); return 2; }
+            if (rest.Length == 0) { Usage.Print(); return 2; }
 
             switch (rest[0].ToLowerInvariant())
             {
                 case "-h" or "--help" or "help" or "/?":
-                    PrintUsage();
+                    Usage.Print();
                     return 0;
                 case "-v" or "--version" or "version":
-                    Console.WriteLine($"KeyMouse {ProductVersion}（引擎 {Version}）");
+                    CommandOutput.Out.WriteLine($"KeyMouse {ProductVersion}（引擎 {Version}）");
                     return 0;
                 case "schema":
                     // The contract itself, for a frontend that would rather read it than be told about it.
                     return Schema(rest[1..]);
                 case "mouse":
-                    return Mouse(rest[1..], global);
+                    return MouseCommands.Run(rest[1..], global);
                 case "key" or "keyboard":
-                    return Keyboard(rest[1..], global);
+                    return KeyboardCommands.Run(rest[1..], global, allowTextStdin);
                 case "window":
                     return WindowGroup(rest[1..], global);
                 case "run":
-                    // One `run`, two file formats: the text syntax, or a recorded JSON flow. The flow
-                    // is detected by content and both go through the same dispatcher below - which is
-                    // also what the resident Runner drives, so a job and a typed command cannot drift.
+                    // Text scripts keep CLI token semantics. JSON leaves bypass argv and share action handlers.
                     if (FlowRunner.LooksLikeJson(rest[1..]))
-                        return FlowRunner.Run(rest[1..], global, Execute);
+                        return FlowRunner.Run(rest[1..], global, FlowCommandExecutor.Execute);
                     return ScriptRunner.Run(rest[1..], global, Execute);
                 case "record":
                     return Recorder.Run(rest[1..], global);
@@ -124,7 +126,7 @@ internal static partial class Commands
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"错误：{ex.Message}");
+            CommandOutput.Error.WriteLine($"错误：{ex.Message}");
             return 1;
         }
     }

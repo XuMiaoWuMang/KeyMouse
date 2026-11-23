@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyNodePositions, BRANCH_GAP, layoutFlow, NODE_H, NODE_W, PAD } from './canvas';
+import { applyNodePositions, layoutFlow, NODE_H, NODE_W, PAD } from './canvas';
 import type { FlowStep } from './model';
 import { pathKey, type NodePath } from './tree';
 
@@ -19,7 +19,7 @@ describe('layoutFlow', () => {
     expect(layout.nodes.map((node) => node.origin)).toEqual(['1', '2']);
   });
 
-  it('if 的两条分支并排在右边，空否则给一个可点的空槽', () => {
+  it('if 的非空分支并排在右边，空分支不占位', () => {
     const layout = layoutFlow([
       {
         type: 'if',
@@ -28,9 +28,8 @@ describe('layoutFlow', () => {
       },
       { type: 'sleep', ms: 2 },
     ]);
-    expect(layout.labels.map((label) => label.text)).toEqual(['成立时', '否则']);
-    expect(layout.empties).toHaveLength(1);
-    expect(layout.empties[0].branch).toBe('else');
+    expect(layout.labels.map((label) => label.text)).toEqual(['条件成立']);
+    expect(layout.empties).toEqual([]);
     const body = layout.nodes.find((node) => node.origin === '1.1')!;
     expect(body.x).toBeGreaterThan(layout.nodes[0].x);
     expect(layout.edges.some((edge) => edge.kind === 'branch')).toBe(true);
@@ -105,7 +104,7 @@ describe('applyNodePositions', () => {
     expect(free.height).toBeGreaterThanOrEqual(900 + NODE_H + PAD);
   });
 
-  it('空分支的「＋」跟着所属块移动', () => {
+  it('空分支不再生成空槽', () => {
     const base = layoutFlow([
       {
         type: 'if',
@@ -115,10 +114,8 @@ describe('applyNodePositions', () => {
     ]);
     const ifPath = base.nodes[0].path;
     const free = applyNodePositions(base, { [top(ifPath)]: { x: 600, y: 400 } });
-    const empty = free.empties.find((item) => item.branch === 'else')!;
 
-    expect(empty.x).toBeGreaterThanOrEqual(600);
-    expect(empty.x).toBe(600 + NODE_W + BRANCH_GAP);
-    expect(empty.y).toBeGreaterThan(400);
+    expect(free.empties).toEqual([]);
+    expect(base.empties).toEqual([]);
   });
 });

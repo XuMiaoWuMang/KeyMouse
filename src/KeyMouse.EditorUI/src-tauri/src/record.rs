@@ -10,9 +10,9 @@
 //! 所以停止键只能由用户自己按（`Ctrl+Alt+Q`，或连按两次 `Esc`），外壳这边靠"文件出现
 //! 了没有"判断这一轮结束了没有。
 //!
-//! 停止有两个办法，都用产品自己的能力，不另开后门：
-//! 1. 命令行自己的停止键 `Ctrl+Alt+Q`：外壳再发一次这个组合键（就是 `KeyMouse key combo`）。
-//! 2. 发键失败/没反应时兜底 `run_cancel`，杀进程——代价是这一次录制不落盘。
+//! 普通录制的停止键由外壳注册（`hotkey.rs` 的 `Action::Recording`），收到后调
+//! [`record_stop`]：先置命名事件让命令行自己写盘，5 秒不退才兜底 `run_cancel`。
+//! 这样不依赖录制进程的低层钩子是否抢得到前台按键，也不会去注入组合键。
 
 use std::process::Stdio;
 use std::time::{Duration, Instant};
@@ -33,13 +33,17 @@ fn self_process_name() -> String {
 }
 
 /// 录制时把自己这个窗口排除掉：否则“点一下编辑器”也会被录成一步。
-fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str) -> Vec<String> {
+fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str, mode: RecordMode) -> Vec<String> {
     let mut args = vec![
         "record".to_string(),
+        "--client-points".to_string(),
         "--out".to_string(),
         out_path.to_string(),
     ];
 
+    if let RecordMode::Key = mode {
+        args.extend(["--mode".to_string(), "key".to_string()]);
+    }
     if duration_ms > 0 {
         args.push("--duration".to_string());
         args.push(duration_ms.to_string());
@@ -60,11 +64,15 @@ fn record_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, s
 
 /// 提权录制：命令行自己在 `--elevate` 里用 runas 起一个管理员进程并等它结束，
 /// 所以外壳这边仍然只是"起一个子进程、等它退出"，退出码就是那次录制的退出码。
-fn elevated_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str) -> Vec<String> {
+fn elevated_args(out_path: &str, duration_ms: u64, ignore_window: Option<isize>, skip_process: &str, mode: RecordMode) -> Vec<String> {
     let mut args = vec!["--elevate".to_string()];
-    args.extend(record_args(out_path, duration_ms, ignore_window, skip_process));
+    args.extend(record_args(out_path, duration_ms, ignore_window, skip_process, mode));
     args
 }
+
+#[derive(Clone, Copy, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RecordMode { Key, Full }
 
 #[tauri::command]
 pub fn record_flow(
@@ -72,9 +80,21 @@ pub fn record_flow(
     window: tauri::Window,
     out_path: String,
     duration_ms: u64,
+    mode: Option<RecordMode>,
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
-    spawn_streaming(&app, record_args(&out_path, duration_ms, ignore, &self_process_name()))?;
+    // 普通录制由外壳注册停止键：命令行的低层钩子可能收不到被其他程序抢先注册的组合键。
+    // 提权录制不能走这里，外壳够不着它的进程，仍由命令行自己听键。
+    let state = app.state::<RunState>();
+    if state.child.lock().unwrap().is_some() {
+        return Err("已经有流程或录制在跑".to_string());
+    }
+    let hotkey = crate::hotkey::start(app.clone(), crate::hotkey::Action::Recording)?;
+    *state.hotkey.lock().unwrap() = Some(hotkey);
+    if let Err(error) = spawn_streaming(&app, record_args(&out_path, duration_ms, ignore, &self_process_name(), mode.unwrap_or(RecordMode::Full))) {
+        let _ = state.hotkey.lock().unwrap().take();
+        return Err(error);
+    }
     // 日志 HUD：录制期间浮在左上角，只读、鼠标穿透。起不来不算录制失败，
     // 用户仍然可以用 Ctrl+Alt+Q 停——所以失败只记日志。
     //
@@ -100,16 +120,17 @@ pub fn record_flow_elevated(
     window: tauri::Window,
     out_path: String,
     duration_ms: u64,
+    mode: Option<RecordMode>,
 ) -> Result<(), String> {
     let ignore = window.hwnd().ok().map(|handle| handle.0 as isize);
-    spawn_streaming(&app, elevated_args(&out_path, duration_ms, ignore, &self_process_name()))?;
+    spawn_streaming(&app, elevated_args(&out_path, duration_ms, ignore, &self_process_name(), mode.unwrap_or(RecordMode::Full)))?;
     Ok(())
 }
 
-/// 按 `Ctrl+Alt+Q` 让命令行自己收尾（它会写文件、打印摘要）。
+/// 通知录制命令行自己收尾（写文件、打印摘要），优先使用命名事件。
 ///
-/// 按键走的是同一个命令行、同一套注入：录制本身靠的就是这套注入，能录就能停。
-/// 5 秒还没退出就杀进程——宁可丢这一次录制，也不要让界面卡在"录制中"。
+/// 外壳全局热键与界面共用此入口；只有旧 CLI 没有命名事件时才注入停止键。
+/// 5 秒还没退出才杀进程，避免界面一直卡在“录制中”。
 ///
 /// 这 5 秒是留给它写文件的：收到停止键之后，它要把录到的东西落盘、打印摘要、退出。
 /// 太短会在最不该打断的时刻打断（写了一半的 json）；太长则"停止"按下去要愣好几秒才有反应。
@@ -154,7 +175,7 @@ pub fn record_stop(app: AppHandle) -> Result<&'static str, String> {
 /// 置上"这一轮该收尾了"的命名事件。返回 true 表示信号确实送到。
 ///
 /// 名字与录制进程约定：`Local\KeyMouse-record-stop-<子进程 pid>`，见
-/// `src\KeyMouse.Core\Runtime\StopSignal.cs`。pid 取 `RunState.pid`（`spawn_streaming` 里填的）。
+/// `src\KeyMouse.Core.Foundation\Runtime\StopSignal.cs`。pid 取 `RunState.pid`（`spawn_streaming` 里填的）。
 fn signal_stop(app: &AppHandle) -> bool {
     use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
     use windows_sys::Win32::System::Threading::{OpenEventW, SetEvent, EVENT_MODIFY_STATE};
@@ -187,7 +208,7 @@ fn is_running(app: &AppHandle) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{elevated_args, record_args};
+    use super::{elevated_args, record_args, RecordMode};
 
     // 下面三个用例把 skip_process 钉成字面量：真实调用处传的是 `self_process_name()`，
     // 它在测试里会是测试二进制的名字（带哈希），拿它做断言等于什么都没断言。
@@ -196,9 +217,10 @@ mod tests {
     #[test]
     fn record_args_include_output_and_ignore_window() {
         assert_eq!(
-            record_args("C:\\a b\\rec.json", 0, Some(0x12AB), SKIP),
+            record_args("C:\\a b\\rec.json", 0, Some(0x12AB), SKIP, RecordMode::Full),
             vec![
                 "record",
+                "--client-points",
                 "--out",
                 "C:\\a b\\rec.json",
                 "--ignore-window",
@@ -212,8 +234,8 @@ mod tests {
     #[test]
     fn duration_is_only_passed_when_positive() {
         assert_eq!(
-            record_args("r.json", 3000, None, SKIP),
-            vec!["record", "--out", "r.json", "--duration", "3000", "--ignore-process", SKIP]
+            record_args("r.json", 3000, None, SKIP, RecordMode::Key),
+            vec!["record", "--client-points", "--out", "r.json", "--mode", "key", "--duration", "3000", "--ignore-process", SKIP]
         );
     }
 
@@ -221,12 +243,15 @@ mod tests {
     fn elevated_args_put_the_flag_first() {
         // --elevate 必须是第一个参数：命令行看到它就不再往下解析，直接 runas 重跑。
         assert_eq!(
-            elevated_args("r.json", 2000, Some(0xBEEF), SKIP),
+            elevated_args("r.json", 2000, Some(0xBEEF), SKIP, RecordMode::Key),
             vec![
                 "--elevate",
                 "record",
+                "--client-points",
                 "--out",
                 "r.json",
+                "--mode",
+                "key",
                 "--duration",
                 "2000",
                 "--ignore-window",

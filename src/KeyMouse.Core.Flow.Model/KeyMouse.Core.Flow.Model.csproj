@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>$(EngineVersion)</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="KeyMouse.Core.Abstractions" />
+    <InternalsVisibleTo Include="KeyMouse.Core" />
+    <InternalsVisibleTo Include="KeyMouse" />
+    <InternalsVisibleTo Include="KeyMouse.Tests" />
+    <InternalsVisibleTo Include="KeyMouse.Runner" />
+    <InternalsVisibleTo Include="KeyMouse.FlowEditor" />
+    <InternalsVisibleTo Include="KeyMouseSetup" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Foundation" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Capture" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Flow.Validation" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Flow.Execution" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Capture.Recording" />
+  </ItemGroup>
+</Project>

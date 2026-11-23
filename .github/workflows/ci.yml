@@ -28,6 +28,9 @@ jobs:
       - name: Unit tests (no desktop required)
         run: dotnet run -c Release --project tests/KeyMouse.Tests/KeyMouse.Tests.csproj
 
+      - name: Check public files in Git index
+        run: python tools/dev/check-public-files.py --index
+
       - name: Documentation links
         run: pwsh -NoProfile -File tools/dev/check-docs.ps1
 
@@ -41,3 +44,9 @@ jobs:
 
       - name: Published exe answers
         run: ./artifacts/cli/KeyMouse.exe --version
+
+      - name: Published flow E2E (dry-run only)
+        run: python tests/KeyMouse.E2E/test_cli.py artifacts/cli/KeyMouse.exe
+
+      - name: MCP stdio contract (no desktop input)
+        run: python tests/mcp/test_stdio.py artifacts/cli/KeyMouse.exe

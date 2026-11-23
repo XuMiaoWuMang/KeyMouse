@@ -1,218 +1,66 @@
-# 接口文档：JSON 参数契约
+# JSON 流程格式
 
-这份文档规定 KeyMouse 对外接口里**哪些 JSON 参数是必须的、哪些是可选的**，以及前端（WinUI 编辑器）
-该怎么用它们。规矩只有一条：
-
-> **前端只依据契约渲染，加载器只依据契约校验。两边都不许自己另写一套"哪种步骤有哪些字段"。**
-
-以前正是各写一套，然后脱节：`click-text`（找字并点击它）在格式里要有区域、文字、匹配方式、上限、按钮，
-界面上却只剩"目标 + 备注"可以改。现在契约是唯一的真相，改契约 = 改一个文件，界面自动跟着变。
-
----
-
-## 1. 契约在哪、怎么看
-
-| 项 | 位置 |
-| --- | --- |
-| 契约文件（唯一权威） | `src/KeyMouse.Core/flow.schema.json` |
-| 分发方式 | 作为资源**内嵌进 KeyMouse.Core.dll**，跟着程序走，不依赖文件路径 |
-| 开发树里的例外 | 引擎判定自己在开发树时（`ProductLayout`）**直接读仓库里的这份文件**，改完不用重新构建就生效；安装版仍读内嵌的那份 |
-| 命令行查看全部 | `KeyMouse schema` |
-| 命令行看一种步骤 | `KeyMouse schema click-text` |
-| 单元测试 | `dotnet run --project tests\KeyMouse.Tests -c Release -- --only flow`；数字范围另见 `--only schema-range` |
-
-**数字字段的 `min`/`max`/`default` 只有这一份，而且引擎认它**：加载时按 `min`/`max` 校验（越界退出码 2，
-不悄悄夹取）、字段没写时取 `default`；编辑器画控件读的也是同一份。所以"界面上输不进 20、手写 JSON
-却能跑 20"这种事不会再出现——两边对"合法流程"的定义出自同一行契约。
-
-`KeyMouse schema click-text` 的输出就是前端能拿到的信息，例如：
-
-```
-click-text：找字并点击它
-  target         必须                     目标窗口
-  region         必须                     在哪里找
-  text           必须                     要找的文字
-  match          可选                     匹配方式  取值：contains | exact | fuzzy
-  maxErrors      可选                     容错字符数  范围：0 .. 20
-  timeoutMs      可选                     最多等（毫秒）  范围：0 .. 600000
-  button         可选                     鼠标键  取值：left | right | middle
-  note           可选                     备注（只给人看）
-  when           可选                     前提条件
-```
-
-## 2. 契约里每个字段的含义
-
-| 键 | 含义 | 前端拿它做什么 |
-| --- | --- | --- |
-| `name` | 参数名（就是 JSON 里的键） | 读写这个参数 |
-| `kind` | 该用什么控件渲染（见下表） | 选控件；`point`/`region`/`target`/`when` 是**嵌套结构**，继续问 `shapes` |
-| `required` | `true` = **必须给** | 标"必须"，为空时提示 |
-| `requiredWhen` | 只在某种情况下必须（如"坐标是客户区时必须给窗口"） | 标"条件必须（…）" |
-| `default` | 省略时程序采用的值 | 提示"留空 = 默认"；可选字段留空就是**不写进 JSON** |
-| `min` / `max` | 整数范围 | 限制输入（NumberBox 的上下限） |
-| `values` | 枚举取值 | 下拉框的选项 |
-| `label` / `help` | 中文/英文标题与说明 | 字段标题与说明文字 |
-
-`kind` 取值与对应控件：
-
-| kind | 控件 | 说明 |
-| --- | --- | --- |
-| `const` | 只读文字 | 固定值（如 `format` 必须是 `keymouse-flow`） |
-| `text` | 单行输入框 | |
-| `multiline` | 多行输入框 | 如 `type` 的要输入文字 |
-| `int` | 数字框（带上下限） | 留空 = 用默认值 |
-| `bool` | 勾选框 | |
-| `enum` | 下拉框 | 选项来自 `values`；第一项是"（默认）"，选中它 = 不写这个参数 |
-| `point` | 子卡片：`space/x/y` | 可配"从屏幕取一个点" |
-| `region` | 子卡片：`space/x/y/width/height` | 可配"从屏幕取区域" |
-| `target` | 子卡片：`process/class/title` | `process` 与 `class` **至少给一个** |
-| `when` | 子卡片：前提条件字段 | 空文字 = 没有前提（这一步总是执行） |
-| `probe` | 子卡片：`target` / `region` / `match` / `maxErrors` | 条件里用 `text()` 时读哪里；块步骤专用 |
-| `steps` | 提示"在「这一步的 JSON」里编辑" | 分组步骤的子步骤 |
-| `vars` | 提示同上 | `call` 传进去的变量表 |
-| `stringList` | 提示同上 | `call` 的 `export` 名字数组 |
-
-## 3. 文档级参数（流程文件本身）
-
-| 参数 | 必须 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `format` | **是** | 字符串 | 必须等于 `keymouse-flow` |
-| `version` | **是** | 整数 | 目前只认 `1` |
-| `steps` | **是** | 数组 | 至少一步 |
-| `allowRestore` | 否 | 布尔 | 默认 `false`。允许还原最小化窗口（不写就不还原，退出码 4 拒绝） |
-| `variables` | 否 | 对象 | 值是字符串，或字符串数组（给 `foreach` 遍历）；步骤里用 `{{名字}}` 引用 |
-| `recordedAt` | 否 | 字符串 | 录制时间，只给人看 |
-
-### 3.1 一个能跑的完整例子
-
-照着抄最快。下面这份流程能通过 `KeyMouse run 文件 --dry-run`（只做资格检查、不发送输入），也能在编辑器里直接打开：
+[flow.schema.json](../../src/KeyMouse.Core.Flow.Validation/flow.schema.json)是引擎与编辑器共用的字段契约；`KeyMouse schema` 显示当前 CLI 实际使用的版本。顶层使用 `format: "keymouse-flow"`、`version: 1` 和 `steps`。文档变量放在 `variables`；每一步以 `type` 指定操作，不是 `kind`。
 
 ```json
-{
-  "format": "keymouse-flow",
-  "version": 1,
-  "recordedAt": "2026-10-29T02:50:00+08:00",
-  "variables": { "name": "世界" },
-  "steps": [
-    { "type": "focus", "target": { "process": "notepad" }, "note": "切到记事本" },
-    { "type": "type", "text": "你好，{{name}}", "intervalMs": 30 },
-    { "type": "key", "combo": "Ctrl+S", "count": 1 },
-    { "type": "sleep", "ms": 300 },
-    { "type": "click-text",
-      "target": { "process": "notepad" },
-      "region": { "space": "client", "x": 0, "y": 0, "width": 400, "height": 32 },
-      "text": "保存", "match": "contains", "timeoutMs": 8000 },
-    { "type": "repeat", "times": 3, "steps": [ { "type": "wheel", "delta": -120 } ] }
-  ]
-}
+{"format":"keymouse-flow","version":1,"steps":[
+  {"type":"set","name":"n","value":"1","delayMs":0},
+  {"type":"assert","cond":"n == 1","delayMs":250}
+]}
 ```
 
-三处最容易写错的地方：
+## 所有操作的执行前等待
 
-- **步骤的种类写在 `type` 里，不是 `kind`。** `kind` 是契约里"这个参数该用什么控件"的字段（见 §2），
-  和步骤 JSON 无关；写成 `kind` 的流程会被拒绝，报「第 N 步的类型 '' 不识别」。
-- **`region` 只支持 `space: "client"`**，且高度要盖住整行文字（见 §4 末尾）。
-- **可选字段不写就是"用默认值"**，不要写 `null`——契约里 `null` 是非法值。
+`delayMs` 是非负整数，省略为 1000，填 `0` 立即执行。完全录制的 `durationMs` 文档头是原始录制时长，不覆盖逐步设置。只有旧 `atMs` 时沿用绝对时间线；同时有两者时采用 `delayMs`。拖动的 `durationMs`、长按的 `ms`、打字的 `intervalMs` 均属于动作内部。
 
-## 4. 步骤级参数一览（必须 = M，可选 = O）
+## 步骤字段
 
-公共字段（每种步骤都可以有）：`note`(O)、`when`(O)、`shot`(O)。
+下表列出类型专属字段。`note`、`shot`、`delayMs` 等公共字段不重复列出；允许单步前提时可附 `when`。未填的可选字段直接省略。坐标相对于客户区时还必须给能定位到唯一窗口的 `target`（进程或窗口类）；不能用只有标题的选择器。拖动两端使用同一坐标空间。
 
-| 步骤 | 必须给的参数 | 可选参数 |
+| 步骤 | 必填 | 可选 |
 | --- | --- | --- |
-| `focus` | `target` | `note`、`when` |
-| `click` | `at` | `button`、`target`（坐标是客户区时必须）、`note`、`when` |
-| `drag` | `from`、`to`、`target` | `durationMs`、`note`、`when` |
-| `move` | `at` | `target`（客户区时必须）、`note`、`when` |
-| `wheel` | — | `delta`、`at`、`target`（客户区时必须）、`note`、`when` |
-| `type` | — | `text`、`intervalMs`、`target`、`note`、`when` |
-| `key` | `combo`（单键或 `+` 组合） | `count`、`target`、`note`、`when` |
-| `sleep` | — | `ms`、`when` |
-| `wait-window` | `target` | `timeoutMs`、`intervalMs`、`note`、`when` |
-| `wait-text` | `target`、`region`、`text` | `match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm`、`note`、`when` |
-| `click-text` | `target`、`region`、`text` | `match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm`、`button`、`note`、`when` |
-| `read-text` | `target`、`region`、`into` | `text`、`match`、`maxErrors`、`note`、`when` |
-| `repeat` | `times`、`steps` | `note` |
-| `foreach` | `in`、`steps` | `note` |
-| `call` | `flow` | `vars`、`export`、`note` |
-| `if` | `cond`、`steps` | `else`、`probe`、`note` |
-| `while` | `cond`、`steps` | `maxRounds`、`probe`、`note` |
-| `do` | `steps`、`cond` | `maxRounds`、`probe`、`note` |
-| `for` | `cond`、`steps` | `init`、`step`、`maxRounds`、`probe`、`note` |
-| `break` / `continue` | — | —（只能放在循环体内） |
-| `return` | — | —（结束当前流程；子流程的 `export` 仍生效，调用方继续） |
-| `set` | `name`、`value` | `note`、`when` |
-| `assert` | `cond` | `message`、`probe`、`note`、`when` |
+| `focus` | `target` | — |
+| `click` | `at` | `button`、`target` |
+| `drag` | `from`、`to` | `durationMs`、`target` |
+| `move` | `at` | `target` |
+| `wheel` | — | `delta`、`axis`、`at`、`target` |
+| `type` | — | `text`、`intervalMs`、`target` |
+| `key` | `combo` | `count`、`target` |
+| `hold` | `ms`、`button` / `text` / `combo` 至少填一项 | `at`、`target` |
+| `mousedown` | — | `button`、`target` |
+| `mouseup` | — | `button`、`target` |
+| `keydown` | `combo` | `target` |
+| `keyup` | `combo` | `target` |
+| `sleep` | — | `ms` |
+| `wait-window` | `target` | `timeoutMs`、`intervalMs` |
+| `wait-text` | `region`、`text` | `target`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` |
+| `click-text` | `region`、`text` | `target`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm`、`button` |
+| `read-text` | `region`、`into` | `target`、`text`、`match`、`maxErrors` |
+| `repeat` | `times`、`steps` | — |
+| `foreach` | `in`、`steps` | — |
+| `call` | `flow` | `vars`、`export` |
+| `if` | `cond`、`steps` | `probe`、`else` |
+| `while` | `cond`、`steps` | `probe`、`maxRounds`（默认 200） |
+| `do` | `cond`、`steps` | `probe`、`maxRounds`（默认 200） |
+| `for` | `cond`、`steps` | `init`、`step`、`probe`、`maxRounds`（默认 10000） |
+| `break` | — | — |
+| `continue` | — | — |
+| `return` | — | — |
+| `set` | `name`、`value` | — |
+| `assert` | `cond` | `message`、`probe` |
+| `mousehold` | `ms`、`button` | `at`、`target` |
+| `keyhold` | `combo`、`ms` | `target` |
 
-关于 `when`（前提条件）：
+## 条件、循环与调用
 
-- 它**不是必须的**。`text` 为空时整个 `when` 被忽略——**等于没有前提**，这一步每次都执行。
-- `when` 自己的必须字段：`text`、`region`；其余（`target`/`match`/`maxErrors`/`timeoutMs`/`intervalMs`/`confirm`/`else`）可选。
-- 语义上和 `click-text`/`wait-text` 的 `text` **不冲突**：`when` 在步骤开始前只读一次，决定"做不做"；
-  步骤自己的 `text` 是它会一直等到超时的目标。
+`if` 根据布尔表达式执行 `steps` 或 `else`；`while` 先判断，`do` 至少一次，`for` 依次执行初始化、条件、循环体和步进。循环有 `maxRounds` 上限，运行还可设置 `--max-steps`。`break`、`continue` 只在循环内有效；`return` 结束当前流程而不是整个调用栈。
 
-关于 `region`：只支持 `space: "client"`（客户区坐标）——屏幕坐标会因窗口移动失效。
-**高度要盖住整行文字**，否则字被切掉会读错（实测：`0,0,400,20` 读成乱码，`0,0,400,32` 正常）。
+表达式可以比较值、组合布尔条件或通过 `text()`、`window()`、`front()`、`found()`、`elapsed()` 取样。`text()` 取一次样；若要等到某段字出现，请用 `wait-text` 并设置 `timeoutMs`。`set.value` 是表达式，普通文字步骤的 `text` 是要输入的文本。示例见[控制流程](../../samples/control-demo.json)。
 
-关于占位符 `{{名字}}`：只能出现在**字符串**字段（文字、组合键、进程名/类名/标题、备注等）。
-JSON 的数字放不下占位符，这是限制不是疏忽。**表达式字段是例外**：`cond`、`set.value`、`for.init`/`step`
-里直接写变量名，写 `{{名字}}` 会在加载时被明确拒绝。
+`call.flow` 相对于调用文件，`vars` 向子流程传值，`export` 显式交回变量。循环引用和过深嵌套在加载时拒绝。`read-text.into` 将结果保存在流程变量；报告中的步骤编号是执行顺序，`origin` 才是文档内的位置。
 
-### 4.1 控制流与表达式（契约之外的语义）
+## 坐标和证据
 
-`if` / `while` / `do` / `for` 的 `cond`、`set` 的 `value`、`for` 的 `init`/`step` 都是一套手写表达式语言：
+点的 `space` 用 `client` 或显式 `screen`；区域还可用 `window`。取点器同时提供屏幕坐标和可用的相对坐标，选择哪套由步骤字段决定。旧流程应保留自己的空间，不因打开文件就转换。截图路径和 `target.title` 都可能揭示私人内容；公开示例只使用虚构数据。
 
-- 字面量：数字、`"文本"` / `'文本'`、`true` / `false`；
-- 变量：直接写名字（文档 `variables`、`--set`、`read-text` 的 `into`、循环变量、`set` 过的名字、`last`）；
-- 运算：`+ - * / %`、`== != < <= > >=`、`&& || !`、括号；`&&`/`||` 短路；
-- 谓词：`text("…")` / `text("…", x, y, 宽, 高)`、`window("进程")`、`front("进程")`、`found(["文字"])`、`elapsed()`；
-- 条件必须是 `true`/`false`，不会把数字或文本自动当真值。
-
-`text()` 读 `probe` 指定的窗口与区域（**单次取样**，不轮询）；`probe` 的形状、`maxRounds` 的上下限、
-循环/步数护栏、`--dry-run` 下"条件按成立算、循环只走一遍"的行为，见
-[`cli.md` 的「控制流」](cli.md)。
-
-`return` 立即结束当前流程，不执行同一流程里它后面的步骤。放在子流程里时，`call` 会把它当成正常结束：
-按 `export` 把变量交回调用者，调用者继续执行；放在根流程里则整次运行正常结束。它可以在 `if`/循环里使用，
-只结束当前流程，不越过 `call` 边界。`return` 不能带 `when`、`steps` 或 `else`，也不占执行步号与报告行。
-
-编辑器把 `cond` 做成有限选项（总是成立/比较两个值/屏幕文字/窗口存在/前台/上次读字/运行时长），
-选项只生成上面这套表达式，覆盖不了时退回「自定义表达式」。必填项没填完不会写出半截条件，
-而是留空让节点的「待补」与播放前检查拦住；`text()` 还要求 `probe.target` 与 `probe.region` 同时存在。
-
-**兼容方向**：新增步骤类型不改 `format.version`（仍是 `1`）。新引擎照跑旧文件；旧引擎打开新文件会报
-"类型不认识"——这是预期的降级，不是格式损坏。
-
-## 5. 常驻 Runner 的 IPC 接口（JSON 行协议）
-
-命名管道 `keymouse-runner-<用户名>`，一行一个 JSON 对象：请求 `{"id":1,"method":"run","params":{...}}`，
-事件 `{"kind":"hello|log|step|finished|result|error", ...}`。`id` 与 `method` **必须**，`params` 视方法而定。
-规范的全文在 [`runner-protocol.md`](runner-protocol.md)，机器可读的那份是 `src/KeyMouse.Runner/runner-protocol.schema.json`：
-
-| method | params 必须 | params 可选 | 说明 |
-| --- | --- | --- | --- |
-| `hello` | — | — | 回显请求 id，回 `result{version, protocol}`。连接后服务端还会主动发一条 **id=0 的问候**（`kind: hello`）——那不是应答，别 await 它 |
-| `status` | — | — | 服务状态与作业表 |
-| `list` | — | — | **作业**表（不是窗口列表；窗口请用 `window list`） |
-| `run` | `flow` | `dryRun`、`echo`、`keepGoing`、`delayMs`、`retry`、`shots`、`evidenceFor` | 执行一个流程；事件逐步上报；`shots` 为真时引擎逐步留证据（落 `<流程>.shots/`） |
-| `record` | — | `out`、`durationMs`、`shots` | 录制一段操作 |
-| `validate` | `flow` | — | 只校验，不执行 |
-| `pick-region` | — | — | 交互式选区，返回 `region` 与窗口 |
-| `ocr` | `region` | `process`、`class` | 读一块区域 |
-| `cancel` / `pause` / `resume` | `target`（作业号） | — | 控制正在跑的作业 |
-| `shutdown` | — | — | 让 Runner 退出 |
-
-任何请求都可以带上 `client`（谁在问）与 `version`（说的哪版协议）：`version` 与契约版本不合时服务端回
-`error(code=2)` 并停止处理；`client` 会记在作业上，`list` / `status` 看得到。
-
-**作业保证**：任何请求都会有结论——`finished` 一定来，失败时先来 `error` 说明原因。
-（这条是踩出来的：校验曾经发生在拿到队列槽之前，一抛异常作业就永远停在 `queued`，客户端只能干等。）
-
-## 6. 改动契约的正确流程
-
-1. 改 `src/KeyMouse.Core/flow.schema.json`（加字段、改必须性、改范围、改说明）。
-2. 跑 `--only flow`：测试会检查"每种步骤类型都有契约条目""每个字段的 kind 编辑器都能渲染"。
-3. 界面**不需要改**：编辑器每次选中步骤时按契约重建检查器。
-4. 若新参数是程序要执行的（不只是给人看），在加载器/执行器里用它，并在 [`cli.md`](cli.md) 补一句语义。
-
-相关文档：[`cli.md`](cli.md)（命令行与语义细节）、[`../dev/design.md`](../dev/design.md)（为什么这样设计）、[`../guide/environments.md`](../guide/environments.md)（开发树与安装版的目录约定）。
+改契约时同时更新解析与校验、编辑器显示、这张表以及受影响的测试；运行 `pwsh tools/dev/check-docs.ps1`。

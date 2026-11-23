@@ -50,7 +50,7 @@
     <ProjectReference Include="..\KeyMouse.Runner\KeyMouse.Runner.csproj" />
   </ItemGroup>
 
-  <!-- Capability namespaces used from here; the folder layout under src\KeyMouse.Core carries the same split. -->
+  <!-- Capability namespaces used from here; the source layout under src\KeyMouse.Core.* follows these capability boundaries. -->
   <ItemGroup>
     <Using Include="KeyMouse.Capture" />
     <Using Include="KeyMouse.Product" />

@@ -18,7 +18,7 @@ internal static class FlowTests
         var emptyTyping = new FlowStep { Type = "type" };
         Harness.Sequence("a type step without text still compiles to an empty argument",
             ["key", "type", ""],
-            FlowDocument.ToArguments(emptyTyping));
+            FlowCommandDisplay.Tokens(emptyTyping));
         Harness.Equal("and the command refuses it instead of typing nothing",
             2, KeyMouse.Runtime.Commands.Execute(["key", "type", ""]));
 
@@ -31,7 +31,7 @@ internal static class FlowTests
         };
         Harness.Sequence("a client click becomes -wx/-wy plus the selector",
             ["mouse", "click", "left", "-wx", "10", "-wy", "20", "--process", "notepad", "--class", "Notepad"],
-            FlowDocument.ToArguments(clientClick));
+            FlowCommandDisplay.Tokens(clientClick));
 
         var screenClick = new FlowStep
         {
@@ -41,7 +41,7 @@ internal static class FlowTests
         };
         Harness.Sequence("a screen click stays absolute (and needs no selector)",
             ["mouse", "click", "right", "-x", "100", "-y", "200"],
-            FlowDocument.ToArguments(screenClick));
+            FlowCommandDisplay.Tokens(screenClick));
 
         var drag = new FlowStep
         {
@@ -54,7 +54,7 @@ internal static class FlowTests
         };
         Harness.Sequence("a drag carries both ends and its duration",
             ["mouse", "drag", "-wx", "5", "-wy", "6", "--wx2", "50", "--wy2", "60", "--duration", "400", "--process", "notepad"],
-            FlowDocument.ToArguments(drag));
+            FlowCommandDisplay.Tokens(drag));
 
         var move = new FlowStep
         {
@@ -64,12 +64,12 @@ internal static class FlowTests
         };
         Harness.Sequence("a client move uses -wx/-wy",
             ["mouse", "move", "-wx", "7", "-wy", "8", "--process", "notepad"],
-            FlowDocument.ToArguments(move));
+            FlowCommandDisplay.Tokens(move));
 
         var screenMove = new FlowStep { Type = "move", At = new FlowPoint { Space = "screen", X = 7, Y = 8 } };
         Harness.Sequence("a screen move is positional (that is the mouse move syntax)",
             ["mouse", "move", "7", "8"],
-            FlowDocument.ToArguments(screenMove));
+            FlowCommandDisplay.Tokens(screenMove));
 
         var wheel = new FlowStep
         {
@@ -80,7 +80,7 @@ internal static class FlowTests
         };
         Harness.Sequence("a wheel step keeps the accumulated delta",
             ["mouse", "wheel", "-240", "-wx", "1", "-wy", "2", "--process", "notepad"],
-            FlowDocument.ToArguments(wheel));
+            FlowCommandDisplay.Tokens(wheel));
 
         var typing = new FlowStep
         {
@@ -91,25 +91,25 @@ internal static class FlowTests
         };
         Harness.Sequence("typing keeps the pace the human used",
             ["key", "type", "hello 世界", "--interval", "25", "--process", "notepad"],
-            FlowDocument.ToArguments(typing));
+            FlowCommandDisplay.Tokens(typing));
 
         var combo = new FlowStep { Type = "key", Combo = "ctrl+s", Target = new FlowTarget { Process = "notepad" } };
         Harness.Sequence("a combination stays a combination",
             ["key", "combo", "ctrl+s", "--process", "notepad"],
-            FlowDocument.ToArguments(combo));
+            FlowCommandDisplay.Tokens(combo));
 
         var single = new FlowStep { Type = "key", Combo = "enter", Target = new FlowTarget { Process = "notepad" } };
         Harness.Sequence("a single key also goes through combo",
             ["key", "combo", "enter", "--process", "notepad"],
-            FlowDocument.ToArguments(single));
+            FlowCommandDisplay.Tokens(single));
 
         var focus = new FlowStep { Type = "focus", Target = new FlowTarget { Process = "notepad", Class = "Notepad" } };
         Harness.Sequence("focus compiles to the window command",
             ["window", "focus", "--process", "notepad", "--class", "Notepad"],
-            FlowDocument.ToArguments(focus));
+            FlowCommandDisplay.Tokens(focus));
 
         Harness.Throws<CommandFailure>("client coordinates without a target are refused",
-            () => FlowDocument.ToArguments(new FlowStep
+            () => FlowCommandDisplay.Tokens(new FlowStep
             {
                 Type = "move",
                 At = new FlowPoint { Space = "client", X = 1, Y = 1 },
@@ -117,11 +117,11 @@ internal static class FlowTests
         // 执行器自己跑的类型没有 CLI 命令：编译结果是空数组，而不是异常。
         // （以前这里抛 CommandFailure，于是长按一放进流程就报"不该编译成命令"。）
         Harness.Check("runner steps compile to nothing",
-            FlowDocument.ToArguments(new FlowStep { Type = "sleep", Ms = 100 }).Length == 0,
+            FlowCommandDisplay.Tokens(new FlowStep { Type = "sleep", Ms = 100 }).Length == 0,
             "sleep");
         Harness.Check("holds compile to nothing",
-            FlowDocument.ToArguments(new FlowStep { Type = "keyhold", Combo = "a", Ms = 500 }).Length == 0 &&
-            FlowDocument.ToArguments(new FlowStep { Type = "mousehold", Button = "left", Ms = 500 }).Length == 0,
+            FlowCommandDisplay.Tokens(new FlowStep { Type = "keyhold", Combo = "a", Ms = 500 }).Length == 0 &&
+            FlowCommandDisplay.Tokens(new FlowStep { Type = "mousehold", Button = "left", Ms = 500 }).Length == 0,
             "keyhold/mousehold");
 
         Harness.Group("flow: an old single-key text migrates into combo");
@@ -187,8 +187,8 @@ internal static class FlowTests
             }
         }
 
-        Harness.Check("click-text needs target, region and text",
-            Required("click-text", "target") && Required("click-text", "region") && Required("click-text", "text"));
+        Harness.Check("click-text needs a region and text; the window is conditional on the region",
+            !Required("click-text", "target") && Required("click-text", "region") && Required("click-text", "text"));
         Harness.Check("...while its tuning knobs are optional",
             !Required("click-text", "match") && !Required("click-text", "button") && !Required("click-text", "timeoutMs"));
         Harness.Check("read-text needs into", Required("read-text", "into"));
@@ -343,9 +343,14 @@ internal static class FlowTests
             Harness.Throws<CommandFailure>("an unknown match mode is refused before anything runs",
                 () => FlowDocument.Load(waitPath));
 
-            Write("""{"type":"wait-text","text":"保存成功","region":{"space":"screen","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
-            Harness.Throws<CommandFailure>("a screen-space region is refused: it goes stale with the window",
+            Write("""{"type":"wait-text","text":"保存成功","region":{"space":"client","x":0,"y":0,"width":200,"height":24}}""");
+            Harness.Throws<CommandFailure>("a client region still needs a window selector",
                 () => FlowDocument.Load(waitPath));
+
+            Write("""{"type":"wait-text","text":"保存成功","region":{"space":"screen","x":0,"y":0,"width":200,"height":24}}""");
+            var screenRegion = FlowDocument.Load(waitPath);
+            Harness.Equal("a screen-space region is read from the desktop itself, no window needed",
+                FlowSpace.Screen, screenRegion.Steps[0].Region!.Space);
 
             Write("""{"type":"wait-text","text":"保存成功","match":"fuzzy","maxErrors":1,"timeoutMs":3000,"confirm":2,"region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
             var valid = FlowDocument.Load(waitPath);
@@ -376,6 +381,16 @@ internal static class FlowTests
             WriteAct("""{"type":"click-text","text":"保存","match":"vibes","region":{"space":"client","x":0,"y":0,"width":200,"height":24},"target":{"process":"notepad"}}""");
             Harness.Throws<CommandFailure>("an unknown match mode is refused on load",
                 () => FlowDocument.Load(actPath));
+
+            WriteAct("""{"type":"click","at":{"x":10,"y":10}}""");
+            var clientByDefault = FlowDocument.Load(actPath);
+            Harness.Throws<CommandFailure>("a point that omits space is client-space and needs a window",
+                () => FlowCommandDisplay.Tokens(clientByDefault.Steps[0]));
+
+            WriteAct("""{"type":"click","at":{"x":10,"y":10},"target":{"process":"notepad"}}""");
+            var defaultPoint = FlowDocument.Load(actPath);
+            Harness.Equal("...and that default is client, matching the schema and the editor",
+                FlowSpace.Client, defaultPoint.Steps[0].At!.Space);
 
             WriteAct("""{"type":"click","at":{"space":"client","x":10,"y":10},"target":{"process":"notepad"},"when":{"text":"保存成功"}}""");
             Harness.Throws<CommandFailure>("a when without a region is refused",

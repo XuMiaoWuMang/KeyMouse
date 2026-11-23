@@ -1,5 +1,5 @@
 /**
- * 流程文件的形状 —— 与 `src/KeyMouse.Core/flow.schema.json` 对齐。
+ * 流程文件的形状 —— 与 `src/KeyMouse.Core.Flow.Validation/flow.schema.json` 对齐。
  *
  * 这里只放"界面要读的那部分"：步骤种类、标题、一行摘要。真正的校验在引擎里，
  * 前端不重复实现规则——契约只有一份。
@@ -12,13 +12,15 @@ export interface FlowTarget {
 }
 
 export interface FlowPoint {
-  space: 'screen' | 'client';
+  /** 不写就是 `client`（客户区相对）——契约、引擎和界面必须按同一个默认解释。 */
+  space?: 'screen' | 'client';
   x: number;
   y: number;
 }
 
 export interface FlowRegion {
-  space: 'client' | 'window';
+  /** 不写就是 `client`；`screen` 是桌面绝对坐标，不需要目标窗口。 */
+  space?: 'client' | 'window' | 'screen';
   x: number;
   y: number;
   width: number;
@@ -48,6 +50,8 @@ export interface FlowWhen {
 
 export interface FlowStep {
   type: StepType;
+  delayMs?: number;
+  atMs?: number; // Legacy absolute timestamp.
   note?: string;
   target?: FlowTarget;
   at?: FlowPoint;
@@ -338,8 +342,8 @@ export function branchesOf(step: FlowStep): StepBranch[] {
   switch (step.type) {
     case 'if':
       return [
-        { key: 'steps', label: '成立时', steps: step.steps ?? [] },
-        { key: 'else', label: '否则', steps: step.else ?? [] },
+        { key: 'steps', label: '条件成立', steps: step.steps ?? [] },
+        { key: 'else', label: '条件不符', steps: step.else ?? [] },
       ];
     case 'while':
     case 'do':

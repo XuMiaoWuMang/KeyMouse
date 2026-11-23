@@ -1890,7 +1890,7 @@ dependencies = [
 
 [[package]]
 name = "keymouse-editor"
-version = "2.2.4"
+version = "3.0.0"
 dependencies = [
  "serde",
  "serde_json",

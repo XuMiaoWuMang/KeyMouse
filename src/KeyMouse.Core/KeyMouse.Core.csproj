@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <OutputType>Library</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>KeyMouse.Core</AssemblyName>
@@ -18,8 +19,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 流程格式的接口契约：加载器与编辑器共用的唯一权威，随程序集一起分发。 -->
-    <EmbeddedResource Include="flow.schema.json" />
+    <!-- Runtime composition root. Lower layers are compiled independently; they cannot dispatch back here. -->
+    <Compile Include="Runtime/Commands*.cs;Runtime/FlowCommandExecutor.cs;Runtime/Usage.cs;Product/Doctor.cs" />
+    <ProjectReference Include="../KeyMouse.Core.Flow.Execution/KeyMouse.Core.Flow.Execution.csproj" />
+    <ProjectReference Include="../KeyMouse.Core.Capture.Recording/KeyMouse.Core.Capture.Recording.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +35,7 @@
     <InternalsVisibleTo Include="KeyMouseSetup" />
   </ItemGroup>
 
-  <!-- Capability namespaces used from here; the folder layout under src\KeyMouse.Core carries the same split. -->
+  <!-- This assembly is only the runtime composition root; the capability projects own their source trees. -->
   <ItemGroup>
     <Using Include="KeyMouse.Capture" />
     <Using Include="KeyMouse.Product" />
@@ -42,8 +45,5 @@
     <Using Include="KeyMouse.Windowing" />
     <!-- WinForms 也在 ImplicitUsings 里，它的 NativeWindow 和我们这个同名。 -->
     <Using Include="KeyMouse.Windowing.NativeWindow" Alias="NativeWindow" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.1" />
   </ItemGroup>
 </Project>

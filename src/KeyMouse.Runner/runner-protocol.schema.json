@@ -1,6 +1,9 @@
 {
   "format": "keymouse-runner-protocol",
   "version": 1,
+  "supportedProtocols": ["1.0", "2.0"],
+  "negotiation": {"envelope": ["protocolVersion", "minCompatibleVersion"], "legacyHello": "1", "newestHello": "2.0", "noOverlapExitCode": 2},
+  "v2Capabilities": ["status-stream", "session-resume", "screenshot-diff"],
   "status": "normative",
   "about": "编辑器（前端）与常驻 Runner（后端）之间的唯一通信契约。任何一侧改动都必须先改这里，再由 tests/KeyMouse.Tests/RunnerProtocolTests.cs 强制两侧一致。",
 
@@ -8,6 +11,7 @@
     "kind": "named-pipe",
     "pipeName": "keymouse-runner-{user}",
     "testPipeName": "keymouse-runner-test-{user}-{tag}",
+    "access": "local-user-sid",
     "encoding": "utf-8",
     "framing": "json-lines",
     "framingNote": "一行一个 JSON 对象，行内不允许换行；空行忽略。",
@@ -35,11 +39,12 @@
   ],
 
   "requests": [
+    { "method": "watch", "params": ["session", "after"], "streams": ["status-stream"], "terminal": ["result", "error"], "note": "v2：重连后按游标接收作业进度，不会重新执行作业。" },
     {
       "method": "hello",
       "params": [],
       "terminal": ["result"],
-      "resultFields": ["version", "protocol"],
+      "resultFields": ["version", "protocol"], "v2ResultFields": ["protocolVersion", "capabilities"],
       "note": "问一句\"你是谁\"：回显请求 id，回 result{version, protocol}。连接后服务端还会主动发一条 id=0 的 hello 问候，那不是应答，两者不要混（见 greeting）。"
     },
     { "method": "status", "params": [], "terminal": ["result"], "resultFields": ["version", "jobs", "pipeline"] },
@@ -47,8 +52,8 @@
     { "method": "shutdown", "params": [], "terminal": ["result"], "resultFields": ["stopping"], "note": "先回 result 再停服务，保证客户端不会吊死。" },
     {
       "method": "run",
-      "params": ["flow", "dryRun", "echo", "keepGoing", "delayMs", "retry", "shots", "evidenceFor"],
-      "streams": ["log", "step"],
+      "params": ["flow", "dryRun", "echo", "keepGoing", "delayMs", "retry", "shots", "evidenceFor", "shotDiff"],
+      "streams": ["queued", "log", "step"], "v2Streams": ["status-stream", "screenshot-diff"],
       "terminal": ["finished", "error"],
       "required": ["flow"],
       "note": "跑一条流程。flow 必须存在，否则 error(code=2)。shots 为真时引擎逐步留证据（先执行、后截图），证据落在 evidenceFor（缺省用 flow）旁边的 <流程>.shots/ 里。"
@@ -56,7 +61,7 @@
     {
       "method": "record",
       "params": ["out", "durationMs", "shots"],
-      "streams": ["log", "step"],
+      "streams": ["queued", "log", "state", "step"],
       "terminal": ["finished", "error"],
       "note": "录制操作序列。shot 参数与 run 同义。"
     },
@@ -69,6 +74,9 @@
   ],
 
   "events": {
+    "state": { "fields": ["kind", "id", "job", "state"], "note": "录制状态" },
+    "status-stream": { "fields": ["kind", "id", "cursor", "value"], "note": "v2 批量进度，value.steps 是事件数组" },
+    "screenshot-diff": { "fields": ["kind", "id", "job", "value"], "note": "v2 可选 BGRA 差分矩形" },
     "hello": { "fields": ["kind", "id", "message"], "note": "连接后的问候（见 greeting），不是任何请求的应答，id 固定 0。" },
     "log": { "fields": ["kind", "id", "job", "line"], "note": "能力层往 stdout/stderr 打的每一行都会变成一条 log。" },
     "step": { "fields": ["kind", "id", "job", "index", "total", "state", "type", "shot", "exitCode", "durationMs", "origin"], "note": "state 取值见 stepStates；index 从 1 开始。origin 是这一步在文档里的位置（如 \"6.1\"、\"6.e1\"，.e 表示 else 分支），动态循环下 index 与行号不再一一对应，编辑器靠 origin 把结果落回正确的行；脚本模式的报告没有 origin，此处为 null。shot 是这一步留下的证据截图路径（引擎抓不到就是 null，绝不编一个）" },
@@ -83,6 +91,9 @@
   "jobStates": ["queued", "running", "finished", "failed", "cancelled", "paused"],
 
   "parameters": {
+    "session": { "type":"string", "note":"watch 的会话令牌" },
+    "after": { "type":"integer", "note":"已消费的游标" },
+    "shotDiff": { "type":"boolean", "note":"显式订阅 v2 截图差分；同时需要 shots" },
     "flow": { "type": "string", "note": "流程文件路径" },
     "out": { "type": "string", "note": "record 的输出文件" },
     "dryRun": { "type": "boolean", "note": "只走一遍不真的发输入" },

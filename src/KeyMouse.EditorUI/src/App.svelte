@@ -1,14 +1,22 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { open, save } from '@tauri-apps/plugin-dialog';
+  import { createDocumentStore, createSelectionStore, createHistory, type FlowDocument } from './lib/editorState';
   import StepIcon from './lib/StepIcon.svelte';
   import Icon from './lib/Icon.svelte';
   import Settings from './Settings.svelte';
+  import FileToolbar from './lib/FileToolbar.svelte';
   import Inspector from './lib/Inspector.svelte';
+  import ChildFlow from './lib/ChildFlow.svelte';
+  import { discardChildSessions } from './lib/childflow';
+  let childDirty: Record<string, boolean> = {};
+  import { clientPlaybackOnly } from './lib/clientPlayback';
+  let documentEpoch = 0;
+  $: hasChildDirty = Object.values(childDirty).some(Boolean);
+  function updateChildDirty(key: string, value: boolean, epoch = documentEpoch) { if (epoch === documentEpoch) childDirty = { ...childDirty, [key]: value }; }
   import { fieldsOf, schemaFrom, type FlowSchema } from './lib/schema';
-  import { writePath } from './lib/fieldpath';
   import {
   appendChild,
   duplicateAt,
@@ -24,7 +32,8 @@
 } from './lib/edit';
   import { parseRunProgress, progressText, type RunProgress } from './lib/progress';
   import { firstFailure, resultsFromReport, runConclusion, runHint, runIsBad, type StepResult } from './lib/run';
-  import { pickSpaceLabel, shouldAttachWindow } from './lib/pick';
+  import { pickSpaceLabel } from './lib/pick';
+  import { applyPickedField, editStepField, type PickResult } from './lib/pickField';
   import { childVisible, filterSteps, matchesFilter } from './lib/filter';
   import type { NodePosition } from './lib/canvas';
   import { buildGraph, graphEdgeKey } from './lib/graph';
@@ -49,6 +58,7 @@
     spanOf,
     type Section,
   } from './lib/sections';
+  import { MIN_RUN, runAtHead, runSelection } from './lib/runs';
   import { QUICK_TYPES, STEP_TEMPLATES, STEP_CATEGORY_LABELS, categoryOf, makeStep, missingHint, missingOf, templatesInCategory } from './lib/steps';
   import {
     branchesOf,
@@ -93,27 +103,27 @@
     initialPath: string | null;
   };
 
-  /** 一个流程文件：文档对象原样保留，界面只碰 steps。 */
-  type FlowDocument = {
-    format?: string;
-    version?: number;
-    recordedAt?: string;
-    variables?: Record<string, string>;
-    steps: FlowStep[];
-    [key: string]: unknown;
-  };
-
+  const documents = createDocumentStore();
+  const selection = createSelectionStore();
   let runtime: RuntimeInfo | null = null;
   let path: string | null = null;
   let doc: FlowDocument | null = null;
   let steps: FlowStep[] = [];
   let selected = 0;
-  /** 选中的是分组里第几个子步骤（「成立时」与「否则」摊平后的下标）；null = 选中的是顶层那一行。 */
+  /** 选中的是分组里第几个子步骤（「条件成立」与「条件不符」摊平后的下标）；null = 选中的是顶层那一行。 */
   let childSel: number | null = null;
   /** 画布上的选中节点；路径可以有多深，不再限制"顶层 + 一层子步骤"。 */
   let selectedPath: NodePath | null = null;
   /** Ctrl/⌘ 多选出来的路径；拖动其中任意一个会整组搬。 */
   let selectedPaths: NodePath[] = [];
+  // subscribe synchronously: handlers may inspect the new tree before Svelte's next tick.
+  onDestroy(documents.subscribe(value => { doc = value; steps = value?.steps ?? []; }));
+  onDestroy(selection.subscribe(value => { selectedPath = value.primary; selectedPaths = value.paths; }));
+  /**
+   * 画布上已经展开的"连续操作"组，放组头真实路径的 pathKey。
+   * 纯视图状态：不写进流程文件，换文件时清空；默认全收起。
+   */
+  let openRuns: string[] = [];
   /**
    * 自由布局：拖动节点只改画布坐标，不改流程顺序。
    * 关掉以后回到结构视图，拖动节点仍然是"挪到另一个分支/位置"。
@@ -206,6 +216,34 @@
       note(`复制失败：${error}`, true);
     }
   }
+  /** 独立于运行状态：运行中也可导出点击时的内存快照。 */
+  let savingRunLog = false;
+
+  async function saveRunLog(): Promise<void> {
+    if (savingRunLog || !lines.length) return;
+    const text = lines.map((item) => item.line + '\n').join('');
+    const name = path ? baseName(path).replace(/\.[^.]+$/, '') : '未命名流程';
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+    savingRunLog = true;
+    try {
+      const picked = await save({
+        title: '保存运行日志',
+        filters: [{ name: '日志', extensions: ['log'] }, { name: '文本', extensions: ['txt'] }],
+        defaultPath: `${name}-运行日志-${stamp}.log`,
+      });
+      if (typeof picked !== 'string') return;
+      await invoke('save_run_log', { path: picked, text });
+      note(`已保存日志快照：${picked}`);
+    } catch (error) {
+      const message = typeof error === 'object' && error !== null && 'message' in error
+        ? String(error.message) : String(error);
+      note(message, true);
+    } finally {
+      savingRunLog = false;
+    }
+  }
+
   /** 输出面板的可滚动容器：新日志默认跟着最后一行走（除非用户自己往上翻过）。 */
   let outputBox: HTMLPreElement | null = null;
   let outputStick = true;
@@ -227,6 +265,9 @@
   let recordingPath: string | null = null;
   /** self = 当前权限录；levated = 管理员权限录（外壳停不了，只能用户按键）。 */
   let recordMode: 'self' | 'elevated' | null = null;
+  type RecordingKind = 'key' | 'full';
+  const recordingLabels = { key: '关键录制', full: '完全录制' };
+  let recordingKind: RecordingKind = 'key';
   /** 「录制」旁边那个 ⌄ 的小菜单开着没有（两个录制方式选一个）。 */
   let recordMenuOpen = false;
   /** 工具栏最右那个 ··· 菜单（打开/保存/另存为/从屏幕取区域）。 */
@@ -337,7 +378,7 @@ $: rowKeys = steps.map((_, index) => String(index + 1));
   let moveOpen: Record<number, boolean> = {};
   /** 选中的是不是某个折叠组的题头（那它没有可改的字段，检查器换成只读卡片）。 */
   $: foldHeadSelected = childSel === null && isFoldHead(foldRuns, selected);
-  /** 当前这一行的所有子步骤，按"成立时 → 否则 / 循环体"的顺序摊平；childSel 是这个数组的下标。 */
+  /** 当前这一行的所有子步骤，按"条件成立 → 条件不符 / 循环体"的顺序摊平；childSel 是这个数组的下标。 */
   $: current = selectedPath ? stepAt(steps, selectedPath) ?? null : null;
   $: quickAddHost = quickAdd ? stepAt(steps, quickAdd.path) ?? null : null;
   $: currentOrigin = selectedPath ? originOfPath(steps, selectedPath) : '';
@@ -398,48 +439,27 @@ function branchOffset(index: number, branchIndex: number): number {
 }
   /** 底部输出里的最后一条人话消息；失败与成功都写这里，不弹对话框。 */
   let notice: { text: string; bad: boolean } | null = null;
-  /**
-   * 已经取到的证据图，键是步骤里记的那个相对路径。
-   *
-   * 图是**按需**从外壳读字节再造 Blob URL 的：界面不需要知道流程文件在哪一层目录，
-   * 也不需要给 WebView 开文件系统权限。同一张图只读一次，读不到就记住原因，别反复试。
-   */
-  let shots: Record<string, { url?: string; error?: string }> = {};
+  // 只保留当前预览的 Blob；换步骤、文件或卸载时都要释放它。
+  let preview: { url?: string; error?: string } = {};
+  let previewRequest = 0;
+  onDestroy(clearPreview);
 
-  /**
-   * 撤销栈存的是"改动之前那份文档"的 JSON。
-   *
-   * 为什么是 JSON 而不是对象引用：步骤编辑里到处是原地改字段，对象引用会被后续
-   * 修改悄悄改掉，撤销就成了"撤到一半"。序列化一份 10 KB 的文本，比追踪引用安全得多。
-   */
-  const undoStack: string[] = [];
-  const redoStack: string[] = [];
-  const HISTORY_LIMIT = 50;
-  /**
-   * 分组边界不进文档，所以撤销栈里另存一份（和文档快照一一对应）。
-   * 不塞进文档 JSON：那样"改分组"会把文档弄脏，用户明明没动流程却要保存。
-   */
-  const undoSections: Section[][] = [];
-  const redoSections: Section[][] = [];
-
-  const copySections = (list: Section[]): Section[] => list.map((section) => ({ ...section }));
+  const history = createHistory<{json:string; sections:Section[]}>();
+  const historyEntry = () => ({json:JSON.stringify(doc), sections:sections.map(section => ({...section}))});
 
   onMount(async () => {
     void loadSchema();
     void loadRecent();
     void loadLongPress();
-    try {
-      // 主题先落地再谈别的：晚一步，用户会先看到一帧默认纸色。
+    // 主题先落地再谈别的：晚一步，用户会先看到一帧默认纸色。
     try {
       document.documentElement.dataset.theme = await invoke<string>('theme');
     } catch {
       document.documentElement.dataset.theme = 'paper';
     }
 
-    // 设置页想"打开某个流程"时发这个事件：打开流程只有一处实现，别复制第二份。
-    window.addEventListener('keymouse:open-path', onOpenPathRequest);
-
-    runtime = await invoke<RuntimeInfo>('runtime_info');
+    try {
+      runtime = await invoke<RuntimeInfo>('runtime_info');
     } catch (e) {
       runtime = null;
       note(String(e), true);
@@ -450,19 +470,21 @@ function branchOffset(index: number, branchIndex: number): number {
   });
 
   // 设置页里点"最近"的一条：它不自己打开文件，只发个事件回来，打开流程只有一处实现。
-  function onOpenPathRequest(event: Event): void {
+  async function onOpenPathRequest(event: Event): Promise<void> {
     const detail = (event as CustomEvent<string>).detail;
-    if (typeof detail === 'string' && detail) {
+    if (typeof detail === 'string' && detail && await confirmDiscard()) {
       view = 'flow';
-      void loadFrom(detail);
+      await loadFrom(detail);
     }
   }
 
   // 关闭窗口时外壳会问界面一句"能关吗"：脏了就先确认，再让它关。
   onMount(() => {
-    const stops: (() => void)[] = [];
+    window.addEventListener('keymouse:open-path', onOpenPathRequest);
+    const stops: (() => void)[] = [() => window.removeEventListener('keymouse:open-path', onOpenPathRequest)];
+    let mounted = true;
     const keep = (p: Promise<() => void>) =>
-      void p.then((unlisten) => stops.push(unlisten)).catch(() => undefined);
+      void p.then((unlisten) => mounted ? stops.push(unlisten) : unlisten()).catch(() => undefined);
 
     keep(
       listen('shell://close-requested', async () => {
@@ -483,7 +505,8 @@ function branchOffset(index: number, branchIndex: number): number {
     keep(
       listen<{ stream: string; line: string }>('shell://run-output', (event) => {
         // “执行中”是给 HUD 的开始行；主输出面板只保留完成行，免得每一步都出现两遍。
-        const live = /^\s*\[\s*\d+\s*\/\s*\d+\s*\]\s*执行中\s/.test(event.payload.line);
+        const live = event.payload.line.startsWith('@keymouse-hud/v1 ') ||
+          /^\s*\[\s*\d+(?:\s*\/\s*\d+)?\s*\]\s*执行中\s/.test(event.payload.line);
         if (!live) {
           lines = [...lines, event.payload];
           // 进度只从输出里读，不问命令行走别的通道：一条命令、一份事实。
@@ -512,7 +535,7 @@ function branchOffset(index: number, branchIndex: number): number {
           // 提权录制时我们只拿到"启动器"的退出码：UAC 被拒是 1223，录制本身出错是 1/2/3。
           if (cancelled) note('这次录制被掐掉了，没有落盘', true);
           else if (elevated && code === 1223) note('UAC 被拒绝了，这一轮什么都没录', true);
-          else if (elevated && code !== 0) note(`提权录制以退出码 ${code} 结束，没有落盘`, true);
+          else if (code !== 0) note(`录制失败（退出码 ${code ?? '未知'}），未打开输出文件`, true);
           else void adoptRecording(target);
           return;
         }
@@ -537,7 +560,7 @@ function branchOffset(index: number, branchIndex: number): number {
       }),
     );
 
-    return () => stops.forEach((stop) => stop());
+    return () => { mounted = false; stops.forEach((stop) => stop()); };
   });
 
   // 界面里没接住的异常不该只留在 DevTools 里：推给外壳记进 editor-crash.log，
@@ -568,18 +591,18 @@ function branchOffset(index: number, branchIndex: number): number {
   });
 
   // 外壳不知道界面里发生了什么，脏标记得推给它；它只负责在关窗前问一句。
-  $: syncDirty(dirty);
+  $: syncDirty(dirty || hasChildDirty);
 
 /**
  * 窗口标题跟着文件和脏标记走：任务栏上光看「KeyMouse 流程编辑器」分不出开的是哪一份，
  * 切换窗口时更要紧。标题里不放完整路径——路径已经在上方那一行显示着。
  */
-$: syncTitle(doc, path, dirty);
+$: syncTitle(doc, path, dirty || hasChildDirty);
 
   // 右侧检查器的内容跟着选中的行走；分组步骤选中的是它自己，不是子步骤。
   $: currentShot = current?.shot ?? null;
   // 选中带证据的步骤时才去读那张图；没存过盘就没有可比对的相对路径。
-  $: if (currentShot && path) void ensureShot(currentShot);
+  $: void loadPreview(currentShot, path, documentEpoch);
   $: fileLabel = path ? baseName(path) : '还没有打开流程';
   $: canSave = doc !== null && dirty;
 
@@ -590,20 +613,22 @@ $: syncTitle(doc, path, dirty);
     if (bad) outputOpen = true;
   }
 
-  /**
-   * 取这一步的证据图。只读到字节，URL 由这里造：见 `shots` 的注释。
-   *
-   * 先占位再请求，避免同一张图被连续两次 reactive 触发时读两遍。
-   */
-  async function ensureShot(shot: string) {
-    if (shots[shot] || !path) return;
-    shots = { ...shots, [shot]: {} };
+  function clearPreview() {
+    ++previewRequest;
+    if (preview.url) URL.revokeObjectURL(preview.url);
+    preview = {};
+  }
+
+  async function loadPreview(shot: string | null, flowPath: string | null, epoch: number) {
+    clearPreview();
+    if (!shot || !flowPath) return;
+    const request = previewRequest;
     try {
-      const bytes = await invoke<ArrayBuffer>('read_shot', { flowPath: path, shot });
-      const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-      shots = { ...shots, [shot]: { url } };
+      const bytes = await invoke<ArrayBuffer>('read_shot', { flowPath, shot });
+      if (request !== previewRequest || epoch !== documentEpoch) return;
+      preview = { url: URL.createObjectURL(new Blob([bytes], { type: 'image/png' })) };
     } catch (e) {
-      shots = { ...shots, [shot]: { error: String(e) } };
+      if (request === previewRequest && epoch === documentEpoch) preview = { error: String(e) };
     }
   }
 
@@ -813,16 +838,19 @@ $: syncTitle(doc, path, dirty);
   }
 
   function useDocument(next: FlowDocument, filePath: string | null) {
+    documentEpoch += 1;
+    discardChildSessions();
+    childDirty = {};
     normalizeKeySteps(next.steps);
-    doc = next;
-    steps = next.steps;
+    documents.open(next);
+    history.reset();
     path = filePath;
     seedStoredPositions(filePath, next.steps);
     seedStoredPorts(filePath, next.steps);
     selected = 0;
     childSel = null;
-    selectedPath = null;
-    selectedPaths = [];
+    selection.clear();
+    openRuns = [];
     fitToken += 1;
     paletteOpen = false;
     // 换文件时把上一份的运行痕迹清掉；否则新画布会挂着旧报告的 ✓/✗。
@@ -934,6 +962,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   async function saveAs(): Promise<void> {
+    if (hasChildDirty) { note('请先保存展开的子流程，再另存父流程', true); return; }
     if (!doc) return;
     try {
       const picked = await save({
@@ -962,9 +991,9 @@ $: syncTitle(doc, path, dirty);
 
   /** 会丢东西的动作才问一句；别的一律写进底部输出。 */
   async function confirmDiscard(): Promise<boolean> {
-    if (!dirty) return true;
+    if (!dirty && !hasChildDirty) return true;
     const { ask } = await import('@tauri-apps/plugin-dialog');
-    return await ask('这份流程还没保存，继续会丢掉改动。', {
+    return await ask(hasChildDirty ? '展开的子流程还有改动未保存，继续会丢掉这些改动。请在子流程区域保存。' : '这份流程还没保存，继续会丢掉改动。', {
       title: '还没保存',
       kind: 'warning',
       okLabel: '丢掉改动',
@@ -981,7 +1010,7 @@ $: syncTitle(doc, path, dirty);
   async function startRun(dryRun: boolean): Promise<void> {
   /**
    * 第一条缺必填项的步骤（顶层与分组里的都算）。播放前用它拦一下，别让命令行去报错。
-   * 判据是 missingOf（lib/steps.ts），与检查器右上角那句「还缺 …」同源。
+   * 判据是 missingOf（lib/steps.ts），与抽屉顶部那句「还缺 …」同源。
    */
   function firstIncomplete(): {
     path: NodePath;
@@ -1008,6 +1037,10 @@ $: syncTitle(doc, path, dirty);
       return;
     }
     if (busy || running) return;
+    if (hasChildDirty) {
+      note('展开的子流程尚未保存：请先在子流程区域保存，再运行父流程', true);
+      return;
+    }
 
     // 缺必填项时播放必然中途失败，先在这里说清楚，并把那一行选中。
     // 试运行不拦——它就是拿来试的，命令行会把缺哪一项原样报出来。
@@ -1028,6 +1061,11 @@ $: syncTitle(doc, path, dirty);
     // 把当前编辑内容写成临时副本去跑（老外壳也是这么做的），绝不覆盖正在编辑的文件。
     let target = path;
     const scratch = !path || dirty;
+    // call 路径相对于父文件；临时副本会改变其目录，不能悄悄换到临时目录查找。
+    if (scratch && allNodes(steps).some((node) => node.step.type === 'call')) {
+      note('包含子流程调用：请先保存父流程，再试运行或播放，以保留相对路径', true);
+      return;
+    }
     if (scratch) {
       try {
         target = await invoke<string>('write_scratch_flow', { text: serialize() });
@@ -1076,7 +1114,7 @@ $: syncTitle(doc, path, dirty);
       running = true;
       paused = false;
       scratchRun = scratch;
-      await hideEditorWindow();
+      if (!clientPlaybackOnly(steps)) await hideEditorWindow();
       await invoke('run_flow', { path: target });
       note(runHint(false) + (scratch ? '（跑的是临时副本，磁盘上的文件没动）' : ''));
     } catch (e) {
@@ -1123,12 +1161,13 @@ $: syncTitle(doc, path, dirty);
    * 录制。
    *
    * 默认不自我提权：钩子看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到，
-   * 命令行会把这句话原样写进输出里。要录那些窗口，用 [`startRecordElevated`]。
+   * 要录那些窗口，需要用户显式选择提权录制。
    *
-   * 停止走产品自己的停止键（Ctrl+Alt+Q），不另开一条后门——它和录制用的是同一套注入，
-   * 能录就能停。
+   * 普通录制由外壳注册 Ctrl+Alt+Q，走命名事件通知命令行写盘，
+   * 不依赖前台焦点或注入的停止键。
    */
-  async function startRecord(): Promise<void> {
+  async function startRecord(kind: RecordingKind, elevated = false): Promise<void> {
+    recordMenuOpen = false;
     if (!runtime?.cliPath) {
       note('这台机器上没找到命令行 KeyMouse.exe', true);
       return;
@@ -1138,10 +1177,12 @@ $: syncTitle(doc, path, dirty);
       return;
     }
 
+    recordingKind = kind;
+    const label = recordingLabels[kind];
     const { save } = await import('@tauri-apps/plugin-dialog');
     const target = await save({
-      title: '把这次录制存到哪',
-      defaultPath: path ? path.replace(/\.json$/i, '-录制.json') : '录制.json',
+      title: `保存${elevated ? '管理员' : ''}${label}`,
+      defaultPath: path ? path.replace(/\.json$/i, `-${label}.json`) : `${label}.json`,
       filters: [{ name: '流程', extensions: ['json'] }],
     });
     if (!target) return;
@@ -1151,13 +1192,13 @@ $: syncTitle(doc, path, dirty);
     progress = null;
     outputOpen = true;
     recordingPath = target;
-    recordMode = 'self';
+    recordMode = elevated ? 'elevated' : 'self';
     running = true;
     // 先把主窗口让开，再让录制命令行上钩子：录到一半才藏，会把开头的鼠标轨迹录成"点编辑器"。
-    await hideEditorWindow();
+    if (!elevated) await hideEditorWindow();
     try {
-      await invoke('record_flow', { outPath: target, durationMs: 0 });
-      note('开始录了：去操作你要录的窗口；按 Ctrl+Alt+Q 停止');
+      await invoke(elevated ? 'record_flow_elevated' : 'record_flow', { outPath: target, durationMs: 0, mode: kind });
+      if (recordingPath === target) note(`${label}：${elevated ? 'UAC 确认后开始，' : ''}按 Ctrl+Alt+Q 停止`);
     } catch (e) {
       running = false;
       recordingPath = null;
@@ -1165,51 +1206,6 @@ $: syncTitle(doc, path, dirty);
       await restoreEditorWindow();
       void invoke('hide_hud').catch(() => undefined);
       note(`录制没起来：${e}`, true);
-    }
-  }
-
-  /**
-   * 以管理员权限录一轮。
-   *
-   * UAC 里点「是」之后，录制在提权进程里跑——那些窗口上的点击才录得到。代价写在这儿：
-   * 提权进程的权限比外壳高，外壳既杀不掉它也送不进停止键，所以
-   *
-   * - 界面**不做**迷你模式（那细带上的「停止」按了也不会生效，摆着就是骗人）；
-   * - 界面上写清楚停法：`Ctrl+Alt+Q`，或连按两次 `Esc`；
-   * - 结束与否靠命令行退出 + 文件出现来判断（`shell://run-exit` 照常会来）。
-   */
-  async function startRecordElevated(): Promise<void> {
-    if (!runtime?.cliPath) {
-      note('这台机器上没找到命令行 KeyMouse.exe', true);
-      return;
-    }
-    if (busy || running) {
-      note('正在跑一条流程，先停止再录', true);
-      return;
-    }
-
-    const { save } = await import('@tauri-apps/plugin-dialog');
-    const target = await save({
-      title: '这次提权录制存到哪',
-      defaultPath: path ? path.replace(/\.json$/i, '-录制.json') : '录制.json',
-      filters: [{ name: '流程', extensions: ['json'] }],
-    });
-    if (!target) return;
-
-    lines = [];
-    results = {};
-    progress = null;
-    outputOpen = true;
-    try {
-      await invoke('record_flow_elevated', { outPath: target, durationMs: 0 });
-      recordingPath = target;
-      recordMode = 'elevated';
-      running = true;
-      note('UAC 里点「是」之后开始录：结束时按 Ctrl+Alt+Q，或连按两次 Esc');
-    } catch (e) {
-      recordingPath = null;
-      recordMode = null;
-      note(`提权录制没起来：${e}`, true);
     }
   }
 
@@ -1301,42 +1297,21 @@ $: syncTitle(doc, path, dirty);
 
   /** 记一份"改之前的文档"。任何会改 steps 的动作都先调它。 */
   function snapshot() {
-    if (!doc) return;
-    undoStack.push(JSON.stringify(doc));
-    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
-    undoSections.push(copySections(sections));
-    if (undoSections.length > HISTORY_LIMIT) undoSections.shift();
-    redoStack.length = 0;
-    redoSections.length = 0;
+    if (doc) history.record(historyEntry);
   }
 
-  /**
-   * 输入框是逐字触发 on:input 的。每敲一个字都记一份快照，撤销就会退回一个字，
-   * 而人期望的是"退回改之前"。所以同一个字段 800ms 内的连续修改只记一次。
-   */
-  let lastEditKey = '';
-  let lastEditAt = 0;
   function snapshotEdit(key: string) {
-    const now = Date.now();
-    if (key === lastEditKey && now - lastEditAt < 800) {
-      lastEditAt = now;
-      return;
-    }
-    snapshot();
-    lastEditKey = key;
-    lastEditAt = now;
+    if (doc) history.record(historyEntry,key);
   }
 
   function restore(json: string) {
     const next = JSON.parse(json) as FlowDocument;
     normalizeKeySteps(next.steps ?? []);
-    doc = next;
-    steps = next.steps ?? [];
+    documents.open(next);
     selected = Math.min(selected, Math.max(steps.length - 1, 0));
-    selectedPaths = selectedPaths.filter((path) => stepAt(steps, path) !== undefined);
-    // 撤销可能把当前节点（连同它的父分支）一起撤掉；路径失效就收起抽屉，别指向空气。
-    if (selectedPath && !stepAt(steps, selectedPath)) {
-      selectedPath = selectedPaths[selectedPaths.length - 1] ?? null;
+    const invalidPrimary = selectedPath && !stepAt(steps, selectedPath);
+    selection.retain(steps);
+    if (invalidPrimary) {
       selected = selectedPath?.[0]?.index ?? 0;
       childSel = selectedPath && selectedPath.length > 1 ? selectedPath[1].index : null;
     }
@@ -1346,37 +1321,30 @@ $: syncTitle(doc, path, dirty);
   }
 
   function undo() {
-    const previous = undoStack.pop();
-    if (previous === undefined || !doc) return;
-    redoStack.push(JSON.stringify(doc));
-    redoSections.push(copySections(sections));
-    restore(previous);
-    sections = undoSections.pop() ?? [];
-    persistSections();
-    note('撤销了一步');
+    if (hasChildDirty) { note('请先保存展开的子流程，再撤销父流程', true); return; }
+    if (!doc) return;
+    const previous = history.undo(historyEntry);
+    if (!previous) return;
+    restore(previous.json); sections = previous.sections; persistSections(); note('撤销了一步');
   }
 
   function redo() {
-    const next = redoStack.pop();
-    if (next === undefined || !doc) return;
-    undoStack.push(JSON.stringify(doc));
-    undoSections.push(copySections(sections));
-    restore(next);
-    sections = redoSections.pop() ?? [];
-    persistSections();
-    note('重做了一步');
+    if (hasChildDirty) { note('请先保存展开的子流程，再重做父流程', true); return; }
+    if (!doc) return;
+    const next = history.redo(historyEntry);
+    if (!next) return;
+    restore(next.json); sections = next.sections; persistSections(); note('重做了一步');
   }
 
-  $: canUndo = undoStack.length > 0;
-  $: canRedo = redoStack.length > 0;
+  $: ({canUndo, canRedo} = $history);
 
   // ── 步骤的增删与排序 ───────────────────────────────────
 
   function applySteps(next: FlowStep[], shift?: { kind: 'insert' | 'delete'; at: number }) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     snapshot();
-    doc = { ...doc, steps: next };
-    steps = next;
+    documents.replaceSteps(next);
     // 插入/删除一行时，它后面的分组头要跟着挪一格，否则分组会自己"吞"掉一行。
     if (shift?.kind === 'insert') sections = shiftAfterInsert(sections, shift.at);
     if (shift?.kind === 'delete') sections = shiftAfterDelete(sections, shift.at);
@@ -1387,26 +1355,27 @@ $: syncTitle(doc, path, dirty);
   // ── 分组（纯界面，不进 JSON）────────────────────────────
 
   /** 换文件时把这份文件的分组捞回来；没有文件（还没保存）就空着。 */
+  let sectionsRevision = 0;
   async function loadSections() {
-    if (!path) {
-      sections = [];
-      return;
-    }
+    const revision = ++sectionsRevision;
+    sections = [];
+    if (!path) return;
     try {
       const list = (await invoke('load_sections', { path })) as Section[];
-      sections = normalizeSections(list, steps.length);
+      if (revision === sectionsRevision) sections = normalizeSections(list, steps.length);
     } catch {
-      sections = [];
+      // No ledger is valid; retain the current document’s state.
     }
   }
 
   /** 把当前分组写回账本。没有文件路径时只留在内存里——存不了就别假装存了。 */
   function persistSections() {
+    const revision = ++sectionsRevision;
     sections = normalizeSections(sections, steps.length);
     if (!path) return;
     void invoke<Section[]>('save_sections', { path, sections })
       .then((next) => {
-        sections = normalizeSections(next, steps.length);
+        if (revision === sectionsRevision) sections = normalizeSections(next, steps.length);
       })
       .catch(() => undefined);
   }
@@ -1500,8 +1469,7 @@ $: syncTitle(doc, path, dirty);
     const moved = moveSection(steps, sections, drag.at, drag.before);
     if (moved.steps === steps) return;
     snapshot();
-    doc = { ...doc, steps: moved.steps };
-    steps = moved.steps;
+    documents.replaceSteps(moved.steps);
     if (moved.sections !== sections) sections = moved.sections;
     persistSections();
     touch();
@@ -1555,6 +1523,28 @@ $: syncTitle(doc, path, dirty);
   }
 
 
+  /**
+   * 点中"连续操作"卡片时要选中整段：删除、复制、拖动因此天然按组生效，
+   * 不需要给画布再加一套"组"的编辑原语。已经展开的组头是普通节点，只选它自己。
+   */
+  function groupAt(path: NodePath): NodePath[] {
+    if (openRuns.includes(pathKey(path))) return [path];
+    const run = runAtHead(steps, path);
+    return run ? run.paths : [path];
+  }
+
+  /** 展开一段连续操作：组里每一步都铺回自己的卡片；收起时选中只剩组头。 */
+  function toggleRun(head: NodePath) {
+    const key = pathKey(head);
+    const run = runAtHead(steps, head);
+    const closing = openRuns.includes(key);
+    openRuns = closing ? openRuns.filter((item) => item !== key) : [...openRuns, key];
+    applySelection([head], head);
+    note(closing
+      ? '已收起连续操作'
+      : `已展开连续操作：${run ? run.paths.length : 0} 步`);
+  }
+
   /** 选中一个画布节点；路径失效时收起抽屉，不指向空气。 */
   function selectPath(path: NodePath | null, additive = false, range = false) {
     paletteOpen = false;
@@ -1569,32 +1559,45 @@ $: syncTitle(doc, path, dirty);
       const to = nodes.findIndex((node) => samePath(node.path, path));
       if (from >= 0 && to >= 0) {
         const [start, end] = from < to ? [from, to] : [to, from];
-        applySelection(nodes.slice(start, end + 1).map((node) => node.path), path);
+        const paths: NodePath[] = [];
+        for (const node of nodes.slice(start, end + 1)) {
+          for (const member of groupAt(node.path)) {
+            if (!paths.some((item) => samePath(item, member))) paths.push(member);
+          }
+        }
+        applySelection(paths, path);
         return;
       }
     }
     if (!additive) {
-      applySelection([path], path);
+      applySelection(groupAt(path), path);
       return;
     }
-    const exists = selectedPaths.findIndex((item) => samePath(item, path)) >= 0;
+    const group = groupAt(path);
+    const exists = group.every((member) => selectedPaths.some((item) => samePath(item, member)));
     if (exists) {
-      const paths = selectedPaths.filter((item) => !samePath(item, path));
-      const primary = selectedPath && !samePath(selectedPath, path)
+      const paths = selectedPaths.filter((item) => !group.some((member) => samePath(member, item)));
+      const primary = selectedPath && !group.some((member) => samePath(member, selectedPath))
         ? selectedPath
         : paths[paths.length - 1] ?? null;
       applySelection(paths, primary);
       return;
     }
-    applySelection([...selectedPaths, path], path);
+    const paths = [...selectedPaths];
+    for (const member of group) {
+      if (!paths.some((item) => samePath(item, member))) paths.push(member);
+    }
+    applySelection(paths, path);
   }
 
   function applySelection(paths: NodePath[], primary: NodePath | null) {
-    selectedPaths = paths;
-    selectedPath = primary;
+    selection.select(paths, primary);
     selected = primary?.[0]?.index ?? 0;
     childSel = primary && primary.length > 1 ? primary[1].index : null;
   }
+
+  /** 多选恰好是一段连续操作时，抽屉用一句人话代替"已选 N 个节点"。 */
+  $: selectedRun = selectedPaths.length >= MIN_RUN ? runSelection(steps, selectedPaths) : null;
 
   /** 画布四向入口：记下待插入位置，再打开同一个添加面板。 */
   function openQuickAdd(path: NodePath, position: 'before' | 'after') {
@@ -1608,8 +1611,9 @@ $: syncTitle(doc, path, dirty);
     if (!paletteOpen) quickAdd = null;
   }
 
-  /** 在选中节点之后插一步；选中块节点时进它的第一条分支（成立时/循环体）。 */
+  /** 在选中节点之后插一步；选中块节点时进它的第一条分支（条件成立/循环体）。 */
   async function addStep(type: StepType) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) await newFlow();
     if (!doc) return;
     const fresh = makeStep(type);
@@ -1653,8 +1657,9 @@ $: syncTitle(doc, path, dirty);
     paletteOpen = false;
   }
 
-  /** 空分支上那个「加一步」：塞一个最小可用的等待步骤，随后就能在抽屉里改。 */
+  /** 检查器「分支 · 添加」：在指定分支末尾塞一个等待步骤，随后就能在抽屉里改。 */
   function addEmptyBranchPath(parent: NodePath, branch: BranchKey) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     const host = stepAt(steps, parent);
     if (!host) return;
@@ -1663,10 +1668,11 @@ $: syncTitle(doc, path, dirty);
     const next = appendToBranch(steps, parent, branch, fresh);
     applySteps(next);
     selectPath([...parent, { branch, index: count }]);
-    note(`往「${stepTitle(host.type)}」${branch === 'else' ? '的否则分支' : ''}里加了一步`);
+    note('已加一步');
   }
 
   function deleteSelected() {
+    if (hasChildDirty) { note('请先保存展开的子流程，再删除父流程节点', true); return; }
     if (!doc) return;
     const paths = selectedPaths.length > 0 ? selectedPaths : selectedPath ? [selectedPath] : [];
     if (paths.length === 0) return;
@@ -1691,6 +1697,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function duplicateSelected() {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc || !selectedPath) return;
     const path = selectedPath;
     const last = path[path.length - 1];
@@ -1713,6 +1720,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function pasteAfterSelected() {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     if (clipboardSteps.length === 0) {
       note('还没有复制操作', true);
@@ -1737,6 +1745,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function moveSelected(delta: -1 | 1) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc || !selectedPath) return;
     const path = selectedPath;
     const last = path[path.length - 1];
@@ -1757,15 +1766,32 @@ $: syncTitle(doc, path, dirty);
 
   /** 画布拖拽落点：可以换父节点/分支；被搬的一组节点保持文档顺序。 */
   function handleMove(from: NodePath[], parent: NodePath, branch: BranchKey, index: number) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc || from.length === 0) return;
-    const result = moveNodes(steps, from, parent, branch, index);
+    // 拖的是收起的合并卡片时，搬整段：只搬组头会把这一组拆散。
+    const head = from[0];
+    const run = from.length === 1 && head && !openRuns.includes(pathKey(head))
+      ? runAtHead(steps, head)
+      : null;
+    const result = moveNodes(steps, run ? run.paths : from, parent, branch, index);
     if (result.moved.length === 0) return;
     applySteps(result.steps);
     applySelection(result.moved, result.moved[0]);
     if (result.moved.length > 1) note(`一起移动了 ${result.moved.length} 步`);
   }
 
-  /** ↑ / ↓ 在画布的可读顺序里换一个节点（父 → 成立时 → 否则）。 */
+  /** 框选落点：框中合并卡片时把它整段纳入选择。 */
+  function selectRange(paths: NodePath[]) {
+    const out: NodePath[] = [];
+    for (const path of paths) {
+      for (const member of groupAt(path)) {
+        if (!out.some((item) => samePath(item, member))) out.push(member);
+      }
+    }
+    applySelection(out, out[0] ?? null);
+  }
+
+  /** ↑ / ↓ 在画布的可读顺序里换一个节点（父 → 条件成立 → 条件不符）。 */
   function selectRelative(delta: -1 | 1) {
     const nodes = allNodes(steps);
     if (nodes.length === 0) return;
@@ -1776,6 +1802,7 @@ $: syncTitle(doc, path, dirty);
 
   /** 复制这一步（右键菜单里的一项）。副本插在原件后面，并选中副本。 */
   function duplicateStep(index: number) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     const next = duplicateAt(steps, index);
     if (next.length === steps.length) return;
     applySteps(next, { kind: 'insert', at: index + 1 });
@@ -1914,6 +1941,7 @@ $: syncTitle(doc, path, dirty);
    * 而右键点的行不一定已经被选中——用参数把"点的是谁"说清楚，别去改选中状态再动手。
    */
   function deleteChildStep(index: number, child: number) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     const ref = childrenOf(steps[index])[child];
     if (!ref) return;
@@ -1927,6 +1955,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function moveChildStep(index: number, child: number, delta: number) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     const ref = childrenOf(steps[index])[child];
     if (!ref) return;
@@ -1938,6 +1967,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function duplicateChildStep(index: number, child: number) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     const ref = childrenOf(steps[index])[child];
     if (!ref) return;
@@ -1950,6 +1980,7 @@ $: syncTitle(doc, path, dirty);
   }
   /** 删掉选中的那一步：选的是组里的子步骤就只删它，不动整组。 */
   function deleteStep(index = selected) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc || steps.length === 0) return;
     if (childSel !== null && index === selected) {
       const ref = childrenOf(steps[index])[childSel];
@@ -1968,6 +1999,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function stepUp(index = selected) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     if (childSel !== null && index === selected) {
       const ref = childrenOf(steps[index])[childSel];
@@ -1982,6 +2014,7 @@ $: syncTitle(doc, path, dirty);
   }
 
   function stepDown(index = selected) {
+    if (hasChildDirty) { note('请先保存展开的子流程，再调整父流程结构', true); return; }
     if (!doc) return;
     if (childSel !== null && index === selected) {
       const ref = childrenOf(steps[index])[childSel];
@@ -2089,6 +2122,7 @@ $: syncTitle(doc, path, dirty);
 
   function onKeydown(event: KeyboardEvent) {
     const element = event.target as HTMLElement | null;
+    if (element?.closest('.child-panel')) return;
     const typing = element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA';
     const mod = event.ctrlKey || event.metaKey;
     const shift = event.shiftKey;
@@ -2262,8 +2296,7 @@ $: syncTitle(doc, path, dirty);
 
   function touch() {
     dirty = true;
-    steps = steps;
-    doc = doc;
+    documents.notifyEdit();
   }
 
   /**
@@ -2357,8 +2390,7 @@ $: syncTitle(doc, path, dirty);
   function replaceCurrent(next: FlowStep) {
     if (!doc || !selectedPath) return;
     const top = replaceAt(steps, selectedPath, next);
-    doc = { ...doc, steps: top };
-    steps = top;
+    documents.replaceSteps(top);
     touch();
   }
 
@@ -2366,17 +2398,17 @@ $: syncTitle(doc, path, dirty);
    *  走 `writePath` 而不是就地赋值——空值要删键、删空的嵌套对象要连父键一起删，
    *  这些规矩写在一处（lib/fieldpath.ts），模板里就不用各个记得。 */
   function applyField(path: string, value: unknown) {
+    if (path === 'flow' && hasChildDirty) { note('请先保存展开的子流程，再修改调用路径', true); return; }
     const step = current;
     if (!step) return;
     snapshotEdit(`field:${selected}:${childSel ?? ''}:${path}`);
     // 必须换一份数组/对象：Svelte 只认赋值，原地改字段列表那行不会重画——
     // 表现就是"我改了输入文字，左边还显示旧的"（用户报过这个）。
-    replaceCurrent(writePath(step, path, value) as unknown as FlowStep);
+    replaceCurrent(editStepField(step, path, value));
   }
 
-  /** 「取点」「取一块」：屏幕上的事交给命令行（浮层与坐标换算都在它那儿），
-   *  这里只把结果写回字段。选中窗口一并填进 target.process——老外壳也这么做：
-   *  只有坐标不知道是哪块屏幕，回放到别的窗口上就偏了。 */
+  /** 「取点」「取一块」：命令行同时给屏幕与相对坐标，纯映射按字段空间选用；
+   *  新拖动默认跟着取点落点走——窗口里取就是客户区，桌面上取就是屏幕；显式空间与用户目标保留。 */
   async function pickField(kind: 'point' | 'region', path: string) {
     const step = current;
     if (!step) return;
@@ -2385,40 +2417,18 @@ $: syncTitle(doc, path, dirty);
       // 取点/取区域时先藏主窗口：否则十字线和选区浮层会压在编辑器上，
       // 用户想选的目标窗口也被挡住。默认就是藏；取消或失败都会在 finally 里还回来。
       await hideEditorWindow();
-      const picked = await invoke<{
-        space: string;
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        process?: string | null;
-        title?: string | null;
-      } | null>('pick_region', { point: kind === 'point' });
+      const picked = await invoke<PickResult | null>('pick_region', { point: kind === 'point' });
       if (!picked) {
         note('取点取消了');
         return;
       }
+      const result = applyPickedField(step, kind, path, picked);
       snapshotEdit(`pick:${selected}:${childSel ?? ''}:${path}`);
-      // 同上：换成新对象再一次性替换，否则列表那行不跟着变。
-      let next = writePath(step, path, {
-        space: picked.space,
-        x: picked.x,
-        y: picked.y,
-        ...(kind === 'region' ? { width: picked.width, height: picked.height } : {}),
-      });
-      const attachWindow = shouldAttachWindow(picked.space);
-      if (attachWindow && picked.process) {
-        // `probe.region` / `when.region` 的窗口属于那个嵌套对象，不是步骤自己的 target；
-        // 写错层会让条件读一个空选择器。屏幕坐标不绑定窗口，不自动填进程名。
-        const owner = path.includes('.') ? path.slice(0, path.lastIndexOf('.') + 1) : '';
-        next = writePath(next, `${owner}target.process`, picked.process);
-        if (picked.title) next = writePath(next, `${owner}target.title`, picked.title);
-      }
-      replaceCurrent(next as unknown as FlowStep);
-      const where = pickSpaceLabel(picked.space);
+      replaceCurrent(result.step);
+      const where = pickSpaceLabel(result.coordinates.space);
       note(
-        '取了 ' + where + '上的 ' + picked.x + ',' + picked.y +
-          (attachWindow && picked.process ? '（' + picked.process + '）' : ''),
+        '取了 ' + where + '上的 ' + result.coordinates.x + ',' + result.coordinates.y +
+          (result.attachedProcess ? '（' + result.attachedProcess + '）' : ''),
       );
     } catch (e) {
       note(`取点失败：${String(e)}`, true);
@@ -2491,17 +2501,7 @@ $: syncTitle(doc, path, dirty);
   </div>
 {:else}
 <div class="shell">
-  <header class="topbar">
-    <div class="brand">
-      <span class="mark" aria-hidden="true">▞</span>
-      <span class="product">KeyMouse</span>
-      <span class="kind">流程编辑器</span>
-    </div>
-    <div class="doc">
-      <span class="name" class:warn={dirty}>{fileLabel}{#if dirty}<span class="unsaved">未保存</span>{/if}</span>
-      {#if path}<span class="path" title={path}>{path}</span>{/if}
-    </div>
-    <div class="file-actions">
+  <FileToolbar {fileLabel} {dirty} {path}>
       {#if view === 'settings'}
         <!-- 设置页不是文档：撤销/保存这些跟它无关，只留一个回程。 -->
         <button class="ghost" on:click={() => (view = 'flow')}>← 返回流程</button>
@@ -2517,8 +2517,7 @@ $: syncTitle(doc, path, dirty);
         <button class="ghost" on:click={saveFlow} disabled={!canSave || busy}>保存</button>
         <button class="ghost" on:click={saveAs} disabled={!doc || busy}>另存为</button>
       {/if}
-    </div>
-  </header>
+  </FileToolbar>
 
   {#if view !== 'settings'}
   <nav class="toolbar">
@@ -2589,11 +2588,11 @@ $: syncTitle(doc, path, dirty);
         <button
           class="ghost"
           class:on={recordingPath !== null}
-          on:click={startRecord}
+          on:click={() => startRecord(recordingKind)}
           disabled={busy || running}
-          title="按当前权限录制：提权窗口上的点击录不到，命令行会说明"
+          title={recordingKind === 'key' ? '录制关键动作，每步默认等待 1000 毫秒' : '录制鼠标轨迹和每步实际等待'}
         >
-          <span class="rec-dot" aria-hidden="true"></span>{recordingPath ? '录制中' : '录制'}
+          <span class="rec-dot" aria-hidden="true"></span>{recordingPath ? '录制中' : recordingLabels[recordingKind]}
         </button>
         <button
           class="ghost rec-caret"
@@ -2608,12 +2607,10 @@ $: syncTitle(doc, path, dirty);
         </button>
         {#if recordMenuOpen}
           <div class="record-menu" role="menu" data-popup="record">
-            <button role="menuitem" on:click={() => { recordMenuOpen = false; void startRecord(); }}>
-              录制（当前权限）
-            </button>
-            <button role="menuitem" on:click={() => { recordMenuOpen = false; void startRecordElevated(); }}>
-              以管理员权限录制（会弹 UAC）
-            </button>
+            <button role="menuitem" on:click={() => startRecord('key')} title="保留任务动作，每步默认等待 1000 毫秒">关键录制</button>
+            <button role="menuitem" on:click={() => startRecord('full')} title="保留鼠标轨迹和每步实际等待">完全录制</button>
+            <button role="menuitem" on:click={() => startRecord('key', true)}>管理员关键录制</button>
+            <button role="menuitem" on:click={() => startRecord('full', true)}>管理员完全录制</button>
             <p class="record-tip">提权窗口上的点击只有提权录制才录得到；那一轮要自己按 Ctrl+Alt+Q 结束。</p>
           </div>
         {/if}
@@ -2720,6 +2717,7 @@ $: syncTitle(doc, path, dirty);
           {/if}
         </section>
       {:else}
+        {#each [documentEpoch] as epoch (epoch)}
         <FlowCanvas
           {steps}
           selected={selectedPath}
@@ -2727,17 +2725,23 @@ $: syncTitle(doc, path, dirty);
           {results}
           {fitToken}
           {freeLayout}
+          {openRuns}
           positions={nodePositions}
           ports={edgePorts}
           onselect={selectPath}
+          ontogglerun={toggleRun}
           onmove={handleMove}
           onmovefree={handleFreeMove}
-          onadd={addEmptyBranchPath}
           onquickadd={openQuickAdd}
           onportchange={handlePortChange}
           onportreset={handlePortReset}
-          onrange={(paths) => applySelection(paths, paths[0] ?? null)}
-        />
+          onrange={selectRange}
+        >
+          <svelte:fragment slot="child" let:node>
+            <ChildFlow identity={`document-${epoch}:${pathKey(node.path)}`} parentPath={path} flow={node.step.flow ?? ''} ancestorPaths={path ? [path] : []} ondirty={(key, value) => updateChildDirty(key, value, epoch)} />
+          </svelte:fragment>
+        </FlowCanvas>
+        {/each}
 
         {#if helpOpen}
           <div class="help-card" role="dialog" aria-label="键盘与版本">
@@ -2750,6 +2754,7 @@ $: syncTitle(doc, path, dirty);
               <dt>拖空白</dt><dd>左键框选 · 右键平移画布</dd>
               <dt>拖节点</dt><dd>{freeLayout ? '自由移动位置；切到结构视图后拖动排序' : '拖动所选节点；可落进任意分支'}</dd>
               <dt>长按节点</dt><dd>把节点加入选择，再拖可整组搬</dd>
+              <dt>连续操作</dt><dd>相邻 ≥3 步的移动/滚轮并成一张卡；点「展开」逐步改。</dd>
               <dt>Ctrl/⌘+点</dt><dd>追加或取消一个节点</dd>
               <dt>Shift+点</dt><dd>从主选扩展到目标节点</dd>
               <dt>Ctrl+A</dt><dd>全选节点，再拖可整组搬</dd>
@@ -2785,30 +2790,43 @@ $: syncTitle(doc, path, dirty);
             </header>
 
             <div class="drawer-body">
-              {#if selectedPaths.length > 1}
+              {#if selectedRun}
+                <p class="drawer-multi">
+                  连续操作 <strong>{selectedRun.paths.length}</strong> 步
+                  <span class="drawer-multi-origins">（{selectedRun.fromOrigin}–{selectedRun.toOrigin}）</span>
+                  · 整段移动；「展开」可逐步改。
+                </p>
+              {:else if selectedPaths.length > 1}
                 <p class="drawer-multi">
                   已选 <strong>{selectedPaths.length}</strong> 个节点
                   <span class="drawer-multi-origins">（{selectedPaths.slice(0, 6).map((item) => originOfPath(steps, item)).join('、')}{selectedPaths.length > 6 ? '…' : ''}）</span>
-                  · 拖动任意一个会整组移动，抽屉显示主选节点。
+                  · 拖动整组移动。
                 </p>
               {/if}
               {#if missingOf(current).length > 0}
-                <p class="drawer-warn">{missingHint(current)}：补齐之后才能播放。</p>
+                <p class="drawer-warn">{missingHint(current)}；补齐后可播放。</p>
               {/if}
 
               {#key selectedPath}
-                <Inspector {schema} step={current} onchange={applyField} onpick={pickField} />
+                <Inspector
+                  {schema}
+                  step={current}
+                  path={selectedPath ?? []}
+                  onchange={applyField}
+                  onpick={pickField}
+                  onaddbranch={addEmptyBranchPath}
+                />
               {/key}
 
               {#if currentShot}
                 <h2 class="section">证据</h2>
                 <figure class="shot">
-                  {#if shots[currentShot]?.url}
+                  {#if preview.url}
                     <button class="shot-frame" on:click={() => openShot(currentShot, false)} title="用系统看图程序打开">
-                      <img src={shots[currentShot].url} alt="这一步当时的样子" />
+                      <img loading="lazy" decoding="async" src={preview.url} alt="这一步当时的样子" />
                     </button>
-                  {:else if shots[currentShot]?.error}
-                    <p class="shot-hint">读不到这张图：{shots[currentShot].error}</p>
+                  {:else if preview.error}
+                    <p class="shot-hint">读不到这张图：{preview.error}</p>
                   {:else}
                     <p class="shot-hint">正在读…</p>
                   {/if}
@@ -2831,9 +2849,6 @@ $: syncTitle(doc, path, dirty);
             </div>
 
             <footer class="drawer-foot">
-              {#if current && branchesOf(current).length > 0}
-                <button class="ghost drawer-add" on:click={() => (paletteOpen = true)}>＋ 子步骤</button>
-              {/if}
               <button class="ghost" on:click={duplicateSelected}>复制</button>
               <button class="ghost" on:click={() => moveSelected(-1)} disabled={!canMove(-1)}>上移</button>
               <button class="ghost" on:click={() => moveSelected(1)} disabled={!canMove(1)}>下移</button>
@@ -2876,6 +2891,12 @@ $: syncTitle(doc, path, dirty);
       <header>
         <h2>运行输出</h2>
         <div class="output-actions">
+          <button
+            class="ghost small"
+            disabled={!lines.length || savingRunLog}
+            title="保存当前保留的输出；运行中保存点击时的快照"
+            on:click={() => void saveRunLog()}
+          >{savingRunLog ? '保存中…' : '保存日志…'}</button>
           {#if lines.length}
             <button
               class="ghost small"
@@ -2924,107 +2945,6 @@ $: syncTitle(doc, path, dirty);
     display: grid;
     grid-template-rows: auto auto 1fr auto auto;
     position: relative;
-  }
-
-  /* ── 顶栏：报头 ───────────────────────────────────────
-     三段：kicker（等宽小字）／衬线文件标题 + 等宽路径／右侧动作。
-     整页只有这一条 1.5px 的实线，下面工具栏、列表、检查器一律发丝线。 */
-  .topbar {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--kp-gap-xl);
-    padding: 13px var(--kp-gap-xl) 11px;
-    border-bottom: 1.5px solid var(--kp-ink);
-  }
-
-  .brand {
-    display: flex;
-    align-items: baseline;
-    gap: 7px;
-    font: 600 10.5px/1 var(--kp-font-mono);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--kp-ink2);
-  }
-
-  .mark {
-    color: var(--kp-signal);
-    font-size: 13px;
-    transform: translateY(-1px);
-  }
-
-  .product {
-    font-weight: 600;
-  }
-
-  .kind {
-    color: var(--kp-ink3);
-    font-weight: 500;
-    letter-spacing: 0.14em;
-  }
-
-  /* 打开的是哪个文件：标题在上（衬线），路径在下（等宽、可截断） */
-  .doc {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .doc .name {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font: 500 17px/1.3 var(--kp-font-serif);
-    letter-spacing: 0.02em;
-    color: var(--kp-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .doc .name.warn {
-    color: var(--kp-ink2);
-  }
-
-  .doc .path {
-    font-size: 11.5px;
-    line-height: 1.4;
-    color: var(--kp-ink3);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .unsaved {
-    flex: none;
-    padding: 1px 6px;
-    border: 1px solid var(--kp-signal);
-    border-radius: 2px;
-    color: var(--kp-signal);
-    font: 500 10px/1.5 var(--kp-font-mono);
-    letter-spacing: 0.08em;
-  }
-
-  .file-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .file-actions .ghost:disabled {
-    opacity: 0.4;
-  }
-
-  .path {
-    font-family: var(--kp-font-mono);
-    font-size: var(--kp-fs-small);
-    color: var(--kp-ink3);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    user-select: text;
   }
 
   /* ── 工具栏 ─────────────────────────────────────────── */
@@ -4878,11 +4798,6 @@ $: syncTitle(doc, path, dirty);
     height: 27px;
     padding: 0 8px;
     font-size: 11.5px;
-  }
-
-  .drawer-foot .drawer-add {
-    margin-right: auto;
-    color: var(--kp-signal);
   }
 
   .drawer-foot .danger {

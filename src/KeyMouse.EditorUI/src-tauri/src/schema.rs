@@ -1,6 +1,6 @@
 //! 流程格式的契约：界面照它渲染，不再各写一份字段表。
 //!
-//! 老外壳（WinUI）是直接读 `KeyMouse.Core` 里的 `FlowSchema`；新外壳是独立进程，
+//! 老外壳（WinUI）是直接读 `KeyMouse.Core.Flow.Validation` 里的 `FlowSchema`；新外壳是独立进程，
 //! 所以走命令行要一份 `KeyMouse schema` 的 JSON。多一次进程启动，换来的是
 //! **契约只有一份**：命令行加了字段，界面下次打开就有，不需要两边同步改代码。
 
@@ -31,7 +31,13 @@ pub fn flow_schema() -> Result<SchemaPayload, String> {
         });
     }
 
-    let output = crate::process::cli_command(&cli)
+    let json = read_schema(&cli)?;
+    let _ = CACHED.set(json.clone());
+    Ok(SchemaPayload { json, cli_path: cli.display().to_string() })
+}
+
+pub(crate) fn read_schema(cli: &std::path::Path) -> Result<String, String> {
+    let output = crate::process::cli_command(cli)
         .arg("schema")
         // 与 run.rs 同一个理由：让命令行吐 UTF-8，而不是跟着控制台码页走。
         .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
@@ -53,9 +59,5 @@ pub fn flow_schema() -> Result<SchemaPayload, String> {
         return Err(format!("schema 的输出不像 JSON：{}", json.chars().take(80).collect::<String>()));
     }
 
-    let _ = CACHED.set(json.clone());
-    Ok(SchemaPayload {
-        json,
-        cli_path: cli.display().to_string(),
-    })
+    Ok(json)
 }

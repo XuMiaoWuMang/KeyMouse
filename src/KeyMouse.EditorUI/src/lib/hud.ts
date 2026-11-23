@@ -8,17 +8,72 @@
  * - 看不清的行宁可丢掉，也不猜一个会误导人的步骤名。
  */
 
-export type HudStatus = 'current' | 'done' | 'skipped' | 'failed';
+export type HudStatus = 'current' | 'done' | 'skipped' | 'failed' | 'cancelled';
+export const HUD_EVENT_PREFIX = '@keymouse-hud/v1 ';
+export const HUD_CHILD_ROWS = 3;
+
+export type HudEvent = {
+  seq: number;
+  id: string;
+  scopeId: string;
+  kind: 'step' | 'call';
+  origin: string;
+  index: number;
+  total: number | null;
+  command: string;
+  status: HudStatus;
+  exitCode?: number | null;
+};
+
+export function parseHudEvent(line: string): HudEvent | null {
+  if (!line.startsWith(HUD_EVENT_PREFIX)) return null;
+  try {
+    const e = JSON.parse(line.slice(HUD_EVENT_PREFIX.length));
+    if (!e || !Number.isSafeInteger(e.seq) || e.seq < 1 ||
+      typeof e.id !== 'string' || !e.id || e.id === 'root' || typeof e.scopeId !== 'string' || !e.scopeId ||
+      e.id === e.scopeId || !['step', 'call'].includes(e.kind) ||
+      typeof e.origin !== 'string' || typeof e.command !== 'string' ||
+      !Number.isSafeInteger(e.index) || e.index < 1 ||
+      !(e.total === null || (Number.isSafeInteger(e.total) && e.total >= e.index)) ||
+      !['current', 'done', 'skipped', 'failed', 'cancelled'].includes(e.status)) return null;
+    return e;
+  } catch { return null; }
+}
 
 export type HudRow = {
   index: number;
-  total: number;
+  total: number | null;
+  id?: string;
+  kind?: 'step' | 'call';
+  children?: HudRow[];
   name: string;
   detail: string;
   status: HudStatus;
 };
 
 export const HUD_ROWS = 7;
+
+export type RecordingState = {
+  active: boolean;
+  steps: number | null;
+};
+
+/**
+ * 录制和播放共用同一块 HUD，但录制没有 `[x/y]` 步骤行。
+ * 从命令行固定的开始/结束句里认状态，别让录制期间只剩“等待第一步…”。
+ */
+export function recordingState(lines: readonly string[]): RecordingState | null {
+  let state: RecordingState | null = null;
+  for (const line of lines) {
+    if (/●\s*录制中/.test(line)) {
+      state = { active: true, steps: null };
+      continue;
+    }
+    const stopped = /■\s*已停止[：:]\s*(\d+)\s*步/.exec(line);
+    if (stopped) state = { active: false, steps: Number(stopped[1]) };
+  }
+  return state;
+}
 
 /** `[  3/8]`；命令行会补空格对齐，所以数字两侧都允许空白。 */
 const COUNTER = /^\s*\[\s*(\d+)\s*\/\s*(\d+)\s*\]\s*(.*)$/;
@@ -122,7 +177,7 @@ export function statusText(status: HudStatus): string {
       ? '跳过'
       : status === 'failed'
         ? '失败'
-        : '执行中';
+        : status === 'cancelled' ? '已停止' : '执行中';
 }
 
 /**
@@ -132,6 +187,34 @@ export function statusText(status: HudStatus): string {
  * 既保留开始时的“执行中”，也不会让 HUD 被同一步的两行占满。
  */
 export function hudRows(lines: readonly string[]): HudRow[] {
+  const events = lines.map(parseHudEvent).filter((e): e is HudEvent => e !== null);
+  if (events.length) {
+    const records = new Map<string, HudEvent>();
+    const scopes = new Map<string, string[]>();
+    for (const e of events) {
+      const old = records.get(e.id);
+      if (old && (old.seq >= e.seq || old.scopeId !== e.scopeId || old.kind !== e.kind ||
+        old.origin !== e.origin || old.index !== e.index)) continue;
+      if (!old) {
+        const ids = scopes.get(e.scopeId) ?? [];
+        ids.push(e.id);
+        scopes.set(e.scopeId, ids);
+      }
+      records.set(e.id, e);
+    }
+    const rows = (scope: string, depth: number): HudRow[] => {
+      if (depth > 8) return [];
+      return (scopes.get(scope) ?? []).slice(scope === 'root' ? -HUD_ROWS : -HUD_CHILD_ROWS).map(id => {
+        const e = records.get(id)!;
+        return {
+          id, kind: e.kind, index: e.index, total: e.total,
+          name: stepName(e.command), detail: compactDetail(e.command), status: e.status,
+          ...(e.kind === 'call' ? { children: rows(id, depth + 1) } : {}),
+        };
+      });
+    };
+    return rows('root', 0);
+  }
   const byIndex = new Map<number, HudRow>();
   for (const line of lines) {
     const row = parseHudLine(line);

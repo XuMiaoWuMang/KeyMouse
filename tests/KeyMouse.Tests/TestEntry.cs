@@ -27,15 +27,20 @@ internal static class TestEntry
         ("flow-control", "if/else、while/do、for、break/continue 与护栏", FlowControlTests.Run),
         ("calls", "子流程：内联、作用域与导出", CallTests.Run),
         ("runner", "常驻 Runner 协议与作业控制", RunnerTests.Run),
+        ("desktop-fixture", "不访问桌面的 OCR/目标执行路径", DesktopFlowTests.Run),
+        ("protocol-v2", "新旧客户端互通、差分与断线续收", RunnerV2Tests.Run),
         ("protocol", "前后端通信契约：方法、事件、参数与终结规则", RunnerProtocolTests.Run),
         ("newlines", "换行归一：CRLF / 裸 CR 一律折成 LF", NewlineTests.Run),
         ("wheel", "滚轮：竖向与横向是两个方向", WheelTests.Run),
         ("stopkeys", "录制的停止键：Ctrl+Alt+Q 与连按两次 ESC", StopKeyTests.Run),
-        ("record-focus", "录制收尾补 focus：回放才落在正确窗口", RecorderFocusTests.Run),
-        ("timeline", "录制时间线：atMs 的写入与往返", TimelineTests.Run),
+        ("record-focus", "录制只保存实际输入，不自动补聚焦步骤", RecorderFocusTests.Run),
+        ("timeline", "逐步等待：录制、回放与旧时间线兼容", TimelineTests.Run),
         ("nowindow", "无窗口执行：默认不要求窗口在前台", NoWindowTests.Run),
         ("schema-range", "数字范围与默认值只认契约，越界加载即失败", SchemaRangeTests.Run),
         ("record-ignore", "录制跳过指定进程的窗口（外壳浮条的点击不该进流程）", RecordIgnoreProcessTests.Run),
+        ("typed-dispatch", "真实类型化与文本命令的输入抑制、参数验证与诊断", TypedDispatchTests.Run),
+        ("native-input-failure", "部分注入、组合键失败后的释放及错误诊断", NativeInputFailureTests.Run),
+        ("execution-mode", "干跑、实跑的输入计数与输出隔离", ExecutionModeTests.Run),
         ("report", "报告落盘：主路径坏了改写到临时目录", ReportTests.Run),
         ("ocr", "内置 OCR：张量布局、DB 后处理、CTC 解码与模型加载", OcrTests.Run),
     ];
@@ -43,6 +48,14 @@ internal static class TestEntry
     private static int Main(string[] args)
     {
         ConsoleText.ConfigureOutputEncoding();
+
+        if (args is ["serve-fixture", var tag] && Guid.TryParse(tag, out var fixture)) return RunnerFixture.Serve(fixture).GetAwaiter().GetResult();
+        if (args is ["runner-soak", var time] && int.TryParse(time,out int minutes)) return RunnerAcceptance.Soak(minutes).GetAwaiter().GetResult();
+        if (args is ["pipe-acl", var mode, var id] && Guid.TryParse(id,out var nonce)) return RunnerAcceptance.Acl(mode,nonce).GetAwaiter().GetResult();
+        if (args is ["client-playback", var cli]) return ClientPlayback.Run(Path.GetFullPath(cli));
+        if (args is ["window-isolation"]) return WindowIsolation.Run();
+        if (args is ["flow-bench"]) return FlowRunnerBenchmark.Run();
+        if (args is ["capture-soak"]) return CaptureSoak.Run();
 
         if (args.Length > 0 && args[0] == "bench")
         {

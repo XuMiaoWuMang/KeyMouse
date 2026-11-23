@@ -1,0 +1,299 @@
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using KeyMouse.Product;
+
+namespace KeyMouse.Flow;
+/// <summary>
+/// One field the format declares. Everything the editor needs to render a control - and everything the
+/// loader needs to know whether the field is required - comes from the contract file, not from code
+/// that was written twice.
+/// </summary>
+internal sealed class FlowField
+{
+    internal required string Name { get; init; }
+    /// <summary>How to render it: text, multiline, int, bool, enum, point, region, target, steps, vars, stringList, when, const.</summary>
+    internal required string Kind { get; init; }
+    internal bool Required { get; init; }
+    /// <summary>Set when the field is only required in one situation, e.g. a target once coordinates are client-relative.</summary>
+    internal string? RequiredWhen { get; init; }
+
+    /// <summary>
+    /// 只在某个字段有值时显示："button" = button 非空才显示，"!button" = button 为空才显示。
+    /// 长按用它分家：鼠标长按给按键/落点，键盘长按给键名，互不干扰。
+    /// </summary>
+    internal string? ShowWhen { get; init; }
+
+    internal int? Min { get; init; }
+    internal int? Max { get; init; }
+    internal string[] Values { get; init; } = [];
+    internal string? Constant { get; init; }
+    internal string? Default { get; init; }
+    /// <summary>坐标空间被格式固定成这个值（如拖拽只能客户区），界面上不该让人选。</summary>
+    internal string? FixedSpace { get; init; }
+
+    /// <summary>枚举值的中文标签（值本身仍是英文机器值）。</summary>
+    internal IReadOnlyDictionary<string, string> ValueLabels { get; init; } = new Dictionary<string, string>();
+    internal string LabelZh { get; init; } = "";
+    internal string LabelEn { get; init; } = "";
+    internal string HelpZh { get; init; } = "";
+    internal string HelpEn { get; init; } = "";
+
+    internal FlowField WithLabel(string zh) => new()
+    {
+        Name = Name, Kind = Kind, Required = Required, RequiredWhen = RequiredWhen, Min = Min, Max = Max,
+        Values = Values, Constant = Constant, Default = Default, FixedSpace = FixedSpace, ValueLabels = ValueLabels, LabelZh = zh, LabelEn = LabelEn,
+        HelpZh = HelpZh, HelpEn = HelpEn,
+    };
+}
+
+/// <summary>What one step type accepts: the fields it uses, and which of them are required.</summary>
+internal sealed class FlowStepContract
+{
+    internal required string Type { get; init; }
+    internal string SummaryZh { get; init; } = "";
+    internal string SummaryEn { get; init; } = "";
+    /// <summary>The step's own fields (without the common ones).</summary>
+    internal required IReadOnlyList<FlowField> Own { get; init; }
+    /// <summary>Fields at least one of which must be present (e.g. a key is either a combo or a single key).</summary>
+    internal IReadOnlyList<string> OneOf { get; init; } = [];
+    /// <summary>Everything the type accepts: its own fields plus the common ones every step has.</summary>
+    internal IReadOnlyList<FlowField> All { get; init; } = [];
+
+    /// <summary>
+    /// 这一种步骤不能用公共的 `when`：块自己的 `cond` 已经承担了条件，再挂一个单步前提
+    /// 会在运行时被拒绝。编辑器据此不渲染那个开关。
+    /// </summary>
+    internal bool NoWhen { get; init; }
+}
+
+/// <summary>
+/// The flow format's contract, read from the embedded `flow.schema.json`.
+///
+/// This exists because the editor and the loader used to keep separate ideas of what a step needs, and
+/// they drifted: the inspector hid the parameters of `click-text` (region, text, match, timeout, button)
+/// while the loader demanded them. Now there is one document, shipped inside the assembly, that says
+/// which parameters exist, which are required, what they mean and how to render them - and both sides
+/// read it.
+/// </summary>
+internal static class FlowSchema
+{
+    private const string ResourceName = "KeyMouse.flow.schema.json";
+
+    /// <summary>
+    /// The contract's bytes.
+    ///
+    /// Shipped builds read the copy embedded in the assembly - that is what "one document, both sides
+    /// read it" means. A **development tree** reads the file next to the sources instead: editing
+    /// `flow.schema.json` otherwise needs `tools\build\build.ps1` before the editor sees it, and that
+    /// trap already cost one wrong conclusion ("我改了 min，界面还是旧值"). Same rule as everywhere
+    /// else: the file is the source of truth in a dev tree, the embedded copy is the shipped artifact.
+    /// </summary>
+    private static byte[] ReadSchemaBytes()
+    {
+        string? file = SchemaFile();
+        if (file is not null) return File.ReadAllBytes(file);
+
+        using Stream stream = typeof(FlowSchema).Assembly.GetManifestResourceStream(ResourceName)
+            ?? throw new InvalidOperationException($"程序集里没有内嵌 {ResourceName}");
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        return buffer.ToArray();
+    }
+
+    /// <summary>开发树里那份契约文件；安装版返回 null（那时只有内嵌的那一份）。</summary>
+    private static string? SchemaFile()
+    {
+        if (ProductLayout.Environment != ProductEnvironment.Development) return null;
+        if (ProductLayout.RepositoryRoot is not { Length: > 0 } root) return null;
+        string path = Path.Combine(root, "src", "KeyMouse.Core.Flow.Validation", "flow.schema.json");
+        return File.Exists(path) ? path : null;
+    }
+
+    internal static IReadOnlyList<FlowField> DocumentFields { get; }
+    internal static IReadOnlyList<FlowField> CommonFields { get; }
+    internal static int DefaultStepDelayMs { get; }
+    internal static IReadOnlyDictionary<string, FlowStepContract> Steps { get; }
+    internal static IReadOnlyDictionary<string, IReadOnlyList<FlowField>> Shapes { get; }
+
+    /// <summary>契约原文，读一次留住：`KeyMouse schema` 每次都吐同一份。</summary>
+    private static readonly string _json;
+
+    static FlowSchema()
+    {
+        byte[] bytes = ReadSchemaBytes();
+        _json = Encoding.UTF8.GetString(bytes);
+
+        using JsonDocument schema = JsonDocument.Parse(bytes);
+
+        JsonElement root = schema.RootElement;
+        DocumentFields = ReadFields(root.GetProperty("document").GetProperty("fields"));
+        CommonFields = ReadFields(root.GetProperty("common"));
+        DefaultStepDelayMs = RuleOf(CommonFields.Single(f => f.Name == "delayMs")).Fallback(1000);
+
+        var steps = new Dictionary<string, FlowStepContract>(StringComparer.Ordinal);
+        var shapes = new Dictionary<string, IReadOnlyList<FlowField>>(StringComparer.Ordinal);
+        foreach (JsonProperty shape in root.GetProperty("shapes").EnumerateObject())
+        {
+            shapes[shape.Name] = ReadFields(shape.Value.GetProperty("fields"));
+        }
+
+        foreach (JsonProperty step in root.GetProperty("steps").EnumerateObject())
+        {
+            IReadOnlyList<FlowField> own = ReadFields(step.Value.GetProperty("fields"));
+            var oneOf = new List<string>();
+            if (step.Value.TryGetProperty("oneOf", out JsonElement oneOfElement))
+            {
+                oneOf.AddRange(oneOfElement.EnumerateArray().Select(e => e.GetString() ?? ""));
+            }
+            steps[step.Name] = new FlowStepContract
+            {
+                Type = step.Name,
+                SummaryZh = Text(step.Value, "summary", "zh"),
+                SummaryEn = Text(step.Value, "summary", "en"),
+                Own = own,
+                OneOf = oneOf,
+                All = [.. own, .. CommonFields],
+                NoWhen = step.Value.TryGetProperty("noWhen", out JsonElement noWhen) &&
+                         noWhen.ValueKind == JsonValueKind.True,
+            };
+        }
+
+        Steps = steps;
+        Shapes = shapes;
+    }
+
+    internal static bool TryGetStep(string type, out FlowStepContract contract) => Steps.TryGetValue(type, out contract!);
+
+    /// <summary>The fields a step of this type shows: its own, then the common ones.</summary>
+    internal static IReadOnlyList<FlowField> FieldsFor(string type) =>
+        TryGetStep(type, out FlowStepContract contract) ? contract.All : CommonFields;
+
+    /// <summary>The fields of a nested shape (`target`, `region`, `point`, `when`), or nothing if it has none.</summary>
+    internal static IReadOnlyList<FlowField> ShapeFields(string kind) =>
+        Shapes.TryGetValue(kind, out IReadOnlyList<FlowField>? fields) ? fields : [];
+
+    /// <summary>The image of the contract as JSON, for `KeyMouse schema` and for tests.</summary>
+    internal static string Json => _json;
+
+    /// <summary>Reads `{ "zh": "...", "en": "..." }.language`, tolerating a missing block.</summary>
+    private static string Text(JsonElement element, string property, string language)
+    {
+        if (!element.TryGetProperty(property, out JsonElement block) || block.ValueKind != JsonValueKind.Object) return "";
+        if (!block.TryGetProperty(language, out JsonElement text) || text.ValueKind != JsonValueKind.String) return "";
+        return text.GetString() ?? "";
+    }
+
+    private static IReadOnlyList<FlowField> ReadFields(JsonElement array) =>
+        array.EnumerateArray().Select(ReadField).ToList();
+
+    private static FlowField ReadField(JsonElement element) => new()
+    {
+        Name = element.GetProperty("name").GetString() ?? "",
+        Kind = element.GetProperty("kind").GetString() ?? "text",
+        Required = element.TryGetProperty("required", out JsonElement required) && required.GetBoolean(),
+        RequiredWhen = element.TryGetProperty("requiredWhen", out JsonElement when) ? when.GetString() : null,
+        ShowWhen = element.TryGetProperty("showWhen", out JsonElement showWhen) ? showWhen.GetString() : null,
+        Min = element.TryGetProperty("min", out JsonElement min) ? min.GetInt32() : null,
+        Max = element.TryGetProperty("max", out JsonElement max) ? max.GetInt32() : null,
+        Values = element.TryGetProperty("values", out JsonElement values)
+            ? values.EnumerateArray().Select(v => v.GetString() ?? "").ToArray()
+            : [],
+        Constant = element.TryGetProperty("value", out JsonElement constant) ? constant.GetString() : null,
+        Default = element.TryGetProperty("default", out JsonElement fallback) ? fallback.ToString() : null,
+        FixedSpace = element.TryGetProperty("fixedSpace", out JsonElement fixedSpace) ? fixedSpace.GetString() : null,
+        ValueLabels = ReadLabels(element),
+        LabelZh = Text(element, "label", "zh"),
+        LabelEn = Text(element, "label", "en"),
+        HelpZh = Text(element, "help", "zh"),
+        HelpEn = Text(element, "help", "en"),
+    };
+
+    /// <summary>True when the step carries a usable value for this field (absent and empty count as no).</summary>
+    /// <summary>读枚举值的中文标签；没写就返回空表（界面回落到显示机器值）。</summary>
+    private static IReadOnlyDictionary<string, string> ReadLabels(JsonElement element)
+    {
+        var labels = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (!element.TryGetProperty("valueLabels", out JsonElement map) || map.ValueKind != JsonValueKind.Object) return labels;
+        foreach (JsonProperty pair in map.EnumerateObject())
+        {
+            if (pair.Value.ValueKind == JsonValueKind.Object && pair.Value.TryGetProperty("zh", out JsonElement zh))
+            {
+                labels[pair.Name] = zh.GetString() ?? pair.Name;
+            }
+            else if (pair.Value.ValueKind == JsonValueKind.String)
+            {
+                labels[pair.Name] = pair.Value.GetString() ?? pair.Name;
+            }
+        }
+        return labels;
+    }
+
+    internal static bool HasValue(FlowStep step, string field)
+    {
+        using JsonDocument document = JsonDocument.Parse(JsonSerializer.Serialize(step, FlowDocument.Json));
+
+        // 支持点分路径（region.y）：嵌套结构里的必填项也要能问"填了没有"。
+        JsonElement value = document.RootElement;
+        foreach (string part in field.Split('.'))
+        {
+            if (value.ValueKind != JsonValueKind.Object || !value.TryGetProperty(part, out value)) return false;
+        }
+        return value.ValueKind switch
+        {
+            JsonValueKind.Null or JsonValueKind.Undefined => false,
+            JsonValueKind.String => value.GetString() is { Length: > 0 },
+            JsonValueKind.Array => value.GetArrayLength() > 0,
+            JsonValueKind.Object => value.EnumerateObject().Any(),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// 契约给某个步骤字段划的范围与默认值；契约里没写就是"没限制"。
+    ///
+    /// 引擎以前把这些数字写死在自己的代码里（`Math.Clamp(step.IntervalMs ?? 200, 20, 5000)`），
+    /// 于是"每轮间隔最少 20 毫秒"同时存在于两处：契约说 100，引擎认 20，谁也说不出哪个算数。
+    /// 现在引擎只问这一处——契约里没有的边界，就按字段类型本身的合法范围兜底。
+    /// </summary>
+    internal static bool TryGetNumberRule(string stepType, string field, out NumberRule rule)
+    {
+        rule = new NumberRule(0, int.MaxValue, null);
+        if (!TryGetStep(stepType, out FlowStepContract contract)) return false;
+
+        FlowField? match = contract.All.FirstOrDefault(f => string.Equals(f.Name, field, StringComparison.Ordinal));
+        if (match is null || match.Kind != "int") return false;
+
+        rule = RuleOf(match);
+        return true;
+    }
+
+    /// <summary>同上，但字段属于嵌套形状（`when` / `region` / `target` / `point`）。</summary>
+    internal static bool TryGetShapeNumberRule(string kind, string field, out NumberRule rule)
+    {
+        rule = new NumberRule(0, int.MaxValue, null);
+        if (!Shapes.TryGetValue(kind, out IReadOnlyList<FlowField>? fields)) return false;
+
+        FlowField? match = fields.FirstOrDefault(f => string.Equals(f.Name, field, StringComparison.Ordinal));
+        if (match is null || match.Kind != "int") return false;
+
+        rule = RuleOf(match);
+        return true;
+    }
+
+    private static NumberRule RuleOf(FlowField field) => new(
+        Min: field.Min ?? 0,
+        Max: field.Max ?? int.MaxValue,
+        Default: int.TryParse(field.Default, NumberStyles.Integer, CultureInfo.InvariantCulture, out int fallback) ? fallback : null);
+}
+
+/// <summary>一个数字字段在契约里的规矩：上下限与默认值。</summary>
+internal readonly record struct NumberRule(int Min, int Max, int? Default)
+{
+    /// <summary>把值夹进范围；越界不报错，运行时照旧跑——报错留给加载时那条更早的检查。</summary>
+    internal int Clamp(int value) => Math.Clamp(value, Min, Max);
+
+    /// <summary>没填时用契约的默认值，再兜一个调用方给的保底。</summary>
+    internal int Fallback(int whenAbsent) => Clamp(Default ?? whenAbsent);
+}

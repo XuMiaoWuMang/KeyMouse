@@ -29,7 +29,7 @@ internal static class RunnerCommand
             case "stop":
                 return Stop();
             default:
-                return Commands.Fail(2,
+                return CommandLine.Fail(2,
                     "用法：KeyMouse runner <status | list | run <流程.json> [--dry-run] | cancel <作业号> | " +
                     "pause <作业号> | resume <作业号> | stop>（先 KeyMouse serve 启动常驻 Runner）");
         }
@@ -40,7 +40,7 @@ internal static class RunnerCommand
         exitCode = 0;
         RunnerClient? client = RunnerClient.ConnectAsync(1500).GetAwaiter().GetResult();
         if (client is not null) return client;
-        exitCode = Commands.Fail(4,
+        exitCode = CommandLine.Fail(4,
             $"没有正在运行的 Runner（管道 {RunnerProtocol.PipeName}）。先在一个窗口里跑：KeyMouse serve");
         return null;
     }
@@ -53,7 +53,7 @@ internal static class RunnerCommand
         {
             RunnerEvent reply = client.SendAsync("status").GetAwaiter().GetResult();
             if (reply.Kind != "result" || reply.Value is not { } value)
-                return Commands.Fail(reply.Code ?? 1, reply.Message ?? "Runner 没给出状态");
+                return CommandLine.Fail(reply.Code ?? 1, reply.Message ?? "Runner 没给出状态");
 
             string version = value.GetProperty("version").GetString() ?? "?";
             string pipeline = value.GetProperty("pipeline").GetString() ?? "?";
@@ -84,9 +84,9 @@ internal static class RunnerCommand
 
     private static int RunFlow(string[] args)
     {
-        if (args.Length == 0) return Commands.Fail(2, "用法：KeyMouse runner run <流程.json> [--dry-run] [--keep-going]");
+        if (args.Length == 0) return CommandLine.Fail(2, "用法：KeyMouse runner run <流程.json> [--dry-run] [--keep-going]");
         string path = Path.GetFullPath(args[0]);
-        if (!File.Exists(path)) return Commands.Fail(2, $"没有这个文件：{path}");
+        if (!File.Exists(path)) return CommandLine.Fail(2, $"没有这个文件：{path}");
         bool dryRun = args.Contains("--dry-run");
         bool keepGoing = args.Contains("--keep-going");
 
@@ -117,7 +117,7 @@ internal static class RunnerCommand
             }).GetAwaiter().GetResult();
 
             if (finished.Kind == "error")
-                return Commands.Fail(finished.Code ?? 1, finished.Message ?? "Runner 拒绝了这次执行");
+                return CommandLine.Fail(finished.Code ?? 1, finished.Message ?? "Runner 拒绝了这次执行");
             int exitCode = finished.ExitCode ?? 0;
             Console.WriteLine($"  结束：退出码 {exitCode}，{finished.DurationMs} ms，{seen} 步");
             return exitCode;
@@ -127,14 +127,14 @@ internal static class RunnerCommand
     private static int Control(string action, string[] args)
     {
         if (args.Length == 0 || !int.TryParse(args[0], out int job))
-            return Commands.Fail(2, $"用法：KeyMouse runner {action} <作业号>（作业号见 runner status）");
+            return CommandLine.Fail(2, $"用法：KeyMouse runner {action} <作业号>（作业号见 runner status）");
 
         RunnerClient? client = Connect(out int code);
         if (client is null) return code;
         using (client)
         {
             RunnerEvent reply = client.SendAsync(action, new RunnerParameters { Target = job }).GetAwaiter().GetResult();
-            if (reply.Kind == "error") return Commands.Fail(reply.Code ?? 1, reply.Message ?? "Runner 拒绝了这次控制");
+            if (reply.Kind == "error") return CommandLine.Fail(reply.Code ?? 1, reply.Message ?? "Runner 拒绝了这次控制");
             string state = reply.Value?.TryGetProperty("state", out var s) == true ? s.GetString() ?? "?" : "?";
             Console.WriteLine($"作业 #{job} 现在是 {state}");
             return 0;

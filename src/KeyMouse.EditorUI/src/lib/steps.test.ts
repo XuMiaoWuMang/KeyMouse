@@ -29,6 +29,63 @@ describe('control-flow step templates', () => {
     expect(missingHint({ type: 'assert', cond: '' })).toBe('还缺 条件');
   });
 
+  it('拖动只缺起点和终点，不要求目标窗口', () => {
+    const step = makeStep('drag');
+    expect(missingOf(step)).toEqual(['from', 'to']);
+    expect(missingHint(step)).toBe('还缺 起点、终点');
+    expect(missingOf({ ...step, from: { space: 'screen', x: 1, y: 2 }, to: { space: 'screen', x: 3, y: 4 } })).toEqual([]);
+  });
+
+  it('拖动任一端显式为客户区时才提示目标窗口，目标必须有有效选择器', () => {
+    const from = { space: 'screen', x: 1, y: 2 } as const;
+    const to = { space: 'screen', x: 3, y: 4 } as const;
+    for (const points of [
+      { from: { ...from, space: 'client' as const }, to },
+      { from, to: { ...to, space: 'client' as const } },
+      { from: { ...from, space: 'client' as const }, to: { ...to, space: 'client' as const } },
+    ]) {
+      const step: FlowStep = { type: 'drag', ...points };
+      expect(missingOf(step)).toEqual(['target']);
+      expect(missingHint(step)).toBe('还缺 目标窗口');
+      expect(missingOf({ ...step, target: { process: '  ', title: '' } })).toEqual(['target']);
+      expect(missingOf({ ...step, target: { process: 'notepad' } })).toEqual([]);
+      expect(missingOf({ ...step, target: { class: 'Notepad' } })).toEqual([]);
+    }
+    expect(missingOf({ type: 'drag', from, to })).toEqual([]);
+  });
+
+  it('目标窗口只认进程名/类名：只有标题不算有效选择器', () => {
+    expect(missingOf({ type: 'focus', target: { title: '无标题 - 记事本' } })).toEqual(['target']);
+    expect(missingOf({ type: 'focus', target: { process: 'notepad', title: '无关' } })).toEqual([]);
+  });
+
+  it('坐标省略空间时按客户区算，需要目标窗口', () => {
+    expect(missingOf({ type: 'click', at: { x: 10, y: 20 } })).toEqual(['target']);
+    expect(missingOf({ type: 'click', at: { x: 10, y: 20 }, target: { process: 'notepad' } })).toEqual([]);
+    expect(missingOf({ type: 'click', at: { space: 'screen', x: 10, y: 20 } })).toEqual([]);
+  });
+
+  it('读屏的屏幕区域不要目标窗口，相对区域才要', () => {
+    const screen: FlowStep = {
+      type: 'wait-text',
+      text: '保存',
+      region: { space: 'screen', x: 0, y: 0, width: 200, height: 32 },
+    };
+    expect(missingOf(screen)).toEqual([]);
+    expect(missingOf({ ...screen, region: { ...screen.region!, space: 'client' } })).toEqual(['target']);
+    expect(missingOf({ ...screen, region: { ...screen.region!, space: 'window' } })).toEqual(['target']);
+  });
+
+  it('text() 的屏幕区域同样不需要目标窗口', () => {
+    const step: FlowStep = {
+      type: 'if',
+      cond: 'text("保存")',
+      steps: [{ type: 'sleep', ms: 1 }],
+      probe: { region: { space: 'screen', x: 0, y: 0, width: 200, height: 32 } },
+    };
+    expect(missingOf(step)).not.toContain('probe');
+  });
+
   it('text() 条件必须同时给窗口和区域', () => {
     const step: FlowStep = {
       type: 'if',
@@ -59,7 +116,7 @@ describe('branchesOf / childSteps', () => {
 
   it('if 有两条分支，否则可以还没写', () => {
     const branches = branchesOf(block);
-    expect(branches.map((b) => b.label)).toEqual(['成立时', '否则']);
+    expect(branches.map((b) => b.label)).toEqual(['条件成立', '条件不符']);
     expect(branches[1].steps).toHaveLength(1);
     expect(branchesOf({ type: 'if', cond: 'true' }).map((b) => b.steps.length)).toEqual([0, 0]);
   });

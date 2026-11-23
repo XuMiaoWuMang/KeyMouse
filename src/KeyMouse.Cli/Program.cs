@@ -14,6 +14,14 @@ internal static class Program
     [STAThread]
     internal static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--capabilities") return UiAccessCommand.Diagnose();
+#if !UIACCESS_FLAVOR
+        if (args.Length > 0 && args[0] == "--uiaccess-run") return UiAccessCommand.Run(args[1..]);
+#endif
+        if (args.Length > 0 && args[0] == "--uiaccess-helper") return UiAccessCommand.Helper(args[1..]);
+#if UIACCESS_FLAVOR
+        return CommandLine.Fail(2, "KeyMouse.Input only accepts --uiaccess-helper or --capabilities.");
+#else
         // --elevate：以管理员身份重跑同一条命令。
         // 不把提权写进 manifest，是因为命令行会被脚本和 CI 大量调用——
         // 那样每次 `mouse click` 都弹一次 UAC，等于把工具废掉。
@@ -26,6 +34,10 @@ internal static class Program
         {
             switch (args[0])
             {
+                case "background":
+                    return BackgroundCommand.Run(args[1..]);
+                case "mcp":
+                    return McpCommand.Run(args[1..]);
                 case "serve":
                     return Runner.RunnerHost.Run(args[1..]);
                 case "runner":
@@ -37,7 +49,8 @@ internal static class Program
         }
         // 每次启动都挂一个"可以被按停"的命名事件（名字带自己的 pid，外壳按 pid 找得到）。
         using PauseControl? pause = PauseControl.Install(Environment.ProcessId);
-        return Commands.Execute(args);
+        return Commands.Execute(args, allowTextStdin: true);
+#endif
     }
 
     /// <summary>

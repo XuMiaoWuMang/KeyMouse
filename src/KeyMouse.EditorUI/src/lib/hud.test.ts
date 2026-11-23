@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HUD_ROWS, compactDetail, hudRows, parseHudLine, statusText, stepName } from './hud';
+import { HUD_ROWS, compactDetail, hudRows, parseHudLine, recordingState, statusText, stepName } from './hud';
 
 describe('parseHudLine', () => {
   it('把流程步骤行读成编号、步骤名、内容和状态', () => {
@@ -90,5 +90,25 @@ describe('hudRows', () => {
     expect(statusText('skipped')).toBe('跳过');
     expect(statusText('failed')).toBe('失败');
     expect(statusText('current')).toBe('执行中');
+  });
+});
+
+describe('recordingState', () => {
+  it('识别录制开始，录制期间不依赖步骤行', () => {
+    expect(recordingState(['● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止）'])).toEqual({
+      active: true,
+      steps: null,
+    });
+  });
+
+  it('识别停止摘要和步数', () => {
+    expect(recordingState([
+      '● 录制中——操作你要录的窗口（Ctrl+Alt+Q 停止）',
+      '■ 已停止：7 步 → D:\\a\\rec.json',
+    ])).toEqual({ active: false, steps: 7 });
+  });
+
+  it('普通播放输出不会被当成录制', () => {
+    expect(recordingState(['  [  1/2] ok  KeyMouse click 1, 2'])).toBeNull();
   });
 });

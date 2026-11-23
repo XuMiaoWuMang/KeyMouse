@@ -5,6 +5,11 @@
    * 字段不在这里写死：形状、标签、必填、取值范围全部来自命令行给出的契约
    * （`KeyMouse schema`，见 `docs/reference/interface.md`）。老外壳按契约渲染，
    * 新外壳照做才对得上——否则契约加一个字段，两边就得各改一次，迟早走样。
+   *
+   * 目标窗口只在该出现的地方出现：
+   * - `focus` / `wait-window` 这类硬性必填的步骤，放在最上面；
+   * - 坐标/区域一旦落在客户区（或整个窗口）里，换算需要窗口，就摆在坐标块下方。
+   * 屏幕绝对坐标不需要窗口，这里不显示它，免得填了也没用。
    */
   import {
     fieldsOf,
@@ -16,17 +21,21 @@
     type FlowSchema,
   } from './schema';
   import { readBool, readPath, readText } from './fieldpath';
+  import { branchesOf, type BranchKey, type FlowStep } from './model';
+  import type { NodePath } from './tree';
   import InspectorShape from './InspectorShape.svelte';
   import KeyValueEditor from './KeyValueEditor.svelte';
   import ConditionEditor from './ConditionEditor.svelte';
 
   export let schema: FlowSchema | null = null;
   export let step: object;
+  export let path: NodePath;
   export let onchange: (path: string, value: unknown) => void;
   export let onpick: (kind: 'point' | 'region', path: string) => void;
+  export let onaddbranch: (parent: NodePath, branch: BranchKey) => void = () => undefined;
 
   $: type = String((step as Record<string, unknown>).type ?? '');
-  // 契约把 note / when / shot 放在 common 里，每种步骤都自带——老外壳也是拼起来渲染的。
+  // 契约把 delayMs / note / when / shot 放在 common 里，每种步骤都自带——老外壳也是拼起来渲染的。
   // shot 不在这里画：证据图有自己的块（要读文件、要能"在文件夹里看"）。
   $: fields = schema
     ? [...fieldsOf(schema, type), ...schema.common]
@@ -34,17 +43,16 @@
         .filter((field) => visibleBy(field, step as Record<string, unknown>))
     : [];
   $: target = fields.find((field) => field.kind === 'target') ?? null;
-  // 块步骤的条件已经写在 cond 里，再挂一个单步 when 会在加载时被拒；契约用 noWhen 说明。
-  $: when = schema?.steps[type]?.noWhen ? null : fields.find((field) => field.kind === 'when') ?? null;
+  // 前提条件不再在这里填：流程控制交给 if；引擎仍然读 `when`，只是界面不提供。
   $: note = fields.find((field) => field.name === 'note') ?? null;
   $: plain = fields.filter(
     (field) =>
       field.kind !== 'target' &&
       field.kind !== 'when' &&
+      field.kind !== 'steps' &&
       field.name !== 'note' &&
       (field.kind !== 'probe' || showProbe),
   );
-  $: hasWhen = readPath(step, 'when') !== undefined;
   $: condText = readText(step, 'cond');
   // probe 只在条件真的读屏（text(...)）或已经填过时出现：`while (i < 3)` 不该逼人填窗口。
   $: showProbe = readPath(step, 'probe') !== undefined || /\btext\s*\(/.test(condText);
@@ -52,22 +60,58 @@
     target !== null &&
     schema !== null &&
     shapeFields(schema, 'target').every((field) => !hasValue(readPath(step, `target.${field.name}`)));
+  $: coords = plain.filter((field) => field.kind === 'point' || field.kind === 'region');
+  // 至少有一处"真的在用相对坐标"的坐标，才在坐标下方给"目标窗口"：
+  // 刚插入的空白步骤还没有坐标，不该先催窗口；滑钮一旦拨到客户区、或取点/填了数，就出现。
+  $: relativeCoords = coords.some((field) => isRelativeShape(field) && coordFilled(field));
+  $: targetHard = target?.required === true;
+  $: showTargetTop = target !== null && targetHard;
+  $: showTargetBelow = target !== null && !targetHard && relativeCoords;
+  $: branches = branchesOf(step as FlowStep);
+  // 旧文件里的 when 仍会被引擎执行；界面不再提供填写，但必须把它"演"出来——否则用户看见的
+  // 是一步普通的点击，运行时却可能因为旧前提条件跳过，排查会绕大圈。
+  $: hasWhen = hasValue(readPath(step, 'when'));
 
-  // 目标窗口在多数步骤里是"可选"（不填就作用于当前焦点窗口）。对着一个可选字段
-  // 标红写「必填」，会把"还没填"和"填错了"混成同一件事。
-  $: targetRequired = target?.required === true;
-  $: targetHint = targetRequired
-    ? targetEmpty
-      ? '必填'
-      : '齐全'
-    : targetEmpty
-      ? '可选'
-      : '可选 · 已填';
   function hasValue(value: unknown): boolean {
     if (value === null || value === undefined) return false;
     if (typeof value === 'string') return value.trim() !== '';
     if (Array.isArray(value)) return value.length > 0;
     return true;
+  }
+
+  /** `space` 没写就是契约里的默认值——引擎和界面必须按同一个默认解释。 */
+  function shapeSpace(field: FieldContract): string {
+    const written = readText(step, `${field.name}.space`);
+    if (written !== '') return written;
+    const space = schema ? shapeFields(schema, field.kind).find((item) => item.name === 'space') : undefined;
+    return asText(space?.default ?? 'client');
+  }
+
+  /** 客户区坐标要窗口坐标换算；整窗区域也要窗口；屏幕区域什么都不要。 */
+  function isRelativeShape(field: FieldContract): boolean {
+    return field.kind === 'region' ? shapeSpace(field) !== 'screen' : shapeSpace(field) === 'client';
+  }
+
+  /** 坐标是否已经"在用了"：写了空间、或填了 x/y。空白的步骤不催目标窗口。 */
+  function coordFilled(field: FieldContract): boolean {
+    if (readText(step, `${field.name}.space`) !== '') return true;
+    return typeof readPath(step, `${field.name}.x`) === 'number' || typeof readPath(step, `${field.name}.y`) === 'number';
+  }
+
+  function spaceContract(field: FieldContract): FieldContract | undefined {
+    return schema ? shapeFields(schema, field.kind).find((item) => item.name === 'space') : undefined;
+  }
+
+  function toggleSpace(field: FieldContract) {
+    const contract = spaceContract(field);
+    if (!contract) return;
+    const next = isRelativeShape(field) ? 'screen' : 'client';
+    commitEnum(`${field.name}.space`, next, contract);
+  }
+
+  function commitSpace(field: FieldContract, value: string) {
+    const contract = spaceContract(field);
+    if (contract) commitEnum(`${field.name}.space`, value, contract);
   }
 
   function kindOf(field: FieldContract): 'point' | 'region' {
@@ -125,19 +169,20 @@
 </script>
 
 {#if !schema}
-  <p class="waiting">正在读流程格式的契约…</p>
+  <p class="waiting">正在读契约…</p>
 {:else}
-  {#if target}
+  {#if showTargetTop && target}
     <div class="side-head">
-      <h2>{label(target)}</h2>
-      <span class="hint" class:warn={targetRequired && targetEmpty}>{targetHint}</span>
+      <h2>
+        {label(target)}
+        {#if targetEmpty}<span class="need" title="必填">*</span>{/if}
+      </h2>
     </div>
     {#each shapeFields(schema, 'target') as field}
       <label class="field">
         <span class="label">{label(field)}</span>
         <input
           value={asText(readPath(step, `target.${field.name}`))}
-          placeholder={helpOf(field).slice(0, 20)}
           title={helpOf(field)}
           on:input={(event) => onchange(`target.${field.name}`, event.currentTarget.value)}
         />
@@ -192,7 +237,7 @@
           </button>
           <span>
             {label(field)}
-            {#if field.required && !hasValue(readPath(step, field.name))}<span class="need">必填</span>{/if}
+            {#if field.required && !hasValue(readPath(step, field.name))}<span class="need" title="必填">*</span>{/if}
           </span>
         </div>
       {:else}
@@ -203,7 +248,7 @@
           <span class="label">
             {label(field)}
             {#if helpOf(field)}<span class="info" title={helpOf(field)}>i</span>{/if}
-            {#if field.required && !hasValue(readPath(step, field.name))}<span class="need">必填</span>{/if}
+            {#if field.required && !hasValue(readPath(step, field.name))}<span class="need" title="必填">*</span>{/if}
           </span>
 
           {#if field.kind === 'multiline'}
@@ -215,6 +260,7 @@
           {:else if field.kind === 'int'}
             <input
               type="number"
+              placeholder={field.name === 'delayMs' && readPath(step, 'atMs') != null ? '沿用旧时间线' : asText(field.default)}
               min={field.min}
               max={field.max}
               value={asText(readPath(step, field.name))}
@@ -230,31 +276,57 @@
               {/each}
             </select>
           {:else if field.kind === 'point' || field.kind === 'region'}
-            <div class="shape-block">
-              <!-- 坐标是几个短字段，横排一行；标签在上、数字在下，窄窗口里也能看清。 -->
-              {#each shapeFields(schema, field.kind) as sub}
-                <label class="field compact">
-                  <span class="label">{label(sub)}</span>
-                  {#if sub.kind === 'enum'}
-                    <select
-                      value={readText(step, `${field.name}.${sub.name}`) || asText(sub.default)}
-                      on:change={(event) =>
-                        commitEnum(`${field.name}.${sub.name}`, event.currentTarget.value, sub)}
+            <div class="coord">
+              {#if spaceContract(field)}
+                {#if (spaceContract(field)?.values ?? []).length === 2}
+                  <!-- 两选项的空间用滑钮：左"屏幕"、右"客户区"，并且把当前值写出来。 -->
+                  <div class="space-row">
+                    <span class="space-side" class:on={!isRelativeShape(field)}>屏幕</span>
+                    <button
+                      class="switch"
+                      class:on={isRelativeShape(field)}
+                      role="switch"
+                      aria-checked={isRelativeShape(field)}
+                      aria-label="客户区相对坐标"
+                      title={isRelativeShape(field) ? '后台客户区：直接操作或读取目标窗口，不移动系统鼠标' : '屏幕绝对坐标'}
+                      on:click={() => toggleSpace(field)}
                     >
-                      {#each sub.values ?? [] as value}
-                        <option value={value}>{sub.valueLabels?.[value]?.zh ?? value}</option>
+                      <span class="knob"></span>
+                    </button>
+                    <span class="space-side" class:on={isRelativeShape(field)}>客户区 · 后台</span>
+                  </div>
+                {:else}
+                  <label class="space-row">
+                    <span class="space-side on">坐标空间</span>
+                    <select
+                      class="space-select"
+                      value={shapeSpace(field)}
+                      on:change={(event) => commitSpace(field, event.currentTarget.value)}
+                    >
+                      {#each spaceContract(field)?.values ?? [] as value}
+                        <option value={value}>
+                          {spaceContract(field)?.valueLabels?.[value]?.zh ?? value}
+                        </option>
                       {/each}
                     </select>
-                  {:else}
+                  </label>
+                {/if}
+              {/if}
+
+              <div class="coords">
+                {#each shapeFields(schema, field.kind).filter((sub) => sub.name !== 'space') as sub}
+                  <label class="field compact">
+                    <span class="label">{label(sub)}</span>
                     <input
                       type="number"
                       value={asText(readPath(step, `${field.name}.${sub.name}`))}
                       on:input={(event) =>
                         commitInt(`${field.name}.${sub.name}`, event.currentTarget.value, sub)}
                     />
-                  {/if}
-                </label>
-              {/each}
+                  </label>
+                {/each}
+              </div>
+
               <button
                 class="pick"
                 on:click={() => onpick(kindOf(field), field.name)}
@@ -280,14 +352,8 @@
               value={readText(step, field.name)}
               on:input={(event) => onchange(field.name, event.currentTarget.value)}
             />
-          {:else if field.kind === 'steps' || field.kind === 'stringList'}
-            <p class="readonly">
-              {field.name === 'else'
-                ? '否则分支在画布上（标着「否则」）加、删、点选；这里只改块本身。'
-                : field.name === 'steps'
-                  ? '子步骤在画布上展开、加删、点选；这里只改块本身。'
-                  : '名字数组先在 JSON 里写（见下面的折叠块）。'}
-            </p>
+          {:else if field.kind === 'stringList'}
+            <p class="readonly">先写 JSON。</p>
           {:else}
             <p class="readonly">
               {asText(readPath(step, field.name)) || '——'}
@@ -298,33 +364,49 @@
     {/each}
   {/if}
 
-  {#if when}
-    <h2 class="section-head">{label(when)}</h2>
-    <div class="toggle-row">
-      <button
-        class="switch"
-        class:on={hasWhen}
-        role="switch"
-        aria-checked={hasWhen}
-        on:click={() => onchange('when', hasWhen ? undefined : {})}
-      >
-        <span class="knob"></span>
-      </button>
-      <span>{hasWhen ? '满足条件才执行' : '每次都执行'}</span>
+  {#if branches.length > 0}
+    <h2 class="section-head">分支</h2>
+    <div class="branches">
+      {#each branches as branch}
+        <div class="branch-row">
+          <span class="branch-name">{branch.label}</span>
+          <span class="branch-count">{branch.steps.length}</span>
+          <button class="branch-add" type="button" on:click={() => onaddbranch(path, branch.key)}>
+            添加
+          </button>
+        </div>
+      {/each}
     </div>
+  {/if}
 
-    {#if hasWhen}
-      <div class="probe-card">
-        <InspectorShape
-          {schema}
-          {step}
-          fields={shapeFields(schema, 'when')}
-          prefix="when"
-          {onchange}
-          {onpick}
+  {#if showTargetBelow && target}
+    <h2 class="section-head">{label(target)}</h2>
+    <p class="target-note">
+      {coords.some((field) => field.kind === 'region' && shapeSpace(field) === 'window')
+        ? '整窗区域需要窗口。'
+        : '客户区坐标需要窗口。'}
+    </p>
+    {#each shapeFields(schema, 'target') as field}
+      <label class="field">
+        <span class="label">{label(field)}</span>
+        <input
+          value={asText(readPath(step, `target.${field.name}`))}
+          title={helpOf(field)}
+          on:input={(event) => onchange(`target.${field.name}`, event.currentTarget.value)}
         />
-      </div>
-    {/if}
+      </label>
+    {/each}
+  {/if}
+
+  {#if hasWhen}
+    <div class="legacy">
+      <p>
+        旧版前提条件仍在生效。
+      </p>
+      <button class="pick" type="button" on:click={() => onchange('when', undefined)}>
+        删掉
+      </button>
+    </div>
   {/if}
 
   {#if note}
@@ -361,13 +443,11 @@
     font-weight: 600;
   }
 
-  .hint {
-    font-size: 11px;
+  .target-note {
+    margin: 0 0 6px;
+    font-size: 12px;
     color: var(--kp-ink3);
-  }
-
-  .hint.warn {
-    color: var(--kp-signal);
+    line-height: 1.5;
   }
 
   .field {
@@ -390,30 +470,59 @@
     text-align: left;
   }
 
-  .shape-block {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
-    align-items: end;
+  /* 坐标块：空间开关在上，x|y 与 dx|dy 两列排开，取点按钮靠右收尾。 */
+  .coord {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+  }
+
+  .space-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .space-side {
+    color: var(--kp-ink3);
+    transition: color 120ms;
+  }
+
+  .space-side.on {
+    color: var(--kp-ink);
+    font-weight: 600;
+  }
+
+  .space-select {
+    flex: 1;
+    min-height: 28px;
+    padding: 3px 8px;
+    font-size: 12px;
+    border: 1px solid var(--kp-rule);
+    border-radius: 4px;
+    background: var(--kp-field);
+    color: var(--kp-ink);
+  }
+
+  .coords {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
   }
 
   .field.compact {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 4px;
+    gap: 3px;
     margin: 0;
   }
 
   .field.compact > .label {
     text-align: left;
     font-size: 12px;
-  }
-
-
-  .field.compact {
-    grid-template-columns: 64px 1fr;
-    margin: 4px 0;
   }
 
   .label {
@@ -438,11 +547,52 @@
   }
 
   .need {
-    margin-left: 6px;
-    padding: 0 5px;
-    border: 1px solid var(--kp-signal);
+    margin-left: 5px;
+    color: var(--kp-signal);
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 600;
+  }
+
+  .branches {
+    display: grid;
+    gap: 4px;
+  }
+
+  .branch-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--kp-rule);
+    border-radius: 4px;
+    background: var(--kp-field);
+    font-size: 12.5px;
+  }
+
+  .branch-name {
+    color: var(--kp-ink);
+  }
+
+  .branch-count {
+    color: var(--kp-ink3);
+    font-family: var(--kp-font-mono);
+    font-size: 11px;
+  }
+
+  .branch-add {
+    margin-left: auto;
+    padding: 2px 9px;
+    border: 1px solid var(--kp-rule);
     border-radius: 3px;
-    font-size: 10px;
+    background: var(--kp-card);
+    color: var(--kp-ink2);
+    font: 500 11.5px/1.5 var(--kp-font);
+    cursor: pointer;
+  }
+
+  .branch-add:hover {
+    border-color: var(--kp-signal);
     color: var(--kp-signal);
   }
 
@@ -519,13 +669,6 @@
     background: #fff;
   }
 
-  .shape-block {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    gap: 10px;
-  }
-
   /* 条件表达式用等宽字：`i < 3` 里的空格和括号该看得出来，衬线正文会把它们糊在一起。 */
   .expression {
     font-family: var(--kp-font-mono);
@@ -533,7 +676,7 @@
     letter-spacing: 0;
   }
 
-  /* 嵌套的观察点 / 前提：只用一道发丝线表示从属，不套第二层卡片。 */
+  /* 嵌套的观察点：只用一道发丝线表示从属，不套第二层卡片。 */
   .probe-card {
     margin: 2px 0 4px;
     padding: 2px 0 2px 12px;
@@ -541,7 +684,8 @@
   }
 
   .pick {
-    height: 30px;
+    align-self: flex-end;
+    height: 28px;
     padding: 0 12px;
     border: 1px solid var(--kp-signal);
     border-radius: 4px;
@@ -551,12 +695,39 @@
     color: var(--kp-signal);
     cursor: pointer;
     white-space: nowrap;
-    justify-self: end;
+  }
+
+  /* 坐标块里的"取点/取一块"横跨整行：它是这一步的主操作，不该缩在右下角。 */
+  .coord > .pick {
+    align-self: stretch;
+    width: 100%;
+    height: 30px;
   }
 
   .pick:hover {
     background: var(--kp-signal);
     color: #fff;
+  }
+
+  /* 旧版前提条件的提示：不是填写区，只负责让"看不见的条件"露出来，并给一个删掉的出口。 */
+  .legacy {
+    margin-top: 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--kp-rule);
+    border-left: 3px solid var(--kp-signal);
+    background: var(--kp-paper);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--kp-ink2);
+  }
+
+  .legacy p {
+    margin: 0 0 8px;
+  }
+
+  .legacy .pick {
+    display: block;
+    margin-left: auto;
   }
 
   .readonly {

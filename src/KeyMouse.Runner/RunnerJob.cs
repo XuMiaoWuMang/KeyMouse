@@ -61,7 +61,9 @@ internal sealed class RunnerJob : IExecutionControl
     /// <summary>How many steps the flow has, so a UI can draw progress without knowing the format.</summary>
     internal int Total { get; set; }
 
-    internal Action<RunnerEvent> Emit { get; }
+    internal Action<RunnerEvent> Emit { get; private set; }
+    internal ShotDelta? Delta { get; set; }
+    internal void ReleaseSink() { Emit = static _ => { }; Delta = null; CurrentStep = null; }
 
     // ------------------------------------------------------------------ IExecutionControl
 
@@ -101,7 +103,11 @@ internal sealed class RunnerJob : IExecutionControl
     private string? ShotFor(int index, FlowStep? step)
     {
         if (!Shots || FlowPath is null || step is null) return null;
-        return RunShots.Capture(step, FlowPath, EvidenceFor, index, AllowRestore);
+        return RunShots.Capture(step, FlowPath, EvidenceFor, index, AllowRestore, Delta == null ? null : frame =>
+        {
+            if (Delta.Next(index, frame) is { } patch)
+                Emit(new RunnerEvent { Kind = "screenshot-diff", Id = RequestId, Job = Job, Value = RunnerHost.Serialize(patch) });
+        });
     }
 
     // ------------------------------------------------------------------ control

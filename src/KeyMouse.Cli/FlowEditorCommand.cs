@@ -7,7 +7,7 @@ namespace KeyMouse;
 ///
 /// 编辑器和命令行是同一份产品的两半，位置约定写在 <see cref="ProductLayout"/> 一个地方：
 /// 安装版里编辑器在 &lt;安装目录&gt;\、命令行在 &lt;安装目录&gt;\cli\，开发树里编辑器在
-/// src\KeyMouse.FlowEditor\bin\…、命令行在 artifacts\cli\。以前这里只认 `edit\` 子目录，
+/// src\KeyMouse.EditorUI\src-tauri\target\release\、命令行在 artifacts\cli\。以前这里只认 `edit\` 子目录，
 /// 两种形态都不存在那个文件夹，于是这条命令永远是坏的。
 /// </summary>
 internal static class FlowEditorCommand
@@ -15,17 +15,17 @@ internal static class FlowEditorCommand
     internal static int Run(string[] args)
     {
         if (args.Length == 0 || args[0] != "edit")
-            return Commands.Fail(2, "用法：KeyMouse flow edit <流程.json>（用图形编辑器打开一个流程）");
+            return CommandLine.Fail(2, "用法：KeyMouse flow edit <流程.json>（用图形编辑器打开一个流程）");
         if (args.Length < 2)
-            return Commands.Fail(2, "用法：KeyMouse flow edit <流程.json>");
+            return CommandLine.Fail(2, "用法：KeyMouse flow edit <流程.json>");
 
         string path = Path.GetFullPath(args[1]);
-        if (!File.Exists(path)) return Commands.Fail(2, $"没有这个文件：{path}");
+        if (!File.Exists(path)) return CommandLine.Fail(2, $"没有这个文件：{path}");
 
         string? editor = ProductLayout.EditorPath;
         if (editor is null)
         {
-            Console.Error.WriteLine("找不到编辑器 KeyMouse.FlowEditor.exe。找过这些地方：");
+            Console.Error.WriteLine("找不到编辑器 KeyMouse.Editor.exe。找过这些地方：");
             foreach (LayoutCandidate candidate in ProductLayout.EditorCandidates())
             {
                 if (candidate.Path.Length == 0) continue;

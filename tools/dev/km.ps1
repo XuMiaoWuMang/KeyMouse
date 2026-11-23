@@ -172,8 +172,8 @@ switch ($Verb) {
     }
 
     { $_ -in 'ub', 'ui-build' } {
-        Say '-> 新编辑器外壳：打包（pnpm build + cargo build --release）'
-        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'editor-ui.ps1') build
+        Say '-> 新编辑器外壳：构建完整 Tauri exe'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'editor-ui.ps1') package
         exit $LASTEXITCODE
     }
 

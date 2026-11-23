@@ -1,0 +1,15 @@
+<Project>
+  <!-- Generate COM type definitions from the local Windows SDK; no external package or checked-in DLL. -->
+  <PropertyGroup>
+    <TlbImpPath Condition="'$(TlbImpPath)' == ''">$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64\TlbImp.exe</TlbImpPath>
+    <UiaInterop>$(BaseIntermediateOutputPath)$(Configuration)/background-interop/BackgroundUIA.dll</UiaInterop>
+  </PropertyGroup>
+  <Target Name="ImportUia" BeforeTargets="ResolveAssemblyReferences" Inputs="$(SystemRoot)\System32\UIAutomationCore.dll;$(MSBuildThisFileFullPath)" Outputs="$(UiaInterop)">
+    <Error Condition="!Exists('$(TlbImpPath)')" Text="Install .NET Framework 4.8 SDK (TlbImp.exe), or set TlbImpPath." />
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(UiaInterop)'))" />
+    <Exec Command="&quot;$(TlbImpPath)&quot; &quot;$(SystemRoot)\System32\UIAutomationCore.dll&quot; /namespace:BackgroundUIA /out:&quot;$(UiaInterop)&quot; /silent" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="BackgroundUIA"><HintPath>$(UiaInterop)</HintPath><EmbedInteropTypes>true</EmbedInteropTypes></Reference>
+  </ItemGroup>
+</Project>

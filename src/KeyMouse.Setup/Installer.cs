@@ -27,20 +27,15 @@ internal static class Installer
     }
 
     /// <summary>
-    /// 目录里装着的编辑器：新壳在前、老壳后备。
+    /// 目录里装着的编辑器。
     ///
-    /// 过渡期两套并存，所以"有没有装过"不能用某一个固定文件名来判断——今天还写着
-    /// `KeyMouse.FlowEditor.exe`，等老壳退役那天这里只剩一个名字。
+    /// 安装包只带 Tauri 外壳（`KeyMouse.Editor.exe`）。2.2.4 之前装上的机器里可能还躺着
+    /// WinUI 老壳，但它不再被解包，也不再参与"装没装过"的判断——升级时由 Replace 整目录清掉。
     /// </summary>
     internal static string? EditorIn(string directory)
     {
-        foreach (string name in new[] { "KeyMouse.Editor.exe", "KeyMouse.FlowEditor.exe" })
-        {
-            string candidate = Path.Combine(directory, name);
-            if (File.Exists(candidate)) return candidate;
-        }
-
-        return null;
+        string candidate = Path.Combine(directory, "KeyMouse.Editor.exe");
+        return File.Exists(candidate) ? candidate : null;
     }
 
     internal static bool IsFirstInstall => InstalledDirectory is null;
@@ -89,10 +84,8 @@ internal static class Installer
             Replace(directory, progress);
 
             progress?.Invoke("正在安装编辑器…");
-            // 新外壳（Tauri）：一个 exe，界面资源已经编在里面。
+            // 只有一个外壳（Tauri）：一个 exe，界面资源已经编在里面。
             Extract("editorui.zip", directory, progress);
-            // 老外壳（WinUI）：过渡期一起装，退役时删掉这一行与 flowedit.zip。
-            Extract("flowedit.zip", directory, progress);
 
             WebView2(directory, progress);
 
@@ -110,8 +103,7 @@ internal static class Installer
                 progress?.Invoke("保留已有的命令行：" + (existing ?? cli));
             }
 
-            // 新壳在前：注册表里写的应该是以后一直用的那个。
-            string gui = EditorIn(directory) ?? Path.Combine(directory, "KeyMouse.Editor.exe");
+            string gui = Path.Combine(directory, "KeyMouse.Editor.exe");
             ProductRegistry.Write(ProductRegistry.GuiValue, gui);
             if (existing is not null && File.Exists(existing))
                 ProductRegistry.Write(ProductRegistry.CliValue, existing);
@@ -279,9 +271,7 @@ internal static class Installer
             Type? shell = Type.GetTypeFromProgID("WScript.Shell");
             if (shell is null) return;
 
-            string target = Path.Combine(directory, File.Exists(Path.Combine(directory, "KeyMouse.Editor.exe"))
-                ? "KeyMouse.Editor.exe"
-                : "KeyMouse.FlowEditor.exe");
+            string target = Path.Combine(directory, "KeyMouse.Editor.exe");
 
             dynamic wsh = Activator.CreateInstance(shell)!;
             dynamic shortcut = wsh.CreateShortcut(link);
@@ -348,6 +338,7 @@ internal static class Installer
         if (guiDirectory is null && selfDirectory.Length > 3 && EditorIn(selfDirectory) is not null)
             guiDirectory = selfDirectory;
 
+        // KeyMouse.FlowEditor 只用于升级：旧安装里可能还有 WinUI 老壳在跑，杀干净 Replace 才能清目录。
         foreach (string process in new[] { "KeyMouse.Editor", "KeyMouse.FlowEditor", "KeyMouse" })
         {
             try

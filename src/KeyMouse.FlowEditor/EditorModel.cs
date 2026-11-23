@@ -254,11 +254,10 @@ public sealed class EditorModel : INotifyPropertyChanged
         return map;
     }
 
-    /// <summary>长按那一行的摘要：键名 + 时长（时长优先取时间线，退回落差）。</summary>
+    /// <summary>长按那一行的摘要：从按下到松开的等待，不计按下前的等待。</summary>
     private string HoldSummary(int head, int count)
     {
         StepVm open = Steps[head];
-        StepVm close = Steps[head + count - 1];
         string type = open.Step.Type == "mousedown" ? "鼠标" : "键盘";
         string name = open.Step.Type == "mousedown"
             ? (open.Step.Button ?? "left") switch
@@ -271,12 +270,19 @@ public sealed class EditorModel : INotifyPropertyChanged
             }
             : $"键盘 {open.Step.Combo ?? open.Step.Text}";
 
-        int ms = 0;
-        if (open.Step.AtMs is int from && close.Step.AtMs is int to && to >= from) ms = to - from;
+        long start = open.Step.AtMs ?? 0;
+        long end = start;
         for (int i = head + 1; i < head + count; i++)
         {
-            if (Steps[i].Step.Type == "sleep" && Steps[i].Step.Ms is int sleepMs) ms = Math.Max(ms, sleepMs);
+            FlowStep step = Steps[i].Step;
+            if (step.DelayMs is null && step.AtMs is int timestamp) end = Math.Max(end, timestamp);
+            else
+            {
+                end += step.DelayMs ?? FlowSchema.DefaultStepDelayMs;
+                if (step.Type == "sleep") end += step.Ms ?? 0;
+            }
         }
+        long ms = end - start;
 
         string duration = ms >= 1000 ? $"{ms / 1000.0:0.0} 秒" : $"{ms} ms";
         return $"长按 {name} · {duration}";

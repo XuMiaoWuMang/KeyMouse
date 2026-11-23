@@ -22,7 +22,7 @@ use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, WebviewUrl, Webvie
 
 /// HUD 窗口尺寸（逻辑像素）：7 行 11px 日志 + 一行小标题。
 pub const WIDTH: f64 = 468.0;
-pub const HEIGHT: f64 = 210.0;
+pub const HEIGHT: f64 = 760.0;
 
 /// 离屏幕左上角的距离（逻辑像素）：给圆角/阴影留呼吸空间。
 const LEFT_MARGIN: f64 = 16.0;
@@ -34,25 +34,88 @@ const TOP_MARGIN: f64 = 16.0;
 /// 比它先到。光靠事件会丢掉开头，所以这里留一份环形缓冲，页面一挂载就先拉一次。
 /// 直接跑 CLI 不经过这个状态，不占内存也不影响命令行。
 #[derive(Default)]
-pub struct HudLog(Mutex<VecDeque<String>>);
+pub struct HudLog(Mutex<HudBuffer>);
+
+#[derive(Default)]
+struct HudBuffer {
+    lines: VecDeque<String>,
+    events: Vec<serde_json::Value>,
+}
+
+const EVENT_PREFIX: &str = "@keymouse-hud/v1 ";
+
+// Match the WebView parser before caching: invalid structured output must not hide legacy rows.
+fn valid_event(event: &serde_json::Value) -> bool {
+    let safe_positive = |key: &str| event[key].as_u64()
+        .is_some_and(|n| n > 0 && n <= 9_007_199_254_740_991);
+    safe_positive("seq") && safe_positive("index")
+        && event["id"].as_str().is_some_and(|s| !s.is_empty() && s != "root")
+        && event["scopeId"].as_str().is_some_and(|s| !s.is_empty())
+        && event["id"] != event["scopeId"]
+        && matches!(event["kind"].as_str(), Some("step" | "call"))
+        && event["origin"].is_string() && event["command"].is_string()
+        && (event["total"].is_null() && event.get("total").is_some()
+            || event["total"].as_u64().is_some_and(|n| n <= 9_007_199_254_740_991 && n >= event["index"].as_u64().unwrap_or(u64::MAX)))
+        && matches!(event["status"].as_str(), Some("current" | "done" | "skipped" | "failed" | "cancelled"))
+}
+
+impl HudBuffer {
+    fn remove_tree(&mut self, id: &str) {
+        let children: Vec<String> = self.events.iter()
+            .filter(|e| e["scopeId"].as_str() == Some(id))
+            .filter_map(|e| e["id"].as_str().map(str::to_string)).collect();
+        for child in children { self.remove_tree(&child); }
+        self.events.retain(|e| e["id"].as_str() != Some(id));
+    }
+}
 
 impl HudLog {
     const CAPACITY: usize = 240;
 
     pub fn clear(&self) {
-        self.0.lock().unwrap().clear();
+        *self.0.lock().unwrap() = HudBuffer::default();
     }
 
     pub fn push(&self, line: &str) {
-        let mut lines = self.0.lock().unwrap();
-        lines.push_back(line.to_string());
-        while lines.len() > Self::CAPACITY {
-            lines.pop_front();
+        let mut buffer = self.0.lock().unwrap();
+        if let Some(json) = line.strip_prefix(EVENT_PREFIX) {
+            if let Ok(event) = serde_json::from_str::<serde_json::Value>(json) {
+                if !valid_event(&event) { return; }
+                if let (Some(id), Some(scope)) = (event["id"].as_str(), event["scopeId"].as_str()) {
+                    let id = id.to_string();
+                    let scope = scope.to_string();
+                    // A child arriving after its parent was evicted must not resurrect that tree.
+                    if scope != "root" && !buffer.events.iter().any(|e| e["id"].as_str() == Some(&scope) && e["kind"] == "call") {
+                        return;
+                    }
+                    if let Some(old) = buffer.events.iter_mut().find(|e| e["id"].as_str() == Some(&id)) {
+                        // Invocation identity and insertion order stay fixed for its whole lifetime.
+                        if old["scopeId"] != event["scopeId"] || old["kind"] != event["kind"]
+                            || old["index"] != event["index"] || old["origin"] != event["origin"]
+                            || old["seq"].as_u64() >= event["seq"].as_u64() { return; }
+                        *old = event;
+                    } else {
+                        buffer.events.push(event);
+                    }
+                    let ids: Vec<String> = buffer.events.iter()
+                        .filter(|e| e["scopeId"].as_str() == Some(&scope))
+                        .filter_map(|e| e["id"].as_str().map(str::to_string)).collect();
+                    let limit = if scope == "root" { 7 } else { 3 };
+                    for old in ids.iter().take(ids.len().saturating_sub(limit)) {
+                        buffer.remove_tree(old);
+                    }
+                }
+            }
+            return;
         }
+        buffer.lines.push_back(line.to_string());
+        while buffer.lines.len() > Self::CAPACITY { buffer.lines.pop_front(); }
     }
 
     pub fn snapshot(&self) -> Vec<String> {
-        self.0.lock().unwrap().iter().cloned().collect()
+        let buffer = self.0.lock().unwrap();
+        if buffer.events.is_empty() { return buffer.lines.iter().cloned().collect(); }
+        buffer.events.iter().map(|e| format!("{EVENT_PREFIX}{e}")).collect()
     }
 }
 
@@ -146,9 +209,14 @@ fn place(window: &tauri::WebviewWindow) {
     let origin = monitor.position();
     let area = monitor.size();
     let (x, y) = hud_position(origin.x, origin.y, area.width, area.height, scale);
-    let _ = window.set_size(LogicalSize::new(WIDTH, HEIGHT));
+    let height = HEIGHT.min(area.height as f64 / scale - TOP_MARGIN * 2.0).max(100.0);
+    let _ = window.set_size(LogicalSize::new(WIDTH, height));
     let _ = window.set_position(LogicalPosition::new(x, y));
 }
+
+#[cfg(test)]
+#[path = "../../../../tests/CallHud/buffer.rs"]
+mod call_buffer_tests;
 
 #[cfg(test)]
 mod tests {
@@ -158,7 +226,7 @@ mod tests {
     fn hud_is_small_enough_to_ignore() {
         // 7 行日志 + 标题，宽到能放下“调用另一个流程”这类长步骤名，又不该横跨半个屏幕。
         assert!((420.0..=560.0).contains(&WIDTH), "太窄会截断步骤名，太宽会挡视线");
-        assert!((170.0..=260.0).contains(&HEIGHT), "7 行 11px 日志加标题，再高就是一块板");
+        assert!((700.0..=800.0).contains(&HEIGHT), "容纳七条父日志与各三条子日志");
     }
 
     #[test]

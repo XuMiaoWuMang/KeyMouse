@@ -1,4 +1,5 @@
 using KeyMouse;
+using System.Diagnostics;
 
 namespace KeyMouse.Tests;
 
@@ -33,6 +34,37 @@ internal static class ProbeTests
             Harness.Throws<ArgumentException>("five values are a usage error", () => Probe.ParseRegion("1,2,3,4,5"));
             Harness.Throws<ArgumentException>("a non-integer is a usage error", () => Probe.ParseRegion("a,5,100,30"));
             Harness.Throws<ArgumentException>("an empty string is a usage error", () => Probe.ParseRegion(""));
+        });
+
+        Harness.Section("capture failure boundaries", () =>
+        {
+            var missing = new WindowInfo { Handle = IntPtr.Zero };
+            Harness.Throws<CommandFailure>("zero HWND is not an empty client area", () => Probe.ValidateRegion(missing, false, (0, 0, 1, 1)));
+            Harness.Throws<CommandFailure>("zero HWND cannot supply window-space pixels", () => Probe.CaptureRegion(missing, true, (0, 0, 1, 1), "screen"));
+            Harness.Check("zero HWND cannot receive focus", !WindowFocus.Focus(IntPtr.Zero).Ok);
+            Harness.Check("oversized frame rejected before creating a DIB", NativeCapture.TryCaptureScreen(0, 0, int.MaxValue, 2) is null);
+            Harness.Throws<ArgumentException>("truncated BGRA buffer rejected", () => new NativeCapture.Frame(2, 1, [0, 0, 0, 0]));
+            var frame = Frame(2, 2, (_, _) => (byte)0);
+            Harness.Throws<ArgumentException>("scaled dimensions cannot wrap", () => Probe.Preprocess(frame, int.MaxValue, 2));
+            Harness.Throws<CommandFailure>("crop cannot wrap into the next scanline", () => frame.Crop(1, 0, 2, 1));
+            Harness.Throws<CommandFailure>("crop bounds cannot wrap integer addition", () => frame.Crop(int.MaxValue, 0, 1, 1));
+        });
+        Harness.Section("external OCR process cleanup", () =>
+        {
+            var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
+            {
+                RedirectStandardOutput = true, RedirectStandardError = true,
+                UseShellExecute = false, CreateNoWindow = true,
+                Arguments = "/d /c echo version & echo diagnostic 1>&2",
+            };
+            var (code, stdout, stderr) = Probe.ReadProcess(psi, 5000);
+            Harness.Check("both redirected streams are drained", code == 0 && stdout.Trim() == "version" && stderr.Trim() == "diagnostic");
+            // The child waits; a synchronous ReadToEnd before the timeout used to hang here.
+            psi.FileName = Path.Combine(Environment.SystemDirectory, "ping.exe");
+            psi.Arguments = "-n 5 127.0.0.1";
+            var clock = Stopwatch.StartNew();
+            Harness.Throws<CommandFailure>("external engine deadline is enforced", () => Probe.ReadProcess(psi, 100));
+            Harness.Check("child was stopped rather than waited out", clock.Elapsed < TimeSpan.FromSeconds(3));
         });
 
         Harness.Group("probe: did we see it");

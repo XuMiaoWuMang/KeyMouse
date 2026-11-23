@@ -143,13 +143,14 @@ internal sealed class SetupForm : Form
         if (code != 0) return;
 
         _status.ForeColor = Color.FromArgb(23, 20, 15);
-        _status.Text = "装好了。" + Environment.NewLine + Path.Combine(directory, "KeyMouse.FlowEditor.exe");
+        string? editor = Installer.EditorIn(directory);
+        _status.Text = "装好了。" + Environment.NewLine + (editor ?? directory);
 
         if (MessageBox.Show(this, "现在打开流程编辑器？", Program.ProductName,
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
         {
-            string exe = Path.Combine(directory, "KeyMouse.FlowEditor.exe");
-            if (File.Exists(exe)) Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+            if (editor is not null)
+                Process.Start(new ProcessStartInfo(editor) { UseShellExecute = true });
         }
 
         Close();

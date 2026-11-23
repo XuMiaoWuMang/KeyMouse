@@ -27,11 +27,42 @@
     type RoutedEdge,
   } from './routing';
   import { branchesOf, stepSummary, stepTitle, type BranchKey, type FlowStep } from './model';
+  import {
+    buildView,
+    realPathOf,
+    remapLayout,
+    rollupRunResult,
+    runOriginLabel,
+    runSummary,
+  } from './runs';
   import { missingHint, missingOf } from './steps';
   import { isPathPrefix, pathKey, samePath, type NodePath } from './tree';
   import type { StepResult } from './run';
 
   export let steps: FlowStep[] = [];
+  /** 调用展开由插槽提供独立文件编辑器，绝不拼入父流程 steps。 */
+  export let allowCalls = true;
+  let openedCalls = new Set<string>();
+  let visibleCalls = new Set<string>();
+  function toggleCall(node: CanvasNode): void {
+    const key = pathKey(node.path);
+    openedCalls = new Set([...openedCalls, key]);
+    const next = new Set(visibleCalls);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    visibleCalls = next;
+    if (!next.has(key)) requestAnimationFrame(home);
+    if (next.has(key)) requestAnimationFrame(() => {
+      if (!viewport) return;
+      const index = callPanels.findIndex((item) => pathKey(item.path) === key);
+      const rect = viewport.getBoundingClientRect();
+      scale = clamp(Math.min((rect.width - 48) / 720, (rect.height - 48) / 600), 0.35, 1);
+      ox = 24 - (WORLD_ORIGIN + layout.width + 32) * scale;
+      oy = 24 - (WORLD_ORIGIN + 48 + index * 650) * scale;
+    });
+  }
+  $: callPanels = layout.nodes.filter((node) => node.step.type === 'call' && openedCalls.has(pathKey(node.path)));
+  $: panelRight = layout.width + 800;
+  $: panelBottom = Math.max(layout.height, callPanels.length * 650 + 48);
   export let selected: NodePath | null = null;
   /** Ctrl/⌘ 多选出来的节点；拖动其中任意一个时会一起搬。 */
   export let selectedPaths: NodePath[] = [];
@@ -42,6 +73,12 @@
   export let freeLayout = true;
   /** 自由布局的手工坐标；没有坐标的节点沿用自动布局。 */
   export let positions: Record<string, NodePosition> = {};
+  /**
+   * 已经展开的"连续操作"组，放组头真实路径的 pathKey。
+   * 收起时整段只占一个节点；展开以后组里每一步都铺回各自的卡片。
+   */
+  export let openRuns: string[] = [];
+  export let ontogglerun: (head: NodePath) => void = () => undefined;
 
   /** 按边的语义键保存的手工接口；缺省时按两个节点的夹角自动选边。 */
   export let ports: Record<string, EdgePorts> = {};
@@ -59,12 +96,12 @@
     index: number,
   ) => void = () => undefined;
   export let onmovefree: (moves: { path: NodePath; x: number; y: number }[]) => void = () => undefined;
-  export let onadd: (parent: NodePath, branch: BranchKey) => void = () => undefined;
   export let onrange: (paths: NodePath[]) => void = () => undefined;
 
   type EdgeEnd = 'from' | 'to';
   type DrawnEdge = GraphEdge & RoutedEdge & {
     key: string;
+    bounds: RoutingRect;
     fromRect: RoutingRect;
     toRect: RoutingRect;
   };
@@ -77,6 +114,10 @@
   const WORLD_ORIGIN = 4096;
 
   let viewport: HTMLDivElement;
+  let viewportW = 0, viewportH = 0;
+  function intersects(a: RoutingRect, b: RoutingRect) {
+    return a.x <= b.x+b.w && b.x <= a.x+a.w && a.y <= b.y+b.h && b.y <= a.y+a.h;
+  }
   let scale = 1;
   let ox = 0;
   let oy = 0;
@@ -95,11 +136,18 @@
     port: EdgePort;
   } | null = null;
 
-  $: baseLayout = layoutFlow(steps);
+  $: openSet = new Set(openRuns);
+  /**
+   * 视图树只多了"连续操作"这一层显示折叠：`buildView` 把 ≥3 步的相邻移动/滚轮并成一个
+   * 占位节点，几何照视图树算，再用 `remapLayout` 换回真实路径。选中、拖动、编辑仍然
+   * 只认真实 NodePath，外面（App）不需要知道哪些步被藏起来了。
+   */
+  $: view = buildView(steps, openSet);
+  $: baseLayout = remapLayout(layoutFlow(view.steps), view);
   $: layout = freeLayout ? applyNodePositions(baseLayout, positions) : baseLayout;
   /**
    * 内容真实包围盒：负坐标节点也要算进「适配」里，否则拖到左边以后点适配，
-   * 视图只围住正坐标那一半。空分支按钮也算，它跟着块走。
+   * 视图只围住正坐标那一半。
    */
   $: contentBounds = (() => {
     let minX = Infinity;
@@ -112,11 +160,9 @@
       maxX = Math.max(maxX, node.x + node.w);
       maxY = Math.max(maxY, node.y + node.h);
     }
-    for (const empty of layout.empties) {
-      minX = Math.min(minX, empty.x);
-      minY = Math.min(minY, empty.y);
-      maxX = Math.max(maxX, empty.x + empty.w);
-      maxY = Math.max(maxY, empty.y + empty.h);
+    if (callPanels.some((node) => visibleCalls.has(pathKey(node.path)))) {
+      maxX = Math.max(maxX, panelRight);
+      maxY = Math.max(maxY, panelBottom);
     }
     if (!Number.isFinite(minX)) {
       return { minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height };
@@ -148,40 +194,57 @@
     }
     return keys;
   })();
+  $: baseNodes = new Map(layout.nodes.map(node => [pathKey(node.path), node]));
   $: nodeByPath = new Map(layout.nodes.map((node) => {
     const key = pathKey(node.path);
-    const moved = previewPaths.has(key);
-    return [key, moved ? { ...node, x: node.x + dragOffset.x, y: node.y + dragOffset.y } : node];
+    return [key, previewPaths.has(key) ? { ...node, x: node.x + dragOffset.x, y: node.y + dragOffset.y } : node];
   }));
-  $: graphEdges = (() => {
-    // 直接读一次 props，确保 Svelte 把 ports 算进这条响应式语句的依赖里；
-    // 只在 flatMap 回调里读时，props 更新不一定会触发重算。
-    const portOverrides = ports;
-    return buildGraph(steps).flatMap((edge): DrawnEdge[] => {
-      const from = nodeByPath.get(pathKey(edge.from));
-      const to = nodeByPath.get(pathKey(edge.to));
-      if (!from || !to) return [];
-      const key = graphEdgeKey(edge);
-      const saved = portOverrides[key];
-      const override = portDrag?.key === key
-        ? { ...saved, [portDrag.end]: portDrag.port }
-        : saved;
-      const routed = routeEdge(from, to, {
-        kind: edge.kind,
-        fromPort: override?.from,
-        toPort: override?.to,
-        obstacles: Array.from(nodeByPath.values()),
-      });
-      return [{
-        ...edge,
-        key,
-        fromRect: from,
-        toRect: to,
-        ...routed,
-        labelY: routed.labelY + labelOffset(edge.kind),
-      }];
+  function draw(edge: GraphEdge, key: string, from: RoutingRect, to: RoutingRect,
+                obstacles: RoutingRect[], override?: EdgePorts): DrawnEdge {
+    const routed = routeEdge(from, to, {kind:edge.kind, fromPort:override?.from, toPort:override?.to, obstacles});
+    return {...edge, key, fromRect:from, toRect:to, ...routed,
+      bounds:routeBounds(routed.points), labelY:routed.labelY + labelOffset(edge.kind)};
+  }
+  // Static routes depend on document layout and persisted ports, never on pointer motion.
+  $: baseEdges = (() => {
+    const seen = new Set<string>();
+    const obstacles = layout.nodes;
+    return buildGraph(view.steps).flatMap((edge): DrawnEdge[] => {
+      const real = {...edge, from:realPathOf(view,edge.from), to:realPathOf(view,edge.to)};
+      const from = baseNodes.get(pathKey(real.from)), to = baseNodes.get(pathKey(real.to));
+      const key = graphEdgeKey(real);
+      if (!from || !to || seen.has(key)) return [];
+      seen.add(key);
+      return [draw(real, key, from, to, obstacles, ports[key])];
     });
   })();
+  $: graphEdges = (() => {
+    if (!previewPaths.size && !portDrag) return baseEdges;
+    const obstacles = [...nodeByPath.values()];
+    // Changing an obstacle affects its incident edges and paths near its old/new location.
+    // Use a conservative clearance box; after drop all routes use the committed layout again.
+    const touched = [...previewPaths].flatMap(key => [baseNodes.get(key), nodeByPath.get(key)])
+      .flatMap(n => n ? [{x:n.x-32,y:n.y-32,w:n.w+64,h:n.h+64}] : []);
+    return baseEdges.map(edge => {
+      const from = nodeByPath.get(pathKey(edge.from))!, to = nodeByPath.get(pathKey(edge.to))!;
+      if (from === edge.fromRect && to === edge.toRect && edge.key !== portDrag?.key &&
+          !touched.some(rect => intersects(rect,edge.bounds))) return edge;
+      const saved = ports[edge.key];
+      const override = portDrag?.key === edge.key ? {...saved, [portDrag.end]:portDrag.port} : saved;
+      return draw(edge,edge.key,from,to,obstacles,override);
+    });
+  })();
+  // Cull only the rendered subset. Hit testing, drop gaps, fit and child sessions use the full layout.
+  function routeBounds(points: {x:number;y:number}[]): RoutingRect {
+    const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return {x, y, w:Math.max(...xs)-x, h:Math.max(...ys)-y};
+  }
+  $: clip = {x:-ox/scale-WORLD_ORIGIN-160,y:-oy/scale-WORLD_ORIGIN-160,
+    w:viewportW/scale+320,h:viewportH/scale+320};
+  $: visibleNodes = layout.nodes.filter(n => intersects(n,clip) || previewPaths.has(pathKey(n.path)) || samePath(selected,n.path));
+  $: visibleEdges = graphEdges.filter(e => intersects(e.bounds, clip) || e.key === activeEdgeKey);
+  $: visibleLabels = layout.labels.filter(l => intersects(l, clip));
   $: activeEdge = activeEdgeKey
     ? graphEdges.find((edge) => edge.key === activeEdgeKey) ?? null
     : null;
@@ -548,10 +611,13 @@
         wy >= node.y - 4 && wy <= node.y + node.h + bottom;
     });
     if (host) {
+      // 落点在合并卡片后面时要跳过整段，不然新步骤会插进两组中间、把"连续操作"劈开。
+      const hostRun = view.runs.get(pathKey(host.path));
+      const hidden = hostRun && !openSet.has(pathKey(host.path)) ? hostRun.paths.length - 1 : 0;
       return {
         parentPath: host.parentPath,
         branch: host.branch,
-        index: host.index + 1,
+        index: host.index + 1 + hidden,
         x: host.x,
         y: host.y + host.h + 4,
         w: host.w,
@@ -612,7 +678,7 @@
 <div
   class="canvas"
   class:panning={pan !== null}
-  bind:this={viewport}
+  bind:this={viewport} bind:clientWidth={viewportW} bind:clientHeight={viewportH}
   role="presentation"
   style="background-position: {ox}px {oy}px; background-size: {Math.max(15, 24 * scale)}px {Math.max(15, 24 * scale)}px;"
   on:pointerdown={onViewportDown}
@@ -662,7 +728,7 @@
           <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--kp-signal)"></path>
         </marker>
       </defs>
-      {#each graphEdges as edge}
+      {#each visibleEdges as edge (edge.key)}
         <g
           class="edge-group {edge.kind}"
           class:active={activeEdgeKey === edge.key}
@@ -694,7 +760,18 @@
       {/each}
     </svg>
 
-    {#each layout.labels as label}
+    {#each callPanels as node, index (pathKey(node.path))}
+      <section class="child-panel" class:child-hidden={!visibleCalls.has(pathKey(node.path))}
+        style="left: {layout.width + 32}px; top: {48 + index * 650}px; width: 720px; height: 600px;"
+        aria-label={`子流程 ${node.step.flow ?? ''}`}
+        on:pointerdown|stopPropagation on:wheel|stopPropagation>
+        <header class="child-panel-heading"><span>子流程 · 来自第 {node.origin} 步调用</span>
+          <button type="button" on:click={() => toggleCall(node)}>收起</button></header>
+        <slot name="child" {node} />
+      </section>
+    {/each}
+
+    {#each visibleLabels as label}
       <div
         class="branch-label"
         class:else-branch={label.branch === 'else'}
@@ -704,36 +781,27 @@
       </div>
     {/each}
 
-    {#each layout.empties as empty}
-      <button
-        class="empty-branch"
-        style="left: {empty.x}px; top: {empty.y}px; width: {empty.w}px; height: {empty.h}px; {previewPaths.has(pathKey(empty.parentPath))
-          ? `transform: translate(${dragOffset.x}px, ${dragOffset.y}px);`
-          : ''}"
-        on:pointerdown|stopPropagation={() => undefined}
-        on:click|stopPropagation={() => onadd(empty.parentPath, empty.branch)}
-        title={empty.branch === 'else' ? '给否则分支加第一步' : '给循环体加第一步'}
-      >
-        <span class="plus" aria-hidden="true">＋</span>
-        <span>{empty.text}里还没有步骤</span>
-      </button>
-    {/each}
-
-    {#each layout.nodes as node}
-      {@const result = results[node.origin]}
-      {@const missing = missingOf(node.step)}
-      {@const count = childCount(node)}
+    {#each visibleNodes as node (pathKey(node.path))}
+      {@const run = view.runs.get(pathKey(node.path)) ?? null}
+      {@const runOpen = run !== null && openSet.has(pathKey(node.path))}
+      {@const result = run && !runOpen ? rollupRunResult(run, steps, results) : results[node.origin]}
+      {@const missing = run && !runOpen ? [] : missingOf(node.step)}
+      {@const count = run && !runOpen ? 0 : childCount(node)}
       <div
         class="node shape-{node.category}"
+        class:run={run !== null}
+        class:run-open={runOpen}
         class:selected={selectedPaths.some((path) => samePath(path, node.path)) ||
           (selectedPaths.length === 0 && samePath(selected, node.path))}
         class:primary={samePath(selected, node.path)}
         class:dragging={previewPaths.has(pathKey(node.path))}
         class:marquee-hit={marqueeHits.some((path) => samePath(path, node.path))}
-        class:failed={result !== undefined && !result.ok}
+        class:failed={result != null && !result.ok}
         role="button"
         tabindex="0"
-        aria-label={`${stepTitle(node.step.type)}，${node.origin}`}
+        aria-label={run
+          ? `连续操作，${run.paths.length} 步，${runOriginLabel(run)}`
+          : `${stepTitle(node.step.type)}，${node.origin}`}
         style="left: {node.x}px; top: {node.y}px; width: {node.w}px; height: {node.h}px; {previewPaths.has(pathKey(node.path))
           ? `transform: translate(${dragOffset.x}px, ${dragOffset.y}px);`
           : ''}"
@@ -747,13 +815,28 @@
         <span class="plate" aria-hidden="true"></span>
         <div class="node-inner">
           <div class="node-head">
-            <span class="node-cat">{node.origin}</span>
+            <span class="node-cat">{run ? runOriginLabel(run) : node.origin}</span>
+            {#if allowCalls && node.step.type === 'call'}
+              <button class="call-toggle" type="button" aria-expanded={visibleCalls.has(pathKey(node.path))}
+                on:pointerdown|stopPropagation on:click|stopPropagation={() => toggleCall(node)}>
+                {visibleCalls.has(pathKey(node.path)) ? '收起子流程' : '展开子流程'}
+              </button>
+            {/if}
+            {#if run}
+              <button class="run-toggle" type="button" aria-expanded={runOpen}
+                title={runOpen ? '把这一段并回一个节点' : `展开这一段的 ${run.paths.length} 步`}
+                on:pointerdown|stopPropagation on:click|stopPropagation={() => ontogglerun(run.head)}>
+                {runOpen ? '收起' : '展开'}
+              </button>
+            {/if}
           </div>
           <div class="node-title">
-            <span class="node-icon" aria-hidden="true"><StepIcon name={node.step.type} size={12} /></span>
-            <span>{stepTitle(node.step.type)}</span>
+            <span class="node-icon" aria-hidden="true">
+              <StepIcon name={run && !runOpen ? 'move' : node.step.type} size={12} />
+            </span>
+            <span>{run && !runOpen ? '连续操作' : stepTitle(node.step.type)}</span>
           </div>
-          <div class="node-summary">{stepSummary(node.step)}</div>
+          <div class="node-summary">{run && !runOpen ? runSummary(run) : stepSummary(node.step)}</div>
           <div class="node-tags">
             {#if result}
               <span class="node-result" class:bad={!result.ok} title={result.text}>
@@ -765,9 +848,9 @@
               <span class="node-missing" title={missingHint(node.step)}>待补</span>
             {/if}
             {#if count > 0}
-              <span class="node-count">{count} 子步</span>
+              <span class="node-count">{count} 步</span>
             {/if}
-            {#if node.step.shot}
+            {#if node.step.shot || (run && !runOpen && run.steps.some((step) => step.shot))}
               <span class="node-shot" title="这一步有录制时的证据图" aria-label="有证据图">▣</span>
             {/if}
           </div>
@@ -893,6 +976,13 @@
 </div>
 
 <style>
+  .child-panel { position: absolute; z-index: 4; display: flex; flex-direction: column; background: var(--kp-field); border: 1px solid var(--kp-rule-strong); border-radius: 4px; overflow: hidden; }
+  .child-panel.child-hidden { display: none; }
+  .child-panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--kp-rule); color: var(--kp-ink2); font-size: 12px; }
+  .child-panel-heading button, .call-toggle { background: var(--kp-paper); border: 1px solid var(--kp-rule); color: var(--kp-ink); border-radius: 3px; cursor: pointer; font: inherit; }
+  .call-toggle { margin-left: auto; padding: 2px 5px; font-size: 10px; }
+  .run-toggle { margin-left: auto; padding: 2px 5px; font-size: 10px; }
+  .call-toggle:focus-visible, .run-toggle:focus-visible, .child-panel-heading button:focus-visible { outline: 2px solid var(--kp-cue); outline-offset: 2px; }
   .canvas {
     position: absolute;
     inset: 0;
@@ -1051,32 +1141,6 @@
     color: var(--kp-ink2);
   }
 
-  /* ── 空分支：虚线槽，点一下就有第一步 ────────────────────── */
-  .empty-branch {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    border: 1px dashed var(--kp-rule-strong);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--kp-card) 55%, transparent);
-    color: var(--kp-ink3);
-    font: 500 11px/1.2 var(--kp-font);
-    cursor: pointer;
-  }
-
-  .empty-branch:hover {
-    border-color: var(--kp-signal);
-    color: var(--kp-signal);
-    background: var(--kp-card);
-  }
-
-  .plus {
-    font-family: var(--kp-font-mono);
-    font-size: 13px;
-  }
-
   /* ── 三种轮廓 ───────────────────────────────────────────── */
   .node {
     position: absolute;
@@ -1170,6 +1234,29 @@
     z-index: 8;
     opacity: 0.72;
     transition: none;
+  }
+
+  /* 连续操作画成一叠卡片：两张错位的底卡比一行"N 步"更快说明"这儿还压着几步"。 */
+  .node.run:not(.run-open)::before,
+  .node.run:not(.run-open)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--kp-rule-strong);
+    border-radius: 10px;
+    background: var(--kp-card);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .node.run:not(.run-open)::before {
+    transform: translate(4px, 4px);
+    opacity: 0.7;
+  }
+
+  .node.run:not(.run-open)::after {
+    transform: translate(8px, 8px);
+    opacity: 0.4;
   }
 
   .plate,

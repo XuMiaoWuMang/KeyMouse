@@ -28,6 +28,22 @@ internal static class RunnerProtocol
     /// </summary>
     internal const string ContractVersion = "1";
 
+    internal const string Latest = "2.0";
+    internal static readonly string[] Capabilities = ["status-stream", "session-resume", "screenshot-diff"];
+
+    // We implement two wire dialects, not every intermediate minor version.
+    internal static string? Negotiate(RunnerRequest request)
+    {
+        if (!AcceptsVersion(request.Params?.Version)) return null;
+        if (request.ProtocolVersion == null && request.MinCompatibleVersion == null) return ContractVersion;
+        static Version? Parse(string? s) => s != null && Version.TryParse(s.Contains('.') ? s : s+".0", out var v)
+            && v.Build < 0 ? v : null;
+        var max = Parse(request.ProtocolVersion); var min = Parse(request.MinCompatibleVersion ?? request.ProtocolVersion);
+        if (max == null || min == null || min > max) return null;
+        if (min <= new Version(2,0) && max >= new Version(2,0)) return Latest;
+        return min <= new Version(1,0) && max >= new Version(1,0) ? ContractVersion : null;
+    }
+
     /// <summary>
     /// 客户端报的版本能不能用。没报（脚本随手发一行）就放行；报了就必须与契约同主版本，
     /// 所以 "1" 与 "1.0" 等价，"2" 会被挡下。
@@ -47,7 +63,7 @@ internal static class RunnerProtocol
     internal static readonly string[] Methods =
     [
         "hello", "status", "list", "run", "record", "validate",
-        "pick-region", "ocr", "cancel", "pause", "resume", "shutdown",
+        "pick-region", "ocr", "cancel", "pause", "resume", "shutdown", "watch",
     ];
 
     internal static readonly JsonSerializerOptions Json = new()
@@ -64,6 +80,8 @@ internal sealed class RunnerRequest
 {
     public int Id { get; set; }
     public string Method { get; set; } = "";
+    public string? ProtocolVersion { get; set; }
+    public string? MinCompatibleVersion { get; set; }
     public RunnerParameters? Params { get; set; }
 }
 
@@ -82,6 +100,9 @@ internal sealed class RunnerParameters
     public int? Retry { get; set; }
     public int? DurationMs { get; set; }
     public bool? Shots { get; set; }
+    public bool? ShotDiff { get; set; }
+    public string? Session { get; set; }
+    public long? After { get; set; }
 
     /// <summary>证据目录以哪个文件为准（编辑器跑的是内存快照，但证据应落在用户那份流程旁边）。</summary>
     public string? EvidenceFor { get; set; }
@@ -106,6 +127,7 @@ internal sealed class RunnerParameters
 /// <summary>One line the Runner sends back. <c>kind</c> is the discriminator.</summary>
 internal sealed class RunnerEvent
 {
+    public long? Cursor { get; set; }
     public string Kind { get; set; } = "";
     public int Id { get; set; }
     public int? Job { get; set; }

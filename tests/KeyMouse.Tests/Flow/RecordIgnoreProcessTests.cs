@@ -62,13 +62,13 @@ internal static class RecordIgnoreProcessTests
     }
 
     /// <summary>
-    /// 选项名写错时，引擎目前**不会**报错（`Commands.Parse` 只做切分，各命令自己认自己的名字）。
+    /// 选项名写错时，引擎目前**不会**报错（`CommandLine.Parse` 只做切分，各命令自己认自己的名字）。
     /// 这条用例钉住这个现状：写错的名字会被原样放进选项表，由命令自己忽略——
     /// 所以外壳传参必须与引擎的选项名逐字一致（`--ignore-process`）。
     /// </summary>
     private static void UnknownOptionIsKeptButIgnored()
     {
-        var (positional, options) = Commands.Parse(["--ignore-proces", "KeyMouse.Editor"], "out", "ignore-process");
+        var (positional, options) = CommandLine.Parse(["--ignore-proces", "KeyMouse.Editor"], "out", "ignore-process");
 
         // 写错名字的后果比"被忽略"更糟：因为它不在 valueFlags 里，后面的值掉出来变成位置参数，
         // record 于是报"不接受位置参数 'KeyMouse.Editor'"。名字必须逐字对上。

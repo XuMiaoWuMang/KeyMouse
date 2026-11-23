@@ -56,6 +56,11 @@ $expected = @{
     'src\KeyMouse.Runner\KeyMouse.Runner.csproj'         = 'EngineVersion'
 }
 
+# Foundation / Model / ... are shipped as part of the same engine, not independent products.
+foreach ($layer in Get-ChildItem (Join-Path $root 'src') -Directory -Filter 'KeyMouse.Core.*') {
+    $expected["src\$($layer.Name)\$($layer.Name).csproj"] = 'EngineVersion'
+}
+
 foreach ($relative in $expected.Keys) {
     $path = Join-Path $root $relative
     if (-not (Test-Path $path)) { Fail "缺项目文件：$relative"; continue }

@@ -1,6 +1,6 @@
 //! 环境判定：这是开发树还是安装版、命令行在哪、自己有没有提权。
 //!
-//! 搜索顺序必须与 `src\KeyMouse.Core\Product\ProductLayout.cs` 的 `CliCandidates()` 一致，
+//! 搜索顺序必须与 `src\KeyMouse.Core.Foundation\Product\ProductLayout.cs` 的 `CliCandidates()` 一致，
 //! 否则会出现"编辑器说找到了、`doctor` 说没有"的错位。
 
 use std::env;
@@ -51,20 +51,27 @@ pub fn runtime_info() -> RuntimeInfo {
     let exe = env::current_exe().unwrap_or_default();
     let here = exe.parent().map(Path::to_path_buf).unwrap_or_default();
     let repo = find_repo_root(&here);
-    let cli = resolve_cli(&here, repo.as_deref());
+    let mut cli = resolve_cli(&here, repo.as_deref());
 
-    let version = cli
-        .as_ref()
-        .and_then(|path| {
-            crate::process::cli_command(path)
-                .arg("--version")
-                // 我们要解析这段文字，不是在终端里看它：让命令行别去猜控制台码页。
-                .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
-                .output()
-                .ok()
-        })
-        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
-        .filter(|text| !text.is_empty());
+    let probe_version = |path: &Path| {
+        crate::process::cli_command(path)
+            .arg("--version")
+            .env("KEYMOUSE_OUTPUT_ENCODING", "utf-8")
+            .output().ok()
+            .filter(|out| out.status.success())
+            .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+            .filter(|text| !text.is_empty())
+    };
+    let mut version = cli.as_deref().and_then(probe_version);
+    // Only fall back within this checkout. Never bypass an explicit CLI or silently use PATH.
+    if version.is_none() && env::var("KEYMOUSE_CLI").unwrap_or_default().trim().is_empty() {
+        if let Some(root) = &repo {
+            if cli.as_ref() == Some(&root.join("artifacts/cli/KeyMouse.exe")) {
+                let local = root.join("src/KeyMouse.Cli/bin/Release/net10.0-windows/KeyMouse.exe");
+                if let Some(v) = probe_version(&local) { cli = Some(local); version = Some(v); }
+            }
+        }
+    }
 
     let environment = match &repo {
         Some(_) => "development",
@@ -145,6 +152,16 @@ fn initial_path() -> Option<String> {
 pub fn is_elevated() -> bool {
     let probe = Path::new(r"C:\Windows\System32").join("keymouse-elevation-probe.tmp");
     fs_write_probe(&probe)
+}
+
+#[cfg(test)]
+#[test]
+#[ignore = "requires the matching built CLI in the editor layout"]
+fn editor_resolves_background_cli() {
+    let cli = crate::run::cli_path_of().expect("editor CLI");
+    let schema: serde_json::Value = serde_json::from_str(&crate::schema::read_schema(&cli).unwrap()).unwrap();
+    assert_eq!(schema.pointer("/capabilities/backgroundClient").and_then(|v| v.as_bool()), Some(true));
+    println!("verified editor CLI: {}", cli.display());
 }
 
 fn fs_write_probe(path: &Path) -> bool {

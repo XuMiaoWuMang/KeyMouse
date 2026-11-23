@@ -89,7 +89,7 @@ function walkSequence(
             from: path,
             to: child.entry,
             kind: item.key === 'else' ? 'false' : 'true',
-            label: item.key === 'else' ? '否则' : '成立',
+            label: item.key === 'else' ? '不符' : '成立',
           });
           branchExits.push(...child.exits);
         } else if (next) {
@@ -99,7 +99,7 @@ function walkSequence(
             from: path,
             to: next,
             kind: item.key === 'else' ? 'false' : 'true',
-            label: item.key === 'else' ? '否则' : '成立',
+            label: item.key === 'else' ? '不符' : '成立',
           });
           branchExits.push({ path: next, terminal: 'normal' });
         }

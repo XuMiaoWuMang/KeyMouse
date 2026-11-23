@@ -1,7 +1,7 @@
 //! 从屏幕上取一点 / 取一块（干活的还是命令行，这里只负责等它、把结果翻译成界面能用的形状）。
 //!
 //! 为什么不在壳里自己画十字线：取区域的浮层、坐标换算、窗口归属这些判断都在
-//! `KeyMouse.Core` 的 `region pick` 里，而且已经有一堆实测结论（客户区 / 窗口 / 屏幕三种空间、
+//! `KeyMouse.Core.Foundation` 的 `region pick` 里，而且已经有一堆实测结论（客户区 / 窗口 / 屏幕三种空间、
 //! 标题栏那种边上情况）。壳再实现一遍，就是第二份会走样的规矩。
 
 
@@ -14,12 +14,18 @@ use crate::run::cli_path_of;
 #[serde(rename_all = "camelCase")]
 struct RawPick {
     ok: bool,
+    screen: RawScreen,
     #[serde(default)]
     space: Option<String>,
     #[serde(default)]
     region: Option<Vec<i64>>,
     #[serde(default)]
     window: Option<RawWindow>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawScreen {
+    rect: [i64; 4],
 }
 
 #[derive(Debug, Deserialize)]
@@ -36,8 +42,18 @@ struct RawWindow {
 }
 
 #[derive(Debug, Serialize)]
+pub struct PickRect {
+    x: i64,
+    y: i64,
+    width: i64,
+    height: i64,
+}
+
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PickResult {
+    /// 绝对屏幕坐标，不能用相对 region 冒充；拖动的默认取点使用这一组。
+    pub screen: PickRect,
     /// 'client' | 'window' | 'screen'
     pub space: String,
     pub x: i64,
@@ -65,13 +81,21 @@ fn parse(raw: &str) -> Result<PickResult, String> {
     if !picked.ok {
         return Err("取区域没成功".to_string());
     }
-    let region = picked.region.ok_or_else(|| "pick 没给区域".to_string())?;
-    if region.len() < 4 {
-        return Err("pick 给的区域不完整".to_string());
-    }
+    let screen = picked.screen.rect;
+    let (space, region) = match picked.space.as_deref() {
+        Some("client" | "window") => {
+            let region = picked.region.ok_or_else(|| "pick 没给区域".to_string())?;
+            let rect: [i64; 4] = region.try_into().map_err(|_| "pick 给的区域不完整".to_string())?;
+            (picked.space.unwrap(), rect)
+        }
+        // CLI 选区没有窗口归属时只给 screen.rect；不能把缺失的相对坐标当成取点失败。
+        Some("screen") | None => ("screen".to_string(), screen),
+        Some(other) => return Err(format!("pick 给了不认识的坐标空间：{other}")),
+    };
     let window = picked.window;
     Ok(PickResult {
-        space: picked.space.unwrap_or_else(|| "screen".to_string()),
+        screen: PickRect { x: screen[0], y: screen[1], width: screen[2], height: screen[3] },
+        space,
         x: region[0],
         y: region[1],
         width: region[2],
@@ -139,6 +163,24 @@ mod tests {
         assert_eq!(picked.space, "client");
         assert_eq!(picked.process.as_deref(), Some("notepad"));
         assert_eq!(picked.handle.as_deref(), Some("0x20378"));
+    }
+
+    #[test]
+    fn parse_keeps_absolute_screen_coordinates_separate_from_client_coordinates() {
+        let raw = SAMPLE.replace("\"rect\": [100, 200, 300, 40]", "\"rect\": [-900, 520, 300, 40]");
+        let picked = parse(&raw).expect("命令行的两套坐标都应当能读");
+        let json = serde_json::to_value(&picked).unwrap();
+        assert_eq!(json["screen"], serde_json::json!({ "x": -900, "y": 520, "width": 300, "height": 40 }));
+        assert_eq!((picked.x, picked.y), (100, 200));
+    }
+
+    #[test]
+    fn parse_accepts_screen_only_point_without_a_window() {
+        let picked = parse(r#"{"ok":true,"screen":{"rect":[-40,25,0,0]},"space":null,"region":null,"window":null}"#)
+            .expect("没有窗口的屏幕点也应当能读");
+        assert_eq!(picked.space, "screen");
+        assert_eq!((picked.x, picked.y, picked.width, picked.height), (-40, 25, 0, 0));
+        assert!(picked.process.is_none());
     }
 
     #[test]

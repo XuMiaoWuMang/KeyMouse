@@ -43,17 +43,17 @@ export const EMPTY_FIELDS: ConditionFields = {
 };
 
 export const MODE_LABELS: { value: ConditionMode; label: string; hint: string }[] = [
-  { value: '', label: '选择条件…', hint: '先选一种，再填右边带「必填」的项。' },
-  { value: 'true', label: '总是成立', hint: '等价于 cond = true；适合先搭结构、之后再改。' },
-  { value: 'false', label: '从不成立', hint: '等价于 cond = false；调试分支时有用。' },
-  { value: 'compare', label: '比较两个值', hint: '左值 / 运算符 / 右值，例如 n < 3、name == "完成"。' },
-  { value: 'text', label: '屏幕上读到文字', hint: '生成 text("…")；还要在下面填「条件读哪里」的窗口与区域。' },
-  { value: 'window', label: '窗口存在', hint: '生成 window("进程名")，例如 window("notepad")。' },
-  { value: 'front', label: '窗口在前台', hint: '生成 front("进程名")。' },
-  { value: 'found', label: '上次读到的文字包含', hint: '生成 found("…")；读取结果来自最近一次读屏/等待文字。' },
-  { value: 'foundAny', label: '上次读到过文字', hint: '生成 found()；不关心具体内容，只要求上一次读屏有结果。' },
-  { value: 'elapsed', label: '运行超过 N 毫秒', hint: '生成 elapsed() > N；N 必须是正整数。' },
-  { value: 'custom', label: '自定义表达式', hint: '直接写引擎表达式；用于选项覆盖不了的情况。' },
+  { value: '', label: '选择条件…', hint: '先选条件类型。' },
+  { value: 'true', label: '总是成立', hint: '总是执行。' },
+  { value: 'false', label: '从不成立', hint: '从不执行。' },
+  { value: 'compare', label: '比较两个值', hint: '例如 n < 3。' },
+  { value: 'text', label: '屏幕上读到文字', hint: '还要填窗口和区域。' },
+  { value: 'window', label: '窗口存在', hint: '例如 notepad。' },
+  { value: 'front', label: '窗口在前台', hint: '窗口已激活。' },
+  { value: 'found', label: '上次读到的文字包含', hint: '用最近一次读屏结果。' },
+  { value: 'foundAny', label: '上次读到过文字', hint: '上次读屏有结果。' },
+  { value: 'elapsed', label: '运行超过 N 毫秒', hint: '毫秒数。' },
+  { value: 'custom', label: '自定义表达式', hint: '直接写表达式。' },
 ];
 
 function quote(text: string): string {

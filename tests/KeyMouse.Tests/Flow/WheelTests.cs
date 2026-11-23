@@ -21,22 +21,22 @@ internal static class WheelTests
         };
         Harness.Sequence("不写 axis 就是竖向",
             ["mouse", "wheel", "240", "-wx", "10", "-wy", "20", "--process", "notepad"],
-            FlowDocument.ToArguments(vertical));
+            FlowCommandDisplay.Tokens(vertical));
 
         vertical.Axis = "vertical";
         Harness.Sequence("写 axis=vertical 也一样",
             ["mouse", "wheel", "240", "-wx", "10", "-wy", "20", "--process", "notepad"],
-            FlowDocument.ToArguments(vertical));
+            FlowCommandDisplay.Tokens(vertical));
 
         vertical.Axis = "horizontal";
         Harness.Sequence("axis=horizontal 走 mouse hwheel",
             ["mouse", "hwheel", "240", "-wx", "10", "-wy", "20", "--process", "notepad"],
-            FlowDocument.ToArguments(vertical));
+            FlowCommandDisplay.Tokens(vertical));
 
         Harness.Throws<CommandFailure>("axis 写错会被拒", () =>
         {
             var bad = new FlowStep { Type = "wheel", Delta = 120, Axis = "diagonal" };
-            FlowDocument.ToArguments(bad);
+            FlowCommandDisplay.Tokens(bad);
         });
     }
 }

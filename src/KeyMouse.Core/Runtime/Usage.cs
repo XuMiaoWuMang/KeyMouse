@@ -12,7 +12,7 @@ internal static class Usage
 
     internal sealed record Section(string Title, string[]? Note, Entry[] Entries);
 
-    public static void Print() => Console.Write(Render());
+    public static void Print() => CommandOutput.Out.Write(Render());
 
     /// <summary>命令列的宽（单元格）。宽于它的命令独占一行，说明另起一行并保持同一左缘。</summary>
     private const int Gutter = 34;
@@ -44,6 +44,17 @@ internal static class Usage
             new("key down <按键> / key up <按键>", "按下 / 抬起"),
             new("key combo <键1+键2+...> [--hold 毫秒]", "组合键，如 ctrl+shift+s、win+r、alt+f4"),
             new("key type <文本> [--interval 毫秒]", "输入文本（Unicode 注入，不依赖输入法/键盘布局）。默认每字 15ms；--interval 0 最快但可能丢字"),
+        ]),
+
+        new("Agent 接入（本地标准输入输出）", null,
+        [
+            new("mcp [--allow-input]", "启动 MCP 服务；默认只读窗口和 OCR，显式允许后才能点击、按键和输入文字"),
+        ]),
+
+        new("后台控件（独立 CLI，不合成键鼠输入）", null,
+        [
+            new("background controls --pid N --hwnd H", "列出该窗口支持的标准编辑框和按钮，输出 JSON"),
+            new("background insert-text / set-value / invoke", "插入文本、替换全部内容或触发按钮。用 KeyMouse background --help 查看目标参数"),
         ]),
 
         new("窗口", null,
@@ -88,11 +99,11 @@ internal static class Usage
 
         new("录制（把一次操作变成可回放的 JSON 流程）", new[]
         {
-            "开始录制：全局监听键鼠（只观察、不拦截，你照常操作），每个动作连同它发生的窗口与客户区相对坐标写成 JSON。",
+            "全局监听键鼠（只观察、不拦截）。CLI 默认记屏幕坐标；--client-points 将窗口内的鼠标动作录为可后台回放的客户区坐标，键盘仍为前台输入。",
             "Ctrl+Alt+Q 停止（连按两次 ESC 也停）；--duration 到点自动停。鼠标轨迹按距离抽稀后一起录；点击/输入等步骤会在 <流程>.shots/ 里各存一张 320x200 的截图。回放就是：KeyMouse run 流程.json",
         },
         [
-            new("record [--out 流程.json] [--duration 毫秒] [--no-shots] [--min-gap 毫秒] [--move-threshold 像素]", ""),
+            new("record [--out 流程.json] [--mode key|full] [--client-points] [--duration 毫秒] [--no-shots] [--min-gap 毫秒] [--move-threshold 像素]", "full 记录每步实际等待（默认模式），key 跳过空移、每步等待 1000 毫秒"),
         ]),
 
         new("常驻服务（给图形界面用）", new[]

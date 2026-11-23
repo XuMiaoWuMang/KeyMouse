@@ -106,8 +106,8 @@ internal static class LoopTests
             """[{"type":"type","text":"你好 {{名字}}"}]""",
             """{"名字":"世界"}"""));
         Harness.Check("变量名可以是中文，占位符照样展开",
-            cjk.Dispatched.Any(argv => argv.Contains("你好 世界")),
-            string.Join(" | ", cjk.Dispatched.Select(argv => string.Join(' ', argv))));
+            cjk.Dispatched.Any(step => step.Text == "你好 世界"),
+            string.Join(" | ", cjk.Dispatched.Select(step => step.Text)));
 
         var templated = new FlowStep
         {

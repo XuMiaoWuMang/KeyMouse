@@ -6,7 +6,7 @@ using KeyMouse.Runtime;
 namespace KeyMouse.Tests;
 
 /// <summary>
-/// 跑一条流程但不碰桌面：普通步骤交给一个假的 dispatcher（记下它收到的 argv），
+/// 跑一条流程但不碰桌面：普通步骤交给一个假的 dispatcher（记下它收到的步骤），
 /// set / assert / 条件循环由引擎自己执行，结果从 <c>--report</c> 里读回来。
 ///
 /// 为什么用报告而不是解析控制台：控制台是给人看的，随时可以改措辞；报告里的 origin、退出码、
@@ -20,16 +20,16 @@ internal static class FlowRun
         int ExitCode,
         ScriptReport? Report,
         string Output,
-        IReadOnlyList<string[]> Dispatched);
+        IReadOnlyList<FlowStep> Dispatched);
 
     /// <summary>Writes the JSON to a fresh temp directory, runs it, and cleans the directory up.</summary>
     internal static Result Run(string flowJson, params string[] options) =>
         Run(flowJson, null, null, options);
 
-    internal static Result Run(string flowJson, Func<string[], int> execute, params string[] options) =>
+    internal static Result Run(string flowJson, ExecuteFlowCommand execute, params string[] options) =>
         Run(flowJson, null, execute, options);
 
-    internal static Result Run(string flowJson, string? fileName, Func<string[], int>? execute, params string[] options)
+    internal static Result Run(string flowJson, string? fileName, ExecuteFlowCommand? execute, params string[] options)
     {
         string directory = Path.Combine(Path.GetTempPath(),
             $"keymouse-flow-control-{Environment.ProcessId}-{Interlocked.Increment(ref _seq)}");
@@ -47,14 +47,14 @@ internal static class FlowRun
     }
 
     /// <summary>Runs a flow that already exists (call tests need sibling subflows next to it).</summary>
-    internal static Result RunPath(string flowPath, Func<string[], int>? execute = null, params string[] options)
+    internal static Result RunPath(string flowPath, ExecuteFlowCommand? execute = null, params string[] options)
     {
         string directory = Path.GetDirectoryName(Path.GetFullPath(flowPath))!;
         string report = Path.Combine(directory, $"report-{Interlocked.Increment(ref _seq)}.json");
-        var dispatched = new List<string[]>();
-        Func<string[], int> dispatcher = execute ?? (args =>
+        var dispatched = new List<FlowStep>();
+        ExecuteFlowCommand dispatcher = execute ?? ((step, _) =>
         {
-            dispatched.Add(args);
+            dispatched.Add(step);
             return 0;
         });
 
@@ -67,7 +67,7 @@ internal static class FlowRun
         try
         {
             exitCode = FlowRunner.Run([flowPath, "--report", report, .. options],
-                new Commands.GlobalOptions(), dispatcher);
+                new CommandLine.GlobalOptions(), dispatcher);
         }
         finally
         {

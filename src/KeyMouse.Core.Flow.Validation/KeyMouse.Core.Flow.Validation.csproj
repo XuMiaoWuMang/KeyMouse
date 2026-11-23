@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>KeyMouse</RootNamespace>
+    <Version>$(EngineVersion)</Version>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../KeyMouse.Core.Flow.Expression/KeyMouse.Core.Flow.Expression.csproj" />
+    <ProjectReference Include="../KeyMouse.Core.Foundation/KeyMouse.Core.Foundation.csproj" />
+    <ProjectReference Include="../KeyMouse.Core.Flow.Model/KeyMouse.Core.Flow.Model.csproj" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Flow.Execution" />
+    <InternalsVisibleTo Include="KeyMouse.Core.Capture.Recording" />
+    <InternalsVisibleTo Include="KeyMouse.Core" />
+    <InternalsVisibleTo Include="KeyMouse.Tests" />
+    <InternalsVisibleTo Include="KeyMouse" />
+    <InternalsVisibleTo Include="KeyMouse.Runner" />
+    <InternalsVisibleTo Include="KeyMouse.FlowEditor" />
+    <InternalsVisibleTo Include="KeyMouseSetup" />
+    <Using Include="KeyMouse.Flow" />
+    <Using Include="KeyMouse.Product" />
+    <Using Include="KeyMouse.Runtime" />
+    <Using Include="KeyMouse.Windowing" />
+    <Using Include="KeyMouse.Input" />
+    <Using Include="KeyMouse.Capture" />
+    <Using Include="KeyMouse.Windowing.NativeWindow" Alias="NativeWindow" />
+    <EmbeddedResource Include="flow.schema.json" LogicalName="KeyMouse.flow.schema.json" />
+  </ItemGroup>
+</Project>

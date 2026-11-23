@@ -34,7 +34,8 @@ body {
 
 .hud {
   position: absolute;
-  inset: 8px;
+  inset: 8px 8px auto;
+  max-height: calc(100vh - 34px);
   display: flex;
   flex-direction: column;
   padding: 8px 10px 8px 11px;
@@ -91,6 +92,17 @@ body {
   flex-direction: column;
   gap: 1px;
   min-height: 0;
+  overflow: hidden;
+}
+
+.children {
+  margin-left: 10px;
+  padding-left: 3px;
+  border-left: 1px solid var(--hud-panel-edge);
+}
+
+.children .row {
+  grid-template-columns: 30px 76px 5px minmax(0, 1fr) 34px;
 }
 
 .row {
@@ -155,6 +167,42 @@ body {
   margin: 2px 4px;
   color: var(--hud-faint);
   font-size: 11px;
+}
+
+.recording {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 1px 0 0;
+  padding: 6px 8px 6px 9px;
+  border-left: 2px solid var(--hud-signal);
+  border-radius: 3px;
+  background: rgba(224, 106, 61, 0.11);
+}
+
+.recording-lead {
+  color: var(--hud-ink);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.recording-hint {
+  color: var(--hud-signal);
+  font-size: 11px;
+}
+
+.recording-detail {
+  color: var(--hud-dim);
+  font-size: 10px;
+}
+
+.recording.stopped {
+  border-left-color: var(--hud-good);
+  background: rgba(250, 244, 234, 0.06);
+}
+
+.recording.stopped .recording-hint {
+  color: var(--hud-good);
 }
 
 .hud.ended .pulse {

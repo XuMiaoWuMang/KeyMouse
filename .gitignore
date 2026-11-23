@@ -45,6 +45,29 @@ _session-backup/
 .keymouse-github-token
 # 前端外壳（Tauri + Vite）：依赖、构建、Rust 中间物
 node_modules/
+.vite/
 src/KeyMouse.EditorUI/dist/
 src/KeyMouse.EditorUI/src-tauri/target/
 src/KeyMouse.EditorUI/src-tauri/gen/
+
+# 只在本机使用的配置、凭据和签名材料；示例配置不能放真实值。
+/.vscode/settings.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.dmp
+# 日志、录制、报告：任意命名的流程请存入 local-recordings/ 或 artifacts/。
+*.log
+*.report.json
+*.replay-report.json
+/local-recordings/
+/flow[0-9]*.json
+/evidence/
+__pycache__/
+# 未发布的工作笔记（保留本地文件，公开文档见 docs/dev/）。
+/docs/dev/optimization-plan.md
+/docs/dev/reliability-audit.md

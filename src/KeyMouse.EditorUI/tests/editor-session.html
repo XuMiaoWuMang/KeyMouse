@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><link rel="icon" href="data:,"><title>KeyMouse 编辑器回归</title></head>
+<body><div id="app"></div><script type="module">
+  import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
+  import { emit } from '@tauri-apps/api/event';
+  mockWindows('main');
+  const files = ['A', 'B', 'C', 'Large'].map(id => `${id}\\flow.json`);
+  window.fixture = { reads: [], released: [], unexpected: [], recordings: [], deferred: null, runStarted: false,
+    crash: () => emit('shell://run-exit', { code: null, cancelled: false }) };
+  const revoke = URL.revokeObjectURL.bind(URL);
+  URL.revokeObjectURL = url => { fixture.released.push(url); revoke(url); };
+  mockIPC(async (cmd, args) => {
+    switch (cmd) {
+      case 'theme': return 'paper';
+      case 'runtime_info': return { environment: 'development', initialPath: null, cliPath: 'KeyMouse.exe' };
+      case 'long_press_ms': return 500;
+      case 'flow_schema': return { json: window.fixtureSchema };
+      case 'remember_recent': case 'recent_files': case 'load_sections': return [];
+      case 'save_sections': return args.sections;
+      case 'set_dirty': case 'show_hud': case 'hide_hud': case 'plugin:window|set_title':
+      case 'plugin:window|hide': case 'plugin:window|show': case 'plugin:window|unminimize':
+      case 'plugin:window|set_focus': return;
+      case 'run_flow': fixture.runStarted = true; return;
+      case 'plugin:dialog|save': return 'recording.json';
+      case 'record_flow': case 'record_flow_elevated': fixture.recordings.push([cmd, args.mode]); return;
+      case 'read_run_report': return '';
+      case 'plugin:dialog|message': return args.buttons.OkCancelCustom[0];
+      case 'plugin:dialog|open': return files.shift();
+      case 'open_flow': return { path: args.path, json: { format: 'keymouse-flow', version: 1,
+        steps: args.path.startsWith('Large') ? Array.from({length:500}, (_, i) => ({type:'sleep', ms:i})) : [{type:'sleep', ms:20, shot:'shot.png'}] } };
+      case 'read_shot': {
+        fixture.reads.push(args.flowPath);
+        if (args.flowPath === 'B\\flow.json') await new Promise(resolve => { fixture.deferred = resolve; });
+        return Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jWZkAAAAASUVORK5CYII='), c => c.charCodeAt(0)).buffer;
+      }
+      default: fixture.unexpected.push(cmd); throw Error(`Unexpected IPC: ${cmd}`);
+    }
+  }, { shouldMockEvents: true });
+  await import('/src/main.ts');
+</script></body></html>

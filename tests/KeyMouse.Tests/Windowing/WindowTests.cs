@@ -70,25 +70,25 @@ internal static class WindowTests
         var otherMain = Win("other-main");
 
         Harness.Sequence("unowned wins over owned",
-            new[] { "main" }, Commands.PreferCandidates(new[] { main, popup }).Select(w => w.Title));
+            new[] { "main" }, CommandTarget.PreferCandidates(new[] { main, popup }).Select(w => w.Title));
 
         Harness.Sequence("order is preserved",
-            new[] { "main", "other-main" }, Commands.PreferCandidates(new[] { main, popup, otherMain }).Select(w => w.Title));
+            new[] { "main", "other-main" }, CommandTarget.PreferCandidates(new[] { main, popup, otherMain }).Select(w => w.Title));
 
         Harness.Sequence("hidden windows only win when nothing is visible",
-            new[] { "hidden" }, Commands.PreferCandidates(new[] { hidden }).Select(w => w.Title));
+            new[] { "hidden" }, CommandTarget.PreferCandidates(new[] { hidden }).Select(w => w.Title));
 
         Harness.Sequence("visible beats hidden",
-            new[] { "main" }, Commands.PreferCandidates(new[] { hidden, main }).Select(w => w.Title));
+            new[] { "main" }, CommandTarget.PreferCandidates(new[] { hidden, main }).Select(w => w.Title));
 
         Harness.Sequence("hidden owned window still wins when alone",
-            new[] { "hidden-owned" }, Commands.PreferCandidates(new[] { hiddenOwned }).Select(w => w.Title));
+            new[] { "hidden-owned" }, CommandTarget.PreferCandidates(new[] { hiddenOwned }).Select(w => w.Title));
 
         Harness.Sequence("an owned window is still usable on its own",
-            new[] { "popup" }, Commands.PreferCandidates(new[] { popup }).Select(w => w.Title));
+            new[] { "popup" }, CommandTarget.PreferCandidates(new[] { popup }).Select(w => w.Title));
 
         Harness.Sequence("two unowned windows stay ambiguous",
-            new[] { "main", "other-main" }, Commands.PreferCandidates(new[] { main, otherMain }).Select(w => w.Title));
+            new[] { "main", "other-main" }, CommandTarget.PreferCandidates(new[] { main, otherMain }).Select(w => w.Title));
     }
 
     private static void StateSummary()

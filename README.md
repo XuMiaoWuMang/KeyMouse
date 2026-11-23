@@ -1,159 +1,35 @@
 # KeyMouse
 
-[![ci](https://github.com/XuMiaoWuMang/KeyMouse/actions/workflows/ci.yml/badge.svg)](https://github.com/XuMiaoWuMang/KeyMouse/actions/workflows/ci.yml)
+KeyMouse 是 Windows 桌面自动化工具。你可以把一次操作录成可编辑的 JSON 流程，也可以手写步骤：等窗口出现、读一行文字、按条件点击，最后用断言判断任务是否完成。图形编辑器用来编排，命令行用来执行和生成报告。
 
-Windows 命令行输入模拟工具：**一条命令 = 一次真实的鼠标/键盘事件**，执行完就退出。
-没有常驻进程、不装驱动——底层是 Win32 `SendInput`，事件进的是系统输入队列，
-和应用收到的真人操作走同一条路。
+**[下载安装包或独立 CLI](https://github.com/XuMiaoWuMang/KeyMouse/releases)** · [安装指南](docs/guide/install.md) · [编辑器手册](docs/guide/editor.md) · [命令参考](docs/reference/cli.md)
 
-它和常见自动化脚本的区别在于**能指定目标窗口，并且动手之前先验证**：
-窗口不可用、或者抢不到前台，就**一个字节都不发**。
+## 先跑一个不碰桌面的例子
 
-反过来，它也能**只读不写**：`probe` 把窗口的一块区域读成文字（OCR），
-同样先验证目标，读不清就以退出码 `6` 失败——**只报告看到什么，判断权在调用方**。
+在仓库根目录打开 PowerShell。以下命令编译 CLI，然后运行[三步计数流程](samples/demo-flow.json)：从 1 加到 2，再检查结果。不需要打开目标窗口，也不会向当前前台程序发送输入。
 
 ```powershell
-KeyMouse key type "hello 世界" --process notepad     # 打字前先确认记事本可用且已聚焦
-KeyMouse mouse click left -wx 200 -wy 300 --title "记事本"
-KeyMouse run script.txt                              # 一批命令顺序执行
-KeyMouse record --out flow.json                      # 录一段操作（Ctrl+Alt+Q 停）
-KeyMouse run flow.json                               # 原样回放，或改完再放
-KeyMouse doctor                                      # 判不清环境时先跑这个
+dotnet build src/KeyMouse.Cli -c Release
+$km = '.\src\KeyMouse.Cli\bin\Release\net10.0-windows\KeyMouse.exe'
+& $km run samples/demo-flow.json --dry-run
+& $km run samples/demo-flow.json
 ```
 
-## 架构：一个产品，两个入口，三层
+## 录制自己的任务
 
-```
-  图形编辑器（src\KeyMouse.EditorUI，Tauri + Svelte）    命令行（src\KeyMouse.Cli → KeyMouse.exe）
-  老外壳（src\KeyMouse.FlowEditor，WinUI 3）仍随安装包一起装着
-                 │ 命名管道 + JSON 行：run/record/pick-region/ocr/validate/cancel/pause/resume/status
-                 ▼
-  常驻 Runner（src\KeyMouse.Runner，KeyMouse serve）
-    ├─ 作业注册表：排队、暂停/继续/取消、逐步事件、日志流
-    └─ 驱动同一份派发（Commands.Execute）
-                 ▼
-  能力层（src\KeyMouse.Core）：流程解释器、SendInput、全局钩子/录制、OCR/读屏、取区域、窗口闸门、流程 JSON
-                 ▼
-  Windows API / 离线 Tesseract 模型 / 流程文件
-```
+1. 打开编辑器，选「关键录制」来保留任务动作，或选「完全录制」来保留动作间隔与抽稀后的鼠标轨迹。按 `Ctrl+Alt+Q` 停止。
+2. 选中一个动作，在「执行前等待（毫秒）」里调整节奏。关键录制每步默认等 1000 毫秒；完全录制填实际间隔；填 `0` 即立即执行。等待跟着步骤移动，不占一行。
+3. 先试运行以检查窗口和参数，再在可控的桌面播放。**客户区鼠标动作**可发给符合条件的后台窗口；屏幕坐标和普通键盘输入不是后台输入。见[边界与排障](docs/guide/troubleshooting.md)。
 
-- **两个入口**：编辑器连常驻 Runner；CLI 既能一次性执行（`KeyMouse run flow.json`），也能驱动同一个 Runner（`KeyMouse runner run flow.json`）。**两个入口跑同一份执行体**，退出码、闸门与焦点验证的语义不会分叉。
-- **三层**：能力层不认识 IPC，Runner 不认识 UI，UI 不认识流程格式细节（它引用 Core，不复制 schema）。Runner 通过 Core 的 `Execution.Control` 接缝实现暂停/取消/逐步上报；CLI 不装这个接缝，同一段代码就是一次普通阻塞调用。
-- **常驻的理由**：作业状态、逐步事件、暂停/取消、日志流都是进程内状态——一次性子进程给不了。
+录制文件可能包含输入原文、窗口标题和截图。仓库提供的示例是合成数据；自己的流程请存入 `local-recordings/` 或工作区以外。提交或反馈问题前请看[公开材料检查](docs/guide/publication.md)。
 
-## 能力一览
+## 从源码开发
 
-| | |
-| --- | --- |
-| **输入** | 鼠标移动 / 点击 / 双击 / 按住 / 滚轮 / 拖拽；键盘敲击 / 组合键 / Unicode 打字（中文不依赖输入法） |
-| **目标** | **可选**：不指定窗口就把事件直接发到屏幕坐标／当前焦点（不校验、不抢前台）；指定了才按标题 / 类名 / 进程 / pid / 句柄选窗口，`--pick` 消歧义 |
-| **闸门** | 只对**指定了窗口**的步骤生效：拒绝隐藏、最小化、被 DWM cloak、无响应、**被禁用**的窗口 |
-| **焦点** | 温和尝试最多 3 次并回读验证；失败即中止，不猜 |
-| **坐标** | 绝对像素，或**窗口客户区相对**坐标（窗口移动也不失效） |
-| **脚本** | 顺序执行、注释、`sleep`、`waitfor`/`waitgone`、`${变量}`、**目标继承**、**循环**（`repeat n [as 名字] … end`）、`--dry-run`、安全重试、JSON 报告 |
-| **感知** | `probe` 把窗口的一块区域读成文字：N 次读取**逐字一致**才算看清，置信度、引擎与模型身份一起进 JSON；**读到空也是结果**，不是失败 |
-| **选区** | `region pick` 用鼠标框一块区域（或单击选整个客户区），报告它属于哪个窗口的哪个坐标系，并给出一条可直接粘贴的 `probe` 命令 |
-| **录制** | `record` 全局监听键鼠（只观察、不拦截），把一次操作写成可回放的 JSON：屏幕坐标、抽稀后的轨迹、关键步骤截图 |
-| **图形编辑器** | 新外壳 `KeyMouse.Editor.exe`（Tauri + Svelte，界面进程不提权）：无限画布 + 自由布局（节点随手拖到任意方向、直角连线按夹角自动选上下/左右边并绕开节点、可拖端点固定接口、四向箭头快速前后插步）+ 结构视图排序 + 三种形状（流程控制/循环控制/操作指令）、语义箭头（if 成立/否则、循环返回/退出、break/continue、return 终止）、左键框选/右键平移、多选长按整组拖动、结构视图下拖进任意分支/换层、右侧详情抽屉、打开/保存、撤销、试运行与播放、停止、录制；录制、播放、取点/取区域默认隐藏主窗口，播放与录制时左上角显示只读运行日志 HUD（最近 7 步，鼠标穿透），停止统一按 `Ctrl+Alt+Q`；老外壳 `KeyMouse.FlowEditor.exe`（WinUI 3）过渡期保留，`KeyMouse flow edit 流程.json` 默认开新外壳、找不到才退到它 |
-| **找字并点它** | `probe --find "取消"` 报告文字**在屏幕上的框与点击点**；流程里的 `click-text` 就是"看到就点它的中心"，任何步骤还能带 `when` 前提 |
-| **循环与变量** | 流程可以带 `variables`、用 `{{名字}}` 传值、用 `repeat` / `foreach` 循环；`read-text` 把屏幕内容读进变量 |
-| **控制流** | C 风格的 `if/else`、`while`、`do-while`、`for`、`break/continue`、`return`，条件是一套手写的小表达式（变量比较、`text("…")` 读屏谓词、`found()`、`elapsed()`），循环都有 `maxRounds` 与 `--max-steps` 上界 |
-| **子流程** | 一个流程可以 `call` 另一个流程文件：内联执行、变量作用域链式、`export` 回传；成环、缺文件、超过 8 层在加载时就被拒 |
-| **条件步骤** | `sleep`、`wait-window`、`wait-text`（读一块区域等某段文字出现，连续两次读到同一段才算数，超时退出码 3） |
-
-## 安装
-
-**下载**（[Releases](https://github.com/XuMiaoWuMang/KeyMouse/releases)）：
-
-| 文件 | 需要什么 | 体积 | 适合 |
+| 目标 | 源码 | 命令（从仓库根目录） | 主要输出 |
 | --- | --- | --- | --- |
-| `KeyMouseSetup-<版本>.exe` | 什么都不用装 | 见发布页 | 想用图形编辑器的人 |
-| `KeyMouse-x64.exe` | 什么都不用装 | 约 49 MB | 只想用命令行 |
-| `KeyMouse-fx-x64.exe` | .NET 10 运行时 | 约 0.3 MB | 已经装了运行时 |
+| CLI 与共用引擎 | [CLI](src/KeyMouse.Cli)、[能力组合层](src/KeyMouse.Core) | `dotnet build src/KeyMouse.Cli -c Release` | `src/KeyMouse.Cli/bin/Release/net10.0-windows/KeyMouse.exe` |
+| 桌面编辑器 | [Svelte 与 Tauri](src/KeyMouse.EditorUI) | `pwsh tools/dev/editor-ui.ps1 setup` 后运行 `pwsh tools/dev/editor-ui.ps1 package` | `src/KeyMouse.EditorUI/src-tauri/target/release/KeyMouse.Editor.exe` |
+| 无桌面测试 | [测试入口](tests/KeyMouse.Tests/TestEntry.cs) | `dotnet run -c Release --project tests/KeyMouse.Tests` | 控制台给出通过数与失败项 |
+| 发布附件 | [打包脚本](tools/build/pack-release.ps1) | `pwsh tools/build/pack-release.ps1` | `artifacts/release/` |
 
-安装版把编辑器放在 `<安装目录>\`、命令行放在 `<安装目录>\cli\`，并写
-`HKCU\Software\KeyMouse`（`GuiPath` / `CliPath`）。细节见 **[docs/guide/install.md](docs/guide/install.md)**。
-
-两个编辑器并列装着，谁也不覆盖谁：**`KeyMouse.Editor.exe`**（新外壳，Tauri，界面进程不提权）与
-**`KeyMouse.FlowEditor.exe`**（老外壳，WinUI 3，自包含）。新外壳需要系统的 WebView2 运行时
-（Windows 11 自带）；缺了安装程序会留一份说明，老外壳仍可直接用。
-
-> 自包含产物体积主要来自交互式选区浮层需要的 WinForms（36 MB → 49 MB 实测），
-> 不用选区的命令一行代码也没变重。见 [docs/dev/design.md](docs/dev/design.md)。
-
-**自己编译**：
-
-```powershell
-.\km d                      # → artifacts\cli\KeyMouse.exe（框架依赖单文件）
-.\km d -s                   # → artifacts\cli-self\KeyMouse.exe（自带运行时）
-.\km e                      # 编编辑器，并把命令行重新打到 artifacts\cli（编辑器读它）
-.\km u                      # 起新编辑器外壳（Tauri）的开发模式
-.\km ub                     # 打新外壳的发布版
-```
-
-想全局调用，把 `artifacts\cli` 加进 PATH：
-
-```powershell
-[Environment]::SetEnvironmentVariable('Path', $env:Path + ';D:\Data\KeyMouse\artifacts\cli', 'User')
-```
-
-## 仓库结构
-
-```
-km.cmd                    根目录唯一入口（转调 tools\dev\km.ps1）
-Directory.Build.props     版本号唯一来源：ProductVersion / EngineVersion
-src\                      全部出货代码
-  KeyMouse.Core\            能力层
-  KeyMouse.Runner\          常驻 Runner
-  KeyMouse.Cli\             命令行入口
-  KeyMouse.FlowEditor\      WinUI 3 编辑器
-  KeyMouse.Setup\           安装程序
-tools\                    开发自动化（不出货）
-  dev\                      日常入口 km、全部关卡 verify、check-docs、check-version
-  build\                    打包单文件、打发布三件套
-  release\                  发 GitHub Release、生成发布清单、清理旧 tag
-  diagnostics\              读屏取证归档、窗口与权限清单
-tests\                    单元测试、冒烟测试（含靶子程序）
-docs\                     guide / reference / dev / tools
-artifacts\                全部构建产物（不入库）
-```
-
-分层理由：**src 出货、tools 帮开发、tests 验证**；三者不混放，脚本不再往根目录堆。
-
-`src\KeyMouse.Core` 内部按职责分六个目录（也是命名空间）：`Input\`（键名与事件注入）、`Windowing\`（窗口定位/闸门/钩子）、
-`Flow\`（流程模型、schema、运行器、录制）、`Capture\`（截屏与 OCR、区域、文字匹配）、`Runtime\`（命令分发与脚本执行）、
-`Product\`（开发树/安装版判定、注册表、`doctor`）。编辑器与测试目录同样按这六类分开。
-
-## 开发
-
-```powershell
-.\km b                     # 只编 CLI（Core + Runner），~1s
-.\km ba                    # 编整个解决方案（含编辑器与安装程序）
-.\km t                     # 全部单元测试（不需要桌面）
-.\km t parsing             # 只跑改到的模块（可写多个）
-.\km tl                    # 列出单元测试模块
-.\km s                     # 桌面冒烟（需要解锁的交互式桌面）
-.\km v                     # 全部关卡：构建 / 单测 / 文档 / 版本 / 打包 / 冒烟
-.\km env                   # 环境判定：开发树还是安装版，命令行与编辑器各在哪
-.\km                       # 不带参数：打印动词表
-```
-
-完整流程（含发布与标签）见 **[docs/dev/development.md](docs/dev/development.md)**，
-每个脚本的说明见 **[docs/tools/README.md](docs/tools/README.md)**。
-
-## 文档
-
-| | |
-| --- | --- |
-| 全部文档索引 | [docs/README.md](docs/README.md) |
-| 命令与选项 | [docs/reference/cli.md](docs/reference/cli.md) |
-| 流程 JSON 与前后端契约 | [docs/reference/interface.md](docs/reference/interface.md)、[docs/reference/runner-protocol.md](docs/reference/runner-protocol.md) |
-| 开发树与安装版的区别 | [docs/guide/environments.md](docs/guide/environments.md) |
-| 设计取舍与已知限制 | [docs/dev/design.md](docs/dev/design.md) |
-
-## 许可证
-
-**AGPL-3.0**，完整条款见 [LICENSE](LICENSE)。Copyright (C) 2026 XuMiaoWuMang。
-
-可以自由使用、修改、再分发（含商用）；但**分发修改版时必须同样以 AGPL-3.0 开源源码**，
-把它做成网络服务时也要向用户提供源码。不提供任何担保。
+[开发环境与依赖](docs/dev/development.md) · [完整源码和产物地图](docs/dev/project-map.md) · [测试指南](docs/dev/testing.md) · [文档目录](docs/README.md)。许可证：[AGPL-3.0](LICENSE)。

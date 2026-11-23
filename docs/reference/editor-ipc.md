@@ -1,14 +1,21 @@
-# 编辑器与外壳之间的接口契约
+# 编辑器 IPC：页面、桌面壳与引擎
 
-新编辑器外壳（`src\KeyMouse.EditorUI`）分成两半：
+Svelte 页面通过 Tauri `invoke` 调用 Rust 命令，通过 `shell://…` 事件订阅进度。Rust 负责文件系统和 CLI 子进程；页面不能把启动成功当作流程完成。此接口与 [Runner 命名管道](runner-protocol.md) 独立。
 
-- **界面**：Svelte 页面，跑在 WebView2 里。它不会碰文件、不会起进程、不会调 KeyMouse。
-- **外壳**：Rust 写的 `src-tauri`，负责窗口、文件对话框、读写文件、起 `KeyMouse.exe`。
+| 场景 | 请求与结果 |
+| --- | --- |
+| 读取契约与定位工具 | `runtime_info` 给出引擎来源；`flow_schema` 返回当前 CLI 的字段契约 |
+| 打开与保存 | `open_flow` / `save_flow` 操作父文件；子文档另有边界与并发保存检查 |
+| 取点与读取证据 | `pick_region` 可能返回取消；`read_shot` 只读流程允许的资源 |
+| 播放与录制 | 前端先发开始请求，再等输出与终结事件；终结前要排空输出，不用固定延时猜状态 |
 
-两半之间只有这一份契约。界面里每次跨过去，都必须能在下面找到对应的一节；反过来，
-下面每一条都必须有实现（写在这里而没实现的，算缺陷）。
+命令注册以 [main.rs](../../src/KeyMouse.EditorUI/src-tauri/src/main.rs) 为准。下列字段表是前端与壳的共同约定。
 
-老编辑器（`src\KeyMouse.FlowEditor`）仍然是进程内直接调 Core，与这份契约无关。
+## 输入执行组件
+
+实际播放保持普通权限外壳。仅前台输入流程检测到受保护安装目录中的 `KeyMouse.Input.exe` 时，调用普通 CLI 的 `--uiaccess-run <helper> run ...`。未安装时沿用普通 CLI；安装组件存在但启动、令牌或认证失败时明确报错，不静默回退。试运行及含客户区或子流程调用的流程不启用 UIAccess。桥接标准输入接受 JSON 行 `{"type":"cancel"}` 和 `{"type":"pause","paused":true}`；普通路径继续使用现有停止/暂停机制。输出事件与退出事件保持本文契约，仍须排空 stdout/stderr 后通知退出。
+
+部署、签名与账户限制见 [UIAccess 安装说明](../dev/uiaccess.md)；私有管道与能力诊断见 [执行桥契约](../../tools/dev/uiaccess.md)。编译通过不能替代真实 `TokenUIAccess=1` 与管理员测试窗口验收。
 
 ## 三条共同约定
 
@@ -41,7 +48,7 @@ type RuntimeInfo = {
 而这里要解析它的文字，猜码页就会把中文解码成 `���`。这条开关写在
 [命令行参考 · 输出编码](cli.md#输出编码)。
 
-`cliPath` 的搜索顺序必须与 `src\KeyMouse.Core\Product\ProductLayout.cs` 的 `CliCandidates()`
+`cliPath` 的搜索顺序必须与 `src\KeyMouse.Core.Foundation\Product\ProductLayout.cs` 的 `CliCandidates()`
 一致，否则会出现"编辑器说找到了、doctor 说没有"的错位：
 
 1. 环境变量 `KEYMOUSE_CLI`
@@ -74,6 +81,34 @@ type FlowFile = {
 
 把界面的文本原样写回文件（UTF-8，无 BOM，LF）。写之前不校验——校验是界面的按钮，
 不是保存的前置条件（用户有权保存一份还没写完的流程）。
+
+### `open_child_flow(parentPath, flow, ancestors) -> FlowFile`
+
+父画布展开 `call` 时读真实子文件，参数使用 JS 的 camelCase：
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `parentPath` | `string \| null` | 调用所在流程的路径；相对引用以它的目录为基准，未保存父流程只能展开绝对引用 |
+| `flow` | `string` | `call.flow` 原值；空白或含 `{{` 的动态引用不能在编辑时展开 |
+| `ancestors` | `string[]` | 已展开的祖先流程路径；外壳还会检查 `parentPath`，按规范化真实路径拒绝循环 |
+
+返回与 `open_flow` 相同的 `{ path, text, json }`，其中 `path` 是规范化真实路径；`text` 必须保留作子文件保存的比较基线。只解析 JSON，不替代引擎的流程校验。祖先数组长度达到 16 时拒绝继续展开。
+
+失败：`flow.dynamic-reference`（空白/变量引用）、`flow.parent-unsaved`（相对引用缺父路径）、`flow.circular-reference`（祖先循环）、`flow.depth`（展开深度上限）、`shell.io`（定位/读取失败）、`flow.invalid-json`（JSON 解析失败）。界面显示外壳的 `message`，保留父画布和调用节点。
+
+### `save_child_flow(path, text, expectedText) -> void`
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `path` | `string` | `open_child_flow` 返回的子文件路径 |
+| `text` | `string` | 当前子文件草稿的完整 JSON 文本 |
+| `expectedText` | `string` | 最近打开或成功保存时的磁盘原文，逐字比较，包含空白和换行 |
+
+先读磁盘原文，比对 `expectedText`，再解析新文本并写子文件。返回成功后，界面才把这次提交文本推进为新的比较基线；失败不得清掉草稿或 dirty，也不得回退为无条件 `save_flow`。
+
+失败：`shell.io`（读写失败）、`flow.conflict`（磁盘原文已改变）、`flow.invalid-json`（新文本不是合法 JSON）。冲突时用户须协调磁盘内容与草稿，再重新打开；当前接口没有强制覆盖参数。此检查是写入前的冲突检查，不是文件锁或原子比较交换。
+
+**独立文档边界**：展开区直接编辑子文件自己的 `steps`、字段与嵌套调用，父 `call` 始终保留 `flow/vars/export` 引用，不把子步骤内联进父 JSON。保存父流程不保存子文件；「保存子流程」只写对应子文件。收起展开区保留草稿，子/孙流程 dirty 或保存中均汇入窗口 dirty；试运行与播放必须等这些草稿保存成功，冲突失败继续拦运行。切换文档/关闭窗口须先确认是否丢弃；父另存为、撤销/重做及会破坏子草稿归属的结构操作须先保护草稿。
 
 ### `read_shot(flow_path, shot) -> ArrayBuffer`
 
@@ -130,7 +165,7 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 `runtime_info.cliPath` 那个 `KeyMouse.exe`。
 
 - 拿着**开发树的** `artifacts\cli\KeyMouse.exe`：它会直接读仓库里的
-  `src/KeyMouse.Core\flow.schema.json`，改完文件刷新界面就生效，不用重建。
+  `src/KeyMouse.Core.Flow.Validation\flow.schema.json`，改完文件刷新界面就生效，不用重建。
 - 拿着**安装版**的 exe，或开发树里那个 `artifacts\cli` 还没重建：读到的是**编译时内嵌**的那一份，
   改源码文件不会影响它。
 
@@ -146,14 +181,13 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 | --- | --- | --- |
 | `space` | `'client' \| 'window' \| 'screen'` | 坐标在哪个空间里 |
 | `x` `y` `width` `height` | `number` | 区域；取点时宽高也可能是 0 |
+| `screen` | `{ x, y, width, height } \| null` | 同一次取点/框选的绝对屏幕坐标，来自 CLI 的 `screen.rect` |
 | `process` `title` `class` `handle` | `string \| null` | 选中的窗口（取点也算选中了窗口） |
 
 `Ok(None)` 表示**用户按了 Esc**（命令行退出码 3），不是错误——界面安静地把这次当成"什么
 都没发生"。其它非 0 退出码才是错，带命令行原话回给界面。
 
-界面拿到结果后做三件事：写坐标字段、把 `process`/`title` 一并填进这一步的 `target`
-（只有坐标不知道是哪块屏幕，回放到别的窗口上就偏了）、底部写一句"取了客户区上的
-120,64（notepad）"这类人话。
+新建拖动在客户区内取点会绑定目标，两端必须属于同一窗口；跨窗口应切到屏幕坐标。已有客户区目标不被第二次取点覆盖。屏幕坐标取点不会删除用户已有的目标设置。
 
 ## 体检与日志
 
@@ -196,6 +230,17 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 
 它永远不会抛错：记日志本身失败（磁盘满、目录不可写）不该把一次用户操作变成一次崩溃。
 
+### `save_run_log(path: string, text: string) -> void`
+
+输出面板「保存日志…」先使用官方原生 `save()` 对话框（日志 `.log` / 文本 `.txt`），选定路径后调用此命令；取消返回 `null`，不调用命令、不显示错误。命令仅写入用户指定文件，不读取运行报告、崩溃日志或流程文件。
+
+- `path`：用户在保存框中选择的路径；默认名为当前流程文件名加 `-运行日志-<本地时间>.log`，未保存流程为 `未命名流程-运行日志-<本地时间>.log`，不要求先保存流程。
+- `text`：点击按钮时输出面板内存中的完整保留快照；逐行文字加 LF，UTF-8 无 BOM。保留当前面板上限（900 行或 40 万字符），不是无限历史归档。运行中同样允许保存，打开对话框后新增的行不计入本次快照。
+- 写入：在目标同目录以唯一名字、排他创建临时文件，写完并同步后重命名替换；失败保留旧目标，尽力删除临时文件，返回 `shell.io` 与中文 `message`。不自动创建目标目录。
+- 界面：无输出时按钮禁用；保存框或写入期间防重复点击，不依赖流程 dirty / busy / running；成功显示提示，失败原样显示外壳 `message`。不自动保存、不记住导出路径、不改变流程的路径与未保存状态。输出可能含业务内容，由用户决定保存与分享。
+
+实现：`src/KeyMouse.EditorUI/src-tauri/src/run_log.rs`；回归入口为在 `src-tauri` 目录执行 `cargo test run_log::tests`，每例使用唯一临时目录，覆盖 UTF-8 原文、新建/替换、替换受阻时旧内容保全及临时文件清理。
+
 ## 跑流程
 
 界面**不判断**流程对不对、窗口在不在——那是 `src\KeyMouse.Core` 的事。外壳只负责起一条
@@ -212,7 +257,9 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 
 `read_run_report` 读的是 `%LOCALAPPDATA%\KeyMouse\tmp\editor-run-report.json`——每次运行都带
 `--report` 写到那儿，界面在 `run-exit` 之后读它，按报告里的 `origin`（`3`、`6.1`）把每步的
-结果写到对应的行上。读不到就是空串、界面只留底部输出：报告是补充，不是运行的前提。
+结果写到对应的行上。主路径写入失败时还会尝试 `%TEMP%\KeyMouse\editor-run-report.json`；
+读取按修改时间依次尝试两处，只接受可读取的 JSON 对象，目录或残缺 JSON 不会遮住另一份完整报告。
+两处都读不到就是空串、界面只留底部输出：报告是补充，不是运行的前提。报告先在同目录写入唯一临时文件，完成后替换目标，失败不会先截断旧报告。
 
 `pause_flow` 只是**置上/清掉**子进程的那个命名事件（`Local\KeyMouse-pause-<pid>`，见
 [`cli.md`](cli.md#暂停与继续)）：停点由命令行决定，永远落在两步之间。外壳不自己挂起线程——
@@ -222,6 +269,29 @@ Rust 只搬一句话。真正读盘还是 `open_flow`。
 type RunExit = { code: number | null; cancelled: boolean };
 type RunLine = { stream: 'out' | 'err'; line: string };
 ```
+
+### 结构化运行日志 `@keymouse-hud/v1`
+
+编辑器启动的引擎在 `KEYMOUSE_HUD=1` 时，向 stdout 写一行前缀加 JSON：`@keymouse-hud/v1 {…}`。外壳仍按原始行转发 `shell://run-output`；主输出面板过滤协议行，HUD 从 `hud_lines() -> string[]` 取快照。普通命令行未设置此变量时保持人读输出。
+
+```ts
+type HudEvent = {
+  seq: number;                 // 单次运行递增的正安全整数；更新同一 id 必须更大
+  id: string;                  // 单次步骤/调用实例的唯一 id，不能是 root
+  scopeId: string;             // root，或包含该实例的 call id
+  kind: 'step' | 'call';
+  origin: string;              // 文档位置；循环复用 origin，但每次执行的 id 不同
+  index: number;               // 当前 scope 内按执行实例递增，从 1 起
+  total: number | null;        // 动态流程未知总数时为 null，显示 [index]
+  command: string;             // 人读动作描述；不包含步骤输出或 call.vars 对象
+  status: 'current' | 'done' | 'skipped' | 'failed' | 'cancelled';
+  exitCode?: number | null;
+};
+```
+
+引擎当前使用 `sN` / `cN` 标识步骤/调用实例，`total` 为 `null`。`call` 开始先发 `current`，其子步骤以该调用 id 为 `scopeId`，结束在同一 id 更新最终状态；嵌套调用继续形成层级。协议身份是 `id`，不能用 `origin`、步骤号或调用文件路径合并不同轮次。更新不得改变 `scopeId/kind/origin/index`，旧 `seq` 或非法事件忽略。
+
+HUD 每个根作用域保留最近 **7** 条父日志，每个调用作用域保留最近 **3** 条子日志；调用结束时保留子日志并更新父调用状态，直到它被后续父日志挤出。淘汰调用时递归淘汰其子树；已淘汰父调用的迟到子事件不得复活子树。这里的「结束保留」指调用结束，整次运行退出仍关闭 HUD；下一次运行清空缓冲。没有有效结构化事件时兼容旧 `[x/y]` 文本，原始行缓冲上限 240。`hud_lines` 每 250ms 拉取完整快照，晚挂载不会漏掉开始行。
 
 ### 没保存也要能跑
 
@@ -240,12 +310,13 @@ type RunLine = { stream: 'out' | 'err'; line: string };
 
 - `shell://run-output`（`RunLine`）：每一行原样转发，不裁剪、不改写。
 - `shell://run-exit`（`RunExit`）：`cancelled` 为真表示这次是被"停止"掐掉的，
-  界面据此说「已停止」而不是「失败」。
+  界面据此说「已停止」而不是「失败」。此事件在 stdout/stderr 读取线程结束、
+  HUD 撤除和运行状态清理后发出，保证该次末行输出先于结束事件。
 
 两条约定：
 
-1. **要有文件才能跑**。命令行读的是磁盘上的 JSON，界面里没保存的改动它看不见；
-   与其偷偷写临时文件让报错行号对不上界面，不如直接提示先保存。
+1. **展开的子文件先保存**。父文档可走上面的临时副本；展开区的子/孙流程仍从各自磁盘文件加载，
+   所以任一子草稿未保存或保存中，试运行与播放都拦下。保存冲突不会解除拦截。
 2. **一次只跑一条**。已经在跑时 `run_flow` 返回错误，不排队、不覆盖。
    停止用 `taskkill /T /F` 杀整棵子树——`run` 可能已经拉起 runner 或外部 OCR 引擎。
 
@@ -269,23 +340,28 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 
 | 命令 | 参数 | 返回 |
 | --- | --- | --- |
-| `record_flow` | `outPath`, `durationMs`（0 = 一直录到停） | —（立刻返回，结果走事件） |
+| `record_flow` | `outPath`, `durationMs`（0 = 一直录到停），`mode`（`key` 或 `full`；省略沿用完全录制） | —（立刻返回，结果走事件） |
 | `record_flow_elevated` | 同上 | —（同上；UAC 里点「是」之后才开始录） |
 | `record_stop` | — | `"stopped" \| "killed" \| "idle"` |
 
 录制与播放**共用**同一条子进程通道（同一个 `RunState`、同样的事件 `shell://run-output`
 与 `shell://run-exit`），所以界面上"已经在跑"与"正在录"互斥——一次只做一件事。
 
-四条约定：
+普通和提权录制均传 `--client-points`。录制及执行含客户区或子流程的流程前，壳核对实际 CLI 的 `schema.capabilities.backgroundClient`，旧引擎不启动。此类流程不交给 UIAccess helper；纯屏幕播放保留原路由。
+
+录制约定：
 
 1. **默认不自我提权**。钩子只看得见与自己同级或更低权限的窗口，提权窗口上的点击录不到；
    命令行会把这件事写进输出（"这些窗口的权限比 KeyMouse 高"），界面原样显示。
    要录那些窗口，走 `record_flow_elevated`（下面第 5 条）。
 2. **把自己排除掉**。外壳传 `--ignore-window 0x<hwnd>`（自己的窗口句柄），
    否则"点一下编辑器"也会被录成一步。
-3. **停止先走命名事件，再回落到停止键**：`record_stop` 先把 `Local\KeyMouse-record-stop-<子进程 pid>`
-   置上（见 [`cli.md`](cli.md) 的"录制的优雅停止事件"），让录制自己走到"写文件、打印摘要"那一步；
+3. **普通录制由外壳注册 `Ctrl+Alt+Q`**：`record_flow` 在起子进程前注册全局停止键，收到消息后
+   在独立工作线程调用 `record_stop`，避免停止处理与退出时注销热键互相等待；
+   `record_stop` 先把 `Local\KeyMouse-record-stop-<子进程 pid>` 置上
+   （见 [`cli.md`](cli.md) 的"录制的优雅停止事件"），让录制自己走到"写文件、打印摘要"那一步；
    置不上（老版本命令行没建这个事件）才发一次 `KeyMouse key combo ctrl+alt+q`。
+   **提权录制不注册外壳热键**，因为外壳够不着高权限进程，仍由录制进程自己的钩子接收组合键。
    为什么不直接注入组合键：注入的键要落在前台窗口、还要被录制进程的钩子看见；
    录制时前台是用户正在操作的窗口，外壳没有可靠的前台焦点，实测时灵时不灵。
    两条路都是 5 秒还没退出才 `run_cancel` 兜底杀进程
@@ -383,27 +459,6 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 | `shot.missing` | 证据图不在了（被删或搬走） | 显示"图不在了"，文件名照旧显示 |
 | `shot.outside` | 证据图不在流程文件旁边 | 同上，并说明"只认流程文件旁边的 `*.shots/`" |
 
-## 界面约定（给写界面的人）
+## 变更前检查
 
-- **打开就打开**：`initialPath` 非空时启动即载入，不让用户再点一次「打开」。
-
-- **轻提醒优先**：普通结果、可恢复的失败写进底部「运行输出」，不弹对话框。
-  只有"会丢东西"的动作（关闭未保存的文档、覆盖已有文件）才用 `dialog` 的确认框。
-- **不自己造错误文案**：`shell.*` 的 `message` 是给人看的，原样显示；需要补充的只有"下一步怎么办"。
-- **状态行**：左边一颗点 + `KeyMouse <产品版本>（引擎 <引擎版本>）· <开发树/安装版>`；
-  命令行没找到时点变警示色并写一句话。提权时点也变警示色（界面进程本不该提权）。
-
-## 变更流程
-
-加一条命令的顺序是固定的，反过来做会留下没人管的接口：
-
-1. 改这份文档（写清楚参数、返回值、错误码、界面怎么用）
-2. 改 `src-tauri/src/main.rs`（或按职责拆开的 `commands/*.rs`）
-3. 改界面
-4. 跑 `pwsh tools\dev\editor-ui.ps1 check` 与 `build`
-
-## 相关
-
-- 外壳的目录与阶段：[新编辑器外壳](../dev/editor-ui.md)
-- 流程文件本身长什么样：[流程格式](interface.md)
-- 命令行的退出码：[命令行参考](cli.md)
+变更请求字段、事件名或取消语义时，同时修改 Rust 生产者与 TypeScript 消费者，并运行 `pwsh tools/dev/editor-ui.ps1 check` 和 `pwsh tools/dev/editor-ui.ps1 test`。运行日志和诊断包是用户数据，测试用虚构路径、窗口与消息，不用私人日志填充协议示例。

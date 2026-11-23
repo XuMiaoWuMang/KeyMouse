@@ -136,7 +136,7 @@ $sampleTexts = @(
     'KeyMouse v2.0.0 已就绪'
     '导出为 PNG/JPG，质量 85%'
     '第 3 步：确认后点击"下一步"'
-    'C:\Users\xumiao\Desktop\报告.docx'
+    'Example\Documents\报告.docx'
     '总计 1,234.56 元'
     '是否保存更改？[是] [否] [取消]'
     '连接超时，请重试（第 2/5 次）'

@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using KeyMouse;
@@ -195,6 +197,23 @@ internal static class RunnerTests
             using (var raw = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
             {
                 raw.Connect(2000);
+                using var current = WindowsIdentity.GetCurrent();
+                var elevated = new RawSecurityDescriptor(RunnerPipe.AccessDescriptor(current.User!, elevated: true), 0);
+                // SYSTEM_MANDATORY_LABEL_ACE (0x11), SYSTEM_MANDATORY_LABEL_NO_WRITE_UP (1), high IL.
+                // Check the bytes passed to Windows, not SDDL text; managed ACL normalization can lose this ACE.
+                var label = elevated.SystemAcl is { Count: 1 } sacl ? sacl[0] : null;
+                byte[] labelBytes = new byte[label?.BinaryLength ?? 0];
+                label?.GetBinaryForm(labelBytes, 0);
+                Harness.Check("elevated descriptor retains its high-integrity no-write-up label", labelBytes.Length >= 20 &&
+                    labelBytes[0] == 0x11 && BitConverter.ToInt32(labelBytes, 4) == 1 &&
+                    new SecurityIdentifier(labelBytes, 8).Value == "S-1-16-12288");
+                var acl = raw.GetAccessControl();
+                var rules = acl.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<PipeAccessRule>().ToArray();
+                Harness.Check("live pipe owned by the current account", Equals(current.User, acl.GetOwner(typeof(SecurityIdentifier))));
+                Harness.Check("only the account SID has an allow ACE", rules.Where(r => r.AccessControlType == AccessControlType.Allow)
+                    .Select(r => r.IdentityReference).SequenceEqual([current.User!]));
+                Harness.Check("network logons are explicitly denied", rules.Any(r => r.AccessControlType == AccessControlType.Deny &&
+                    ((SecurityIdentifier)r.IdentityReference).IsWellKnown(WellKnownSidType.NetworkSid)));
                 using var reader = new StreamReader(raw, new UTF8Encoding(false));
                 var read = Task.Run(() => reader.ReadLine());
                 string? first = read.Wait(TimeSpan.FromSeconds(5)) ? read.Result : null;

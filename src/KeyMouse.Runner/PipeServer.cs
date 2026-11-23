@@ -27,29 +27,32 @@ internal sealed class PipeServer
 
     internal async Task RunAsync()
     {
-        while (!_stop.IsCancellationRequested)
+        var stop = _stop.Token;
+        while (!stop.IsCancellationRequested)
         {
-            var pipe = new NamedPipeServerStream(
-                _pipeName,
-                PipeDirection.InOut,
-                NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous);
+            var pipe = RunnerPipe.Listen(_pipeName);
             try
             {
-                await pipe.WaitForConnectionAsync(_stop.Token);
+                await pipe.WaitForConnectionAsync(stop);
             }
             catch (OperationCanceledException)
             {
                 pipe.Dispose();
                 break;
             }
-            _ = Task.Run(() => HandleAsync(pipe, _stop.Token));
+            catch
+            {
+                pipe.Dispose();
+                throw;
+            }
+            _ = Task.Run(() => HandleAsync(pipe, stop));
         }
     }
 
     private async Task HandleAsync(NamedPipeServerStream pipe, CancellationToken stop)
     {
+        using var connection = CancellationTokenSource.CreateLinkedTokenSource(stop);
+        var disconnected = connection.Token;
         var writeGate = new object();
         using var reader = new StreamReader(pipe, new UTF8Encoding(false));
         using var writer = new StreamWriter(pipe, new UTF8Encoding(false));
@@ -104,7 +107,7 @@ internal sealed class PipeServer
                 }
 
                 RunnerRequest captured = request;
-                _ = Task.Run(() => _host.HandleAsync(captured, Emit), stop);
+                _ = Task.Run(() => _host.HandleAsync(captured, Emit, disconnected), stop);
             }
         }
         catch (OperationCanceledException)
@@ -117,6 +120,7 @@ internal sealed class PipeServer
         }
         finally
         {
+            connection.Cancel();
             try { pipe.Dispose(); } catch (ObjectDisposedException) { /* already gone */ }
         }
     }

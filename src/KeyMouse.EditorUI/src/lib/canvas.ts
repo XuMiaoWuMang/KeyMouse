@@ -2,7 +2,7 @@
  * 把流程树铺到无限画布上。
  *
  * 版式：**从上到下是顺序，往右一格是"进入某个块"**。
- * 顶层动作沿一条竖线往下排；块的子步骤在它右边展开，`if` 的成立时/否则并排。
+ * 顶层动作沿一条竖线往下排；块的子步骤在它右边展开，`if` 的条件成立/条件不符并排。
  * 这是流程图的常规读法，也符合"先看到下一步，再看到分支"的顺序。
  *
  * 这里只管几何，不碰 DOM：节点、分支标签、空分支按钮、连线、可插入的缝隙都是数据。
@@ -168,6 +168,8 @@ export function layoutFlow(steps: readonly FlowStep[]): CanvasLayout {
         maxY = Math.max(maxY, bottom);
 
         branches.forEach((item, branchIndex) => {
+          // 空分支不在画布上占位：加第一步改到检查器的「分支」区里。
+          if (item.steps.length === 0) return;
           const bx = x + BRANCH_INDENT + branchIndex * (NODE_W + BRANCH_GAP);
           const labelX = bx + NODE_W / 2;
           labels.push({
@@ -186,25 +188,7 @@ export function layoutFlow(steps: readonly FlowStep[]): CanvasLayout {
           });
 
           const childY = labelY + BRANCH_LABEL_H;
-          if (item.steps.length > 0) {
-            bottom = Math.max(bottom, layoutSequence(item.steps, path, item.key, bx, childY, depth + 1));
-          } else {
-            empties.push({
-              parentPath: path,
-              branch: item.key,
-              text: item.label,
-              x: bx,
-              y: childY,
-              w: NODE_W,
-              h: EMPTY_H,
-            });
-            maxY = Math.max(maxY, childY + EMPTY_H);
-            bottom = Math.max(bottom, childY + EMPTY_H);
-            edges.push({
-              d: verticalLine(labelX, labelY + BRANCH_LABEL_H, labelX, childY),
-              kind: 'branch',
-            });
-          }
+          bottom = Math.max(bottom, layoutSequence(item.steps, path, item.key, bx, childY, depth + 1));
         });
 
         next = bottom + NODE_GAP;

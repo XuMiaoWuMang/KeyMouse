@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Pipes;
+using System.Security.Principal;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -28,6 +29,11 @@ internal sealed class RunnerClient : IDisposable
     private readonly object _gate = new();
     private readonly Task _pump;
     private int _nextId;
+    private bool _disconnected;
+    private readonly SemaphoreSlim _writes = new(1,1);
+    internal string ProtocolVersion { get; private set; } = RunnerProtocol.ContractVersion;
+    internal string[] Capabilities { get; private set; } = [];
+
 
     private RunnerClient(NamedPipeClientStream pipe)
     {
@@ -40,12 +46,33 @@ internal sealed class RunnerClient : IDisposable
     /// <summary>Connects to a running Runner, or returns null when there is none.</summary>
     internal static async Task<RunnerClient?> ConnectAsync(int timeoutMs = 400, string? pipeName = null)
     {
-        var pipe = new NamedPipeClientStream(".", pipeName ?? RunnerProtocol.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        var pipe = new NamedPipeClientStream(".", pipeName ?? RunnerProtocol.PipeName, PipeDirection.InOut,
+            PipeOptions.Asynchronous, TokenImpersonationLevel.Identification);
         try
         {
             using var timeout = new CancellationTokenSource(timeoutMs);
             await pipe.ConnectAsync(timeout.Token);
-            return new RunnerClient(pipe);
+            using var identity = WindowsIdentity.GetCurrent();
+            if (!Equals(pipe.GetAccessControl().GetOwner(typeof(SecurityIdentifier)), identity.User))
+                throw new UnauthorizedAccessException();
+            var client = new RunnerClient(pipe);
+            try
+            {
+                var hello = await client.SendAsync("hello", cancellation: timeout.Token);
+                if (hello.Kind != "result" || hello.Value is not { ValueKind: JsonValueKind.Object } value)
+                    throw new IOException("Runner 未能完成版本协商");
+                if (value.TryGetProperty("protocolVersion", out var chosen))
+                {
+                    if (chosen.GetString() != RunnerProtocol.Latest || !value.TryGetProperty("capabilities", out var caps) || caps.ValueKind != JsonValueKind.Array)
+                        throw new IOException("Runner 返回不支持的协议版本");
+                    client.ProtocolVersion = RunnerProtocol.Latest;
+                    client.Capabilities = caps.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToArray();
+                }
+                else if (!value.TryGetProperty("protocol", out var legacy) || legacy.ToString() != RunnerProtocol.ContractVersion)
+                    throw new IOException("Runner 没有返回可用的协议版本");
+                return client;
+            }
+            catch (Exception ex) { client.Dispose(); throw new InvalidOperationException("已连上 Runner，但协议协商失败：" + ex.Message, ex); }
         }
         catch (Exception ex) when (ex is OperationCanceledException or IOException or TimeoutException)
         {
@@ -59,7 +86,7 @@ internal sealed class RunnerClient : IDisposable
             // 这不是"没有 Runner"，所以不能悄悄返回 null——那样启动的新 Runner 也抢不到这个管道名。
             pipe.Dispose();
             throw new RunnerAccessDeniedException(
-                "有一个 KeyMouse Runner 正在以更高权限运行，当前程序连不上它（命名管道拒绝访问）。\n" +
+                "KeyMouse Runner 的用户或权限级别不匹配（命名管道拒绝访问）。\n" +
                 "办法：以**同样的权限**启动本程序（编辑器用管理员身份运行），" +
                 "或者在任务管理器里结束那个 KeyMouse.exe（它需要管理员权限才能结束）。");
         }
@@ -84,21 +111,29 @@ internal sealed class RunnerClient : IDisposable
         // 每个请求都自报家门与协议版本：契约里的 client / version 就是给这件事用的，
         // 服务端据此把作业记到某个人头上，并在版本不合时当场拒绝，而不是跑出看不懂的结果。
         parameters ??= new RunnerParameters();
+        if (ProtocolVersion != RunnerProtocol.Latest && (method == "watch" || parameters.ShotDiff == true))
+            return RunnerEvent.Error(id, 2, "当前 Runner 未协商 v2 能力");
         parameters.Client ??= ClientName;
         parameters.Version ??= RunnerProtocol.ContractVersion;
 
         var completion = new TaskCompletionSource<RunnerEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_gate)
         {
+            if (_disconnected) return RunnerEvent.Error(id, 1, "Runner 已停止");
             if (onEvent is not null) _listeners[id] = onEvent;
             _waiting[id] = completion;
         }
 
-        string line = JsonSerializer.Serialize(new RunnerRequest { Id = id, Method = method, Params = parameters }, RunnerProtocol.Json);
+        string line = JsonSerializer.Serialize(new RunnerRequest { Id = id, Method = method, Params = parameters,
+            ProtocolVersion = method == "hello" || ProtocolVersion == RunnerProtocol.Latest ? RunnerProtocol.Latest : null,
+            MinCompatibleVersion = method == "hello" ? "1.0" : ProtocolVersion == RunnerProtocol.Latest ? RunnerProtocol.Latest : null }, RunnerProtocol.Json);
         try
         {
-            await _writer.WriteLineAsync(line.AsMemory(), cancellation);
+            await _writes.WaitAsync(cancellation);
+            try { await _writer.WriteLineAsync(line.AsMemory(), cancellation); }
+            finally { _writes.Release(); }
         }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { Complete(id, RunnerEvent.Error(id, 7, "客户端取消了等待")); }
         catch (Exception ex) when (ex is IOException or ObjectDisposedException)
         {
             Complete(id, RunnerEvent.Error(id, 1, $"Runner 连接断了：{ex.Message}"));
@@ -149,6 +184,7 @@ internal sealed class RunnerClient : IDisposable
         {
             lock (_gate)
             {
+                _disconnected = true;
                 foreach (int id in _waiting.Keys.ToArray())
                 {
                     Complete(id, RunnerEvent.Error(id, 1, "Runner 已停止"));

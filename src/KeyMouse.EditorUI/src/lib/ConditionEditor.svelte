@@ -90,7 +90,7 @@
   {#if mode === 'compare'}
     <div class="compare-grid">
       <label class="field">
-        <span class="label">左值 {#if blank(fields.left)}<span class="need">必填</span>{/if}</span>
+        <span class="label">左值 {#if blank(fields.left)}<span class="need" title="必填">*</span>{/if}</span>
         <input value={fields.left} placeholder="变量名，例如 n" on:input={(e) => patch('left', e.currentTarget.value)} />
       </label>
       <label class="field">
@@ -102,34 +102,34 @@
         </select>
       </label>
       <label class="field">
-        <span class="label">右值 {#if blank(fields.right)}<span class="need">必填</span>{/if}</span>
+        <span class="label">右值 {#if blank(fields.right)}<span class="need" title="必填">*</span>{/if}</span>
         <input value={fields.right} placeholder="3 或 “完成”" on:input={(e) => patch('right', e.currentTarget.value)} />
       </label>
     </div>
   {:else if mode === 'text'}
     <label class="field">
-      <span class="label">要找的文字 {#if blank(fields.text)}<span class="need">必填</span>{/if}</span>
+      <span class="label">要找的文字 {#if blank(fields.text)}<span class="need" title="必填">*</span>{/if}</span>
       <input value={fields.text} placeholder="例如 保存" on:input={(e) => patch('text', e.currentTarget.value)} />
     </label>
-    <p class="hint">生成 <code>text("…")</code>；下面「条件读哪里」的窗口与区域也都要填。</p>
+    <p class="hint">还要填窗口和区域。</p>
   {:else if mode === 'window' || mode === 'front'}
     <label class="field">
-      <span class="label">进程名 {#if blank(fields.process)}<span class="need">必填</span>{/if}</span>
+      <span class="label">进程名 {#if blank(fields.process)}<span class="need" title="必填">*</span>{/if}</span>
       <input value={fields.process} placeholder="例如 notepad" on:input={(e) => patch('process', e.currentTarget.value)} />
     </label>
   {:else if mode === 'found'}
     <label class="field">
-      <span class="label">包含的文字 {#if blank(fields.text)}<span class="need">必填</span>{/if}</span>
+      <span class="label">包含的文字 {#if blank(fields.text)}<span class="need" title="必填">*</span>{/if}</span>
       <input value={fields.text} placeholder="例如 副本" on:input={(e) => patch('text', e.currentTarget.value)} />
     </label>
   {:else if mode === 'elapsed'}
     <label class="field">
-      <span class="label">超过多少毫秒 {#if msBlank()}<span class="need">必填</span>{/if}</span>
+      <span class="label">超过多少毫秒 {#if msBlank()}<span class="need" title="必填">*</span>{/if}</span>
       <input type="number" min="1" value={fields.ms} on:input={(e) => patch('ms', e.currentTarget.value)} />
     </label>
   {:else if mode === 'custom'}
     <label class="field">
-      <span class="label">表达式 {#if blank(fields.custom)}<span class="need">必填</span>{/if}</span>
+      <span class="label">表达式 {#if blank(fields.custom)}<span class="need" title="必填">*</span>{/if}</span>
       <input
         class="mono"
         spellcheck="false"
@@ -146,11 +146,7 @@
   </p>
 
   {#if mode && expression === ''}
-    <p class="warn">条件还没填完：带「必填」的项不能空，右上角会显示「还缺 条件」。</p>
-  {/if}
-
-  {#if mode === ''}
-    <p class="hint">选一种条件类型即可；需要特殊写法时选「自定义表达式」。</p>
+    <p class="warn">还差必填项。</p>
   {/if}
 </div>
 
@@ -176,8 +172,10 @@
   }
 
   .need {
+    margin-left: 4px;
     color: var(--kp-signal);
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   input,
@@ -216,12 +214,6 @@
     font-size: 10.5px;
     line-height: 1.5;
     color: var(--kp-ink3);
-  }
-
-  .hint code {
-    font-family: var(--kp-font-mono);
-    font-size: 10px;
-    color: var(--kp-ink2);
   }
 
   .preview {

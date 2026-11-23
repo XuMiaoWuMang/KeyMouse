@@ -39,7 +39,7 @@ internal sealed class InspectorBuilder
         // showWhen：长按这种"二选一"的步骤，只显示当前这一种用法该有的字段。
         AddSection(contract.Own.Where(f => f.Name != "when" && Visible(f)).ToList(), markRequired: true);
         AddWhen(contract);
-        AddSection(contract.All.Where(f => f.Name == "note").ToList(), markRequired: false);
+        AddSection(contract.All.Where(f => f.Name is "delayMs" or "note").ToList(), markRequired: false);
     }
 
     /// <summary>showWhen 判断："button" = 该字段有值才显示，"!button" = 没值才显示。</summary>

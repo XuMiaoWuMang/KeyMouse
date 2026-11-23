@@ -36,7 +36,7 @@ describe('buildGraph', () => {
     ]);
 
     expect(edges).toContain('steps:0->steps:0/steps:0:true:成立');
-    expect(edges).toContain('steps:0->steps:0/else:0:false:否则');
+    expect(edges).toContain('steps:0->steps:0/else:0:false:不符');
     expect(edges).toContain('steps:0/steps:0->steps:1:next');
     expect(edges).toContain('steps:0/else:0->steps:1:next');
     expect(edges).not.toContain('steps:0->steps:1:true:成立');
@@ -52,7 +52,7 @@ describe('buildGraph', () => {
       { type: 'sleep', ms: 2 },
     ]);
 
-    expect(edges).toContain('steps:0->steps:1:false:否则');
+    expect(edges).toContain('steps:0->steps:1:false:不符');
     expect(edges).toContain('steps:0/steps:0->steps:1:next');
     expect(edges).not.toContain('steps:0->steps:1:true:成立');
   });
@@ -122,7 +122,7 @@ describe('buildGraph', () => {
 
     expect(edges).toContain('steps:0->steps:0/steps:0:true:成立');
     expect(edges).toContain('steps:0/steps:0->steps:0/steps:0/steps:0:true:成立');
-    expect(edges).toContain('steps:0/steps:0->steps:0/steps:0/else:0:false:否则');
+    expect(edges).toContain('steps:0/steps:0->steps:0/steps:0/else:0:false:不符');
     expect(edges).toContain('steps:0/steps:0/steps:0->steps:1:next');
     expect(edges).toContain('steps:0/steps:0/else:0->steps:1:next');
   });
@@ -159,7 +159,7 @@ describe('buildGraph', () => {
     ]);
 
     expect(edges).toContain('steps:0->steps:0/steps:0:true:成立');
-    expect(edges).toContain('steps:0->steps:0/else:0:false:否则');
+    expect(edges).toContain('steps:0->steps:0/else:0:false:不符');
     expect(edges.some((edge) => edge.endsWith('->steps:1:next'))).toBe(false);
   });
 });

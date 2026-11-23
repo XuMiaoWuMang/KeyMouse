@@ -29,10 +29,10 @@ export interface StepTemplate {
 export const STEP_TEMPLATES: readonly StepTemplate[] = [
   { type: 'focus', group: '常用', required: ['target'], labels: { target: '目标窗口' } },
   { type: 'type', group: '常用', required: ['text'], labels: { text: '文字' } },
-  { type: 'wait-text', group: '常用', required: ['target', 'region', 'text'], labels: { target: '目标窗口', region: '区域', text: '文字' } },
-  { type: 'click-text', group: '常用', required: ['target', 'region', 'text'], labels: { target: '目标窗口', region: '区域', text: '文字' } },
+  { type: 'wait-text', group: '常用', required: ['region', 'text'], labels: { target: '目标窗口', region: '区域', text: '文字' } },
+  { type: 'click-text', group: '常用', required: ['region', 'text'], labels: { target: '目标窗口', region: '区域', text: '文字' } },
   { type: 'click', group: '鼠标', required: ['at'], labels: { at: '坐标' } },
-  { type: 'drag', group: '鼠标', required: ['from', 'to', 'target'], labels: { from: '起点', to: '终点', target: '目标窗口' } },
+  { type: 'drag', group: '鼠标', required: ['from', 'to'], labels: { from: '起点', to: '终点', target: '目标窗口' } },
   { type: 'move', group: '鼠标', required: ['at'], labels: { at: '坐标' } },
   { type: 'wheel', group: '鼠标', required: [] },
   // 单键与组合键共用 `combo`：enter / f5 / ctrl+shift+s。
@@ -44,7 +44,7 @@ export const STEP_TEMPLATES: readonly StepTemplate[] = [
   },
   { type: 'sleep', group: '等待', required: [] },
   { type: 'wait-window', group: '等待', required: ['target'], labels: { target: '目标窗口' } },
-  { type: 'read-text', group: '读取', required: ['target', 'region', 'into'], labels: { target: '目标窗口', region: '区域', into: '变量名' } },
+  { type: 'read-text', group: '读取', required: ['region', 'into'], labels: { target: '目标窗口', region: '区域', into: '变量名' } },
   { type: 'repeat', group: '流程', required: ['times', 'steps'], labels: { times: '次数', steps: '子步骤' } },
   { type: 'foreach', group: '流程', required: ['in', 'steps'], labels: { in: '来源', steps: '子步骤' } },
   { type: 'call', group: '流程', required: ['flow'], labels: { flow: '流程文件' } },
@@ -157,29 +157,49 @@ function isBlank(value: unknown): boolean {
   return false;
 }
 
+/** 运行时只认 process/class；title 只给人看，不能当选择器。 */
+function hasSelector(target: FlowStep['target']): boolean {
+  return !!(target?.process?.trim() || target?.class?.trim());
+}
+
+/** 不写 space 就是客户区（引擎的默认值），客户区意味着必须有窗口。 */
+function isRelative(point: { space?: string } | undefined): boolean {
+  return !!point && (point.space ?? 'client') === 'client';
+}
+
 /** 这一步还缺哪些必填项（键名）。齐了就是空数组。 */
 export function missingOf(step: FlowStep): string[] {
   const template = BY_TYPE.get(step.type);
   if (!template) return [];
   const raw = step as unknown as Record<string, unknown>;
-  const missing = template.required.filter((key) => isBlank(raw[key]));
+  // 必填的 target 要真的能定位窗口：只有标题不算选择器（运行时只认 process/class）。
+  const missing = template.required.filter((key) =>
+    key === 'target' ? !hasSelector(step.target) : isBlank(raw[key]),
+  );
+
+  // 客户区坐标要有窗口才能换算成屏幕点：at / from / to 任一是客户区就得给目标窗口。
+  if ([step.at, step.from, step.to].some(isRelative) && !hasSelector(step.target)) missing.push('target');
+
+  // 读屏区域同理：客户区/窗口坐标需要窗口，screen 不需要。
+  const regionRelative = !!step.region && (step.region.space ?? 'client') !== 'screen';
+  if (regionRelative && !hasSelector(step.target)) missing.push('target');
+
   // 二选一的那些：全空才记一条（用 ` 或 ` 拼起来，提示里再说人话）。
   if (template.anyOf && template.anyOf.every((key) => isBlank(raw[key]))) {
     missing.push(template.anyOf.join(' 或 '));
   }
-  // 条件里调了 text() 就一定要有读屏观察点；否则加载器会拒绝，UI 不该等播放时才说。
+  // 条件里调了 text() 就一定要有读屏观察点；屏幕区域可以不要窗口。
   if (/\btext\s*\(/.test(step.cond ?? '')) {
     const probe = step.probe;
-    const target = probe?.target;
     const region = probe?.region;
-    const hasTarget = !!target && !!(target.process || target.class || target.title);
+    const probeRelative = !!region && (region.space ?? 'client') !== 'screen';
     const hasRegion = !!region && typeof region.width === 'number' && typeof region.height === 'number';
-    if (!hasTarget || !hasRegion) missing.push('probe');
+    if (!hasRegion || (probeRelative && !hasSelector(probe?.target))) missing.push('probe');
   }
   return missing;
 }
 
-/** 把缺的项说成人话，用于检查器右上角。 */
+/** 把缺的项说成人话，用于抽屉顶部。 */
 export function missingHint(step: FlowStep): string {
   const missing = missingOf(step);
   if (missing.length === 0) return '齐全';

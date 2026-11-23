@@ -37,6 +37,11 @@ internal static class SchemaRangeTests
 
         Harness.Group("schema-range: 越界在加载时就失败");
 
+        Harness.Check("执行前等待适用于普通步骤与控制步骤", Accepted("""{"type":"key","combo":"a","delayMs":0}""")
+            && Accepted("""{"type":"if","cond":"true","delayMs":10,"steps":[{"type":"key","combo":"a"}]}"""));
+        Harness.Check("负的步骤等待在加载时被拒", !Accepted("""{"type":"key","combo":"a","delayMs":-1}""")
+            && !Accepted("""{"type":"if","cond":"true","delayMs":-1,"steps":[{"type":"key","combo":"a"}]}"""));
+
         string low = Failure(() => FlowDocument.Load(Write(
             """{"type":"wait-text","text":"保存","target":{"process":"notepad"},"region":{"space":"client","x":0,"y":0,"width":420,"height":30},"intervalMs":20}""")));
         Harness.Check("intervalMs 低于 100 会被拒", low.Contains("intervalMs", StringComparison.Ordinal) && low.Contains("100..5000", StringComparison.Ordinal), low);

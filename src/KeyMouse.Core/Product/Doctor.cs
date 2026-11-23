@@ -15,25 +15,25 @@ internal static class Doctor
     {
         ConsoleText.ConfigureOutputEncoding();
 
-        foreach (string line in ProductLayout.Describe()) Console.WriteLine(line);
+        foreach (string line in ProductLayout.Describe()) CommandOutput.Out.WriteLine(line);
 
-        Console.WriteLine();
-        Console.WriteLine($"版本：{Commands.ProductVersion}（引擎 {Commands.Version}）");
-        Console.WriteLine($"权限：{(IsElevated() ? "管理员（UIPI 拦不到我们，能操作提权窗口）" : "普通用户（提权窗口会拦下输入）")}");
-        Console.WriteLine($"编码：输出用 {Console.OutputEncoding.WebName}（跟随控制台码页；重定向时按 UTF-8）");
-        Console.WriteLine($"临时文件：{Scratch.Directory}" + (Scratch.FellBack
+        CommandOutput.Out.WriteLine();
+        CommandOutput.Out.WriteLine($"版本：{Commands.ProductVersion}（引擎 {Commands.Version}）");
+        CommandOutput.Out.WriteLine($"权限：{(IsElevated() ? "管理员（UIPI 拦不到我们，能操作提权窗口）" : "普通用户（提权窗口会拦下输入）")}");
+        CommandOutput.Out.WriteLine($"编码：输出用 {Console.OutputEncoding.WebName}（跟随控制台码页；重定向时按 UTF-8）");
+        CommandOutput.Out.WriteLine($"临时文件：{Scratch.Directory}" + (Scratch.FellBack
             ? "（%TEMP% 写不进去，已退到备用目录——probe 的中间位图、录制草稿都落在这里）"
             : "（就是系统的 %TEMP%）"));
-        Console.WriteLine($"注册表：HKCU\\{ProductRegistry.KeyPath} " +
+        CommandOutput.Out.WriteLine($"注册表：HKCU\\{ProductRegistry.KeyPath} " +
             $"GuiPath={Show(ProductRegistry.Read(ProductRegistry.GuiValue))} " +
             $"CliPath={Show(ProductRegistry.Read(ProductRegistry.CliValue))}");
 
-        Console.WriteLine();
-        Console.WriteLine("检查：");
+        CommandOutput.Out.WriteLine();
+        CommandOutput.Out.WriteLine("检查：");
         bool ok = true;
         ok &= Report("命令行可用", ProductLayout.CliPath is not null, "没有找到 KeyMouse.exe");
         ok &= Report("编辑器可用", ProductLayout.EditorPath is not null,
-            "没有找到 KeyMouse.FlowEditor.exe（只想用命令行的话，这一条可以不管）", fatal: false);
+            "没有找到编辑器 KeyMouse.Editor.exe（只想用命令行的话，这一条可以不管）", fatal: false);
         ok &= Report("流程 schema 打得开", SchemaReadable(), "内置 flow.schema.json 读不出来，安装包可能不完整");
 
         return ok ? 0 : 1;
@@ -43,11 +43,11 @@ internal static class Doctor
     {
         if (ok)
         {
-            Console.WriteLine($"  ok   {what}");
+            CommandOutput.Out.WriteLine($"  ok   {what}");
             return true;
         }
 
-        Console.WriteLine($"  {(fatal ? "FAIL" : "--  ")} {what}：{detail}");
+        CommandOutput.Out.WriteLine($"  {(fatal ? "FAIL" : "--  ")} {what}：{detail}");
         return false;
     }
 

@@ -20,7 +20,7 @@ internal static class NoWindowTests
         };
         Harness.Sequence("屏幕坐标的点击不带选择器",
             ["mouse", "click", "left", "-x", "640", "-y", "480"],
-            FlowDocument.ToArguments(click));
+            FlowCommandDisplay.Tokens(click));
 
         var drag = new FlowStep
         {
@@ -30,7 +30,7 @@ internal static class NoWindowTests
         };
         Harness.Sequence("屏幕坐标的拖拽也不需要窗口",
             ["mouse", "drag", "10", "20", "30", "40"],
-            FlowDocument.ToArguments(drag));
+            FlowCommandDisplay.Tokens(drag));
 
         var clientDrag = new FlowStep
         {
@@ -39,12 +39,12 @@ internal static class NoWindowTests
             To = new FlowPoint { Space = "client", X = 30, Y = 40 },
         };
         Harness.Throws<CommandFailure>("客户区拖拽没有窗口会被拒（没法换算）",
-            () => FlowDocument.ToArguments(clientDrag));
+            () => FlowCommandDisplay.Tokens(clientDrag));
 
         var typing = new FlowStep { Type = "type", Text = "hi" };
         Harness.Sequence("不指定窗口的打字就发给当前焦点",
             ["key", "type", "hi"],
-            FlowDocument.ToArguments(typing));
+            FlowCommandDisplay.Tokens(typing));
 
         var document = new FlowDocument
         {
@@ -58,14 +58,14 @@ internal static class NoWindowTests
         Harness.Check("整篇没有一个窗口，也能通过加载与编译",
             FlowPlan.Build(document, Path.Combine(Path.GetTempPath(), "keymouse-nowindow-test.json")).PlannedSteps == 3);
 
-        // 读屏必须落在某个窗口里：区域允许 client / window，不允许 screen。
+        // 读屏区域允许 client / window / screen；只有屏幕空间不需要窗口。
         Harness.Group("nowindow: 读屏区域的空间");
 
-        FlowStep Reading(string space) => new()
+        FlowStep Reading(string space, bool withTarget = true) => new()
         {
             Type = "wait-text",
             Text = "完成",
-            Target = new FlowTarget { Process = "notepad" },
+            Target = withTarget ? new FlowTarget { Process = "notepad" } : null,
             Region = new FlowRegion { Space = space, X = 0, Y = 0, Width = 100, Height = 20 },
         };
 
@@ -79,7 +79,7 @@ internal static class NoWindowTests
 
         Harness.Equal("region 可以是整个窗口（标题栏那类也能读）", "window", Load(Reading("window")));
         Harness.Equal("region 默认还是客户区", "client", Load(Reading("client")));
-        Harness.Throws<CommandFailure>("region 写 screen 会被拒（没有窗口就没有可比对的坐标系）",
-            () => Load(Reading("screen")));
+        Harness.Equal("屏幕区域能读，且不需要目标窗口",
+            "screen", Load(Reading("screen", withTarget: false)));
     }
 }

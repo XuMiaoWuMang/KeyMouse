@@ -1,17 +1,66 @@
-# KeyMouse 命令参考
+# 命令行参考
 
-完整的命令、选项与退出码。概览见 [README](../README.md)，设计取舍见 [design.md](../dev/design.md)。
+运行 `KeyMouse help` 查看入口，`KeyMouse help probe` 查看一组参数。下文用 `KeyMouse` 代表实际可执行文件；未放入 PATH 时用完整路径或 PowerShell 的 `& $km`。命令分为读取状态、执行输入和运行流程三类。
 
-## 调用形式
+## 输出编码
 
+交互控制台默认使用当前控制台代码页。把输出交给编辑器或其他程序解析时，设置 `KEYMOUSE_OUTPUT_ENCODING=utf-8` 可强制使用无 BOM 的 UTF-8；没有控制台时默认也是 UTF-8。
+
+| 任务 | 命令 | 先确认什么 |
+| --- | --- | --- |
+| 查看可见窗口 | `KeyMouse window list --json` | 输出含窗口标题，仅供本地选择 |
+| 检查流程 | `KeyMouse run samples/demo-flow.json --dry-run` | 不发送输入，不等于业务动作已成功 |
+| 录制、编辑、回放 | `record`、`flow edit`、`run` | 使用空白靶窗；录制内容是明文 |
+| 截取区域读字 | `region pick`、`probe` | 确定坐标空间与读图方式 |
+| 指定后台控件 | `background controls` 等 | 需要受支持的控件及唯一目标，不回退到前台 |
+
+## 录制与 JSON 回放
+
+```powershell
+# 在本地忽略目录保存录制；不要在此期间输入凭据
+New-Item -ItemType Directory -Force local-recordings | Out-Null
+KeyMouse record --mode key --client-points --no-shots --out local-recordings/task.json
+KeyMouse flow edit local-recordings/task.json
+KeyMouse run local-recordings/task.json --dry-run
 ```
-KeyMouse <group> <command> [参数] [选项]
+
+CLI 默认 `--mode full`，编辑器默认关键录制。`--duration` 设置自动停止时间；手动可用 `Ctrl+Alt+Q` 或短时间连按两次 Esc。`--move-threshold` 控制移动轨迹抽稀。`--no-shots` 只关闭截图，不隐藏已输入的文字。没有 `--client-points` 的 CLI 录制默认使用屏幕坐标。
+
+新录制每步写 `delayMs`，不插入 `sleep`：首步从开始等待，其余从前一步结束起算。关键录制写 1000 ms，完全录制写实际间隔。手写步骤不填默认为 1000 ms；显式 `0` 表示立即执行。旧 `atMs` 且未填 `delayMs` 的动作沿用原绝对时间戳。手动 `sleep.ms` 是该操作自身的时长；`--min-gap` 为兼容保留，不生成等待步骤。
+
+`run --report <路径>` 生成报告。新流程的控制语句、变量、子流程、区域和步骤参数查[文件格式](interface.md)。编辑器能修改等待值，CLI 的 `--delay` 是另外的运行选项。
+
+## mcp：标准输入输出服务
+
+启动 `KeyMouse mcp`，客户端的程序设为实际 CLI，参数为 `["mcp"]`。默认提供 `list_windows` 和 `read_text` 只读工具；只有显式添加 `--allow-input` 才注册 `click`、`press_key` 和 `type_text`。目标 HWND 必须来自本次窗口枚举。诊断请区分协议错误和 `structuredContent.exitCode`；不要把完整窗口清单或 OCR 结果上传。
+
+## background（后台控件，独立 CLI）
+
+想在继续使用前台程序时操作另一个窗口，用 `background`，而不是 `key` / `mouse --focus-policy never`。目前支持标准 Windows/WinForms 编辑框和按钮（必须有独立子窗口句柄），同一交互会话、用户和权限级别。可以操作最小化目标，不需要还原。应用自身的事件处理程序仍可能弹窗或切换焦点。
+
+**先定位，再执行**。在 PowerShell 7 中，从 `window list` 取得目标的真实 PID 和 HWND，替换下列示例值：
+
+```powershell
+KeyMouse window list --json
+$targetArgs = '--pid', '4321', '--hwnd', '0x1234'
+KeyMouse background controls @targetArgs
+# 从 controls 返回的 JSON 取 id 或 control；以下 Notes、ApplyButton 都是示例 ID
+KeyMouse background insert-text @targetArgs --id Notes --text '在当前插入点写入'
+KeyMouse background set-value   @targetArgs --id Notes --text '替换全部内容'
+KeyMouse background invoke      @targetArgs --id ApplyButton
 ```
 
-六组命令：`mouse`、`key`（别名 `keyboard`）、`window`、`run`、`probe`（只读）、`region`（只报坐标）。
-无参数运行会打印内置帮助；`KeyMouse help probe` 打印某一组的完整选项。
+| 命令 | 语义 |
+| --- | --- |
+| `controls --pid N --hwnd H` | 输出 `{pid, hwnd, controls:[{control, kind, id}]}`；只列出范围内识别出的普通编辑框、按钮，不输出编辑内容或密码控件。列出不代表当前可写/可触发。 |
+| `insert-text … --text TEXT` | 插入到编辑框的当前插入点，若有选区则仅替换选区；不是逐键输入，不会触发每个字符的键盘事件。 |
+| `set-value … --text TEXT` | 替换整个编辑框内容，可用空字符串清空。两个文本命令都回读核对，不回显输入文本。 |
+| `invoke …` | 一次性触发按钮的 UI Automation Invoke 操作，不移动光标，不等价于坐标点击。成功只表示已提交，不证明按钮的业务任务已经完成。 |
 
----
+- 每个动作必须同时给 `--pid N --hwnd H`，再选 `--id AutomationId` 或 `--control 0x子句柄` **其中一个**。ID 在该窗口内受支持控件中区分大小写精确匹配。为空或重名时，重新 `controls` 并用当次列出的句柄；不要跨窗口关闭/重建保存旧句柄。只接受分开的选项和值。
+- `--text` 最多 4096 个 UTF-16 代码单元，不接受 NUL；`insert-text` 不接受空文本，也不处理已有内容达到 65535 个代码单元的编辑框。单行框拒绝换行；目标若截断、格式化或同时被其他程序修改，回读不一致会明确报错，不会再写一次。
+- 退出码 `2`：参数错误；`3`：ID 无匹配或不唯一；`4`：窗口/控件不可用或权限、能力不符，未投递；`1`：动作可能已经执行，请检查目标状态，**不要自动重试**。不回退到系统键鼠输入、不隐式提权、不在失败后切回原窗口。
+- 此组命令只走独立 CLI，不是流程步骤，也不开放给 Runner、编辑器、UIAccess helper 或 MCP。自绘/浏览器页面、任意坐标点击、拖拽、全局快捷键和锁屏操作不在支持范围。完整验证见[可行性报告](../dev/background-input-feasibility.md)。
 
 ## mouse
 
@@ -31,7 +80,7 @@ KeyMouse <group> <command> [参数] [选项]
 
 `button`：`left`（默认）、`right`、`middle`、`x1`、`x2`
 
-带选择器时，任何鼠标命令都会**先聚焦目标**（见下面的窗口策略）；`mouse pos` 不接受选择器。
+带选择器时默认只校验窗口资格、换算坐标，不抢焦点；要先聚焦目标，显式指定 `--focus-policy gentle`（见下面的窗口策略）；`mouse pos` 不接受选择器。
 
 ---
 
@@ -43,6 +92,8 @@ KeyMouse <group> <command> [参数] [选项]
 | `key down <key>` / `key up <key>` | 按下 / 抬起 |
 | `key combo <k1+k2+...> [--hold MS]` | 组合键，如 `ctrl+shift+s`、`win+r`、`alt+f4`；修饰键先按、反序释放 |
 | `key type <text> [--interval MS]` | 输入文本；Unicode 注入，**不依赖输入法/键盘布局**，中文直接打；默认 15ms/字，`--interval 0` 最快但可能丢字。文本为空会被拒（退出码 2）——那通常说明流程里漏了 `text` |
+
+独立 CLI 的 `key type --stdin` 从重定向的标准输入读取完整的 UTF-8 文本，保留空格、换行和前导连字符。MCP 的 `type_text` 使用这个入口传递原文；嵌套流程和 Runner 不会读取宿主的输入流。
 
 ### 按键名
 
@@ -66,7 +117,7 @@ KeyMouse <group> <command> [参数] [选项]
 
 | 命令 | 说明 |
 | --- | --- |
-| `window list [--filter <串>] [--process <名>] [--all]` | 列出顶层窗口及其状态；默认只列**可见且有标题**的，`--all` 连隐藏/无标题的一起列 |
+| `window list [--filter <串>] [--process <名>] [--all] [--json]` | 列出顶层窗口及其状态；默认只列**可见且有标题**的，`--all` 连隐藏/无标题的一起列。`--json` 输出 `windows` 数组 |
 | `window inspect <选择器>` | 逐条打印资格判定：每个匹配窗口为什么可用 / 不可用 |
 | `window focus <选择器>` | 只做聚焦 + 验证，不发送任何输入 |
 
@@ -94,56 +145,9 @@ KeyMouse <group> <command> [参数] [选项]
 
 ---
 
-## 提权
+## 输入目标与权限
 
-**编辑器一律以管理员身份运行**（`app.manifest` 里 `requireAdministrator`）：它是自动化前端，
-不提权就录不到、也点不动以管理员身份运行的程序——发往更高完整性级别窗口的输入，
-Windows 不会交给低权限进程的全局钩子（UIPI）。代价是每次启动一次 UAC。
-
-**命令行默认不提权**（`asInvoker`）：它会被脚本和 CI 大量调用，每次弹 UAC 等于把它废掉。
-需要时显式加 `--elevate`，它以管理员身份重跑同一条命令并把退出码原样带回：
-
-```
-KeyMouse --elevate record --out flow.json     # 录管理员窗口上的操作
-KeyMouse --elevate run flow.json              # 回放同样需要
-```
-
-用户拒绝 UAC 时返回退出码 `1223`（ERROR_CANCELLED），**不会执行任何操作**。
-录制结束时如果发现光标停在过权限更高的窗口，输出里也会提示改用 `--elevate`。
-
-## 不指定窗口（默认）
-
-**给坐标就能点，不需要任何窗口在前台。** 没有选择器时，事件直接发到屏幕位置／当前焦点：
-
-```
-KeyMouse mouse click left -x 640 -y 480      # 就点屏幕上这个点，不管谁在前台
-KeyMouse mouse drag 100 100 400 300          # 从这儿拖到那儿
-KeyMouse key type "hello"                   # 打给当前焦点所在的窗口
-```
-
-不校验窗口、不抢前台、不做闸门检查——这正是自动化要的默认行为。
-
-**手动指定窗口时也不抢焦点**：选择器默认只用来换算客户区坐标与校验资格（`--focus-policy never`），
-绝不 `SetForegroundWindow`——点下去落在屏幕上最上面那个窗口，由你负责摆好。
-需要工具先把窗口提到前台，再显式加 `--focus-policy gentle`。
-客户区坐标（`-wx/-wy`）因为要换算，始终需要一个窗口。
-
-## 窗口策略
-| 选项 | 说明 |
-| --- | --- |
-| `--focus-policy never`（默认） | **不碰焦点**：窗口只用来换算坐标与校验资格 |
-| `--focus-policy gentle` | `SetForegroundWindow` → 回读 `GetForegroundWindow` 验证 → 最多 3 次 |
-| `--focus-policy none` | 目标必须**已经**是前台窗口，否则拒绝 |
-| `--focus-attempts <n>` | 温和模式的尝试次数（默认 3） |
-
-**`window focus` 不看 `--focus-policy`**：这条命令的全部意义就是把窗口提到前台，所以它总是走
-gentle 那条路，并把焦点验证结果写进输出（`已聚焦 …（经过 1 次尝试（含线程输入附着）后成为前台窗口）`）。
-验证不过就退出码 5，不会假装成功。
-| `--allow-restore` | 允许自动还原最小化窗口（默认拒绝） |
-| `-wx <cx> -wy <cy>` | 客户区坐标；必须成对出现且必须带选择器。`mouse drag` 里它是**起点**，终点用 `--wx2 <cx2> --wy2 <cy2>`（四个必须一起给，不允许与四个位置参数混用） |
-| `--strict-point` | 额外要求该屏幕点下方的窗口就是目标本身（对拖拽的起止点都检查） |
-
----
+屏幕输入作用在交互桌面。选择器指定目标后才有目标资格与焦点检查；`--focus-policy never` 不会将普通键盘命令转换成后台控件消息。可后台回放的是有有效目标的客户区鼠标步骤；跨用户、会话或权限边界会被拒绝。最小化目标不能一概而论，见[后台验证边界](../dev/background-input-feasibility.md)。`--allow-restore` 是同意还原，不是跳过检查。
 
 ## run（脚本）
 
@@ -247,7 +251,7 @@ end
 日志会标出当前迭代，进度分母是**展开后**的条数：
 
 ```
-C:\...\demo.txt 共 10 条命令，循环展开后 16 条
+demo.txt 共 10 条命令，循环展开后 16 条
 [  4/16] 成功  [row=0] key type "第 0 行"   ← 继承目标 --title "记事本"
 ```
 
@@ -280,7 +284,7 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
 
 ```json
 {
-  "script": "D:\\demo.txt",
+  "script": "demo.txt",
   "total": 3,
   "succeeded": 2,
   "failed": 1,
@@ -297,7 +301,7 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
 ```
 
 `origin` 是这一步在**文档里的位置**：`"3"` 是第三个顶层步，`"6.1"` 是第六步的第一个子步，
-`"6.e1"` 是第六步的「否则」分支里的第一个子步（`.e` 标记 else，避免和成立时分支的 `6.1` 撞号）。
+`"6.e1"` 是第六步的「条件不符」（else）分支里的第一个子步（`.e` 标记 else，避免和条件成立分支的 `6.1` 撞号）。
 循环展开成多项时同一步的 `origin` 相同（它描述"哪一行"，不是"第几次执行"），子流程内联时
 沿用调用它的那一行的 `origin`——编辑器靠它把结果写回正确的行。脚本（`.txt`）没有这一步，
 所以 `origin` 缺省。
@@ -320,28 +324,6 @@ KeyMouse run demo.txt --set app=notepad --set "text=你好 世界"
 
 ---
 
-## 例子
-
-```powershell
-# 绝对坐标
-KeyMouse mouse move 100 200
-KeyMouse mouse click right -x 640 -y 480
-KeyMouse key combo ctrl+shift+s
-
-# 指定窗口：先验证、再聚焦、再操作
-KeyMouse key type "hello 世界" --process notepad
-KeyMouse mouse click left -wx 120 -wy 340 --title "记事本"
-KeyMouse mouse drag -wx 5 -wy 130 --wx2 900 -wy2 300 --process notepad
-KeyMouse window list --process QQ
-KeyMouse window inspect --title "记事本"
-KeyMouse window focus --hwnd 0x2079C
-
-# 多候选时显式指定（否则报错并列出候选）
-KeyMouse window focus --process explorer --pick 3
-```
-
----
-
 ## 退出码
 
 | 码 | 含义 |
@@ -358,55 +340,6 @@ KeyMouse window focus --process explorer --pick 3
 脚本返回**第一条失败命令**的退出码；流程里的 `assert` / 循环护栏也是 `3`，语义同样是"确定没发出输入"。
 
 `3` / `4` / `5` / `6` 共享同一条承诺：**确定没有发出任何输入**，因此都可以安全重试（`--retry` 也只对它们生效）。
-
-## 暂停与继续
-
-命令行每次启动都会在本进程里建一个**手动复位的命名事件**：
-
-```text
-Local\KeyMouse-pause-<pid>
-```
-
-谁把它置上（`SetEvent`），正在跑的那一条就会**停在下一步之前**；清掉（`ResetEvent`）就继续。
-停点永远落在两步之间，所以不会把一半的组合键留在键盘上——这一点比自己 `SuspendThread` 靠得住。
-
-- 不需要任何参数，也不会额外打印什么：没人置事件时这条通道完全不出现。
-- 暂停时 stderr 打一行「已暂停：下一步还没发出去…」，继续时打「继续。」。
-- 「停止」仍然是把整棵子树杀掉（退出码 7 的语义不变）：暂停只是为了"先看一眼再决定"。
-- 图形编辑器用它实现工具栏上的「暂停 / 继续」，见 [`editor-ipc.md`](editor-ipc.md) 的 `pause_flow`。
-
-### 录制的"优雅停止"事件
-
-`record` 另建一个**单向**的命名事件（跑流程时不建）：
-
-```text
-Local\KeyMouse-record-stop-<pid>
-```
-
-谁把它置上，这一轮录制就在下一次检查时收尾、**把已经录到的写盘**，退出码 0——
-和按 `Ctrl+Alt+Q` 的效果一样，但**不依赖前台窗口、也不依赖注入的键被钩子看见**。
-外壳录制结束时的 `record_stop` 走的就是这条路：界面进程只负责置事件，不依赖注入的组合键能不能落到前台。
-
-- 只认"置上"，不提供 `ResetEvent`：停止是单向的。
-- 置不上（老版本命令行没建这个事件）时外壳回落到注入 `Ctrl+Alt+Q`，见 `record_stop`。
-- 引擎侧实现：`src\KeyMouse.Core\Runtime\StopSignal.cs`；外壳侧：`record.rs` 的 `signal_stop`。
-
-## 输出编码
-
-默认跟随控制台的输出码页（中文 Windows 上是 cp936）——这是给终端里的人和 PowerShell 管道看的，
-`[Console]::OutputEncoding` 与它一致时不会乱码。
-
-要让输出变成 **UTF-8（无 BOM）**，设环境变量：
-
-```powershell
-$env:KEYMOUSE_OUTPUT_ENCODING = 'utf-8'
-KeyMouse --version
-```
-
-调用方需要自己解析输出时（编辑器外壳、Node/Python/Rust 脚本）**应当**设它：猜控制台码页对终端是对的，
-对程序是错的——cp936 的字节按 UTF-8 解会变成 `KeyMouse 2.2.1��� 2.4.0��`。
-
-设了这个变量就不再看控制台码页；不设则行为与以前完全一致。
 
 ## probe（读，不是发）
 
@@ -481,446 +414,13 @@ KeyMouse probe --title "记事本" --region 10,60,400,30 --json
           "at": { "space": "client", "x": 145, "y": 18 }, "line": "保存 取消 确定",
           "distance": 0, "confidence": 91.0 }
 ```
-## record（录制：把一次操作变成可回放的 JSON）
 
-```
-KeyMouse record --out flow.json                 # 开始录，Ctrl+Alt+Q 停止（0.3 秒内连按两次 ESC 也停）
-KeyMouse record --out flow.json --duration 10000
-KeyMouse run flow.json                          # 回放
-```
+## 选区、服务与编辑器
 
-全局监听键盘与鼠标（`WH_KEYBOARD_LL` / `WH_MOUSE_LL`），**只观察、不拦截**：你照常操作，
-录下来的每一步记**屏幕坐标**、**不绑窗口**——录制的目的就是复刻你按下的那个位置，
-跟它当时属于哪个窗口无关（窗口挪了位置，回放仍打在原来的屏幕点上）。
-窗口只出现在**截图**里：取景框对准你操作时看着的那个客户区。
-间隔超过 `--min-gap` 会落成一个 `sleep` 步骤。
+- `KeyMouse region pick --point --json` 选择一个点；`region pick --json` 选择一个矩形。返回窗口归属与坐标，并不执行点击或识别。
+- `KeyMouse serve` 启动本地 Runner；用 `KeyMouse runner status` 查看状态。请求、事件、暂停、续收和终结规则见 [Runner 协议](runner-protocol.md)。
+- `KeyMouse flow edit <文件>` 需要已有编辑器。Tauri 壳如何调用 CLI 见[编辑器 IPC](editor-ipc.md)。
 
-**第一步会补一个 `focus`**：录制时第一下操作落在哪个窗口，收尾时就在流程最前面插一步
-`{"type":"focus","target":{"process":"…"}}`，先把它切到前台再按坐标打。没有这一步，
-目标窗口被别的窗口压着时，回放的第一下点击就打在别人身上，后面的字全打进空气。
-它只记**进程名**不记标题——记事本换个文件名标题就变了，那会让回放第一步就找不到窗口。
-文件里已经以 `focus` 开头、或者一步都没录到时不会重复插（见 `tests\KeyMouse.Tests\Flow\RecorderFocusTests.cs`）。
+## 暂停与继续
 
-| 选项 | 默认 | 说明 |
-| --- | --- | --- |
-| `--out <路径>` | `flow.json` | 流程文件；截图放在同目录的 `<名字>.shots/` |
-| `--duration <毫秒>` | 关 | 到点自动停（无人值守/自动化用；也可以按停止键） |
-| `--no-shots` | 开 | 不存关键步骤的截图 |
-| `--min-gap <毫秒>` | 300 | 多长的间隔值得记成 `sleep` |
-| `--move-threshold <像素>` | 8 | 鼠标轨迹按这个距离抽稀（越短越忠实、文件越大） |
-
-**停止键**：`Ctrl+Alt+Q`，或 **0.3 秒内**连按两次 `ESC`。停止键本身不会被录进流程。
-
-两次 `ESC` 的间隔超过 0.3 秒就**不算双击**：第一次会当成一次普通按键补记进流程（按下后最多等 0.3 秒），
-第二次重新起算。这个窗口是"人手双击"的上限——早先放宽到 1 秒时，录制中正常按两次 `ESC`
-（编辑器里退菜单、游戏里关面板）会被误当成停止。
-
-**编辑器里的录制按钮有四种状态**，每一步都由事实驱动，不靠计时猜：
-
-| 状态 | 触发 |
-| --- | --- |
-| 录制 | 空闲 |
-| 正在初始化… | 点击后**立刻**（确认框、拉起 serve 都在这一步之后才做） |
-| 停止录制 | Runner 报 `state: recording`——**全局钩子真的装好了** |
-| 正在停止… | 停止键或点按钮之后；写出流程、回到「录制」 |
-
-实测：点击 → 68 ms 显示「正在初始化…」→ 1.1 秒后（钩子就绪）变「停止录制」→
-按 Ctrl+Alt+Q 后 101 ms 回到「录制」。
-
-**流程时长（`durationMs`）**：录制文件头里写明这段录制有多长（毫秒），和逐步的 `atMs` 一起，
-让人不必读完全部步骤就能判断节奏：`"recordedAt": "…", "durationMs": 2984`。
-回放时也会在头部打印：`时长 3 秒（按录制时的时间线回放）`。
-
-**时间线（`atMs`）**：录制的每一步都带 `atMs`——从录制开始算的毫秒。回放按这条时间线排程，
-快速挥动就是一阵密集事件、中途停顿就是真的停，速度与录制时一致。
-
-- 手工写的流程不写 `atMs`，仍用 `sleep` 表达等待（两种方式可以混用，有 `atMs` 的步骤以时间线为准）；
-- 有 `atMs` 的流程里，`sleep` 的等待已包含在时间线中，回放时不再重复等；
-- 落后于时间线（例如某一步很慢）时**不补等**：宁可晚一点，也不越拖越晚。
-
-**已知边界：管理员权限的窗口录不到。** Windows 不会把发往**更高完整性级别**窗口的输入交给低权限进程的全局钩子（UIPI）。
-所以如果目标程序以管理员身份运行（例如某些桌面客户端），落在它窗口上的点击**既收不到也补不了**——录制结束时会把这类窗口的 pid 与标题列出来，
-要录它们，KeyMouse 也必须以管理员身份运行。
-
-**钩子漏事件时**：除了低级钩子，录制器每 20ms 还会轮询鼠标按键状态。若某次按下/抬起没被钩子收到（触摸或触控笔被提升成鼠标消息、或点击落在完整性更高的进程窗口上），就补记一条点击，并在该步的 `note` 里写明「轮询补记」，位置与时间按当时光标采样。录制结束时会打印「钩子收到：…」的计数，用来区分「系统没送来」和「我们丢了」。
-
-**滚轮怎么记**：连续滚动合成一步，`delta` 是总和（120 = 一格，正数向上）。合并只发生在**同轴、同向、间隔 ≤200 ms** 的情况下——方向一反过来就另起一步，所以"上两格马上又下两格"录成两步，不会被加成 0。横向滚轮（`WM_MOUSEHWHEEL`，触控板横滑 / Shift+滚轮）单独记成 `wheel` 步骤并带 `"axis": "horizontal"`，回放走 `mouse hwheel`；竖向是默认，不写进文件。
-
-**录进去的步骤**：`focus`（切换窗口）、`click`、`drag`（按住移动超过阈值就是一个 drag，
-带起点/终点/时长）、`move`（抽稀后的轨迹）、`wheel`、`type`（连续输入的字符合成一步，
-并记下你实际的输入速度）、`key`（特殊键与组合键）、`sleep`。
-
-**两条要记住的事**：
-
-- 录制期间**你敲的每个键都会被记录**（包括密码这种敏感内容），流程文件是明文，
-  关键步骤的截图也可能含敏感画面——录完自己看一眼再分享。
-- 回放走的还是同一条路：流程被编译成一条条命令，**选择器、焦点闸门、退出码语义与手打命令完全一致**，
-  `--dry-run` / `--report` / `--retry` 也照常工作；流程里可以加条件步骤（`sleep` / `wait-window` /
-  `wait-text`，见下一节），它们是"等到什么"而不是"再敲一下"。
-
-## 流程 JSON（`keymouse-flow`）
-
-```json
-{
-  "format": "keymouse-flow",
-  "version": 1,
-  "recordedAt": "2026-10-03T18:10:23+08:00",
-  "screen": { "width": 2560, "height": 1440 },
-  "options": { "minGapMs": 300, "moveThresholdPx": 8, "shots": true },
-  "steps": [
-    { "type": "click", "button": "left", "at": { "space": "client", "x": 120, "y": 159 },
-      "target": { "process": "notepad", "class": "Notepad", "title": "新建 文本文档.txt - Notepad" },
-      "shot": "flow.shots/0001-click.png" }
-  ]
-}
-```
-
-| `type` | 字段 | 回放成 |
-| --- | --- | --- |
-| `focus` | `target` | `window focus` |
-| `click` | `button`、`at` | `mouse click` |
-| `move` | `at` | `mouse move`（屏幕坐标时是位置参数写法） |
-| `wheel` | `delta`、`at` | `mouse wheel`（连续滚动会合并成一个 delta） |
-| `drag` | `from`、`to`、`durationMs` | `mouse drag --duration` |
-| `type` | `text`、`intervalMs` | `key type --interval` |
-| `key` | `combo`（单键或 `+` 组合） | `key combo` |
-| `sleep` | `ms` | 执行器直接等（`--dry-run` 时不等） |
-| `wait-window` | `target`、`timeoutMs`、`intervalMs` | 执行器轮询到窗口可用；超时退出码 `3` |
-| `wait-text` | `target`、`region`、`text`、`match`、`maxErrors`、`timeoutMs`、`intervalMs`、`confirm` | 执行器**读区域等文字**：每轮一次 OCR，连续 `confirm` 次读到**同一段**满足条件的文字才算等到；超时退出码 `3` |
-| `click-text` | `target`、`region`、`text`、`match`、`maxErrors`、`button`、`timeoutMs` | **看到就点它**：等文字出现（同 `wait-text` 的确认规则），然后点**匹配框的中心**；没等到 → 退出码 `3` |
-| `read-text` | `target`、`region`、`into`、`text`（可选） | 读一次区域，把内容存进变量（给了 `text` 就存匹配到的那段）；没匹配到 → 退出码 `3`，变量不动 |
-| `call` | `flow`、`vars`、`export` | 运行另一个流程文件：**内联**执行，子流程有自己的变量作用域，`export` 里的名字交回调用者 |
-| `if` | `cond`、`steps`、`else`（可选）、`probe`（条件用 `text()` 时必须） | 条件成立执行 `steps`，否则执行 `else`；`else` 里再放一个 `if` 就是 `else if` |
-| `while` | `cond`、`steps`、`maxRounds`（默认 200）、`probe` | 条件成立就重复；超过 `maxRounds` 退出码 `3` |
-| `do` | `steps`、`cond`、`maxRounds`（默认 200）、`probe` | 先执行一遍，再按 `cond` 决定是否再来一轮 |
-| `for` | `init`、`cond`、`step`、`steps`、`maxRounds`（默认 10000）、`probe` | 计数循环：`init` 一次、每轮前查 `cond`、每轮后执行 `step` |
-| `break` / `continue` | — | 跳出当前循环 / 进入下一轮；只能出现在循环体内 |
-| `return` | — | 结束当前流程；子流程的 `export` 仍交回调用者，调用者继续；根流程里则正常结束整次运行 |
-| `set` | `name`、`value`（表达式） | 给变量赋值；已有变量在原处更新，新变量定义在当前块 |
-| `assert` | `cond`、`message`（可选）、`probe` | 断言；不成立退出码 `3`，消息原样带出 |
-
-### 控制流：if / else / while / do / for / break / continue / return
-
-C 的**语义**，结构化 JSON 的**语法**。条件不是一段随便执行的东西，而是一套手写的小表达式语言：
-没有 `eval`，加载时检查语法与变量名，报错带列号。
-
-```json
-{ "type": "if", "cond": "text(\"保存\")",
-  "probe": { "target": { "process": "notepad" },
-             "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 } },
-  "steps": [ { "type": "key", "combo": "ctrl+s" } ],
-  "else":  [ { "type": "sleep", "ms": 200 } ] }
-
-{ "type": "while", "cond": "text(\"加载中\")", "maxRounds": 60,
-  "probe": { "target": { "process": "notepad" },
-             "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 } },
-  "steps": [ { "type": "sleep", "ms": 500 } ] }
-
-{ "type": "do", "cond": "found()", "steps": [ … ] }
-
-{ "type": "for", "init": { "i": "0" }, "cond": "i < 3", "step": { "i": "i + 1" },
-  "steps": [ { "type": "set", "name": "sum", "value": "sum + i" } ] }
-
-{ "type": "break" }      { "type": "continue" }
-{ "type": "return" }
-{ "type": "set", "name": "n", "value": "n + 1" }
-{ "type": "assert", "cond": "n < 10", "message": "n 太大了" }
-```
-
-| 写法 | 语义 |
-| --- | --- |
-| `if` | 条件成立执行 `steps`，否则执行 `else`；`else` 里再放一个 `if` 就是 `else if`。两个块都是 C 那样的花括号作用域 |
-| `while` | 每轮开始前重新求值；条件为假就结束 |
-| `do` | 先执行一遍 `steps`，再求值；为真就再来一轮（至少执行一次） |
-| `for` | `init` 在循环前按顺序求值一次；每轮前查 `cond`；每轮后执行 `step`——`continue` 之后 `step` 照样执行 |
-| `break` / `continue` | 只对**最近一层**循环有效；不在循环里会在加载时报错 |
-| `return` | 立即结束**当前流程**，不执行它后面的步骤；子流程被 `call` 调用时按 `export` 交回变量，调用者继续。可以在 `if`/循环里用，不能带 `when`/`steps`/`else` |
-| `set` | 已有变量在**原处**更新（循环外的计数器因此能一直加），新变量定义在当前块 |
-| `assert` | 条件必须为真；否则退出码 `3`，`message` 原样写进输出 |
-
-**表达式**（`cond`、`init`/`step` 的值、`set.value`）：
-
-| 类别 | 内容 |
-| --- | --- |
-| 字面量 | `3`、`2.5`、`"文本"`、`'文本'`、`true`、`false` |
-| 变量 | 直接写名字：文档 `variables`、`--set`、`read-text` 的 `into`、循环变量 `index`/`item`、`for` 的 `init` 名字、`set` 过的名字，以及 `last`（最近一次读屏得到的文字） |
-| 算术 | `+ - * / %`、一元 `-`；`+` 两边只要有一边是文本就拼接，数字与"像数字的文本"相加时按数字算（所以 `--set i=3` 也能写 `i + 1`） |
-| 比较 | `== != < <= > >=`；两个文本按序号比较，数字与文本比时会尝试把文本读成数字 |
-| 逻辑 | `&& \|\| !`，短路：`false && text(...)` 不会去读屏 |
-| 谓词 | `text("保存")`、`text("保存", 0, 0, 600, 32)`、`window("notepad")`、`front("notepad")`、`found("副本")`、`elapsed()` |
-| 括号 | `( … )`；三目 `?:`、`switch`、`goto`、函数定义都不提供 |
-
-- `text(文字[, x, y, 宽, 高])` **单次取样**：读一次 `probe` 的区域，不轮询。要"等到出现"就写 `wait-text`，
-  或者 `while (!text("完成")) { sleep … }`（后者有 `maxRounds` 兜底）。
-- 五个参数形态只换区域，窗口与匹配方式仍取 `probe`；区域空间跟 `probe.region.space` 一致。
-- `probe` 只在条件里用了 `text()` 时必须给；`target` 与 `region` 都必填，不猜窗口也不猜区域。
-- `window()` / `front()` 的参数是**进程名**（`.exe` 可写可不写）；`front()` 比较的是前台窗口的进程。
-- `found()`：最近一次 `read-text` / `wait-text` / `click-text` 是否命中。不带参数 = 是否成功；带文字 =
-  命中过这段文字（或读到的内容包含它）。`text()` 不算一次"读取步骤"，不会改 `last`/`found()`。
-- `elapsed()`：从这次流程开始到现在的毫秒数（写超时保护时用）。
-- **条件必须是 `true/false`**。数字或文本不会自动当真值——这是刻意的：GUI 流程里"0 不成立"比"少写一个比较"更难查。
-
-**作用域**（C 的块作用域）：
-
-- `if` / `while` / `do` / `for` 的身体各有一层帧：里面**新定义**的变量出块就没了；
-- `set` 一个外层已有的名字会在**原处**更新——循环外的计数器因此能一直加；
-- `for` 的 `init` 名字只活在循环里；`step` 在每轮 body 之后执行（`continue` 之后也执行），
-  但 `step` 里新定义的名字在 body/`cond` 第一轮看不到，加载期就会拒绝；
-- `read-text` 的 `into` 仍然写**当前作用域**；子流程的捕获仍然留在子流程里，靠 `export` 交回。
-
-**护栏（条件循环必须有上界）**：
-
-| 项 | 默认 | 说明 |
-| --- | --- | --- |
-| `while.maxRounds` / `do.maxRounds` | 200 | 最多执行多少轮；硬顶 10000 |
-| `for.maxRounds` | 10000 | 计数循环的上界；硬顶 10000 |
-| `--max-steps N` | 2000000 | 整次运行的执行步数硬上限；嵌套循环相乘时靠它兜底 |
-
-超过任一上界 → 退出码 `3`，指出是哪一层循环/哪条条件；**即使 `--keep-going` 也停**——上界触发说明流程写错了，
-再继续只会把错误放大。`--max-steps` 对流程与脚本都生效（脚本自己的展开上限是 10 万条，通常更早挡住）。
-
-**`--dry-run` 下**：
-
-- 条件照常求值，但不发任何输入；
-- `text()` 只解析窗口、校验区域，然后**按成立算**（和 `when` 的 dry-run 一样），因此走的是"条件成立"的那条路；
-- `while` / `do` / `for` 的循环体**只走一遍**，不会因为 `text()` 永远成立而空转；日志会标明"只走一遍"；
-- `window()` / `front()` 真的去查（只读，不发输入）。
-
-**报告与编号**：块本身不是"一步"，只有真正执行的步骤进报告；`origin` 仍指向文档里的那一行
-（循环体反复执行时同一个 `origin` 出现多次）。含条件/循环的流程在控制台里不打印分母
-（`[  7]` 而不是 `[  7/20]`），因为实际步数要到跑完才知道；报告里的 `total` 是**静态规划数**
-（`if` 两条分支都算、循环体只算一遍），对没有控制流的旧流程与原值完全一致。
-
-### wait-text：等一块区域上出现某段文字
-
-```json
-{ "type": "wait-text",
-  "target": { "process": "notepad" },
-  "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 },
-  "text": "保存成功", "match": "fuzzy", "maxErrors": 1,
-  "timeoutMs": 8000, "intervalMs": 1000, "confirm": 2 }
-```
-
-| 字段 | 默认 | 说明 |
-| --- | --- | --- |
-| `region` | 必填 | 读哪一块（`space` 只支持 `client`：屏幕坐标会随窗口移动失效）。越界在**加载时**就报错（退出码 2） |
-| `text` | 必填 | 等什么字 |
-| `match` | `contains` | `contains`（读到里含期望）/ `exact`（完全一致）/ `fuzzy`（编辑距离 ≤ `maxErrors`） |
-| `maxErrors` | 1 | 只对 `fuzzy` 有意义。**这是你声明的容错预算，不是工具偷偷放宽的阈值** |
-| `timeoutMs` | 5000 | 等多久；超时退出码 `3`（= 没做任何操作，可安全重试） |
-| `intervalMs` | 1000 | 两轮之间等多久（每轮都是一次真实的引擎调用，约 0.2~0.6 秒） |
-| `confirm` | 2 | 需要连续几轮**读到同一段**满足条件的文字才算数；设 1 就是"一眼看到就算" |
-
-**上面这几个"默认"不在引擎里写死**：加载时按 `flow.schema.json` 的 `default` 取值、按 `min`/`max`
-校验，越界直接退出码 2（不悄悄夹一下，否则你的笔误会被藏起来）。改契约就改
-`src/KeyMouse.Core/flow.schema.json`——开发树里引擎直接读这份文件，安装版读编译进去的那份。
-本表的数字是"当前契约的值"，契约改了这里也得跟着改。
-
-三条语义值得记住：
-
-- **比较时忽略空白**，两侧都是。引擎把中文按字切词并加空格（`你 好 ， 世 界`），
-  若按字面比较，你写屏幕上的原文 `你好，世界` 反而永远不匹配。**读本身没有被加工**：
-  `probe` 打印的仍是引擎原样输出。
-- **`confirm` 是可信度的来源**：单次读取可能正好撞上重绘/光标（实测同一个区域两次读取会不一致），
-  连续两次读到同一段才算"等到了"。
-- `--dry-run` 下不读：只解析窗口并校验区域是否越界，然后报告"会等什么、等多久"。
-
-超过 `confirm` 次仍未等到就是退出码 `3`，并且失败信息会告诉你**最后读到的是什么**、
-离期望差几个字符——这才是这个条件能被调试的原因。
-
-`at` / `from` / `to` 的 `space` 只认两种：**`screen`（默认）** 把事件打在这个屏幕点上，不需要窗口；
-`client` 是窗口客户区相对，必须同时给 `target`（否则坐标无从换算）。
-录制器一律写 `screen`——它复刻的是你按下的那个位置，与当时是哪个窗口无关。
-`target` 里的 `process` + `class` 是回放真正用的选择器；`title` 只给人看。
-
----
-
-## serve（常驻 Runner）与 runner（让 CLI 去驱动它）
-
-```
-KeyMouse serve                      # 前台启动常驻 Runner（编辑器连的就是它）
-KeyMouse runner status              # 问它现在什么状态、有哪些作业
-KeyMouse runner run flow.json       # 让常驻 Runner 执行一个流程（CLI 只是客户端）
-KeyMouse runner cancel 3            # 暂停 / 继续 / 取消某个作业
-KeyMouse runner pause 3
-KeyMouse runner resume 3
-KeyMouse runner stop                # 请它退出
-```
-
-**一个产品、两个入口、三层**：编辑器（WinUI）与命令行都连同一个常驻 Runner，Runner 驱动的是与
-一次性命令**完全相同**的那份派发——所以退出码、闸门、焦点验证不会因为入口不同而变。
-
-- 管道：`\\.\pipe\keymouse-runner-<用户名>`（按用户隔离，没有端口）。
-- 协议：一行一个 JSON 对象，双向。请求 `{"id":1,"method":"run","params":{"flow":"...","dryRun":false}}`；
-  事件 `{"kind":"..."}`，`kind` ∈ `hello | log | step | finished | result | error`。
-  `step` 带 `index/total/state(started|finished)/type/exitCode/durationMs/origin`——编辑器靠它在画布上落节点
-  实时高亮正在执行的那一步；动态循环下 `index` 与行号不再一一对应，`origin` 才是行键。
-- 方法：`hello | status | list | run | record | validate | pick-region | ocr | cancel | pause | resume | shutdown`。
-- **一次只跑一个作业**：输入是全局资源，作业排队而不是并行（理由见 design.md）。
-
-退出码 `7 = 被客户端取消`：取消点之后没有再发出任何输入（和 3/4/5/6 一样，可以放心重跑）。
-
-## flow（图形编辑器）
-
-```
-KeyMouse flow edit flow.json                    # 用默认编辑器打开一个流程（先新外壳，退老外壳）
-```
-
-编辑器在 `src\KeyMouse.FlowEditor`（独立项目，**要单独构建**：
-`pwsh tools\dev\km.ps1 ba`）。它做六件事：
-
-- **无限画布**：整份流程铺在一张可缩放/平移的画布上；顶层从左到右、块内向下。三种轮廓对应流程控制/循环控制/操作指令，节点可拖动排序。
-- **右侧抽屉**：点节点滑出，按契约渲染字段（契约里没有的东西界面上不会凭空多出来），另有"这一步的 JSON"随时可看；点空白或 Esc 收起。
-- **从屏幕取一点 / 取一块**：点字段拉 `region pick --point`（十字线 + 实时坐标，单击即取这一点），
-  区域字段拉拖框浮层。浮层标签报的是**会写进文件的那组坐标**（目标窗口内），选完连窗口一起填进当前步骤。
-- **试运行/播放**：存一份给 `run`（未保存的改动写到临时文件，不覆盖你正在编辑的文件），
-  输出实时显示在「运行输出」里（长行换行、不横向滚动；面板收起来后右下角留一个「输出」把它叫回来）。
-- **运行态**：逐步结果（✓ 用时 / ✗ 原因）按报告 `origin` 落到对应节点。
-- **录制**：工具栏「录制」→ 选保存位置；**主窗口隐藏**，左上角留一块只读日志 HUD（最近 7 步，鼠标穿透）。按 Ctrl+Alt+Q 停止；录到的内容进编辑器、算「未命名」，存哪儿由你决定。
-
-编辑器**不重新实现**录制、取区域、读取与回放——那些行为（连同它们的实测结论）都只在命令行这边有一份。
-
-
-### `when`：任何一步都可以带前提
-
-```json
-{ "type": "click", "at": { "space": "client", "x": 200, "y": 300 },
-  "target": { "process": "notepad" },
-  "when": { "target": { "process": "notepad" },
-            "region": { "space": "client", "x": 0, "y": 0, "width": 600, "height": 32 },
-            "text": "保存成功", "match": "contains", "timeoutMs": 2000, "else": "skip" } }
-```
-
-`when` 是**单步**的前提：前提成立才执行这一步。成块的条件分支用 `if`，循环用 `while`/`do`/`for`（见上一节）。
-
-- `target` 可以自己给（**可以盯另一个窗口**）；不给就用步骤自己的 target。
-- `else`：`skip`（默认，跳过这一步、退出码仍是 0）或 `fail`（退出码 `3`，同样保证"什么都没发"）。
-- 前提不成立时的跳过会在报告里标成 `skipped`，控制台那一行显示 `skip`。
-- `if` / `while` / `do` / `for` / `break` / `continue` **不能**带 `when`：条件请写进它们自己的 `cond`。
-
-
-
-
-关于 `when` 的两个细节：
-
-- **`when` 里 `text` 是空的，就等于没有前提**（那一步总是执行）。编辑器点一下 `when` 的其它输入框就会造出这种半成品，
-  它不该让整个文件作废——这一栏自己的说明就是"留空 = 总是执行"。
-- 前提在**这一步开始前只读一次**：读到就执行，读不到就跳过（或按 `else: fail` 退出码 `3`）。它和 `click-text`/`wait-text`
-  自己"要找/要等的文字"不是一回事：那个是这一步会一直等到超时的。
-
-### 子流程（call）
-
-```json
-{ "type": "call", "flow": "sub/login.json",
-  "vars": { "user": "{{item}}" },      // 传给子流程（可引用调用者的变量）
-  "export": ["seen"] }                 // 子流程跑完后，把 seen 交回调用者
-```
-
-- **`flow`** 相对于**调用它的那个文件**（嵌套调用同理），所以整个目录可以整体搬走。
-- **作用域是链式的**：子流程看得到调用者的变量，也能用自己的 `variables` 覆盖；`vars` 优先级最高。
-- **子流程里的 `read-text` 捕获留在子流程内**，不会悄悄改掉调用者的同名变量——要交回来就写 `export`，而且只有 `export` 列出的名字会回来。
-- **加载时就查**：文件不存在、`flow` 缺失、调用成环（a → b → a）、嵌套超过 8 层，都是退出码 `2` 并指出是第几步。
-- 一次 `call` 的步骤会**内联**进这次运行：日志与事件里的编号是"第几步"（按实际要跑的步数），不是文件里的行号。
-
-### 参数契约（哪些必须、哪些可选）
-
-每种步骤的参数、必须性与取值范围，由 `src/KeyMouse.Core/flow.schema.json` 规定，那份文件也是编辑器渲染界面的依据：
-
-```powershell
-KeyMouse schema                # 打印整份契约
-KeyMouse schema click-text     # 只看一种步骤：必须 / 可选 / 取值 / 范围
-```
-
-**这份契约从哪儿读**，取决于你跑的是哪一个 `KeyMouse.exe`：
-
-| 场景 | 读哪里 | 改完多久生效 |
-| --- | --- | --- |
-| 开发树（`artifacts\cli\KeyMouse.exe`，或 `dotnet run` 出来的那个） | 仓库里的 `src/KeyMouse.Core\flow.schema.json` **文件本身** | 立刻。不用重建 |
-| 安装版（`%LOCALAPPDATA%\KeyMouse\cli\KeyMouse.exe`） | 编译时**内嵌进 `KeyMouse.Core.dll`** 的那一份 | 随版本走；改文件不会影响已装的版本 |
-
-判定沿用 [`environments.md`](../guide/environments.md) 的规则（往上能不能找到 `KeyMouse.sln`）。所以"我改了 schema、界面没变"这件事只会发生在**安装版**，或者**开发树里但拿的是旧的 `artifacts\cli`**——后一种情况跑一次 `pwsh tools\build\build.ps1` 就好。
-
-细节与前端渲染约定见 [`interface.md`](interface.md)。
-### 变量与循环
-
-```json
-{ "format": "keymouse-flow", "version": 1,
-  "variables": { "app": "notepad", "rows": ["第一行", "第二行", "第三行"] },
-  "steps": [
-    { "type": "focus", "target": { "process": "{{app}}" } },
-    { "type": "foreach", "in": "rows", "steps": [
-        { "type": "type", "text": "{{item}}", "target": { "process": "{{app}}" } },
-        { "type": "key", "text": "enter", "target": { "process": "{{app}}" } } ] },
-    { "type": "repeat", "times": 3, "steps": [ { "type": "sleep", "ms": 200 } ] } ] }
-```
-
-- **`variables`**：值是字符串（`{{名字}}` 用）或字符串数组（`foreach` 遍历）。
-  `KeyMouse run flow.json --set app=mspaint` **覆盖**文档里的同名值（数组会被压成单元素，这是明说的取舍）。
-- **`{{名字}}`** 只能出现在**字符串**字段（文字、组合键、进程名/类名/标题、备注）——JSON 的数字放不下占位符。
-  替换发生在**派发前一刻**，所以 `read-text` 刚捕获的值，后面的步骤立刻就能用。
-- **循环变量**：`repeat`/`foreach` 里可用 `{{index}}`（0 起），`foreach` 里还有 `{{item}}`。
-- **`times` 上限 10000**：循环不能无限跑，这条上限写在文档里，而不是跑到凌晨三点才发现。
-- **分组自己不能带 `when`**（展平后它没有落脚点）：把前提写到里面的步骤上；循环体里再嵌套循环按次数相乘。
-- 变量名写错、`foreach` 遍历了不存在的列表，都在**加载时**以退出码 `2` 报出来，并指出是第几步。
-
-
-### 还原最小化窗口（同意语义）
-
-目标窗口最小化时，KeyMouse 不会擅自把它还原——**还原是在改你的桌面**，所以必须明说：
-
-- 命令行：`KeyMouse window focus --process 某进程 --allow-restore`，或 `KeyMouse run flow.json --allow-restore`
-- 流程文件：`{ "format": "keymouse-flow", "version": 1, "allowRestore": true, ... }`
-
-两者**任一**即可；都不说时 `focus` 以退出码 `4` 拒绝，并在信息里直接告诉你怎么允许。
-
-### 聚焦是"验证过的"，不是"喊过了"
-
-`focus` 不会假定调用成功：它会**回读真实的前台窗口**，只有前台真的变成了目标才返回 0。如果窗口拒绝到前台，
-退出码 `5`，信息里会点名**当前**占着前台的是谁。
-
-- 机制：先 `AttachThreadInput` 把当前前台线程的输入队列接到自己身上，再 `SetForegroundWindow`。
-  这是 Windows 前台锁的官方绕法，而且**不注入任何按键**——不会往别的窗口打字。
-- 若仍然失败：目标以管理员身份运行时，UIPI 会挡住前台切换与输入注入，KeyMouse 也需要以管理员身份运行。
-
-## region（选区：给人挑坐标，不读文字）
-
-坐标写不准是个真问题：实测里三次凭记忆挑区域，三次都落在壁纸或空白上。`region pick` 把这件事交给鼠标——
-**拖动框选**，或**单击选中某个窗口的整个客户区**，`ESC` / 右键取消。它**只报坐标**，
-并给出一条可以直接粘贴的 `probe` 命令。
-
-只需要一个坐标时（点击、移动这类动作）用 `--point`：浮层画一条十字线和实时坐标，
-**单击即取这一点**，不必先框一个框再把左上角当点——编辑器里这些动作的按钮就叫「从屏幕取一点…」。
-
-```
-KeyMouse region pick                          # 框一块区域
-KeyMouse region pick --json                   # 机器可读：screen / window / space / region / probe
-KeyMouse region pick --rect 100,200,300,40    # 跳过浮层，屏幕坐标（脚本与测试用）
-```
-
-| 选项 | 默认 | 说明 |
-| --- | --- | --- |
-| `--rect x,y,w,h` | 打开浮层 | **屏幕坐标**的非交互入口；宽高必须为正 |
-| `--json` | 关 | 输出 `screen` / `window` / `space` / `region` / `probe` |
-
-坐标系只有一条判定规则：**整个选区落在客户区里 → `client`；落在窗口矩形里（标题栏）→ `window`；
-两者都不是 → 只报屏幕坐标并说明原因**（`probe` 只接受前两种，所以这种情况不会给出可粘贴的命令）。
-
-```
-选区  屏幕 700,470 260x40
-目标  0x1D097E  Notepad(31612)  "新建 文本文档.txt - Notepad"  类名=Notepad  [可见，响应=0ms]
-空间  客户区（client）  region 60,200,260,40
-命令  KeyMouse probe --hwnd 0x1D097E --region 60,200,260,40
-```
-
-浮层里几条**被实测逼出来**的细节（改它之前先看 design.md 的实测记录）：
-
-- 打开前先抓一张**冻结的屏幕快照**当背景：瞄准的东西不会动，浮层自己也不会被抓进图里。
-- 浮层必须真的在最顶层——只设 `TopMost` 不够，实测它仍在目标窗口**下面**，拖动落到了目标窗口上。
-- 取消键是**全局热键**：后台进程抢不到前台，只在有焦点时才灵的取消键不算取消键。
-- 线程必须是 Per-Monitor V2 并且**开浮层前验证**：WinForms 会把 UI 线程降成 SystemAware，
-  那样量到的桌面是逻辑尺寸（实测 2560×1440 vs 真实 5120×1532），交出来的坐标整体被缩放；
-  验证不过就退出码 `4`，宁可不给坐标。
-
-**它不做的事**：不判断"这算不算匹配"、不做容错匹配、不看颜色、不等状态变化。置信度只回答"到底读出来了没有"：
-实测读对时 55~96、读错时 14~52，两者**重叠**——所以精确与否必须由调用方用容错匹配声明，而不是靠提高阈值。
-
+先运行 `KeyMouse serve`，再通过 `KeyMouse runner pause <作业号>` 暂停、`KeyMouse runner resume <作业号>` 继续。流程只会停在两步之间；当前步骤完成后、下一步发送前生效。要终止作业则用 `KeyMouse runner cancel <作业号>`。

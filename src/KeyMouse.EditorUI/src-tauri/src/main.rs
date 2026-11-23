@@ -4,7 +4,7 @@
 //!
 //! 它只做界面做不到的事：开窗口、文件对话框、读写文件、起 `KeyMouse.exe`。
 //! 业务判断一律问命令行，不在这里重写一遍——那份逻辑在
-//! `src\KeyMouse.Core`，两边各写一份迟早会分叉。
+//! `src\KeyMouse.Core.*` 能力项目与 `src\KeyMouse.Core` 组合根，两边各写一份迟早会分叉。
 //!
 //! 契约见 `docs/reference/editor-ipc.md`。
 
@@ -20,13 +20,32 @@ mod pick;
 mod process;
 mod record;
 mod run;
+mod run_log;
 mod schema;
+#[cfg(windows)]
+mod startup;
 mod store;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
+
+/// 只有文档窗口拥有未保存状态，辅助窗口的关闭不参与文档确认。
+fn is_document_window(label: &str) -> bool {
+    label == "main"
+}
+
+#[cfg(test)]
+mod window_tests {
+    #[test]
+    fn only_main_window_participates_in_document_close_guard() {
+        assert!(super::is_document_window("main"));
+        for auxiliary in ["hud", "pick", "mini"] {
+            assert!(!super::is_document_window(auxiliary));
+        }
+    }
+}
 
 /// 界面里有没有未保存的改动。
 ///
@@ -129,6 +148,10 @@ fn clamp_to_monitor(window: &tauri::WebviewWindow) {
 }
 
 fn main() {
+    #[cfg(windows)]
+    if startup::reject_low_integrity() {
+        std::process::exit(4);
+    }
     crashlog::install();
 
     let dirty = Arc::new(AtomicBool::new(false));
@@ -224,10 +247,13 @@ fn main() {
             diagnostics::collect_diagnostics,
             crashlog::crash_log_path,
             files::open_flow,
+            files::open_child_flow,
+            files::save_child_flow,
             files::save_flow,
             files::write_scratch_flow,
             files::read_shot,
             files::shot_file,
+            run_log::save_run_log,
             run::validate_flow,
             run::run_flow,
             run::run_cancel,
@@ -263,6 +289,10 @@ fn main() {
         .on_window_event(move |window, event| {
             // 只拦"用户想关窗"这一种；销毁走 destroy()，不会回到这里。
             if let WindowEvent::CloseRequested { api, .. } = event {
+                // 脏标记属于文档主窗；HUD 等辅助窗口必须能独立关闭。
+                if !is_document_window(window.label()) {
+                    return;
+                }
                 if !dirty.load(Ordering::Relaxed) {
                     // 真要走，先把窗口大小记下来：下次开还是这个大小。
                     store::remember_size(window);

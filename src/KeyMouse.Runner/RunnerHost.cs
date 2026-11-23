@@ -11,14 +11,14 @@ namespace KeyMouse.Runner;
 /// Two decisions worth stating:
 ///
 /// * **One job at a time.** Input is a global resource: two executions sending keys at once produce a
-///   sequence neither of them asked for, and the console output that becomes the log stream is
-///   process-wide anyway. Jobs are queued, not raced.
-/// * **The log stream is the console.** A job redirects <c>Console.Out</c> into its event sink for
+///   sequence neither of them asked for. Jobs are queued, not raced.
+/// * **The log stream is the console.** A job routes its command output into its event sink for
 ///   the duration of the run, so every line the capability layer already prints (progress, errors,
 ///   the exit-code report) reaches the client without Core knowing a socket exists.
 /// </summary>
 internal sealed class RunnerHost
 {
+    private readonly Dictionary<string, ProgressSession> _sessions = [];
     private readonly object _gate = new();
     private readonly List<RunnerJob> _jobs = [];
     private readonly SemaphoreSlim _oneAtATime = new(1, 1);
@@ -32,14 +32,15 @@ internal sealed class RunnerHost
     }
 
     /// <summary>Handles one request and writes whatever it produces through <paramref name="emit"/>.</summary>
-    internal async Task HandleAsync(RunnerRequest request, Action<RunnerEvent> emit)
+    internal async Task HandleAsync(RunnerRequest request, Action<RunnerEvent> emit, CancellationToken disconnect = default)
     {
         // 版本先对，再谈方法：一个说别的版本号的客户端，它的方法名和参数含义都不可信。
-        if (!RunnerProtocol.AcceptsVersion(request.Params?.Version))
+        string? protocol = RunnerProtocol.Negotiate(request);
+        if (protocol == null)
         {
             emit(RunnerEvent.Error(
                 request.Id, 2,
-                $"客户端说的是协议版本 {request.Params!.Version}，本 Runner 说的是 {RunnerProtocol.ContractVersion}；两边对齐版本后才能继续"));
+                $"客户端说的是协议版本 {request.ProtocolVersion ?? request.Params?.Version}，本 Runner 说的是 {RunnerProtocol.ContractVersion}；两边对齐版本后才能继续"));
             return;
         }
 
@@ -48,11 +49,16 @@ internal sealed class RunnerHost
             case "hello":
                 // 与别的方法同一套规则：回显请求 id，以 result 终结。
                 // 连接后那条 id=0 的问候是另一回事，见契约的 greeting。
-                emit(RunnerEvent.Result(request.Id, Serialize(new
-                {
-                    version = Version,
-                    protocol = RunnerProtocol.ContractVersion,
-                })));
+                emit(RunnerEvent.Result(request.Id, protocol == RunnerProtocol.Latest
+                    ? Serialize(new {version = Version, protocol, protocolVersion = protocol, capabilities = RunnerProtocol.Capabilities})
+                    : Serialize(new {version = Version, protocol})));
+                return;
+
+            case "watch":
+                ProgressSession? session;
+                lock (_gate) _sessions.TryGetValue(request.Params?.Session ?? "", out session);
+                if (protocol != RunnerProtocol.Latest || session == null) { emit(RunnerEvent.Error(request.Id, 3, "没有可恢复的 v2 会话")); return; }
+                await session.Follow(request.Id, request.Params?.After ?? 0, emit, disconnect);
                 return;
 
             case "list":
@@ -70,7 +76,7 @@ internal sealed class RunnerHost
 
             case "run":
             case "record":
-                await ExecuteAsync(request, emit);
+                await ExecuteAsync(request, emit, protocol);
                 return;
 
             case "validate":
@@ -109,9 +115,25 @@ internal sealed class RunnerHost
 
     // ------------------------------------------------------------------ execution
 
-    private async Task ExecuteAsync(RunnerRequest request, Action<RunnerEvent> emit)
+    private async Task ExecuteAsync(RunnerRequest request, Action<RunnerEvent> emit, string protocol)
     {
         RunnerParameters p = request.Params ?? new RunnerParameters();
+        if (p.ShotDiff == true && (protocol != RunnerProtocol.Latest || p.Shots != true || request.Method != "run"))
+        { emit(RunnerEvent.Error(request.Id, 2, "shotDiff 仅适用于显式开启 shots 的 v2 run")); return; }
+        ProgressSession? progress = null;
+        if (protocol == RunnerProtocol.Latest && request.Method == "run")
+        {
+            lock (_gate)
+            {
+                if (_sessions.Count >= 16 && _sessions.FirstOrDefault(kv => kv.Value.Done).Key is { } old) _sessions.Remove(old);
+                if (_sessions.Count < 16) { progress = new ProgressSession(); _sessions.Add(progress.Token, progress); }
+            }
+            if (progress == null) { emit(RunnerEvent.Error(request.Id, 3, "可恢复的并发会话已满")); return; }
+            var sink = emit;
+            emit = item => { progress.Publish(item); sink(item); };
+            emit(new RunnerEvent { Kind = "status-stream", Id = request.Id, Cursor = 0,
+                Value = Serialize(new {session = progress.Token, steps = Array.Empty<RunnerEvent>()}) });
+        }
         var job = new RunnerJob(Interlocked.Increment(ref _nextJob), request.Id, request.Method, emit) { Client = p.Client };
         lock (_gate) _jobs.Add(job);
 
@@ -128,7 +150,7 @@ internal sealed class RunnerHost
         }
 
         await _oneAtATime.WaitAsync();
-        TextWriter? previousOut = null, previousError = null;
+        var previousControl = Execution.Control;
         try
         {
             var arguments = new List<string> { request.Method };
@@ -147,6 +169,7 @@ internal sealed class RunnerHost
                 job.FlowPath = Path.GetFullPath(p.Flow!);
                 job.AllowRestore = document.AllowRestore;
                 job.Shots = p.Shots ?? false;
+                if (p.ShotDiff == true) job.Delta = new ShotDelta();
                 job.EvidenceFor = p.EvidenceFor;
                 arguments.Add(p.Flow!);
                 if (p.DryRun == true) arguments.Add("--dry-run");
@@ -169,11 +192,8 @@ internal sealed class RunnerHost
             Execution.Control = job;
 
             // Every line the capability layer prints becomes a log event (see the class comment).
-            var sink = new EventTextWriter(emit, request.Id, job.Job);
-            previousOut = Console.Out;
-            previousError = Console.Error;
-            Console.SetOut(sink);
-            Console.SetError(sink);
+            var sink = TextWriter.Synchronized(new EventTextWriter(emit, request.Id, job.Job));
+            using var logs = CommandOutput.Redirect(sink, sink);
 
             int exitCode;
             try
@@ -200,10 +220,13 @@ internal sealed class RunnerHost
         }
         finally
         {
-            if (previousOut is not null) Console.SetOut(previousOut);
-            if (previousError is not null) Console.SetError(previousError);
-            Execution.Control = null;
-            job.FinishedAt = Environment.TickCount64;
+            Execution.Control = previousControl;
+            job.ReleaseSink();
+            lock (_gate)
+            {
+                job.FinishedAt = Environment.TickCount64;
+                if (_jobs.Count > 128) _jobs.RemoveAll(j => j.Job <= job.Job - 128 && j.FinishedAt != null);
+            }
             _oneAtATime.Release();
         }
     }
@@ -254,20 +277,12 @@ internal sealed class RunnerHost
         int exitCode = 0;
         var thread = new Thread(() =>
         {
-            var captured = new StringWriter();
-            TextWriter previous = Console.Out;
-            Console.SetOut(captured);
-            try
-            {
-                bool point = string.Equals(request.Params?.Mode, "point", StringComparison.OrdinalIgnoreCase);
-                exitCode = Commands.Execute(point
-                    ? ["region", "pick", "--point", "--json"]
-                    : ["region", "pick", "--json"]);
-            }
-            finally
-            {
-                Console.SetOut(previous);
-            }
+            using var captured = new StringWriter();
+            using var capture = CommandOutput.Redirect(captured, CommandOutput.Error);
+            bool point = string.Equals(request.Params?.Mode, "point", StringComparison.OrdinalIgnoreCase);
+            exitCode = Commands.Execute(point
+                ? ["region", "pick", "--point", "--json"]
+                : ["region", "pick", "--json"]);
             json = captured.ToString().Trim();
         })
         {
@@ -306,18 +321,9 @@ internal sealed class RunnerHost
         }
         arguments.Add("--json");
 
-        var captured = new StringWriter();
-        TextWriter previous = Console.Out;
-        Console.SetOut(captured);
-        int exitCode;
-        try
-        {
-            exitCode = Commands.Execute(arguments.ToArray());
-        }
-        finally
-        {
-            Console.SetOut(previous);
-        }
+        using var captured = new StringWriter();
+        using var capture = CommandOutput.Redirect(captured, CommandOutput.Error);
+        int exitCode = Commands.Execute(arguments.ToArray());
 
         string json = captured.ToString().Trim();
         if (json.Length > 0)
@@ -403,11 +409,11 @@ internal sealed class RunnerHost
                     break;
                 case "--parent":
                     if (i + 1 >= args.Length || !int.TryParse(args[i + 1], out parent))
-                        return Commands.Fail(2, "--parent 需要一个进程号");
+                        return CommandLine.Fail(2, "--parent 需要一个进程号");
                     i++;
                     break;
                 default:
-                    return Commands.Fail(2, $"用法：KeyMouse serve [--once] [--parent <pid>]（--once 只服务第一个连接，测试用）。收到：{args[i]}");
+                    return CommandLine.Fail(2, $"用法：KeyMouse serve [--once] [--parent <pid>]（--once 只服务第一个连接，测试用）。收到：{args[i]}");
             }
         }
 
